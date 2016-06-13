@@ -113,7 +113,7 @@ Example:
 	var target = make([]string, 0)
 	
 	toolbox.FilterSliceElements(source, func(item string) bool {
-		return strings.HasPrefix(item, "a") //this matcher any elements start with a
+		return strings.HasPrefix(item, "a") //this matches any elements start with a
 	}, &target)
 ```
 
