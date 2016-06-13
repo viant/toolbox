@@ -224,7 +224,7 @@ Example:
     	}
     
     	productsByVendor := make(map[string][]Product)
-    	toolbox.IndexMultimap(products, productsByVendor, func(product Product) string {
+    	toolbox.GroupSliceElements(products, productsByVendor, func(product Product) string {
     		return product.vendor
     	})
 ```
