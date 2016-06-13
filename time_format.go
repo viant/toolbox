@@ -22,9 +22,9 @@ import "strings"
 
 //DateFormatKeyword constant 'dateFormat' key
 var DateFormatKeyword = "dateFormat"
+
 //DateLayoutKeyword constant 'dateLayout' key
 var DateLayoutKeyword = "dateLayout"
-
 
 //DateFormatToLayout converts java date format https://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html#rfc822timezone into go date layout
 func DateFormatToLayout(dateFormat string) string {

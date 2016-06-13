@@ -20,8 +20,9 @@ package toolbox_test
 
 import (
 	"testing"
-	"github.com/viant/toolbox"
+
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/toolbox"
 )
 
 type IMessage interface {
@@ -36,11 +37,9 @@ func (this Message) Message() string {
 	return this.message
 }
 
-
 func TestContext(t *testing.T) {
 	context := toolbox.NewContext()
-	message1:= Message{message:"abc"}
-
+	message1 := Message{message: "abc"}
 
 	//operate on pointer test
 	assert.False(t, context.Contains((*Message)(nil)), "Should not have message in context")
@@ -48,31 +47,23 @@ func TestContext(t *testing.T) {
 	assert.True(t, context.Contains((*Message)(nil)), "Should have meesage in context")
 	assert.True(t, context.Contains(&Message{}), "Should have meesage in context")
 
-
-	m1 :=context.GetRequired((*Message)(nil)).(*Message)
-	assert.Equal(t, "abc", m1.message, "should have the same value field");
-	m1.message ="xyz"
-	assert.Equal(t, "xyz", message1.message, "should have the same value field");
+	m1 := context.GetRequired((*Message)(nil)).(*Message)
+	assert.Equal(t, "abc", m1.message, "should have the same value field")
+	m1.message = "xyz"
+	assert.Equal(t, "xyz", message1.message, "should have the same value field")
 
 	context.Put((*IMessage)(nil), &message1)
-	m2 :=context.GetRequired((*IMessage)(nil)).(*IMessage)
-	assert.Equal(t, "xyz", (*m2).Message(), "should have the same value field");
-
-
+	m2 := context.GetRequired((*IMessage)(nil)).(*IMessage)
+	assert.Equal(t, "xyz", (*m2).Message(), "should have the same value field")
 
 	//operate on struct passing by copy does not enable global changes
 	assert.False(t, context.Contains(Message{}), "Should not have message in context")
 	context.Put(Message{}, message1)
 
-
-	m3:=context.GetRequired(Message{}).(Message)
-	assert.Equal(t, "xyz", m3.message, "should have the same value field");
+	m3 := context.GetRequired(Message{}).(Message)
+	assert.Equal(t, "xyz", m3.message, "should have the same value field")
 	m3.message = "123"
-	assert.Equal(t, "123", m3.message, "should have the same value field");
-	assert.Equal(t, "xyz", m1.message, "should have the same value field");
-
-
-
-
+	assert.Equal(t, "123", m3.message, "should have the same value field")
+	assert.Equal(t, "xyz", m1.message, "should have the same value field")
 
 }

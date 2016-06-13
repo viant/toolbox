@@ -19,11 +19,11 @@
 package toolbox
 
 import (
+	"bytes"
+	"fmt"
 	"net/http"
 	"reflect"
 	"strings"
-	"fmt"
-	"bytes"
 )
 
 var jsonContentType = "application/json"
@@ -31,8 +31,8 @@ var textPlainContentType = "text/plain"
 
 //ServiceRouting represents a simple web services routing rule, which is matched with http request
 type ServiceRouting struct {
-	URI                 string             //matching uri
-	Handler             interface{}        //has to be func
+	URI                 string      //matching uri
+	Handler             interface{} //has to be func
 	HTTPMethod          string
 	Parameters          []string
 	ContentTypeEncoders map[string]EncoderFactory //content type encoder factory
@@ -57,15 +57,13 @@ func (sr ServiceRouting) getEncoderFactory(contentType string) EncoderFactory {
 	return NewJSONEncoderFactory()
 }
 
-
-
 func (sr ServiceRouting) extractParameterFromBody(parameterName string, targetType reflect.Type, request *http.Request) (interface{}, error) {
 	targetValuePointer := reflect.New(targetType)
 	contentType := getContentTypeOrJSONContentType(request.Header.Get("Content-Type"))
-	decoderFactory  := sr.getDecoderFactory(contentType)
+	decoderFactory := sr.getDecoderFactory(contentType)
 	decoder := decoderFactory.Create(request.Body)
-	if ! strings.Contains(parameterName, ":") {
-		err :=decoder.Decode(targetValuePointer.Interface())
+	if !strings.Contains(parameterName, ":") {
+		err := decoder.Decode(targetValuePointer.Interface())
 		if err != nil {
 			return nil, fmt.Errorf("Unable to extract %Tv due to %v", targetValuePointer.Interface(), err)
 		}
@@ -75,13 +73,13 @@ func (sr ServiceRouting) extractParameterFromBody(parameterName string, targetTy
 		valueMap[pair[1]] = targetValuePointer.Interface()
 		err := decoder.Decode(&valueMap)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to extract %T due to %v",  targetValuePointer.Interface(), err)
+			return nil, fmt.Errorf("Unable to extract %T due to %v", targetValuePointer.Interface(), err)
 		}
 	}
 	return targetValuePointer.Interface(), nil
 }
 
-func (sr ServiceRouting) extractParameters(request *http.Request,response http.ResponseWriter) (map[string]interface{}, error) {
+func (sr ServiceRouting) extractParameters(request *http.Request, response http.ResponseWriter) (map[string]interface{}, error) {
 	var result = make(map[string]interface{})
 	functionSignature := GetFuncSignature(sr.Handler)
 	uriParameters, _ := ExtractURIParameters(sr.URI, request.RequestURI)
@@ -102,10 +100,10 @@ func (sr ServiceRouting) extractParameters(request *http.Request,response http.R
 		}
 	}
 	if HasSliceAnyElements(sr.Parameters, "@httpRequest") {
-		result["@httpRequest"] =  request
+		result["@httpRequest"] = request
 	}
 	if HasSliceAnyElements(sr.Parameters, "@httpResponseWriter") {
-		result["@httpResponseWriter"] =  response
+		result["@httpResponseWriter"] = response
 	}
 
 	if request.ContentLength > 0 {
@@ -113,7 +111,7 @@ func (sr ServiceRouting) extractParameters(request *http.Request,response http.R
 			if _, found := result[parameter]; !found {
 				value, err := sr.extractParameterFromBody(parameter, functionSignature[i], request)
 				if err != nil {
-					return nil, fmt.Errorf("Failed to extract parameters for %v %v due to %v", sr.HTTPMethod, sr.URI,  err)
+					return nil, fmt.Errorf("Failed to extract parameters for %v %v due to %v", sr.HTTPMethod, sr.URI, err)
 				}
 				result[parameter] = value
 				break
@@ -123,19 +121,16 @@ func (sr ServiceRouting) extractParameters(request *http.Request,response http.R
 	return result, nil
 }
 
-
-
 //ServiceRouter represents routing rule
 type ServiceRouter struct {
 	serviceRouting []ServiceRouting
 }
 
-
 func (r *ServiceRouter) match(request *http.Request) []ServiceRouting {
-	var result = make([]ServiceRouting , 0)
+	var result = make([]ServiceRouting, 0)
 	for _, candidate := range r.serviceRouting {
 		if candidate.HTTPMethod == request.Method {
-			_, matched :=ExtractURIParameters(candidate.URI, request.RequestURI)
+			_, matched := ExtractURIParameters(candidate.URI, request.RequestURI)
 			if matched {
 				result = append(result, candidate)
 			}
@@ -144,16 +139,15 @@ func (r *ServiceRouter) match(request *http.Request) []ServiceRouting {
 	return result
 }
 
-
 func getContentTypeOrJSONContentType(contentType string) string {
-	if contentType == textPlainContentType || contentType == jsonContentType || contentType == ""{
+	if contentType == textPlainContentType || contentType == jsonContentType || contentType == "" {
 		return jsonContentType
 	}
 	return contentType
 }
 
 //WriteResponse writes response to response writer, it used encoder factory to encode passed in response to the writer, it sets back request contenttype to response.
-func  (r *ServiceRouter) WriteResponse(encoderFactory EncoderFactory, response interface{},  request *http.Request, responseWriter http.ResponseWriter,) error {
+func (r *ServiceRouter) WriteResponse(encoderFactory EncoderFactory, response interface{}, request *http.Request, responseWriter http.ResponseWriter) error {
 	requestContentType := request.Header.Get("Content-Type")
 	responseContentType := getContentTypeOrJSONContentType(requestContentType)
 	encoder := encoderFactory.Create(responseWriter)
@@ -214,8 +208,6 @@ func NewServiceRouter(serviceRouting ...ServiceRouting) *ServiceRouter {
 	return &ServiceRouter{serviceRouting}
 }
 
-
-
 //RouteToService calls web service url, with passed in json request, and encodes http json response into passed response
 func RouteToService(method, url string, request, response interface{}) (err error) {
 	return RouteToServiceWithCustomFormat(method, url, request, response, NewJSONEncoderFactory(), NewJSONDecoderFactory())
@@ -249,7 +241,7 @@ func RouteToServiceWithCustomFormat(method, url string, request, response interf
 	}
 	err = decoderFactory.Create(serverResponse.Body).Decode(response)
 	if err != nil {
-		return fmt.Errorf("Failed to decode response to %T : %v, %v",  response, err, serverResponse.Header.Get("error"))
+		return fmt.Errorf("Failed to decode response to %T : %v, %v", response, err, serverResponse.Header.Get("error"))
 	}
 	return nil
 }

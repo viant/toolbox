@@ -2,8 +2,9 @@ package toolbox_test
 
 import (
 	"testing"
-	"github.com/viant/toolbox"
+
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/toolbox"
 )
 
 func TestSliceIterator(t *testing.T) {
@@ -22,6 +23,4 @@ func TestSliceIterator(t *testing.T) {
 	assert.True(t, iterator.HasNext())
 	iterator.Next(&value)
 	assert.Equal(t, "c", value)
-
 }
-

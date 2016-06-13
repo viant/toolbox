@@ -19,26 +19,24 @@
 package toolbox_test
 
 import (
-	"testing"
-	"reflect"
-	"time"
-	"github.com/viant/toolbox"
 	"fmt"
+	"reflect"
+	"testing"
+	"time"
+
+	"github.com/viant/toolbox"
 )
 
-
 type User2 struct {
-	Name        string `column:"name"`
+	Name        string    `column:"name"`
 	DateOfBirth time.Time `column:"date" dateLayout:"2006-01-02 15:04:05.000000"`
-	Id          int `autoincrement:"true"`
-	Other       string `transient:"true"`
+	Id          int       `autoincrement:"true"`
+	Other       string    `transient:"true"`
 }
-
-
 
 func AssertEqual(test *testing.T, actual interface{}, expected interface{}, message string) {
 	if actual != expected {
-		test.Fatalf("Failed to " + message + " expected:%s, got %s:", expected, actual)
+		test.Fatalf("Failed to "+message+" expected:%s, got %s:", expected, actual)
 	}
 }
 
@@ -60,4 +58,3 @@ func TestAssertPointerKind(test *testing.T) {
 	toolbox.AssertPointerKind(&User2{}, reflect.Struct, "user")
 	toolbox.AssertPointerKind((*User2)(nil), reflect.Struct, "user")
 }
-

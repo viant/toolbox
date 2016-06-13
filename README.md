@@ -61,7 +61,7 @@ Example:
 ```go
 	var aSlice interface{}
 	
-	toolbox.ProcessSlice(aSlice, func(indext int, item interface{}) bool {
+	toolbox.ProcessSlice(aSlice, func(index int, item interface{}) bool {
     		...
     		return true //to continue to next element return true
     })
@@ -265,7 +265,7 @@ Example:
 	
 **DateFormatToLayout**
 
-Java date format style to go date layout converter.
+Java date format style to go date layout conversion.
 
 
 ```go	

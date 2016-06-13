@@ -19,11 +19,9 @@
 package toolbox
 
 import (
-	"io"
 	"encoding/json"
+	"io"
 )
-
-
 
 //Decoder represents a decoder.
 type Decoder interface {
@@ -37,11 +35,10 @@ type DecoderFactory interface {
 	Create(reader io.Reader) Decoder
 }
 
-
-type jsonDecoderFactory struct {}
+type jsonDecoderFactory struct{}
 
 func (d jsonDecoderFactory) Create(reader io.Reader) Decoder {
-	return  json.NewDecoder(reader)
+	return json.NewDecoder(reader)
 }
 
 //NewJSONDecoderFactory create a new JSONDecoderFactory

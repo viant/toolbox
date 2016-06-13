@@ -25,7 +25,6 @@ import (
 
 var columnMapping = []string{"column", "dateLayout", "dateFormat", "autoincrement", "primaryKey", "sequence", "valueMap"}
 
-
 //ProcessStruct reads passed in struct fields and values to pass it to provided handler
 func ProcessStruct(aStruct interface{}, handler func(field reflect.StructField, value interface{})) {
 	structValue := DiscoverValueByKind(reflect.ValueOf(aStruct), reflect.Struct)
@@ -43,16 +42,14 @@ func ProcessStruct(aStruct interface{}, handler func(field reflect.StructField, 
 	}
 }
 
-
-
 //BuildTagMapping builds map keyed by mappedKeyTag tag value, and value is another map of keys where tag name is presents in the tags parameter.
-func BuildTagMapping(structTemplatePointer interface{}, mappedKeyTag string, resultExclusionTag string, inheritKeyFromField bool, convertKeyToLowerCase bool, tags [] string) map[string](map[string]string) {
+func BuildTagMapping(structTemplatePointer interface{}, mappedKeyTag string, resultExclusionTag string, inheritKeyFromField bool, convertKeyToLowerCase bool, tags []string) map[string](map[string]string) {
 	reflectStructType := DiscoverTypeByKind(structTemplatePointer, reflect.Struct)
 	var result = make(map[string]map[string]string)
 	for i := 0; i < reflectStructType.NumField(); i++ {
-		var field reflect.StructField;
+		var field reflect.StructField
 		field = reflectStructType.Field(i)
-		isTransient := strings.EqualFold(field.Tag.Get(resultExclusionTag), "true");
+		isTransient := strings.EqualFold(field.Tag.Get(resultExclusionTag), "true")
 		if isTransient {
 			continue
 		}
@@ -61,11 +58,11 @@ func BuildTagMapping(structTemplatePointer interface{}, mappedKeyTag string, res
 		if mappedKeyTag == "fieldName" {
 			key = field.Name
 		}
-		if (len(key) == 0) {
-			if (! inheritKeyFromField) {
+		if len(key) == 0 {
+			if !inheritKeyFromField {
 				continue
 			}
-			key = field.Name;
+			key = field.Name
 		}
 
 		if convertKeyToLowerCase {
@@ -75,7 +72,7 @@ func BuildTagMapping(structTemplatePointer interface{}, mappedKeyTag string, res
 		result[key] = make(map[string]string)
 		for _, tag := range tags {
 			tagValue := field.Tag.Get(tag)
-			if (len(tagValue) > 0) {
+			if len(tagValue) > 0 {
 				result[key][tag] = tagValue
 			}
 		}
@@ -83,8 +80,6 @@ func BuildTagMapping(structTemplatePointer interface{}, mappedKeyTag string, res
 	}
 	return result
 }
-
-
 
 //NewFieldSettingByKey reads field's tags and returns them indexed by passed in key, fieldName is always part of the resulting map unless filed has "transient" tag.
 func NewFieldSettingByKey(aStruct interface{}, key string) map[string](map[string]string) {

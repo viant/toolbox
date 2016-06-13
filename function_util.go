@@ -19,16 +19,12 @@
 package toolbox
 
 import (
-	"reflect"
 	"fmt"
+	"reflect"
 )
 
-
-
-
-
 //CallFunction calls passed in function with provided parameters,it returns a function result.
-func CallFunction(function interface{}, parameters ... interface{}) []interface{} {
+func CallFunction(function interface{}, parameters ...interface{}) []interface{} {
 	AssertKind(function, reflect.Func, "function")
 	var functionParameters = make([]reflect.Value, 0)
 
@@ -46,21 +42,20 @@ func CallFunction(function interface{}, parameters ... interface{}) []interface{
 	return result
 }
 
-
 //BuildFunctionParameters builds function parameters provided in the parameterValues.
 // Parameters value will be converted if needed to expected by the function signature type. It returns function parameters , or error
-func BuildFunctionParameters(function interface{}, parameters [] string, parameterValues map[string]interface{}) ([]interface{}, error) {
+func BuildFunctionParameters(function interface{}, parameters []string, parameterValues map[string]interface{}) ([]interface{}, error) {
 	AssertKind(function, reflect.Func, "function")
 	functionValue := reflect.ValueOf(function)
 	funcSignature := GetFuncSignature(function)
 	actualMethodSignatureLength := len(funcSignature)
 	converter := Converter{}
 	if actualMethodSignatureLength != len(parameters) {
-		return nil, fmt.Errorf("Invalid number of parameters wanted: [%T],  had: %v",function, 0)
+		return nil, fmt.Errorf("Invalid number of parameters wanted: [%T],  had: %v", function, 0)
 	}
 	var functionParameters = make([]interface{}, 0)
 	for i, name := range parameters {
-		parameterValue := parameterValues[name];
+		parameterValue := parameterValues[name]
 		reflectValue := reflect.ValueOf(parameterValue)
 		if reflectValue.Kind() == reflect.Slice && funcSignature[i].Kind() != reflectValue.Kind() {
 			return nil, fmt.Errorf("Incompatible types expected: %v, but had %v", funcSignature[i].Kind(), reflectValue.Kind())
@@ -73,7 +68,7 @@ func BuildFunctionParameters(function interface{}, parameters [] string, paramet
 			}
 			reflectValue = newValuePointer.Elem()
 		}
-		if functionValue.Type().IsVariadic() && funcSignature[i].Kind() == reflect.Slice && i + 1 == len(funcSignature) {
+		if functionValue.Type().IsVariadic() && funcSignature[i].Kind() == reflect.Slice && i+1 == len(funcSignature) {
 			ProcessSlice(reflectValue.Interface(), func(item interface{}) bool {
 				functionParameters = append(functionParameters, item)
 				return true
@@ -96,5 +91,3 @@ func GetFuncSignature(function interface{}) []reflect.Type {
 	}
 	return result
 }
-
-

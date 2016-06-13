@@ -15,19 +15,15 @@
 *  License for the specific language governing permissions and limitations under
 *  the License.
 *
-*/
+ */
 package toolbox
 
 import (
 	"fmt"
-	"sort"
 	"reflect"
+	"sort"
 	"strings"
 )
-
-
-
-
 
 //TrueValueProvider is a function that returns true, it takes one parameters which ignores,
 //This provider can be used to make map from slice like map[some type]bool
@@ -41,9 +37,8 @@ var CopyStringValueProvider = func(source string) string {
 	return source
 }
 
-
 //ProcessSlice iterates over any slice, it calls handler with each element unless handler returns false,
-func ProcessSlice(slice interface{}, handler func(item interface{}) bool ) {
+func ProcessSlice(slice interface{}, handler func(item interface{}) bool) {
 	sliceValue := DiscoverValueByKind(reflect.ValueOf(slice), reflect.Slice)
 	for i := 0; i < sliceValue.Len(); i++ {
 		if !handler(sliceValue.Index(i).Interface()) {
@@ -52,9 +47,8 @@ func ProcessSlice(slice interface{}, handler func(item interface{}) bool ) {
 	}
 }
 
-
 //ProcessSliceWithIndex iterates over any slice, it calls handler with every index and item unless handler returns false
-func ProcessSliceWithIndex(slice interface{}, handler func(index int, item interface{}) (bool)) {
+func ProcessSliceWithIndex(slice interface{}, handler func(index int, item interface{}) bool) {
 	sliceValue := DiscoverValueByKind(reflect.ValueOf(slice), reflect.Slice)
 	for i := 0; i < sliceValue.Len(); i++ {
 		if !handler(i, sliceValue.Index(i).Interface()) {
@@ -63,10 +57,9 @@ func ProcessSliceWithIndex(slice interface{}, handler func(index int, item inter
 	}
 }
 
-
 //IndexSlice reads passed in slice and applies function that takes a slice item as argument to return a key value.
 //passed in resulting map needs to match key type return by a key function, and accept slice item type as argument.
-func IndexSlice(slice, resultingMap, keyFunction interface{})  {
+func IndexSlice(slice, resultingMap, keyFunction interface{}) {
 	mapValue := DiscoverValueByKind(resultingMap, reflect.Map)
 	ProcessSlice(slice, func(item interface{}) bool {
 		result := CallFunction(keyFunction, item)
@@ -74,8 +67,6 @@ func IndexSlice(slice, resultingMap, keyFunction interface{})  {
 		return true
 	})
 }
-
-
 
 //CopySliceElements appends elements from source slice into target
 //This function comes handy if you want to copy from generic []interface{} slice to more specific slice like []string, if source slice element are of the same time
@@ -88,7 +79,6 @@ func CopySliceElements(sourceSlice, targetSlicePointer interface{}) {
 	})
 }
 
-
 //TransformSlice appends transformed elements from source slice into target, transformer take as argument item of source slice and return value of target slice.
 func TransformSlice(sourceSlice, targetSlicePointer, transformer interface{}) {
 	AssertPointerKind(targetSlicePointer, reflect.Slice, "targetSlicePointer")
@@ -99,8 +89,6 @@ func TransformSlice(sourceSlice, targetSlicePointer, transformer interface{}) {
 		return true
 	})
 }
-
-
 
 //FilterSliceElements copies elements from sourceSlice to targetSlice if predicate function returns true. Predicate function needs to accept source slice element type and return true.
 func FilterSliceElements(sourceSlice interface{}, predicate interface{}, targetSlicePointer interface{}) {
@@ -114,10 +102,11 @@ func FilterSliceElements(sourceSlice interface{}, predicate interface{}, targetS
 		return true
 	})
 }
+
 //HasSliceAnyElements checks if sourceSlice has any of passed in elements. This method iterates through elements till if finds the first match.
-func HasSliceAnyElements(sourceSlice interface{}, elements ... interface{}) (result bool)  {
+func HasSliceAnyElements(sourceSlice interface{}, elements ...interface{}) (result bool) {
 	ProcessSlice(sourceSlice, func(item interface{}) bool {
-		for _, element:=range elements {
+		for _, element := range elements {
 			if item == element {
 				result = true
 				return false
@@ -127,9 +116,6 @@ func HasSliceAnyElements(sourceSlice interface{}, elements ... interface{}) (res
 	})
 	return result
 }
-
-
-
 
 //SliceToMap reads passed in slice to to apply the key and value function for each item. Result of these calls is placed in the resulting map.
 func SliceToMap(sourceSlice, targetMap, keyFunction, valueFunction interface{}) {
@@ -150,16 +136,15 @@ func GroupSliceElements(sourceSlice, targetMap, keyFunction interface{}) {
 		result := CallFunction(keyFunction, item)
 		keyValue := reflect.ValueOf(result[0])
 		sliceForThisKey := mapValue.MapIndex(keyValue)
-		if ! sliceForThisKey.IsValid() {
+		if !sliceForThisKey.IsValid() {
 			sliceForThisKeyPoiner := reflect.New(mapValueType)
 			sliceForThisKey = sliceForThisKeyPoiner.Elem()
 			mapValue.SetMapIndex(keyValue, sliceForThisKey)
 		}
-		mapValue.SetMapIndex(keyValue,reflect.Append(sliceForThisKey, reflect.ValueOf(item)))
+		mapValue.SetMapIndex(keyValue, reflect.Append(sliceForThisKey, reflect.ValueOf(item)))
 		return true
 	})
 }
-
 
 //SliceToMultimap reads source slice and transfer all values by valueFunction and returned by keyFunction to a slice in target map.
 //Key and value function result type need to agree with target map type.
@@ -173,16 +158,15 @@ func SliceToMultimap(sourceSlice, targetMap, keyFunction, valueFunction interfac
 		valueResult := CallFunction(valueFunction, item)
 		value := reflect.ValueOf(valueResult[0])
 		sliceForThisKey := mapValue.MapIndex(keyValue)
-		if ! sliceForThisKey.IsValid() {
+		if !sliceForThisKey.IsValid() {
 			sliceForThisKeyPoiner := reflect.New(mapValueType)
 			sliceForThisKey = sliceForThisKeyPoiner.Elem()
 			mapValue.SetMapIndex(keyValue, sliceForThisKey)
 		}
-		mapValue.SetMapIndex(keyValue,reflect.Append(sliceForThisKey, value))
+		mapValue.SetMapIndex(keyValue, reflect.Append(sliceForThisKey, value))
 		return true
 	})
 }
-
 
 //SetSliceValue sets value at slice index
 func SetSliceValue(slice interface{}, index int, value interface{}) {
@@ -190,29 +174,22 @@ func SetSliceValue(slice interface{}, index int, value interface{}) {
 	sliceValue.Index(index).Set(reflect.ValueOf(value))
 }
 
-
-
 //GetSliceValue gets value from passed in index
 func GetSliceValue(slice interface{}, index int) interface{} {
 	sliceValue := DiscoverValueByKind(reflect.ValueOf(slice), reflect.Slice)
 	return sliceValue.Index(index).Interface()
 }
 
-
-
-
 //ProcessMap iterates over any map, it calls handler with every key, value pair unless handler returns false.
 func ProcessMap(sourceMap interface{}, handler func(key, value interface{}) bool) {
 	mapValue := DiscoverValueByKind(reflect.ValueOf(sourceMap), reflect.Map)
 	for _, key := range mapValue.MapKeys() {
 		value := mapValue.MapIndex(key)
-		if ! handler(key.Interface(), value.Interface()) {
+		if !handler(key.Interface(), value.Interface()) {
 			break
 		}
 	}
 }
-
-
 
 //CopyMapEntries appends map entry from source map to target map
 func CopyMapEntries(sourceMap, targetMap interface{}) {
@@ -226,8 +203,6 @@ func CopyMapEntries(sourceMap, targetMap interface{}) {
 	})
 }
 
-
-
 //MapKeysToSlice appends all map keys to targetSlice
 func MapKeysToSlice(sourceMap interface{}, targetSlicePointer interface{}) {
 	AssertPointerKind(targetSlicePointer, reflect.Slice, "targetSlicePointer")
@@ -237,7 +212,6 @@ func MapKeysToSlice(sourceMap interface{}, targetSlicePointer interface{}) {
 		return true
 	})
 }
-
 
 //MapKeysToStringSlice creates a string slice from sourceMap keys, keys do not need to be of a string type.
 func MapKeysToStringSlice(sourceMap interface{}) []string {
@@ -249,10 +223,8 @@ func MapKeysToStringSlice(sourceMap interface{}) []string {
 	return keys
 }
 
-
-
 //Process2DSliceInBatches iterates over any 2 dimensional slice, it calls handler with batch.
-func Process2DSliceInBatches(slice [][]interface{}, size int, handler func(batchedSlice [][]interface{}) ()) {
+func Process2DSliceInBatches(slice [][]interface{}, size int, handler func(batchedSlice [][]interface{})) {
 	batchCount := (len(slice) / size) + 1
 	fromIndex, toIndex := 0, 0
 
@@ -268,8 +240,6 @@ func Process2DSliceInBatches(slice [][]interface{}, size int, handler func(batch
 	}
 }
 
-
-
 //SortStrings creates a new copy of passed in slice and sorts it.
 func SortStrings(source []string) []string {
 	var result = make([]string, 0)
@@ -277,10 +247,6 @@ func SortStrings(source []string) []string {
 	sort.Strings(result)
 	return result
 }
-
-
-
-
 
 //JoinAsString joins all items of a slice, with separator, it takes any slice as argument,
 func JoinAsString(slice interface{}, separator string) string {

@@ -24,18 +24,15 @@ import (
 	"time"
 )
 
-//ValueProvider represents a value provider 
+//ValueProvider represents a value provider
 type ValueProvider interface {
-	
-	//Get returns a value for passed in context and arguments. Context can be used to manage state.
-	Get(context Context, arguments ... interface{}) (interface{}, error)
 
+	//Get returns a value for passed in context and arguments. Context can be used to manage state.
+	Get(context Context, arguments ...interface{}) (interface{}, error)
 }
 
 //ValueProviderRegistry registry of value providers
 type ValueProviderRegistry interface {
-
-	
 	Register(name string, valueProvider ValueProvider)
 
 	Contains(name string) bool
@@ -45,16 +42,15 @@ type ValueProviderRegistry interface {
 	Get(name string) ValueProvider
 }
 
-
 type valueProviderRegistryImpl struct {
-	registry        map[string](ValueProvider)
+	registry map[string](ValueProvider)
 }
 
 func (r valueProviderRegistryImpl) Register(name string, valueProvider ValueProvider) {
 	r.registry[name] = valueProvider
 }
 
-func (r valueProviderRegistryImpl)Contains(name string) bool {
+func (r valueProviderRegistryImpl) Contains(name string) bool {
 	_, ok := r.registry[name]
 	return ok
 }
@@ -70,7 +66,6 @@ func (r valueProviderRegistryImpl) Names() []string {
 	return MapKeysToStringSlice(&r.registry)
 }
 
-
 //NewValueProviderRegistry create new NewValueProviderRegistry
 func NewValueProviderRegistry() ValueProviderRegistry {
 	var result ValueProviderRegistry = &valueProviderRegistryImpl{
@@ -79,10 +74,9 @@ func NewValueProviderRegistry() ValueProviderRegistry {
 	return result
 }
 
-
 type envValueProvider struct{}
 
-func (p envValueProvider) Get(context Context, arguments ... interface{}) (interface{}, error) {
+func (p envValueProvider) Get(context Context, arguments ...interface{}) (interface{}, error) {
 	key := arguments[0].(string)
 	value, found := os.LookupEnv(key)
 	if found {
@@ -98,35 +92,35 @@ func NewEnvValueProvider() ValueProvider {
 }
 
 type castedValueProvider struct{}
-func (p castedValueProvider) Get(context Context, arguments ... interface{}) (interface{}, error) {
+
+func (p castedValueProvider) Get(context Context, arguments ...interface{}) (interface{}, error) {
 	key := arguments[0].(string)
 	if len(arguments) == 2 {
-		return nil, fmt.Errorf("Failed to cast to %v due to invalud number of arguments" ,key)
+		return nil, fmt.Errorf("Failed to cast to %v due to invalud number of arguments", key)
 	}
 
 	switch key {
-		case "time":
-			if len(arguments) != 3 {
-				return nil, fmt.Errorf("Failed to cast to time due to invalud number of arguments expected 2, but had %v", len(arguments) -1)
-			}
-			castedTime, err := ParseTime(AsString(arguments[1]), AsString(arguments[2]))
-			if err != nil {
-				return nil, fmt.Errorf("Failed to cast to time %v due to %v",AsString(arguments[1]), err)
-			}
-			return castedTime, nil
-		case "int":
-			return AsInt(arguments[1]), nil
-		case "float":
-			return AsFloat(arguments[1]), nil
-		case "bool":
-			return AsBoolean(arguments[1]), nil
-		case "string":
+	case "time":
+		if len(arguments) != 3 {
+			return nil, fmt.Errorf("Failed to cast to time due to invalud number of arguments expected 2, but had %v", len(arguments)-1)
+		}
+		castedTime, err := ParseTime(AsString(arguments[1]), AsString(arguments[2]))
+		if err != nil {
+			return nil, fmt.Errorf("Failed to cast to time %v due to %v", AsString(arguments[1]), err)
+		}
+		return castedTime, nil
+	case "int":
+		return AsInt(arguments[1]), nil
+	case "float":
+		return AsFloat(arguments[1]), nil
+	case "bool":
+		return AsBoolean(arguments[1]), nil
+	case "string":
 		return AsString(arguments[1]), nil
 
 	}
 	return nil, fmt.Errorf("Failed to cast to %v - unsupported type", key)
 }
-
 
 //NewCastedValueProvider return a provider that return casted value type
 func NewCastedValueProvider() ValueProvider {
@@ -134,12 +128,10 @@ func NewCastedValueProvider() ValueProvider {
 	return result
 }
 
-
-
 type currentTimeProvider struct{}
 
-func (p currentTimeProvider) Get(context Context, arguments ... interface{}) (interface{}, error) {
-	return time.Now(),nil
+func (p currentTimeProvider) Get(context Context, arguments ...interface{}) (interface{}, error) {
+	return time.Now(), nil
 }
 
 //NewCurrentTimeProvider returns a provder that returns time.Now()
@@ -148,13 +140,12 @@ func NewCurrentTimeProvider() ValueProvider {
 	return result
 }
 
-
-
 type nilValueProvider struct{}
 
-func (p nilValueProvider) Get(context Context, arguments ... interface{}) (interface{}, error) {
+func (p nilValueProvider) Get(context Context, arguments ...interface{}) (interface{}, error) {
 	return nil, nil
 }
+
 //NewNilValueProvider returns a provider that returns a nil
 func NewNilValueProvider() ValueProvider {
 	var result ValueProvider = &nilValueProvider{}

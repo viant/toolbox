@@ -20,10 +20,10 @@ package toolbox_test
 
 import (
 	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
 )
-
 
 func TestNewTokenizer(t *testing.T) {
 	tokenizer := toolbox.NewTokenizer("Z Abcf",
@@ -31,8 +31,8 @@ func TestNewTokenizer(t *testing.T) {
 		-1,
 		map[int]toolbox.Matcher{
 			101: toolbox.KeywordMatcher{"Abc", true},
-			201:toolbox.CharactersMatcher{Chars:" \n\t"},
-			102:toolbox.LiteralMatcher{},
+			201: toolbox.CharactersMatcher{Chars: " \n\t"},
+			102: toolbox.LiteralMatcher{},
 		},
 	)
 
@@ -40,7 +40,6 @@ func TestNewTokenizer(t *testing.T) {
 	assert.Equal(t, 201, tokenizer.Nexts(101, 201, 102).Token)
 	assert.Equal(t, 101, tokenizer.Nexts(101, 201, 102).Token)
 	assert.Equal(t, 102, tokenizer.Nexts(101, 201, 102).Token)
-
 
 }
 
@@ -52,14 +51,9 @@ func TestMatchKeyword(t *testing.T) {
 
 }
 
-
-
 func TestMatchWhitespace(t *testing.T) {
-	matcher:= toolbox.CharactersMatcher{Chars:" \n\t"}
+	matcher := toolbox.CharactersMatcher{Chars: " \n\t"}
 	assert.Equal(t, 0, matcher.Match("1, 2, 3", 0))
 	assert.Equal(t, 2, matcher.Match("1, \t2, 3", 2))
 
 }
-
-
-

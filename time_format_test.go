@@ -20,9 +20,10 @@ package toolbox_test
 
 import (
 	"testing"
-	"github.com/viant/toolbox"
 	"time"
+
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/toolbox"
 )
 
 func TestTimeFormat(t *testing.T) {
@@ -61,7 +62,5 @@ func TestTimeFormat(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, int64(1464903979), timeValue.Unix())
 	}
-
-
 
 }

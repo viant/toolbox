@@ -15,7 +15,7 @@
 *  License for the specific language governing permissions and limitations under
 *  the License.
 *
-*/
+ */
 package toolbox
 
 import "reflect"
@@ -28,15 +28,12 @@ type Iterator interface {
 
 	//Next sets item pointer with next element.
 	Next(itemPointer interface{})
-
 }
-
 
 type sliceIterator struct {
 	sliceValue reflect.Value
-	index int
+	index      int
 }
-
 
 func (i *sliceIterator) HasNext() bool {
 	return i.index < i.sliceValue.Len()
@@ -50,9 +47,8 @@ func (i *sliceIterator) Next(itemPointer interface{}) {
 	itemPointerValue.Elem().Set(value)
 }
 
-
 //NewSliceIterator creates a new slice iterator.
 func NewSliceIterator(slice interface{}) Iterator {
 	sliceValue := DiscoverValueByKind(reflect.ValueOf(slice), reflect.Slice)
-	return &sliceIterator{sliceValue:sliceValue}
+	return &sliceIterator{sliceValue: sliceValue}
 }

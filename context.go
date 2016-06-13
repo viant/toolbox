@@ -19,10 +19,9 @@
 package toolbox
 
 import (
-	"reflect"
 	"fmt"
+	"reflect"
 )
-
 
 //Context represents type safe map.
 type Context interface {
@@ -46,18 +45,16 @@ type Context interface {
 	Contains(targetType interface{}) bool
 }
 
-
 type contextImpl struct {
 	context map[string]interface{}
 }
 
-
 func (c *contextImpl) getReflectType(targetType interface{}) reflect.Type {
 	var reflectType reflect.Type
 	var ok bool
-	reflectType, ok = targetType.(reflect.Type);
-	if ! ok {
-		reflectType = reflect.TypeOf(targetType);
+	reflectType, ok = targetType.(reflect.Type)
+	if !ok {
+		reflectType = reflect.TypeOf(targetType)
 	}
 	return reflectType
 }
@@ -73,33 +70,33 @@ func (c *contextImpl) getKey(targetType interface{}) string {
 }
 
 func (c *contextImpl) GetRequired(targetType interface{}) interface{} {
-	if ! c.Contains(targetType) {
-		key := c.getKey(targetType);
+	if !c.Contains(targetType) {
+		key := c.getKey(targetType)
 		panic("Failed to lookup key:" + key)
 	}
 	return c.GetOptional(targetType)
 }
 
 func (c *contextImpl) GetOptional(targetType interface{}) interface{} {
-	key := c.getKey(targetType);
+	key := c.getKey(targetType)
 	if result, ok := c.context[key]; ok {
-		return result;
+		return result
 	}
 	return nil
 }
 
 func (c *contextImpl) Put(targetType interface{}, value interface{}) {
 	if c.Contains(targetType) {
-		key := c.getKey(targetType);
+		key := c.getKey(targetType)
 		panic("Failed to put key - already exist: " + key)
 	}
 	c.Replace(targetType, value)
 }
 
 func (c *contextImpl) Replace(targetType interface{}, value interface{}) {
-	key := c.getKey(targetType);
+	key := c.getKey(targetType)
 	targetReflectType := c.getReflectType(targetType)
-	valueReflectType :=reflect.TypeOf(value)
+	valueReflectType := reflect.TypeOf(value)
 	if valueReflectType == targetReflectType {
 		c.context[key] = value
 		return
@@ -118,28 +115,28 @@ func (c *contextImpl) Replace(targetType interface{}, value interface{}) {
 		value = convertedPointer.Interface()
 
 	} else {
-		value =reflect.ValueOf(value).Convert(targetReflectType).Interface()
+		value = reflect.ValueOf(value).Convert(targetReflectType).Interface()
 	}
 	c.context[key] = value
 }
 
 func (c *contextImpl) Remove(targetType interface{}) interface{} {
-	key := c.getKey(targetType);
+	key := c.getKey(targetType)
 	result := c.GetOptional(targetType)
 	delete(c.context, key)
 	return result
 }
 
 func (c *contextImpl) Contains(targetType interface{}) bool {
-	key := c.getKey(targetType);
+	key := c.getKey(targetType)
 	if _, ok := c.context[key]; ok {
 		return true
 	}
 	return false
 }
+
 //NewContext creates a new context
 func NewContext() Context {
-	var result Context = &contextImpl{context:make(map[string]interface{})}
+	var result Context = &contextImpl{context: make(map[string]interface{})}
 	return result
 }
-

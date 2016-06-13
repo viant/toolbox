@@ -19,10 +19,11 @@
 package toolbox_test
 
 import (
-	"testing"
-	"github.com/viant/toolbox"
-	"github.com/stretchr/testify/assert"
 	"strings"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/viant/toolbox"
 )
 
 func TestIndexSlice(t *testing.T) {
@@ -33,7 +34,7 @@ func TestIndexSlice(t *testing.T) {
 			name string
 		}
 
-		var fooCollection = []Foo{Foo{1, "A"}, Foo{2, "B"} }
+		var fooCollection = []Foo{Foo{1, "A"}, Foo{2, "B"}}
 		var indexedMap = make(map[int]Foo)
 		toolbox.IndexSlice(fooCollection, indexedMap, func(foo Foo) int {
 			return foo.id
@@ -43,8 +44,8 @@ func TestIndexSlice(t *testing.T) {
 
 	{
 		aSlice := []string{"a", "c"}
-		aMap :=make(map[string]int)
-		index :=0
+		aMap := make(map[string]int)
+		index := 0
 		toolbox.SliceToMap(aSlice, aMap, toolbox.CopyStringValueProvider, func(s string) int {
 			index++
 			return index
@@ -73,7 +74,7 @@ func TestMakeMapFromSlice(t *testing.T) {
 		name string
 	}
 
-	var fooCollection = []Foo{Foo{1, "A"}, Foo{2, "B"} }
+	var fooCollection = []Foo{Foo{1, "A"}, Foo{2, "B"}}
 	var testMap = make(map[int]string)
 	toolbox.SliceToMap(fooCollection, testMap, func(foo Foo) int {
 		return foo.id
@@ -143,8 +144,8 @@ func TestHasSliceAnyElements(t *testing.T) {
 
 func TestMapKeysToSlice(t *testing.T) {
 	m := map[string]int{
-		"abc":1,
-		"efg":2,
+		"abc": 1,
+		"efg": 2,
 	}
 	var keys = make([]string, 0)
 	toolbox.MapKeysToSlice(m, &keys)
@@ -153,15 +154,18 @@ func TestMapKeysToSlice(t *testing.T) {
 
 func TestMapKeysToStringSlice(t *testing.T) {
 	m := map[string]int{
-		"abc":1,
-		"efg":2,
+		"abc": 1,
+		"efg": 2,
 	}
 	slice := toolbox.MapKeysToStringSlice(m)
 	assert.Equal(t, 2, len(slice))
 }
 
 func TestCopyMapEntries(t *testing.T) {
-	type Foo struct{ id int; name string }
+	type Foo struct {
+		id   int
+		name string
+	}
 	source := map[interface{}]interface{}{
 		1: Foo{1, "A"},
 		2: Foo{2, "B"},
@@ -209,16 +213,15 @@ func TestSliceToMultiMap(t *testing.T) {
 	toolbox.SliceToMultimap(products, productsByVendor, func(product Product) string {
 		return product.vendor
 	},
-	func(product Product) int {
-		return product.productId
-	})
+		func(product Product) int {
+			return product.productId
+		})
 
 	assert.Equal(t, 2, len(productsByVendor))
 	assert.Equal(t, 3, len(productsByVendor["Vendor1"]))
 	assert.Equal(t, 4, productsByVendor["Vendor1"][2])
 
 }
-
 
 func TestTransformSlice(t *testing.T) {
 	type Product struct{ vendor, name string }
@@ -228,7 +231,7 @@ func TestTransformSlice(t *testing.T) {
 		Product{"Vendor1", "Product3"},
 		Product{"Vendor1", "Product4"},
 	}
-	var vendors=make([]string, 0)
+	var vendors = make([]string, 0)
 	toolbox.TransformSlice(products, &vendors, func(product Product) string {
 		return product.vendor
 	})

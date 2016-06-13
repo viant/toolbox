@@ -19,56 +19,56 @@
 package toolbox_test
 
 import (
-	"testing"
-	"github.com/viant/toolbox"
-	"github.com/stretchr/testify/assert"
 	"reflect"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/viant/toolbox"
 )
 
-
 func TestConverter(t *testing.T) {
-	converter :=toolbox.NewColumnConverter("")
+	converter := toolbox.NewColumnConverter("")
 	{
-		var value interface{};
-		var test  = 123;
+		var value interface{}
+		var test = 123
 		err := converter.AssignConverted(&value, &test)
 		assert.Nil(t, err)
 		assert.Equal(t, 123, *(value.(*int)))
 	}
 	{
-		var value interface{};
-		var test  = 123;
+		var value interface{}
+		var test = 123
 		err := converter.AssignConverted(&value, test)
 		assert.Nil(t, err)
 		assert.Equal(t, 123, value.(int))
 	}
 
 	{
-		var value []byte;
-		var test  = []byte("abc");
+		var value []byte
+		var test = []byte("abc")
 		err := converter.AssignConverted(&value, &test)
 		assert.Nil(t, err)
 		assert.Equal(t, "abc", string(value))
 	}
 
 	{
-		var value []byte;
-		var test  = []byte("abc");
+		var value []byte
+		var test = []byte("abc")
 		err := converter.AssignConverted(&value, test)
 		assert.Nil(t, err)
 		assert.Equal(t, "abc", string(value))
 	}
 
 	{
-		var value string;
+		var value string
 		err := converter.AssignConverted(&value, "abc")
 		assert.Nil(t, err)
 		assert.Equal(t, "abc", value)
 	}
 
 	{
-		var value string;
-		var test  = "abc";
+		var value string
+		var test = "abc"
 		err := converter.AssignConverted(&value, &test)
 		assert.Nil(t, err)
 		assert.Equal(t, "abc", value)
@@ -76,32 +76,30 @@ func TestConverter(t *testing.T) {
 
 	{
 
-		var value *string;
+		var value *string
 		err := converter.AssignConverted(&value, "abc")
 		assert.Nil(t, err)
 		assert.Equal(t, "abc", *value)
 	}
 
 	{
-		var value *string;
-		var test  = "abc";
+		var value *string
+		var test = "abc"
 		err := converter.AssignConverted(&value, &test)
 		assert.Nil(t, err)
 		assert.Equal(t, "abc", *value)
 	}
 
-
-
 	{
-		var value string;
+		var value string
 		err := converter.AssignConverted(&value, []byte("abc"))
 		assert.Nil(t, err)
 		assert.Equal(t, "abc", value)
 	}
 
 	{
-		var value string;
-		var test  = []byte("abc");
+		var value string
+		var test = []byte("abc")
 		err := converter.AssignConverted(&value, &test)
 		assert.Nil(t, err)
 		assert.Equal(t, "abc", value)
@@ -109,33 +107,31 @@ func TestConverter(t *testing.T) {
 
 	{
 
-		var value *string;
+		var value *string
 		err := converter.AssignConverted(&value, []byte("abc"))
 		assert.Nil(t, err)
 		assert.Equal(t, "abc", *value)
 	}
 
 	{
-		var value *string;
-		var test  = []byte("abc");
+		var value *string
+		var test = []byte("abc")
 		err := converter.AssignConverted(&value, &test)
 		assert.Nil(t, err)
 		assert.Equal(t, "abc", *value)
 	}
 
-
-
 	{
-		var value int64;
-		for _, item := range []interface{}{int(102),int64(102), float64(102), float32(102), "102"  } {
-			err:=converter.AssignConverted(&value, item)
+		var value int64
+		for _, item := range []interface{}{int(102), int64(102), float64(102), float32(102), "102"} {
+			err := converter.AssignConverted(&value, item)
 			assert.Nil(t, err)
 			assert.Equal(t, int64(102), value)
 		}
 	}
 	{
-		var value *int64;
-		for _, item := range []interface{}{int(102),int64(102), float64(102), float32(102), "102"  } {
+		var value *int64
+		for _, item := range []interface{}{int(102), int64(102), float64(102), float32(102), "102"} {
 			err := converter.AssignConverted(&value, item)
 			assert.Nil(t, err)
 			assert.Equal(t, int64(102), *value)
@@ -143,8 +139,8 @@ func TestConverter(t *testing.T) {
 	}
 
 	{
-		var value *float64;
-		for _, item := range []interface{}{int(102),int64(102), float64(102), float32(102), "102"  } {
+		var value *float64
+		for _, item := range []interface{}{int(102), int64(102), float64(102), float32(102), "102"} {
 			err := converter.AssignConverted(&value, item)
 			assert.Nil(t, err)
 			assert.Equal(t, float64(102), *value)
@@ -153,10 +149,9 @@ func TestConverter(t *testing.T) {
 
 }
 
-
 func TestDiscoverCollectionValueType(t *testing.T) {
 	{
-		var input= []string{"3.2", "1.2"}
+		var input = []string{"3.2", "1.2"}
 		var output, kind = toolbox.DiscoverCollectionValuesAndKind(input)
 		assert.Equal(t, reflect.Float64, kind)
 		assert.Equal(t, 1.2, output[1])

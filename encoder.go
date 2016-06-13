@@ -19,12 +19,12 @@
 package toolbox
 
 import (
-	"io"
 	"encoding/json"
+	"io"
 )
 
 //Encoder writes an instance to output stream
-type Encoder  interface {
+type Encoder interface {
 
 	//Encode encodes  an instance to output stream
 	Encode(object interface{}) error
@@ -36,15 +36,13 @@ type EncoderFactory interface {
 	Create(writer io.Writer) Encoder
 }
 
-
-type jsonEncoderFactory struct {}
+type jsonEncoderFactory struct{}
 
 func (e jsonEncoderFactory) Create(writer io.Writer) Encoder {
-	return  json.NewEncoder(writer)
+	return json.NewEncoder(writer)
 }
 
 //NewJSONEncoderFactory creates new NewJSONEncoderFactory
 func NewJSONEncoderFactory() EncoderFactory {
 	return &jsonEncoderFactory{}
 }
-

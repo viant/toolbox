@@ -22,5 +22,3 @@ package toolbox
 type Predicate interface {
 	Apply(value interface{}) bool
 }
-
-

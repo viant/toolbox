@@ -19,12 +19,11 @@
 package toolbox
 
 import (
-	"fmt"
-	"strings"
 	"encoding/json"
+	"fmt"
 	"io"
+	"strings"
 )
-
 
 //MacroEvaluator represents a macro expression evaluator, macros has the following format   macro prefix [macro parameter] macro postfix
 type MacroEvaluator struct {
@@ -43,7 +42,7 @@ func (e *MacroEvaluator) HasMacro(candidate string) bool {
 	return postfixPosition > prefixPosition
 }
 
-func (e *MacroEvaluator) expandArguments(context Context, arguments *[]interface{}) (error) {
+func (e *MacroEvaluator) expandArguments(context Context, arguments *[]interface{}) error {
 	//expanded macros within the macro
 	for i, argument := range *arguments {
 		if IsString(argument) {
@@ -65,7 +64,7 @@ func (e *MacroEvaluator) decodeArguments(context Context, decodedArguments strin
 	var arguments = make([]interface{}, 0)
 	if len(decodedArguments) > 0 {
 		decoder := json.NewDecoder(strings.NewReader(decodedArguments))
-		err := decoder.Decode(&arguments);
+		err := decoder.Decode(&arguments)
 		if err != nil && err != io.EOF {
 			return nil, fmt.Errorf("Failed to process macro arguments: " + decodedArguments + " due to:\n\t" + err.Error())
 		}
@@ -77,8 +76,6 @@ func (e *MacroEvaluator) decodeArguments(context Context, decodedArguments strin
 	return arguments, nil
 }
 
-
-
 func (e *MacroEvaluator) extractMacro(input string) (success bool, macro, macroName, macroArguments string) {
 	prefix, postfix := e.Prefix, e.Postfix
 	var isInQuotes, argumentCount, previousChar, expectArguements, argumentStartPosition, argumentEndPosition = false, 0, "", false, 0, 0
@@ -86,17 +83,17 @@ func (e *MacroEvaluator) extractMacro(input string) (success bool, macro, macroN
 	if prefixPosition == -1 {
 		return false, "", "", ""
 	}
-	for i:= prefixPosition + len(prefix); i<len(input);i++ {
-		aChar := input[i:i+1]
+	for i := prefixPosition + len(prefix); i < len(input); i++ {
+		aChar := input[i : i+1]
 		if i > 0 {
-			previousChar = input[i-1:i]
+			previousChar = input[i-1 : i]
 		}
 
-		if strings.ContainsAny(aChar, " \b\n[")  {
+		if strings.ContainsAny(aChar, " \b\n[") {
 			expectArguements = true
 		}
 		if aChar == "\"" && previousChar != "\\" {
-			isInQuotes = ! isInQuotes
+			isInQuotes = !isInQuotes
 		}
 		if !isInQuotes && aChar == "[" && previousChar != "\\" {
 			if argumentCount == 0 {
@@ -113,13 +110,13 @@ func (e *MacroEvaluator) extractMacro(input string) (success bool, macro, macroN
 			if aChar == postfix {
 				break
 			}
-			if ! expectArguements {
-				macroName= macroName+ aChar
+			if !expectArguements {
+				macroName = macroName + aChar
 			}
 		}
 	}
-	if argumentStartPosition > 0 && argumentStartPosition < argumentEndPosition  {
-		macroArguments = input[argumentStartPosition:argumentEndPosition + 1]
+	if argumentStartPosition > 0 && argumentStartPosition < argumentEndPosition {
+		macroArguments = input[argumentStartPosition : argumentEndPosition+1]
 	}
 
 	return true, prefix + macro, macroName, macroArguments
@@ -128,16 +125,16 @@ func (e *MacroEvaluator) extractMacro(input string) (success bool, macro, macroN
 //Expand expands passed in input, it returns expanded value of any type or error
 func (e *MacroEvaluator) Expand(context Context, input string) (interface{}, error) {
 	success, macro, macroName, macroArguments := e.extractMacro(input)
-	if ! success {
+	if !success {
 		return input, nil
 	}
 
 	valueProviderRegistry := e.ValueProviderRegistry
 	if !valueProviderRegistry.Contains(macroName) {
-		return nil, fmt.Errorf("Failed to lookup macro: '%v'",macroName)
+		return nil, fmt.Errorf("Failed to lookup macro: '%v'", macroName)
 	}
 	arguments, err := e.decodeArguments(context, macroArguments, macro)
-	if (err != nil) {
+	if err != nil {
 		return nil, fmt.Errorf("Failed expand macro: %v due to %v", macro, err.Error())
 	}
 
@@ -158,7 +155,7 @@ func (e *MacroEvaluator) Expand(context Context, input string) (interface{}, err
 }
 
 //ExpandParameters expands passed in parameters as strings
-func ExpandParameters(macroEvaluator *MacroEvaluator, parameters *map[string]string) (error) {
+func ExpandParameters(macroEvaluator *MacroEvaluator, parameters *map[string]string) error {
 	for key := range *parameters {
 		value := (*parameters)[key]
 		if macroEvaluator.HasMacro(value) {
@@ -175,7 +172,7 @@ func ExpandParameters(macroEvaluator *MacroEvaluator, parameters *map[string]str
 //ExpandValue expands passed in value, it returns expanded string value or error
 func ExpandValue(macroEvaluator *MacroEvaluator, value string) (string, error) {
 	if macroEvaluator.HasMacro(value) {
-		expanded, err:= macroEvaluator.Expand(nil, value)
+		expanded, err := macroEvaluator.Expand(nil, value)
 		if err != nil {
 			return "", err
 		}

@@ -18,24 +18,20 @@
  */
 package toolbox_test
 
-
 import (
-	"testing"
-	"github.com/viant/toolbox"
-	"github.com/stretchr/testify/assert"
 	"fmt"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/viant/toolbox"
 )
 
-
-
-
-
 func TestMacroExpansion(t *testing.T) {
-	valueRegistry:= toolbox.NewValueProviderRegistry()
+	valueRegistry := toolbox.NewValueProviderRegistry()
 	valueRegistry.Register("abc", TestValueProvider{"Called with %v %v!"})
 
-	evaluator := toolbox.MacroEvaluator{ValueProviderRegistry: valueRegistry, Prefix:"<ds:", Postfix:">"}
-	{//simple macro test
+	evaluator := toolbox.MacroEvaluator{ValueProviderRegistry: valueRegistry, Prefix: "<ds:", Postfix: ">"}
+	{ //simple macro test
 
 		actual, err := evaluator.Expand(nil, "<ds:abc[]>")
 		if err != nil {
@@ -44,7 +40,7 @@ func TestMacroExpansion(t *testing.T) {
 		assert.Equal(t, "Called with %v %v!", actual)
 	}
 
-	{//simple macro test
+	{ //simple macro test
 		actual, err := evaluator.Expand(nil, "<ds:abc>")
 		if err != nil {
 			t.Errorf("Failed expand macro %v", err.Error())
@@ -52,8 +48,7 @@ func TestMacroExpansion(t *testing.T) {
 		assert.Equal(t, "Called with %v %v!", actual)
 	}
 
-
-	{//simple macro with arguments
+	{ //simple macro with arguments
 
 		actual, err := evaluator.Expand(nil, "<ds:abc [1, true]>")
 		if err != nil {
@@ -61,7 +56,7 @@ func TestMacroExpansion(t *testing.T) {
 		}
 		assert.Equal(t, "Called with 1 true!", actual)
 	}
-	{//simple macro with arguments
+	{ //simple macro with arguments
 
 		actual, err := evaluator.Expand(nil, "<ds:abc [1, true]> <ds:abc [2, false]>")
 		if err != nil {
@@ -70,7 +65,7 @@ func TestMacroExpansion(t *testing.T) {
 		assert.Equal(t, "Called with 1 true! Called with 2 false!", actual)
 	}
 
-	{//embeded macro with arguments
+	{ //embeded macro with arguments
 
 		actual, err := evaluator.Expand(nil, "<ds:abc [1, \"<ds:abc [10,11]>\"]>")
 		if err != nil {
@@ -80,23 +75,21 @@ func TestMacroExpansion(t *testing.T) {
 	}
 }
 
-
 type TestValueProvider struct {
 	expandeWith string
 }
 
-
-func (this TestValueProvider) Init() (error){
- 	return nil
+func (this TestValueProvider) Init() error {
+	return nil
 }
 
-func (this TestValueProvider) Get(context toolbox.Context, arguments ... interface{}) (interface{}, error) {
-	if(len(arguments)  > 0) {
-		return fmt.Sprintf(this.expandeWith, arguments...),  nil
+func (this TestValueProvider) Get(context toolbox.Context, arguments ...interface{}) (interface{}, error) {
+	if len(arguments) > 0 {
+		return fmt.Sprintf(this.expandeWith, arguments...), nil
 	}
 	return this.expandeWith, nil
 }
 
-func (this TestValueProvider) Destroy() (error) {
+func (this TestValueProvider) Destroy() error {
 	return nil
 }

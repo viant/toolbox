@@ -19,18 +19,16 @@
 package toolbox
 
 import (
+	"errors"
+	"fmt"
 	"reflect"
 	"strconv"
-	"fmt"
 	"strings"
-	"errors"
 	"time"
 )
 
 //DefaultDateLayout is set to 2006-01-02 15:04:05.000
 var DefaultDateLayout = "2006-01-02 15:04:05.000"
-
-
 
 //AsString converts an input to string.
 func AsString(input interface{}) string {
@@ -60,7 +58,6 @@ func AsString(input interface{}) string {
 	return fmt.Sprintf("%v", input)
 }
 
-
 //CanConvertToFloat checkis if float conversion is possible.
 func CanConvertToFloat(value interface{}) bool {
 	if _, ok := value.(float64); ok {
@@ -81,6 +78,7 @@ func AsFloat(value interface{}) float64 {
 	}
 	return 0
 }
+
 //AsBoolean converts an input to bool.
 func AsBoolean(value interface{}) bool {
 	if boolValue, ok := value.(bool); ok {
@@ -146,9 +144,9 @@ func DiscoverValueAndKind(input string) (interface{}, reflect.Kind) {
 	}
 	if intValue, err := strconv.ParseInt(input, 10, 64); err == nil {
 		return int(intValue), reflect.Int
-	} else if (strings.ToLower(input) == "true") {
+	} else if strings.ToLower(input) == "true" {
 		return true, reflect.Bool
-	} else if (strings.ToLower(input) == "false") {
+	} else if strings.ToLower(input) == "false" {
 		return false, reflect.Bool
 	}
 	return input, reflect.String
@@ -160,12 +158,12 @@ func DiscoverCollectionValuesAndKind(values interface{}) ([]interface{}, reflect
 	var candidateKind = reflect.Int
 	var result = make([]interface{}, 0)
 	ProcessSlice(values, func(value interface{}) bool {
-	stringValue := strings.ToLower(AsString(value))
+		stringValue := strings.ToLower(AsString(value))
 		switch candidateKind {
 		case reflect.String:
 			return false
 		case reflect.Int:
-			if ! strings.Contains(stringValue, ".") && CanConvertToInt(value) {
+			if !strings.Contains(stringValue, ".") && CanConvertToInt(value) {
 				return true
 			}
 			candidateKind = reflect.Float64
@@ -201,8 +199,6 @@ func DiscoverCollectionValuesAndKind(values interface{}) ([]interface{}, reflect
 	return result, candidateKind
 }
 
-
-
 //UnwrapValue returns  value
 func UnwrapValue(value *reflect.Value) interface{} {
 	if value.CanInterface() {
@@ -223,10 +219,9 @@ func UnwrapValue(value *reflect.Value) interface{} {
 		pointer := value.Elem()
 		return UnwrapValue(&pointer)
 	default:
-		panic(fmt.Sprintf("Unsupported kind: %v, check if all fields are public. ",value.Kind().String()))
+		panic(fmt.Sprintf("Unsupported kind: %v, check if all fields are public. ", value.Kind().String()))
 	}
 }
-
 
 //NewBytes copies from input
 func NewBytes(input []byte) []byte {
@@ -238,13 +233,12 @@ func NewBytes(input []byte) []byte {
 	return nil
 }
 
-
 //ParseTime parses time, adjusting date layout to length of input
 func ParseTime(input, layout string) (time.Time, error) {
 
 	if len(layout) == 0 {
 		layout = DefaultDateLayout
-	}//GetFieldValue returns field value
+	} //GetFieldValue returns field value
 	lastPosition := len(input)
 	if lastPosition >= len(layout) {
 		lastPosition = len(layout)
@@ -253,8 +247,6 @@ func ParseTime(input, layout string) (time.Time, error) {
 
 	return time.Parse(layout, input)
 }
-
-
 
 //Converter represets data converter, it converts incompatibe data structure, like map and struct, string and time, *string to string, etc.
 type Converter struct {
@@ -367,7 +359,7 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 	if target == nil {
 		return fmt.Errorf("destinationPointer was nil %v %v", target, input)
 	}
-	if ! IsNonNilPointer(target) {
+	if !IsNonNilPointer(target) {
 		return errors.New("invalid destinationPointer type - expected non nil pointer")
 	}
 	if input == nil {
@@ -636,7 +628,7 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 	}
 
 	inputValue := reflect.ValueOf(input)
-	if input == nil || ! inputValue.IsValid() || (inputValue.CanSet() && inputValue.IsNil()) {
+	if input == nil || !inputValue.IsValid() || (inputValue.CanSet() && inputValue.IsNil()) {
 		return nil
 	}
 
@@ -678,7 +670,6 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 	}
 	return fmt.Errorf("Unable to convert type %T into type %T", input, target)
 }
-
 
 //NewColumnConverter create a new converter, that has abbility to convert map to struct using column mapping
 func NewColumnConverter(dataFormat string) *Converter {

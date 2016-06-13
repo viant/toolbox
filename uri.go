@@ -1,7 +1,5 @@
 package toolbox
 
-
-
 //ExtractURIParameters parses URIs to extract {<param>} defined in templateURI from requestURI, it returns extracted parameters and flag if requestURI matched templateURI
 func ExtractURIParameters(templateURI, requestURI string) (map[string]string, bool) {
 	var expectingValue, expectingName bool
@@ -9,21 +7,21 @@ func ExtractURIParameters(templateURI, requestURI string) (map[string]string, bo
 	var uriParameters = make(map[string]string)
 	maxLength := len(templateURI) + len(requestURI)
 	var requestURIIndex, templateURIIndex int
-	for  k := 0; k < maxLength; k++ {
+	for k := 0; k < maxLength; k++ {
 		var requestChar, routingChar string
 		if requestURIIndex < len(requestURI) {
-			requestChar = requestURI[requestURIIndex:requestURIIndex + 1]
+			requestChar = requestURI[requestURIIndex : requestURIIndex+1]
 		}
 
 		if templateURIIndex < len(templateURI) {
-			routingChar = templateURI[templateURIIndex:templateURIIndex + 1]
+			routingChar = templateURI[templateURIIndex : templateURIIndex+1]
 		}
 
-		if (! expectingValue && ! expectingName) && requestChar == routingChar && routingChar != "" {
-			requestURIIndex++; templateURIIndex++
+		if (!expectingValue && !expectingName) && requestChar == routingChar && routingChar != "" {
+			requestURIIndex++
+			templateURIIndex++
 			continue
 		}
-
 
 		if routingChar == "}" {
 			expectingName = false
@@ -48,23 +46,21 @@ func ExtractURIParameters(templateURI, requestURI string) (map[string]string, bo
 			expectingName = true
 			templateURIIndex++
 		}
-
 		if expectingValue && requestURIIndex < len(requestURI) {
 			value += requestChar
 			requestURIIndex++
 		}
 
-		if (! expectingValue && ! expectingName) {
+		if !expectingValue && !expectingName {
 			uriParameters[name] = value
-			name = ""; value = ""
+			name = ""
+			value = ""
 		}
 	}
 	if len(name) > 0 && len(value) > 0 {
 		uriParameters[name] = value
 	}
 
-
 	matched := requestURIIndex == len(requestURI) && templateURIIndex == len(templateURI)
-	return uriParameters,matched
+	return uriParameters, matched
 }
-

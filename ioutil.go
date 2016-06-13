@@ -19,19 +19,16 @@
 package toolbox
 
 import (
-	"net/url"
+	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
-	"fmt"
 	"path"
 )
 
 //FileSchema file://
 var FileSchema = "file://"
-
-
-
 
 //ExtractMimeType extracts mime type by extension
 func ExtractMimeType(file string) string {
@@ -43,19 +40,18 @@ func ExtractMimeType(file string) string {
 	if mimeType, ok := FileExtensionMimeType[extension]; ok {
 		return mimeType
 	}
-
 	return "text/plain"
 }
 
 //OpenReaderFromURL opens a reader from URL
 func OpenReaderFromURL(rawURL string) (io.ReadCloser, string, error) {
 	var url, err = url.Parse(rawURL)
-	if (err != nil) {
+	if err != nil {
 		return nil, "", err
 	}
 	switch url.Scheme {
 	case "http", "https":
-		response, err := http.Get(rawURL);
+		response, err := http.Get(rawURL)
 		if err != nil {
 			return nil, "", err
 		}
@@ -71,11 +67,10 @@ func OpenReaderFromURL(rawURL string) (io.ReadCloser, string, error) {
 	return nil, "", fmt.Errorf("Unsupprted url.Scheme: %v on %v", url.Scheme, rawURL)
 }
 
-
 //FileFromURL returns file path from passed in URL.
 func FileFromURL(fileURL string) (string, error) {
 	var url, err = url.Parse(fileURL)
-	if (err != nil) {
+	if err != nil {
 		return "", err
 	}
 	switch url.Scheme {
@@ -84,7 +79,6 @@ func FileFromURL(fileURL string) (string, error) {
 	}
 	return "", fmt.Errorf("Unsupprted url.Scheme: %v on %v", url.Scheme, fileURL)
 }
-
 
 //OpenURL opens passed in url as file, or error. Only file:// scheme is supported
 func OpenURL(fileURL string, flag int, permissions os.FileMode) (*os.File, error) {
