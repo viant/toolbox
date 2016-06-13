@@ -1,5 +1,6 @@
 # Toolbox - go utility library
 
+[![Toolbox - go utility library](https://goreportcard.com/badge/github.com/viant/toolbox)](https://goreportcard.com/report/github.com/viant/toolbox)
 
 This library is compatible with Go 1.5+
 

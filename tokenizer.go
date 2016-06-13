@@ -57,7 +57,7 @@ func (t *Tokenizer) Nexts(candidates ...int) *Token {
 	return &Token{t.InvalidToken, ""}
 }
 
-//Next tries to match a candidate, it returns token if imatching is sucessful.
+//Next tries to match a candidate, it returns token if imatching is successful.
 func (t *Tokenizer) Next(candidate int) *Token {
 	offset := t.Index
 	if !(offset < len(t.Input)) {
