@@ -49,7 +49,7 @@ Example
 	
 	toolbox.ProcessSlice(aSlice, func(item interface{}) bool {
     		...
-    		return true //toContinue to next element return true
+    		return true //to continue to next element return true
     })
 	
 ```
@@ -63,7 +63,7 @@ Example:
 	
 	toolbox.ProcessSlice(aSlice, func(indext int, item interface{}) bool {
     		...
-    		return true //toContinue to next element return true
+    		return true //to continue to next element return true
     })
 	
 ```
@@ -113,7 +113,7 @@ Example:
 	var target = make([]string, 0)
 	
 	toolbox.FilterSliceElements(source, func(item string) bool {
-		return strings.HasPrefix(item, "a") //this matches any elements start with a
+		return strings.HasPrefix(item, "a") //this matches any elements starting with a
 	}, &target)
 ```
 
@@ -175,7 +175,7 @@ Example:
     var aMap interface{}
 	toolbox.ProcessMap(aMap, func(key, value interface{}) bool {
     		...
-    		return true //toContinue to next element return true
+    		return true //to continue to next element return true
     })
 
 ```
