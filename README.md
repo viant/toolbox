@@ -1,6 +1,7 @@
 # Toolbox - go utility library
 
-[![Toolbox - go utility library - Go Report Card](https://goreportcard.com/badge/github.com/viant/toolbox)](https://goreportcard.com/report/github.com/viant/toolbox)
+[![GoReportCard](https://goreportcard.com/badge/github.com/viant/toolbox)](https://goreportcard.com/report/github.com/viant/toolbox)
+[![GoDoc](https://godoc.org/github.com/viant/toolbox?status.svg)](https://godoc.org/github.com/viant/toolbox)
 
 This library is compatible with Go 1.5+
 
@@ -282,10 +283,6 @@ Java date format style to go date layout conversion.
 ### ServiceRouter
 
 ### Decoder and Encoder 
-
-### Godoc
-[![Godoc](https://godoc.org/github.com/viant/toolbox)](https://godoc.org/github.com/viant/toolbox)
-
 
 ### Gocover
 [![GoCover](https://gocover.io/github.com/viant/toolbox)](https://gocover.io/github.com/viant/toolbox)
