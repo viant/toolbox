@@ -1,6 +1,8 @@
 # Toolbox - go utility library
 
-[![Toolbox - go utility library](https://goreportcard.com/badge/github.com/viant/toolbox)](https://goreportcard.com/report/github.com/viant/toolbox)
+[![Toolbox - go utility library - Go Report Card](https://goreportcard.com/badge/github.com/viant/toolbox)](https://goreportcard.com/report/github.com/viant/toolbox)
+[![Toolbox - go utility library - Godoc](https://godoc.org/github.com/viant/toolbox)](https://godoc.org/github.com/viant/toolbox)
+[![Toolbox - go utility library - GoCover](https://gocover.io/github.com/viant/toolbox)](https://gocover.io/github.com/viant/toolbox)
 
 This library is compatible with Go 1.5+
 
