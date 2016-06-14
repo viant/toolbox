@@ -1,8 +1,6 @@
 # Toolbox - go utility library
 
 [![Toolbox - go utility library - Go Report Card](https://goreportcard.com/badge/github.com/viant/toolbox)](https://goreportcard.com/report/github.com/viant/toolbox)
-[![Toolbox - go utility library - Godoc](https://godoc.org/github.com/viant/toolbox)](https://godoc.org/github.com/viant/toolbox)
-[![Toolbox - go utility library - GoCover](https://gocover.io/github.com/viant/toolbox)](https://gocover.io/github.com/viant/toolbox)
 
 This library is compatible with Go 1.5+
 
@@ -24,10 +22,10 @@ as a way to share utilities, and other abstractions that may be useful in other 
 
 <a name="Collection-Utilities"></a>
 
-## Collection Utilities
+### Collection Utilities
 
 
-### Iterator
+#### Iterator
 
 Example
 ```go
@@ -40,7 +38,7 @@ Example
     }
 ```
 
-### Slice utilities
+#### Slice utilities
 
 The following methods work on **any slice type.**
 
@@ -167,7 +165,7 @@ type Product struct{ vendor, name string }
 ```
 
 
-### Map utilities
+#### Map utilities
 
 **ProcessMap**
 
@@ -257,14 +255,14 @@ Example:
 ```
 
 
-## Converter && Conversion Utilities
+### Converter && Conversion Utilities
 
 
-## Struct Utilities
+### Struct Utilities
  	
-## Function Utilities
+### Function Utilities
 
-## Time Utilities	
+### Time Utilities	
 	
 **DateFormatToLayout**
 
@@ -277,13 +275,20 @@ Java date format style to go date layout conversion.
 ```
 
 
-## Macro
+### Macro
 
-## Tokenizer
+### Tokenizer
 
-## ServiceRouter
+### ServiceRouter
 
-## Decoder and Encoder 
+### Decoder and Encoder 
+
+### Godoc
+[![Godoc](https://godoc.org/github.com/viant/toolbox)](https://godoc.org/github.com/viant/toolbox)
+
+
+### Gocover
+[![GoCover](https://gocover.io/github.com/viant/toolbox)](https://gocover.io/github.com/viant/toolbox)
 
 	
 	
