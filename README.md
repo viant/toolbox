@@ -284,7 +284,8 @@ Java date format style to go date layout conversion.
 
 ### Decoder and Encoder 
 
-### Gocover
+## GoCover
+
 [![GoCover](https://gocover.io/github.com/viant/toolbox)](https://gocover.io/github.com/viant/toolbox)
 
 	
