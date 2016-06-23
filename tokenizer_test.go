@@ -71,3 +71,19 @@ func TestEOFMatcher(t *testing.T) {
 	assert.Equal(t, 0, matcher.Match(" abc ", 0))
 	assert.Equal(t, 1, matcher.Match(" a1bc", 4))
 }
+
+
+func TestKeywordsMatcher(t *testing.T) {
+	{
+		matcher := toolbox.KeywordsMatcher{Keywords:[]string{"ab", "xy"},
+			CaseSensitive :false}
+		assert.Equal(t, 2, matcher.Match(" abcde", 1))
+		assert.Equal(t, 0, matcher.Match(" abcde", 0))
+	}
+	{
+		matcher := toolbox.KeywordsMatcher{Keywords:[]string{"AB", "xy"},
+			CaseSensitive :true}
+		assert.Equal(t, 2, matcher.Match(" ABcde", 1))
+		assert.Equal(t, 0, matcher.Match("abcde", 0))
+	}
+}

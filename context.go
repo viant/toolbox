@@ -61,11 +61,6 @@ func (c *contextImpl) getReflectType(targetType interface{}) reflect.Type {
 
 func (c *contextImpl) getKey(targetType interface{}) string {
 	var reflectType = c.getReflectType(targetType)
-	if reflectType.Kind() == reflect.Ptr {
-		return "*" + reflectType.Elem().String()
-	} else if reflectType.Kind() == reflect.Slice {
-		return "[]" + reflectType.Elem().String()
-	}
 	return reflectType.String()
 }
 
@@ -104,11 +99,7 @@ func (c *contextImpl) Replace(targetType interface{}, value interface{}) {
 	if valueReflectType.AssignableTo(targetReflectType) {
 		panic(fmt.Sprintf("value of type %v is not assignable to %v", valueReflectType, targetReflectType))
 	}
-
 	if targetReflectType.Kind() == reflect.Ptr {
-		if valueReflectType.Kind() != reflect.Ptr {
-			panic(fmt.Sprintf("Target type was pointer but value was not: %v, %v", targetReflectType, valueReflectType))
-		}
 		converted := reflect.ValueOf(value).Elem().Convert(targetReflectType.Elem())
 		convertedPointer := reflect.New(targetReflectType.Elem())
 		convertedPointer.Elem().Set(converted)

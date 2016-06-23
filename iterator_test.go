@@ -9,7 +9,7 @@ import (
 func TestSliceIterator(t *testing.T) {
 
 	{
-		slice := []string{"a", "z", "c"}
+		slice := []string{"a", "r", "c"}
 		iterator := toolbox.NewSliceIterator(slice)
 		value := ""
 
@@ -19,10 +19,13 @@ func TestSliceIterator(t *testing.T) {
 
 		assert.True(t, iterator.HasNext())
 		iterator.Next(&value)
-		assert.Equal(t, "z", value)
+		assert.Equal(t, "r", value)
+
+
 
 		assert.True(t, iterator.HasNext())
 		iterator.Next(&value)
+
 		assert.Equal(t, "c", value)
 
 	}
@@ -39,9 +42,11 @@ func TestSliceIterator(t *testing.T) {
 		iterator.Next(&value)
 		assert.Equal(t, "z", value)
 
+
+		var values = make([]interface{}, 1)
 		assert.True(t, iterator.HasNext())
-		iterator.Next(&value)
-		assert.Equal(t, "c", value)
+		iterator.Next(&values[0])
+		assert.Equal(t, "c", values[0])
 
 	}
 

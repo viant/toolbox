@@ -70,4 +70,6 @@ func TestContext(t *testing.T) {
 	assert.Equal(t, "123", m3.message, "should have the same value field")
 	assert.Equal(t, "xyz", m1.message, "should have the same value field")
 
+	removed := context.Remove((*IMessage)(nil))
+	assert.NotNil(t, removed)
 }

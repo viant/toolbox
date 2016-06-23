@@ -18,7 +18,9 @@
  */
 package toolbox
 
-import "reflect"
+import (
+	"reflect"
+)
 
 //Iterator represents generic iterator.
 type Iterator interface {
@@ -63,8 +65,12 @@ func (i *stringSliceIterator) HasNext() bool {
 func (i *stringSliceIterator) Next(itemPointer interface{}) {
 	value := i.sliceValue[i.index]
 	i.index++
-	stringPointer := itemPointer.(*string)
-	*stringPointer = value
+	if stringPointer, ok  := itemPointer.(*string); ok {
+		*stringPointer = value
+		return
+	}
+	interfacePointer:= itemPointer.(*interface{})
+	*interfacePointer = value
 }
 
 
@@ -80,10 +86,6 @@ func (i *interfaceSliceIterator) HasNext() bool {
 func (i *interfaceSliceIterator) Next(itemPointer interface{}) {
 	value := i.sliceValue[i.index]
 	i.index++
-	if pointer, ok := itemPointer.(*interface{});ok {
-		*pointer = value
-		return
-	}
 	itemPointerValue := reflect.ValueOf(itemPointer)
 	itemPointerValue.Elem().Set(reflect.ValueOf(value))
 }

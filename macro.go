@@ -155,15 +155,15 @@ func (e *MacroEvaluator) Expand(context Context, input string) (interface{}, err
 }
 
 //ExpandParameters expands passed in parameters as strings
-func ExpandParameters(macroEvaluator *MacroEvaluator, parameters *map[string]string) error {
-	for key := range *parameters {
-		value := (*parameters)[key]
+func ExpandParameters(macroEvaluator *MacroEvaluator, parameters map[string]string) error {
+	for key := range parameters {
+		value := parameters[key]
 		if macroEvaluator.HasMacro(value) {
 			textValue, err := macroEvaluator.Expand(nil, AsString(value))
 			if err != nil {
 				return err
 			}
-			(*parameters)[key] = AsString(textValue)
+			parameters[key] = AsString(textValue)
 		}
 	}
 	return nil

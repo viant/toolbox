@@ -107,62 +107,11 @@ func TestTypeDetection(t *testing.T) {
 }
 
 
-/*
 
+func TestIsValueOfKind(t *testing.T) {
+	text := ""
+	assert.True(t, toolbox.IsValueOfKind(&text, reflect.Ptr))
+	assert.False(t, toolbox.IsValueOfKind(&text, reflect.Struct))
+	assert.True(t, toolbox.IsValueOfKind(&text, reflect.String))
 
-
-
-
-//IsPointer returns true if input is a pointer
-
-//AssertPointerKind checks if input is a pointer of the passed in kind, if not it panic with message including name
-func AssertPointerKind(input interface{}, kind reflect.Kind, name string) {
-	AssertType(reflect.TypeOf(input), reflect.Ptr, name)
-	AssertType(reflect.TypeOf(input).Elem(), kind, name)
 }
-
-//AssertKind checks if input is of the passed in kind, if not it panic with message including name
-func AssertKind(input interface{}, kind reflect.Kind, name string) {
-	AssertType(reflect.TypeOf(input), kind, name)
-}
-
-//AssertType checks if dataType is of the passed in kind, if not it panic with message including name
-func AssertType(dataType reflect.Type, kind reflect.Kind, name string) {
-	if dataType.Kind() != kind {
-		panic(fmt.Sprintf("Failed to check: %v - expected kind: %v but found %v (%v)", name, kind.String(), dataType.Kind(), dataType.String()))
-	}
-}
-
-//DiscoverValueByKind returns unwrapped input that matches expected kind, or panic if this is not possible
-func DiscoverValueByKind(input interface{}, expected reflect.Kind) reflect.Value {
-	value, ok := input.(reflect.Value)
-	if !ok {
-		value = reflect.ValueOf(input)
-	}
-	if value.Kind() == expected {
-		return value
-	} else if value.Kind() == reflect.Ptr {
-		return DiscoverValueByKind(value.Elem(), expected)
-	} else if value.Kind() == reflect.Interface {
-		return DiscoverValueByKind(value.Elem(), expected)
-	}
-	panic(fmt.Sprintf("Failed to discover value by kind expected: %v, actual:%v   on %v:", expected.String(), value.Type(), value))
-}
-
-//IsValueOfKind returns true if passed in input is of supplied kind.
-func IsValueOfKind(input interface{}, kind reflect.Kind) bool {
-	value, ok := input.(reflect.Value)
-	if !ok {
-		value = reflect.ValueOf(input)
-	}
-	if value.Kind() == kind {
-		return true
-	} else if value.Kind() == reflect.Ptr {
-		return IsValueOfKind(value.Elem(), kind)
-	} else if value.Kind() == reflect.Interface {
-		return IsValueOfKind(value.Elem(), kind)
-	}
-	return false
-}
-
- */

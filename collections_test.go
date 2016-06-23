@@ -82,6 +82,33 @@ func TestProcessSlice(t *testing.T) {
 	}
 }
 
+func TestProcessSliceWithIndex(t *testing.T) {
+	{
+		aSlice := []interface{}{
+			"abc", "def", "cyz", "adc",
+		}
+		count := 0
+		toolbox.ProcessSliceWithIndex(aSlice, func(index int, item interface{}) bool {
+			count = index
+			return true
+		})
+
+		assert.Equal(t, 3, count)
+	}
+	{
+		aSlice := []string{
+			"abc", "def", "cyz", "adc",
+		}
+		count := 0
+		toolbox.ProcessSliceWithIndex(aSlice, func(index int, item interface{}) bool {
+			count = index
+			return true
+		})
+
+		assert.Equal(t, 3, count)
+	}
+}
+
 func TestMakeMapFromSlice(t *testing.T) {
 	type Foo struct {
 		id   int
@@ -308,4 +335,45 @@ func TestMakeReverseStringMap(t *testing.T) {
 	assert.Equal(t, 2, len(aMap))
 	assert.Equal(t, "a", aMap["1"])
 	assert.Equal(t, "b", aMap["2"])
+}
+
+
+func TestSortStrings(t *testing.T) {
+	sorted := toolbox.SortStrings([]string{"z", "b", "c", "a"})
+	assert.Equal(t, "a", sorted[0])
+	assert.Equal(t, "z", sorted[3])
+
+}
+
+func TestJoinAsString(t *testing.T) {
+	assert.Equal(t, "a,b",toolbox.JoinAsString([]string{"a", "b"}, ","))
+}
+
+
+func TestSetSliceValue(t *testing.T) {
+
+	{
+		var aSlice = make([]string, 2)
+		toolbox.SetSliceValue(aSlice, 0, "abc")
+		assert.Equal(t, "abc", aSlice[0])
+		assert.Equal(t, "abc", toolbox.GetSliceValue(aSlice, 0))
+	}
+
+	{
+		var aSlice = make([]int, 2)
+		toolbox.SetSliceValue(aSlice, 0, 100)
+		assert.Equal(t, 100, aSlice[0])
+		assert.Equal(t, 100, toolbox.GetSliceValue(aSlice, 0))
+	}
+	{
+		var aSlice = make([]interface{}, 2)
+		toolbox.SetSliceValue(aSlice, 0, "a")
+		assert.Equal(t, "a", aSlice[0])
+		assert.Equal(t, "a", toolbox.GetSliceValue(aSlice, 0))
+	}
+}
+
+
+func TestTrueValueProvider(t *testing.T) {
+	assert.True(t, toolbox.TrueValueProvider(1))
 }

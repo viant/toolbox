@@ -107,6 +107,9 @@ func AsInt(value interface{}) int {
 	if intValue, ok := value.(int); ok {
 		return intValue
 	}
+	if floatValue, ok := value.(float64); ok {
+		return int(floatValue)
+	}
 	valueAsString := AsString(value)
 	if result, err := strconv.ParseInt(valueAsString, 10, 64); err == nil {
 		return int(result)
@@ -200,26 +203,7 @@ func DiscoverCollectionValuesAndKind(values interface{}) ([]interface{}, reflect
 
 //UnwrapValue returns  value
 func UnwrapValue(value *reflect.Value) interface{} {
-	if value.CanInterface() {
-		return value.Interface()
-	}
-	switch value.Kind() {
-	case reflect.String:
-		return value.String()
-	case reflect.Bool:
-		return value.Bool()
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return value.Int()
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return value.Uint()
-	case reflect.Float32, reflect.Float64:
-		return value.Float()
-	case reflect.Ptr:
-		pointer := value.Elem()
-		return UnwrapValue(&pointer)
-	default:
-		panic(fmt.Sprintf("Unsupported kind: %v, check if all fields are public. ", value.Kind().String()))
-	}
+	return value.Interface()
 }
 
 //NewBytes copies from input
@@ -579,23 +563,20 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 	case *time.Time:
 		switch inputValue := input.(type) {
 		case string:
-			timeValue, err := time.Parse(c.DataLayout, inputValue)
-			if err != nil {
-				if CanConvertToFloat(inputValue) {
-					intValue := int(AsFloat(inputValue))
-					timeValue = time.Unix(int64(intValue), 0)
-				} else {
-					return err
-				}
-			}
-			*targetValuePointer = timeValue
-			return nil
-		case *string:
-			time, err := time.Parse(c.DataLayout, *inputValue)
-			if err != nil {
+			timeValue := AsTime(inputValue, c.DataLayout)
+			if timeValue == nil {
+				_, err := time.Parse(c.DataLayout, inputValue)
 				return err
 			}
-			*targetValuePointer = time
+			*targetValuePointer = *timeValue
+			return nil
+		case *string:
+			timeValue := AsTime(inputValue, c.DataLayout)
+			if timeValue == nil {
+				_, err := time.Parse(c.DataLayout, *inputValue)
+				return err
+			}
+			*targetValuePointer = *timeValue
 			return nil
 		case int, int64, uint, uint64, float32, float64, *int, *int64, *uint, *uint64, *float32, *float64:
 			intValue := int(AsFloat(inputValue))
@@ -607,25 +588,21 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 
 	case **time.Time:
 		switch inputValue := input.(type) {
-
 		case string:
-			timeValue, err := ParseTime(inputValue, c.DataLayout)
-			if err != nil {
-				if CanConvertToFloat(inputValue) {
-					intValue := int(AsFloat(inputValue))
-					timeValue = time.Unix(int64(intValue), 0)
-				} else {
-					return err
-				}
-			}
-			*targetValuePointer = &timeValue
-			return nil
-		case *string:
-			time, err := ParseTime(*inputValue, c.DataLayout)
-			if err != nil {
+			timeValue := AsTime(inputValue, c.DataLayout)
+			if timeValue == nil {
+				_, err := time.Parse(c.DataLayout, inputValue)
 				return err
 			}
-			*targetValuePointer = &time
+			*targetValuePointer = timeValue
+			return nil
+		case *string:
+			timeValue := AsTime(inputValue, c.DataLayout)
+			if timeValue == nil {
+				_, err := time.Parse(c.DataLayout, *inputValue)
+				return err
+			}
+			*targetValuePointer = timeValue
 			return nil
 		case int, int64, uint, uint64, float32, float64, *int, *int64, *uint, *uint64, *float32, *float64:
 			intValue := int(AsFloat(inputValue))

@@ -229,12 +229,26 @@ func SliceToMultimap(sourceSlice, targetMap, keyFunction, valueFunction interfac
 
 //SetSliceValue sets value at slice index
 func SetSliceValue(slice interface{}, index int, value interface{}) {
+	if aSlice, ok := slice.([]string);ok {
+		aSlice[index] = AsString(value)
+		return
+	}
+	if aSlice, ok := slice.([]interface{});ok {
+		aSlice[index] = value
+		return
+	}
 	sliceValue := DiscoverValueByKind(reflect.ValueOf(slice), reflect.Slice)
 	sliceValue.Index(index).Set(reflect.ValueOf(value))
 }
 
 //GetSliceValue gets value from passed in index
 func GetSliceValue(slice interface{}, index int) interface{} {
+	if aSlice, ok := slice.([]string);ok {
+		return aSlice[index]
+	}
+	if aSlice, ok := slice.([]interface{});ok {
+		return aSlice[index]
+	}
 	sliceValue := DiscoverValueByKind(reflect.ValueOf(slice), reflect.Slice)
 	return sliceValue.Index(index).Interface()
 }
