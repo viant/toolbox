@@ -110,7 +110,7 @@ func AssertKind(input interface{}, kind reflect.Kind, name string) {
 	AssertTypeKind(reflect.TypeOf(input), kind, name)
 }
 
-//AssertType checks if dataType is of the passed in kind, if not it panic with message including name
+//AssertTypeKind checks if dataType is of the passed in kind, if not it panic with message including name
 func AssertTypeKind(dataType reflect.Type, kind reflect.Kind, name string) {
 	if dataType.Kind() != kind {
 		panic(fmt.Sprintf("Failed to check: %v - expected kind: %v but found %v (%v)", name, kind.String(), dataType.Kind(), dataType.String()))

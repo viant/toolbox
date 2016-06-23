@@ -32,7 +32,8 @@ func TestConverter(t *testing.T) {
 
 	{
 		target := make([]interface{}, 1)
-		converter.AssignConverted(&target[0], nil)
+		err :=converter.AssignConverted(&target[0], nil)
+		assert.Nil(t, err)
 		assert.Nil(t, target[0])
 	}
 

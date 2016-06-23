@@ -45,7 +45,8 @@ func TestContext(t *testing.T) {
 
 	//operate on pointer test
 	assert.False(t, context.Contains((*Message)(nil)), "Should not have message in context")
-	context.Put((*Message)(nil), &message1)
+	err := context.Put((*Message)(nil), &message1)
+	assert.Nil(t, err)
 	assert.True(t, context.Contains((*Message)(nil)), "Should have meesage in context")
 	assert.True(t, context.Contains(&Message{}), "Should have meesage in context")
 
