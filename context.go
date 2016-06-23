@@ -90,7 +90,7 @@ func (c *contextImpl) Put(targetType interface{}, value interface{}) error {
 	return c.Replace(targetType, value)
 }
 
-func (c *contextImpl) Replace(targetType interface{}, value interface{})  error {
+func (c *contextImpl) Replace(targetType interface{}, value interface{}) error {
 	key := c.getKey(targetType)
 	targetReflectType := c.getReflectType(targetType)
 	valueReflectType := reflect.TypeOf(value)
@@ -106,7 +106,7 @@ func (c *contextImpl) Replace(targetType interface{}, value interface{})  error 
 		value = convertedPointer.Interface()
 
 	} else {
-		if ! valueReflectType.AssignableTo(targetReflectType) {
+		if !valueReflectType.AssignableTo(targetReflectType) {
 			return fmt.Errorf("value of type %v is not assignable to %v", valueReflectType, targetReflectType)
 		}
 		value = reflect.ValueOf(value).Convert(targetReflectType).Interface()

@@ -22,9 +22,10 @@ import (
 	"reflect"
 	"testing"
 
+	"time"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
-	"time"
 )
 
 func TestConverter(t *testing.T) {
@@ -32,7 +33,7 @@ func TestConverter(t *testing.T) {
 
 	{
 		target := make([]interface{}, 1)
-		err :=converter.AssignConverted(&target[0], nil)
+		err := converter.AssignConverted(&target[0], nil)
 		assert.Nil(t, err)
 		assert.Nil(t, target[0])
 	}
@@ -260,7 +261,7 @@ func TestConverter(t *testing.T) {
 	{
 		var value *bool
 		sTrue := "true"
-		vTrue :=  true
+		vTrue := true
 
 		for _, item := range []interface{}{1, true, "true", &sTrue, &vTrue} {
 			err := converter.AssignConverted(&value, item)
@@ -274,7 +275,7 @@ func TestConverter(t *testing.T) {
 	{
 		var value bool
 		sTrue := "true"
-		vTrue :=  true
+		vTrue := true
 		for _, item := range []interface{}{1, true, "true", &sTrue, &vTrue} {
 			err := converter.AssignConverted(&value, item)
 			assert.Nil(t, err)
@@ -383,10 +384,9 @@ func TestConverter(t *testing.T) {
 		}
 
 		aMap := map[string]interface{}{
-			"Id":1,
-			"Name":"abc",
-			"A":[]string{"a", "b"},
-
+			"Id":   1,
+			"Name": "abc",
+			"A":    []string{"a", "b"},
 		}
 		a := A{}
 		err := converter.AssignConverted(&a, aMap)
@@ -400,10 +400,9 @@ func TestConverter(t *testing.T) {
 	{
 
 		aMap := map[string]interface{}{
-			"Id":1,
-			"Name":"abc",
-			"A":[]string{"a", "b"},
-
+			"Id":   1,
+			"Name": "abc",
+			"A":    []string{"a", "b"},
 		}
 		{
 			a := make(map[string]interface{})
@@ -446,7 +445,7 @@ func TestAsString(t *testing.T) {
 	assert.Equal(t, "123", toolbox.AsString("123"))
 	var aInt uint = 1
 	assert.Equal(t, "1", toolbox.AsString(aInt))
-	type  S struct {
+	type S struct {
 		Id int
 	}
 	assert.Equal(t, "&{1}", toolbox.AsString(&S{1}))
@@ -575,6 +574,5 @@ func TestUnwrapValue(t *testing.T) {
 		value := toolbox.UnwrapValue(&fieldValue)
 		assert.Equal(t, "a", value)
 	}
-
 
 }

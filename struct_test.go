@@ -95,5 +95,4 @@ func TestBuildTagMapping(t *testing.T) {
 		}
 	}
 
-
 }

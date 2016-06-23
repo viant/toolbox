@@ -98,7 +98,6 @@ func IsPointer(input interface{}) bool {
 	return reflect.TypeOf(input).Kind() == reflect.Ptr
 }
 
-
 //AssertPointerKind checks if input is a pointer of the passed in kind, if not it panic with message including name
 func AssertPointerKind(input interface{}, kind reflect.Kind, name string) {
 	AssertTypeKind(reflect.TypeOf(input), reflect.Ptr, name)

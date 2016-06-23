@@ -37,8 +37,6 @@ func (this Message) Message() string {
 	return this.message
 }
 
-
-
 func TestContext(t *testing.T) {
 	context := toolbox.NewContext()
 	message1 := Message{message: "abc"}
@@ -50,7 +48,6 @@ func TestContext(t *testing.T) {
 	assert.True(t, context.Contains((*Message)(nil)), "Should have meesage in context")
 	assert.True(t, context.Contains(&Message{}), "Should have meesage in context")
 
-
 	value, err := context.GetRequired((*Message)(nil))
 	assert.Nil(t, err)
 	m1 := value.(*Message)
@@ -58,12 +55,10 @@ func TestContext(t *testing.T) {
 	m1.message = "xyz"
 	assert.Equal(t, "xyz", message1.message, "should have the same value field")
 
-
 	err = context.Put((*IMessage)(nil), &message1)
 	assert.Nil(t, err)
 	m2 := context.GetOptional((*IMessage)(nil)).(*IMessage)
 	assert.Equal(t, "xyz", (*m2).Message(), "should have the same value field")
-
 
 	//operate on struct passing by copy does not enable global changes
 	assert.False(t, context.Contains(Message{}), "Should not have message in context")
@@ -74,7 +69,6 @@ func TestContext(t *testing.T) {
 	m3.message = "123"
 	assert.Equal(t, "123", m3.message, "should have the same value field")
 	assert.Equal(t, "xyz", m1.message, "should have the same value field")
-
 
 	err = context.Put(Message{}, message1)
 	assert.NotNil(t, err, "Key is already in context")
@@ -87,6 +81,5 @@ func TestContext(t *testing.T) {
 
 	_, err = context.GetRequired("abc")
 	assert.NotNil(t, err)
-
 
 }

@@ -213,7 +213,6 @@ func TestFilterSliceElements(t *testing.T) {
 		assert.Equal(t, "adc", target[1])
 	}
 
-
 }
 
 func TestHasSliceAnyElements(t *testing.T) {
@@ -322,7 +321,6 @@ func TestTransformSlice(t *testing.T) {
 	assert.Equal(t, "Vendor1", vendors[3])
 }
 
-
 func TestMakeStringMap(t *testing.T) {
 	aMap := toolbox.MakeStringMap("a:1, b:2", ":", ",")
 	assert.Equal(t, 2, len(aMap))
@@ -337,7 +335,6 @@ func TestMakeReverseStringMap(t *testing.T) {
 	assert.Equal(t, "b", aMap["2"])
 }
 
-
 func TestSortStrings(t *testing.T) {
 	sorted := toolbox.SortStrings([]string{"z", "b", "c", "a"})
 	assert.Equal(t, "a", sorted[0])
@@ -346,9 +343,8 @@ func TestSortStrings(t *testing.T) {
 }
 
 func TestJoinAsString(t *testing.T) {
-	assert.Equal(t, "a,b",toolbox.JoinAsString([]string{"a", "b"}, ","))
+	assert.Equal(t, "a,b", toolbox.JoinAsString([]string{"a", "b"}, ","))
 }
-
 
 func TestSetSliceValue(t *testing.T) {
 
@@ -372,7 +368,6 @@ func TestSetSliceValue(t *testing.T) {
 		assert.Equal(t, "a", toolbox.GetSliceValue(aSlice, 0))
 	}
 }
-
 
 func TestTrueValueProvider(t *testing.T) {
 	assert.True(t, toolbox.TrueValueProvider(1))

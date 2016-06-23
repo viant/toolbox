@@ -300,7 +300,6 @@ func (c *Converter) assignConvertedSlice(target, input interface{}, targetIndire
 	return err
 }
 
-
 func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[string]interface{}, targetIndirectValue reflect.Value, targetIndirectPointerType reflect.Type) error {
 	newStructPointer := reflect.New(targetIndirectValue.Type())
 	newStruct := newStructPointer.Elem()

@@ -45,14 +45,13 @@ func TestCallFunction(t *testing.T) {
 	}
 	{
 
-		var myFunction = func(arg1 string, arg2 ... int) string {
+		var myFunction = func(arg1 string, arg2 ...int) string {
 			return fmt.Sprintf("%v%v", arg2, arg1)
 		}
 
 		functionParameters, err := toolbox.BuildFunctionParameters(myFunction, []string{"arg1", "arg2"}, map[string]interface{}{
 			"arg1": "abc",
 			"arg2": []interface{}{100},
-
 		})
 
 		assert.Nil(t, err)
@@ -62,14 +61,13 @@ func TestCallFunction(t *testing.T) {
 	}
 	{
 
-		var myFunction = func(arg1 string, arg2 ... int) string {
+		var myFunction = func(arg1 string, arg2 ...int) string {
 			return fmt.Sprintf("%v%v", arg2, arg1)
 		}
 
 		_, err := toolbox.BuildFunctionParameters(myFunction, []string{"arg1", "arg2"}, map[string]interface{}{
 			"arg1": "abc",
 			"arg2": 100,
-
 		})
 
 		assert.NotNil(t, err)

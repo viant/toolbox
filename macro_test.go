@@ -22,9 +22,10 @@ import (
 	"fmt"
 	"testing"
 
+	"errors"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
-	"errors"
 )
 
 func TestMacroExpansion(t *testing.T) {
@@ -101,10 +102,9 @@ func TestMacroExpansion(t *testing.T) {
 	}
 }
 
-
 type TestValueProvider struct {
 	expandeWith string
-	err error
+	err         error
 }
 
 func (t TestValueProvider) Init() error {
@@ -122,7 +122,6 @@ func (t TestValueProvider) Destroy() error {
 	return nil
 }
 
-
 func TestExpandParameters(t *testing.T) {
 	valueRegistry := toolbox.NewValueProviderRegistry()
 	valueRegistry.Register("abc", TestValueProvider{"Called with %v %v!", nil})
@@ -130,14 +129,14 @@ func TestExpandParameters(t *testing.T) {
 	evaluator := toolbox.MacroEvaluator{ValueProviderRegistry: valueRegistry, Prefix: "<ds:", Postfix: ">"}
 
 	{
-		aMap := map[string]string {
+		aMap := map[string]string{
 			"k1": "!<ds:klm>!",
 		}
 		err := toolbox.ExpandParameters(&evaluator, aMap)
 		assert.NotNil(t, err)
 	}
 	{
-		aMap := map[string]string {
+		aMap := map[string]string{
 			"k1": "!<ds:abc>!",
 		}
 		err := toolbox.ExpandParameters(&evaluator, aMap)
@@ -157,15 +156,14 @@ func TestExpandValue(t *testing.T) {
 		assert.Equal(t, "!Called with %v %v!!", expanded)
 	}
 	{
-		expanded, err:= toolbox.ExpandValue(&evaluator, "!!")
+		expanded, err := toolbox.ExpandValue(&evaluator, "!!")
 		assert.Nil(t, err)
 		assert.Equal(t, "!!", expanded)
 
 	}
 	{
-		_, err:= toolbox.ExpandValue(&evaluator, "<ds:klm>")
+		_, err := toolbox.ExpandValue(&evaluator, "<ds:klm>")
 		assert.NotNil(t, err)
 	}
-
 
 }

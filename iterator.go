@@ -34,8 +34,6 @@ type Iterator interface {
 	Next(itemPointer interface{})
 }
 
-
-
 type sliceIterator struct {
 	sliceValue reflect.Value
 	index      int
@@ -52,8 +50,6 @@ func (i *sliceIterator) Next(itemPointer interface{}) {
 	itemPointerValue.Elem().Set(value)
 }
 
-
-
 type stringSliceIterator struct {
 	sliceValue []string
 	index      int
@@ -63,18 +59,16 @@ func (i *stringSliceIterator) HasNext() bool {
 	return i.index < len(i.sliceValue)
 }
 
-
 func (i *stringSliceIterator) Next(itemPointer interface{}) {
 	value := i.sliceValue[i.index]
 	i.index++
-	if stringPointer, ok  := itemPointer.(*string); ok {
+	if stringPointer, ok := itemPointer.(*string); ok {
 		*stringPointer = value
 		return
 	}
-	interfacePointer:= itemPointer.(*interface{})
+	interfacePointer := itemPointer.(*interface{})
 	*interfacePointer = value
 }
-
 
 type interfaceSliceIterator struct {
 	sliceValue []interface{}
@@ -97,13 +91,12 @@ func (i *interfaceSliceIterator) Next(itemPointer interface{}) {
 	}
 }
 
-
 //NewSliceIterator creates a new slice iterator.
 func NewSliceIterator(slice interface{}) Iterator {
-	if aSlice, ok := slice.([]interface{});ok {
+	if aSlice, ok := slice.([]interface{}); ok {
 		return &interfaceSliceIterator{aSlice, 0}
 	}
-	if aSlice, ok := slice.([]string);ok {
+	if aSlice, ok := slice.([]string); ok {
 		return &stringSliceIterator{aSlice, 0}
 	}
 	sliceValue := DiscoverValueByKind(reflect.ValueOf(slice), reflect.Slice)

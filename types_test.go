@@ -24,8 +24,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/viant/toolbox"
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/toolbox"
 )
 
 type User2 struct {
@@ -34,7 +34,6 @@ type User2 struct {
 	Id          int       `autoincrement:"true"`
 	Other       string    `transient:"true"`
 }
-
 
 func TestAssertKind(t *testing.T) {
 	toolbox.AssertKind(User2{}, reflect.Struct, "user")
@@ -55,10 +54,6 @@ func TestAssertPointerKind(test *testing.T) {
 	toolbox.AssertPointerKind((*User2)(nil), reflect.Struct, "user")
 }
 
-
-
-
-
 func TestTypeDetection(t *testing.T) {
 
 	assert.False(t, toolbox.IsFloat(3))
@@ -68,24 +63,20 @@ func TestTypeDetection(t *testing.T) {
 	assert.True(t, toolbox.CanConvertToFloat(3))
 	assert.False(t, toolbox.CanConvertToFloat(false))
 
-
 	assert.False(t, toolbox.IsInt(3.0))
 	assert.True(t, toolbox.IsInt(3))
 
 	assert.True(t, toolbox.CanConvertToInt(3))
 	assert.True(t, toolbox.CanConvertToInt("3"))
 
-
 	assert.False(t, toolbox.CanConvertToInt(true))
 	assert.False(t, toolbox.CanConvertToInt(3.3))
-
 
 	assert.False(t, toolbox.IsBool(3.0))
 	assert.True(t, toolbox.IsBool(true))
 
 	assert.False(t, toolbox.IsString(3.0))
 	assert.True(t, toolbox.IsString("abc"))
-
 
 	assert.True(t, toolbox.CanConvertToString("abc"))
 	assert.False(t, toolbox.CanConvertToString(3.2))
@@ -103,10 +94,7 @@ func TestTypeDetection(t *testing.T) {
 	assert.False(t, toolbox.IsPointer(reflect.TypeOf(aString)))
 	assert.True(t, toolbox.IsPointer(&aString))
 
-
 }
-
-
 
 func TestIsValueOfKind(t *testing.T) {
 	text := ""

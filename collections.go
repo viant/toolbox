@@ -42,14 +42,14 @@ var CopyStringValueProvider = func(source string) string {
 //ProcessSlice iterates over any slice, it calls handler with each element unless handler returns false,
 func ProcessSlice(slice interface{}, handler func(item interface{}) bool) {
 	//The common cases with reflection for speed
-	if aSlice, ok:=slice.([]interface{}); ok {
+	if aSlice, ok := slice.([]interface{}); ok {
 		for _, item := range aSlice {
 			handler(item)
 		}
 		return
 	}
 	//The common cases with reflection for speed
-	if aSlice, ok:=slice.([]string); ok {
+	if aSlice, ok := slice.([]string); ok {
 		for _, item := range aSlice {
 			handler(item)
 		}
@@ -65,13 +65,13 @@ func ProcessSlice(slice interface{}, handler func(item interface{}) bool) {
 
 //ProcessSliceWithIndex iterates over any slice, it calls handler with every index and item unless handler returns false
 func ProcessSliceWithIndex(slice interface{}, handler func(index int, item interface{}) bool) {
-	if aSlice, ok:=slice.([]interface{}); ok {
+	if aSlice, ok := slice.([]interface{}); ok {
 		for i, item := range aSlice {
 			handler(i, item)
 		}
 		return
 	}
-	if aSlice, ok:=slice.([]string); ok {
+	if aSlice, ok := slice.([]string); ok {
 		for i, item := range aSlice {
 			handler(i, item)
 		}
@@ -100,8 +100,7 @@ func IndexSlice(slice, resultingMap, keyFunction interface{}) {
 //This function comes handy if you want to copy from generic []interface{} slice to more specific slice like []string, if source slice element are of the same time
 func CopySliceElements(sourceSlice, targetSlicePointer interface{}) {
 
-
-	if aTargetSlicePointer, ok := targetSlicePointer.(*[]interface{});ok {
+	if aTargetSlicePointer, ok := targetSlicePointer.(*[]interface{}); ok {
 		ProcessSlice(sourceSlice, func(item interface{}) bool {
 			*(aTargetSlicePointer) = append(*aTargetSlicePointer, item)
 			return true
@@ -109,7 +108,7 @@ func CopySliceElements(sourceSlice, targetSlicePointer interface{}) {
 		return
 	}
 
-	if aTargetSlicePointer, ok := targetSlicePointer.(*[]string);ok {
+	if aTargetSlicePointer, ok := targetSlicePointer.(*[]string); ok {
 		ProcessSlice(sourceSlice, func(item interface{}) bool {
 			*(aTargetSlicePointer) = append(*aTargetSlicePointer, AsString(item))
 			return true
@@ -138,9 +137,9 @@ func TransformSlice(sourceSlice, targetSlicePointer, transformer interface{}) {
 //FilterSliceElements copies elements from sourceSlice to targetSlice if predicate function returns true. Predicate function needs to accept source slice element type and return true.
 func FilterSliceElements(sourceSlice interface{}, predicate interface{}, targetSlicePointer interface{}) {
 	//The most common case witout reflection
-	if aTargetSlicePointer, ok := targetSlicePointer.(*[]string);ok {
-		aPredicate, ok :=   predicate.(func(item string) bool);
-		if ! ok {
+	if aTargetSlicePointer, ok := targetSlicePointer.(*[]string); ok {
+		aPredicate, ok := predicate.(func(item string) bool)
+		if !ok {
 			panic("Invalid predicate")
 		}
 		ProcessSlice(sourceSlice, func(item interface{}) bool {
@@ -175,7 +174,6 @@ func HasSliceAnyElements(sourceSlice interface{}, elements ...interface{}) (resu
 	})
 	return result
 }
-
 
 //SliceToMap reads passed in slice to to apply the key and value function for each item. Result of these calls is placed in the resulting map.
 func SliceToMap(sourceSlice, targetMap, keyFunction, valueFunction interface{}) {
@@ -228,14 +226,13 @@ func SliceToMultimap(sourceSlice, targetMap, keyFunction, valueFunction interfac
 	})
 }
 
-
 //SetSliceValue sets value at slice index
 func SetSliceValue(slice interface{}, index int, value interface{}) {
-	if aSlice, ok := slice.([]string);ok {
+	if aSlice, ok := slice.([]string); ok {
 		aSlice[index] = AsString(value)
 		return
 	}
-	if aSlice, ok := slice.([]interface{});ok {
+	if aSlice, ok := slice.([]interface{}); ok {
 		aSlice[index] = value
 		return
 	}
@@ -245,10 +242,10 @@ func SetSliceValue(slice interface{}, index int, value interface{}) {
 
 //GetSliceValue gets value from passed in index
 func GetSliceValue(slice interface{}, index int) interface{} {
-	if aSlice, ok := slice.([]string);ok {
+	if aSlice, ok := slice.([]string); ok {
 		return aSlice[index]
 	}
-	if aSlice, ok := slice.([]interface{});ok {
+	if aSlice, ok := slice.([]interface{}); ok {
 		return aSlice[index]
 	}
 	sliceValue := DiscoverValueByKind(reflect.ValueOf(slice), reflect.Slice)

@@ -68,22 +68,20 @@ func TestTimeFormat(t *testing.T) {
 func TestGetTimeLayout(t *testing.T) {
 	{
 		settings := map[string]string{
-			toolbox.DateFormatKeyword:"yyyy-MM-dd HH:mm:ss z",
+			toolbox.DateFormatKeyword: "yyyy-MM-dd HH:mm:ss z",
 		}
 		assert.Equal(t, "2006-1-02 15:04:05 MST", toolbox.GetTimeLayout(settings))
 		assert.True(t, toolbox.HasTimeLayout(settings))
 	}
 	{
 		settings := map[string]string{
-			toolbox.DateLayoutKeyword:"2006-1-02 15:04:05 MST",
+			toolbox.DateLayoutKeyword: "2006-1-02 15:04:05 MST",
 		}
 		assert.Equal(t, "2006-1-02 15:04:05 MST", toolbox.GetTimeLayout(settings))
 		assert.True(t, toolbox.HasTimeLayout(settings))
 	}
 	{
-		settings := map[string]string{
-
-		}
+		settings := map[string]string{}
 		assert.False(t, toolbox.HasTimeLayout(settings))
 
 	}
