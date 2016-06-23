@@ -17,4 +17,8 @@ var FileExtensionMimeType = map[string]string{
 	"csv":  CSVMimeType,
 	"tsv":  TSVMimeType,
 	"sql":  TextMimeType,
+	"html":"text/html",
+	"js":"text/javascript",
+	"jpg":"image/jpeg",
+	"png":"image/png",
 }
