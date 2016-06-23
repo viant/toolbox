@@ -19,7 +19,6 @@
 package toolbox
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -259,22 +258,18 @@ func (c *Converter) assignConvertedMap(target, input interface{}, targetIndirect
 	mapPointer := reflect.New(mapType)
 	mapValueType := mapType.Elem()
 	keyKeyType := mapType.Key()
-
 	newMap := mapPointer.Elem()
-
 	newMap.Set(reflect.MakeMap(mapType))
 	var err error
 	ProcessMap(input, func(key, value interface{}) bool {
-		if mapValueType.Kind() == reflect.Interface {
-			mapValueType = reflect.TypeOf(value)
-		}
-
+		mapValueType = reflect.TypeOf(value)
 		targetMapValuePointer := reflect.New(mapValueType)
 		err = c.AssignConverted(targetMapValuePointer.Interface(), value)
 		if err != nil {
 			err = fmt.Errorf("Failed to assigned converted map value %v to %v due to %v", input, target, err)
 			return false
 		}
+
 		targetMapKeyPointer := reflect.New(keyKeyType)
 		err = c.AssignConverted(targetMapKeyPointer.Interface(), key)
 		if err != nil {
@@ -319,6 +314,7 @@ func (c *Converter) assignConvertedSlice(target, input interface{}, targetIndire
 	return err
 }
 
+
 func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[string]interface{}, targetIndirectValue reflect.Value, targetIndirectPointerType reflect.Type) error {
 	newStructPointer := reflect.New(targetIndirectValue.Type())
 	newStruct := newStructPointer.Elem()
@@ -358,9 +354,6 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 func (c *Converter) AssignConverted(target, input interface{}) error {
 	if target == nil {
 		return fmt.Errorf("destinationPointer was nil %v %v", target, input)
-	}
-	if !IsNonNilPointer(target) {
-		return errors.New("invalid destinationPointer type - expected non nil pointer")
 	}
 	if input == nil {
 		return nil
@@ -416,6 +409,10 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 		case *bool:
 			*targetValuePointer = *inputValue
 			return nil
+
+		case int:
+			*targetValuePointer = inputValue != 0
+			return nil
 		case string:
 			boolValue, err := strconv.ParseBool(inputValue)
 			if err != nil {
@@ -440,6 +437,10 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 			return nil
 		case *bool:
 			*targetValuePointer = inputValue
+			return nil
+		case int:
+			boolValue := inputValue != 0
+			*targetValuePointer = &boolValue
 			return nil
 		case string:
 			boolValue, err := strconv.ParseBool(inputValue)
@@ -577,7 +578,6 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 		return nil
 	case *time.Time:
 		switch inputValue := input.(type) {
-
 		case string:
 			timeValue, err := time.Parse(c.DataLayout, inputValue)
 			if err != nil {
@@ -597,17 +597,28 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 			}
 			*targetValuePointer = time
 			return nil
+		case int, int64, uint, uint64, float32, float64, *int, *int64, *uint, *uint64, *float32, *float64:
+			intValue := int(AsFloat(inputValue))
+			timeValue := time.Unix(int64(intValue), 0)
+			*targetValuePointer = timeValue
+			return nil
+
 		}
 
 	case **time.Time:
 		switch inputValue := input.(type) {
 
 		case string:
-			time, err := ParseTime(inputValue, c.DataLayout)
+			timeValue, err := ParseTime(inputValue, c.DataLayout)
 			if err != nil {
-				return err
+				if CanConvertToFloat(inputValue) {
+					intValue := int(AsFloat(inputValue))
+					timeValue = time.Unix(int64(intValue), 0)
+				} else {
+					return err
+				}
 			}
-			*targetValuePointer = &time
+			*targetValuePointer = &timeValue
 			return nil
 		case *string:
 			time, err := ParseTime(*inputValue, c.DataLayout)
@@ -616,6 +627,12 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 			}
 			*targetValuePointer = &time
 			return nil
+		case int, int64, uint, uint64, float32, float64, *int, *int64, *uint, *uint64, *float32, *float64:
+			intValue := int(AsFloat(inputValue))
+			timeValue := time.Unix(int64(intValue), 0)
+			*targetValuePointer = &timeValue
+			return nil
+
 		}
 
 	case *interface{}:

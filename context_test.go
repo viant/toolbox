@@ -47,14 +47,18 @@ func TestContext(t *testing.T) {
 	assert.True(t, context.Contains((*Message)(nil)), "Should have meesage in context")
 	assert.True(t, context.Contains(&Message{}), "Should have meesage in context")
 
+
 	m1 := context.GetRequired((*Message)(nil)).(*Message)
 	assert.Equal(t, "abc", m1.message, "should have the same value field")
+
 	m1.message = "xyz"
 	assert.Equal(t, "xyz", message1.message, "should have the same value field")
+
 
 	context.Put((*IMessage)(nil), &message1)
 	m2 := context.GetRequired((*IMessage)(nil)).(*IMessage)
 	assert.Equal(t, "xyz", (*m2).Message(), "should have the same value field")
+
 
 	//operate on struct passing by copy does not enable global changes
 	assert.False(t, context.Contains(Message{}), "Should not have message in context")

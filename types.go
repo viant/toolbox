@@ -96,28 +96,20 @@ func IsPointer(input interface{}) bool {
 	return reflect.TypeOf(input).Kind() == reflect.Ptr
 }
 
-//IsNonNilPointer returns true if input is a nil pointer
-func IsNonNilPointer(input interface{}) bool {
-	if reflectType, ok := input.(reflect.Type); ok {
-		return reflectType.Kind() == reflect.Ptr && reflectType.Elem() != nil
-	}
-	reflectType := reflect.TypeOf(input)
-	return reflectType.Kind() == reflect.Ptr && reflectType.Elem() != nil
-}
 
 //AssertPointerKind checks if input is a pointer of the passed in kind, if not it panic with message including name
 func AssertPointerKind(input interface{}, kind reflect.Kind, name string) {
-	AssertType(reflect.TypeOf(input), reflect.Ptr, name)
-	AssertType(reflect.TypeOf(input).Elem(), kind, name)
+	AssertTypeKind(reflect.TypeOf(input), reflect.Ptr, name)
+	AssertTypeKind(reflect.TypeOf(input).Elem(), kind, name)
 }
 
 //AssertKind checks if input is of the passed in kind, if not it panic with message including name
 func AssertKind(input interface{}, kind reflect.Kind, name string) {
-	AssertType(reflect.TypeOf(input), kind, name)
+	AssertTypeKind(reflect.TypeOf(input), kind, name)
 }
 
 //AssertType checks if dataType is of the passed in kind, if not it panic with message including name
-func AssertType(dataType reflect.Type, kind reflect.Kind, name string) {
+func AssertTypeKind(dataType reflect.Type, kind reflect.Kind, name string) {
 	if dataType.Kind() != kind {
 		panic(fmt.Sprintf("Failed to check: %v - expected kind: %v but found %v (%v)", name, kind.String(), dataType.Kind(), dataType.String()))
 	}

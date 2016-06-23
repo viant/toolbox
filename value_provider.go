@@ -95,10 +95,9 @@ type castedValueProvider struct{}
 
 func (p castedValueProvider) Get(context Context, arguments ...interface{}) (interface{}, error) {
 	key := arguments[0].(string)
-	if len(arguments) == 2 {
-		return nil, fmt.Errorf("Failed to cast to %v due to invalud number of arguments", key)
+	if len(arguments) < 2 {
+		return nil, fmt.Errorf("Failed to cast to %v due to invalud number of arguments, Wanted 2 but had:%v", key, len(arguments))
 	}
-
 	switch key {
 	case "time":
 		if len(arguments) != 3 {

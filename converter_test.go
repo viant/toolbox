@@ -24,10 +24,23 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
+	"time"
 )
 
 func TestConverter(t *testing.T) {
-	converter := toolbox.NewColumnConverter("")
+	converter := toolbox.NewColumnConverter(toolbox.DateFormatToLayout("yyyy-MM-dd hh:mm:ss z"))
+
+	{
+		target := make([]interface{}, 1)
+		converter.AssignConverted(&target[0], nil)
+		assert.Nil(t, target[0])
+	}
+
+	{
+		err := converter.AssignConverted(nil, nil)
+		assert.NotNil(t, err)
+	}
+
 	{
 		var value interface{}
 		var test = 123
@@ -72,6 +85,22 @@ func TestConverter(t *testing.T) {
 		err := converter.AssignConverted(&value, &test)
 		assert.Nil(t, err)
 		assert.Equal(t, "abc", value)
+	}
+
+	{
+		var value string
+		var test = 12
+		err := converter.AssignConverted(&value, &test)
+		assert.Nil(t, err)
+		assert.Equal(t, "12", value)
+	}
+
+	{
+		var value *string
+		var test = 12
+		err := converter.AssignConverted(&value, &test)
+		assert.Nil(t, err)
+		assert.Equal(t, "12", *value)
 	}
 
 	{
@@ -145,6 +174,132 @@ func TestConverter(t *testing.T) {
 			assert.Nil(t, err)
 			assert.Equal(t, float64(102), *value)
 		}
+	}
+
+	{
+		var value *bool
+		sTrue := "true"
+		for _, item := range []interface{}{1, true, "true", &sTrue} {
+			err := converter.AssignConverted(&value, item)
+			assert.Nil(t, err)
+			assert.True(t, *value)
+		}
+	}
+	{
+		var value bool
+		sTrue := "true"
+		for _, item := range []interface{}{1, true, "true", &sTrue} {
+			err := converter.AssignConverted(&value, item)
+			assert.Nil(t, err)
+			assert.True(t, value)
+		}
+	}
+	{
+
+		var value *time.Time
+		date := "2016-02-22 12:32:01 UTC"
+		{
+			err := converter.AssignConverted(&value, date)
+			assert.Nil(t, err)
+			assert.Equal(t, 1456144321, int(value.Unix()))
+		}
+		{
+			err := converter.AssignConverted(&value, &date)
+			assert.Nil(t, err)
+			assert.Equal(t, 1456144321, int(value.Unix()))
+		}
+		{
+			err := converter.AssignConverted(&value, "1456144321")
+			assert.Nil(t, err)
+			assert.Equal(t, 1456144321, int(value.Unix()))
+		}
+		{
+			unix:="1456144321.0"
+			err := converter.AssignConverted(&value, unix)
+			assert.Nil(t, err)
+			assert.Equal(t, 1456144321, int(value.Unix()))
+		}
+		{
+			unix:=1456144321.0
+			err := converter.AssignConverted(&value, unix)
+			assert.Nil(t, err)
+			assert.Equal(t, 1456144321, int(value.Unix()))
+		}
+		{
+			unix:=1456144321.0
+			err := converter.AssignConverted(&value, &unix)
+			assert.Nil(t, err)
+			assert.Equal(t, 1456144321, int(value.Unix()))
+		}
+
+
+		{
+
+			type A struct{
+				Id int
+				Name string
+				A []string
+			}
+
+			aMap := map[string]interface{} {
+				"Id":1,
+				"Name":"abc",
+				"A":[]string{"a", "b"},
+
+			}
+			a := A{}
+			err := converter.AssignConverted(&a, aMap)
+			assert.Nil(t, err)
+			assert.Equal(t, 1, a.Id)
+			assert.Equal(t, "abc", a.Name)
+			assert.Equal(t, 2, len(a.A))
+
+		}
+
+		{
+
+
+
+			aMap := map[string]interface{} {
+				"Id":1,
+				"Name":"abc",
+				"A":[]string{"a", "b"},
+
+			}
+			{
+				a := make(map[string]interface{})
+				err := converter.AssignConverted(&a, aMap)
+				assert.Nil(t, err)
+				assert.Equal(t, 1, a["Id"])
+				assert.Equal(t, "abc", a["Name"])
+			}
+			{
+				a := make(map[string]interface{})
+				err := converter.AssignConverted(&a, &aMap)
+				assert.Nil(t, err)
+				assert.Equal(t, 1, a["Id"])
+				assert.Equal(t, "abc", a["Name"])
+			}
+		}
+
+		{
+
+			aSlice := []interface{} {1, 2, 3}
+			target := make([]int, 0)
+			err := converter.AssignConverted(&target, aSlice)
+			assert.Nil(t, err)
+			assert.Equal(t, 1, target[0])
+			assert.Equal(t, 3, len(target))
+		}
+		{
+			aSlice := []interface{} {1, 2, 3}
+			target := make([]int, 0)
+			err := converter.AssignConverted(&target, aSlice)
+			assert.Nil(t, err)
+			assert.Equal(t, 1, target[0])
+			assert.Equal(t, 3, len(target))
+		}
+
 	}
 
 }

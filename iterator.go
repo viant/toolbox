@@ -30,6 +30,8 @@ type Iterator interface {
 	Next(itemPointer interface{})
 }
 
+
+
 type sliceIterator struct {
 	sliceValue reflect.Value
 	index      int
@@ -40,15 +42,61 @@ func (i *sliceIterator) HasNext() bool {
 }
 
 func (i *sliceIterator) Next(itemPointer interface{}) {
-	AssertKind(itemPointer, reflect.Ptr, "itemPointer")
 	value := i.sliceValue.Index(i.index)
 	i.index++
 	itemPointerValue := reflect.ValueOf(itemPointer)
 	itemPointerValue.Elem().Set(value)
 }
 
+
+
+type stringSliceIterator struct {
+	sliceValue []string
+	index      int
+}
+
+func (i *stringSliceIterator) HasNext() bool {
+	return i.index < len(i.sliceValue)
+}
+
+
+func (i *stringSliceIterator) Next(itemPointer interface{}) {
+	value := i.sliceValue[i.index]
+	i.index++
+	stringPointer := itemPointer.(*string)
+	*stringPointer = value
+}
+
+
+type interfaceSliceIterator struct {
+	sliceValue []interface{}
+	index      int
+}
+
+func (i *interfaceSliceIterator) HasNext() bool {
+	return i.index < len(i.sliceValue)
+}
+
+func (i *interfaceSliceIterator) Next(itemPointer interface{}) {
+	value := i.sliceValue[i.index]
+	i.index++
+	if pointer, ok := itemPointer.(*interface{});ok {
+		*pointer = value
+		return
+	}
+	itemPointerValue := reflect.ValueOf(itemPointer)
+	itemPointerValue.Elem().Set(reflect.ValueOf(value))
+}
+
+
 //NewSliceIterator creates a new slice iterator.
 func NewSliceIterator(slice interface{}) Iterator {
+	if aSlice, ok := slice.([]interface{});ok {
+		return &interfaceSliceIterator{aSlice, 0}
+	}
+	if aSlice, ok := slice.([]string);ok {
+		return &stringSliceIterator{aSlice, 0}
+	}
 	sliceValue := DiscoverValueByKind(reflect.ValueOf(slice), reflect.Slice)
 	return &sliceIterator{sliceValue: sliceValue}
 }

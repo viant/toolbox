@@ -57,3 +57,17 @@ func TestMatchWhitespace(t *testing.T) {
 	assert.Equal(t, 2, matcher.Match("1, \t2, 3", 2))
 
 }
+
+
+func TestLiteralMatcher(t *testing.T) {
+	matcher := toolbox.LiteralMatcher{}
+	assert.Equal(t, 0, matcher.Match(" abc ", 0))
+	assert.Equal(t, 4, matcher.Match(" a1bc", 1))
+
+}
+
+func TestEOFMatcher(t *testing.T) {
+	matcher := toolbox.EOFMatcher{}
+	assert.Equal(t, 0, matcher.Match(" abc ", 0))
+	assert.Equal(t, 1, matcher.Match(" a1bc", 4))
+}

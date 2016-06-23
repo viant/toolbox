@@ -56,16 +56,30 @@ func TestIndexSlice(t *testing.T) {
 }
 
 func TestProcessSlice(t *testing.T) {
-	aSlice := []interface{}{
-		"abc", "def", "cyz", "adc",
-	}
-	count := 0
-	toolbox.ProcessSlice(aSlice, func(item interface{}) bool {
-		count++
-		return true
-	})
+	{
+		aSlice := []interface{}{
+			"abc", "def", "cyz", "adc",
+		}
+		count := 0
+		toolbox.ProcessSlice(aSlice, func(item interface{}) bool {
+			count++
+			return true
+		})
 
-	assert.Equal(t, 4, count)
+		assert.Equal(t, 4, count)
+	}
+	{
+		aSlice := []string{
+			"abc", "def", "cyz", "adc",
+		}
+		count := 0
+		toolbox.ProcessSlice(aSlice, func(item interface{}) bool {
+			count++
+			return true
+		})
+
+		assert.Equal(t, 4, count)
+	}
 }
 
 func TestMakeMapFromSlice(t *testing.T) {
@@ -106,30 +120,72 @@ func TestProcess2DSliceInBatches(t *testing.T) {
 	assert.Equal(t, 7, actualItemCount)
 }
 
-func TestAppendToSlice(t *testing.T) {
-	source := []interface{}{
-		"abc", "def", "cyz",
+func TestCopySliceElements(t *testing.T) {
+	{
+		source := []interface{}{
+			"abc", "def", "cyz",
+		}
+		var target = make([]string, 0)
+		toolbox.CopySliceElements(source, &target)
+		assert.Equal(t, 3, len(target))
+		for i := 0; i < len(source); i++ {
+			assert.Equal(t, source[i], target[i])
+		}
 	}
-	var target = make([]string, 0)
-	toolbox.CopySliceElements(source, &target)
-	assert.Equal(t, 3, len(target))
-	for i := 0; i < len(source); i++ {
-		assert.Equal(t, source[i], target[i])
+	{
+		source := []interface{}{
+			1, 2, 3,
+		}
+		var target = make([]int, 0)
+		toolbox.CopySliceElements(source, &target)
+		assert.Equal(t, 3, len(target))
+		for i := 0; i < len(source); i++ {
+			assert.Equal(t, source[i], target[i])
+		}
 	}
+	{
+		source := []interface{}{
+			1, 2, 3,
+		}
+		var target = make([]interface{}, 0)
+		toolbox.CopySliceElements(source, &target)
+		assert.Equal(t, 3, len(target))
+		for i := 0; i < len(source); i++ {
+			assert.Equal(t, source[i], target[i])
+		}
+	}
+
 }
 
 func TestFilterSliceElements(t *testing.T) {
-	source := []interface{}{
-		"abc", "def", "cyz", "adc",
+	{
+		source := []interface{}{
+			1, 2, 3,
+		}
+		var target = make([]int, 0)
+		//filter all elements starting with a
+		toolbox.FilterSliceElements(source, func(item int) bool {
+			return item > 1
+		}, &target)
+		assert.Equal(t, 2, len(target))
+		assert.Equal(t, 2, target[0])
+		assert.Equal(t, 3, target[1])
 	}
-	var target = make([]string, 0)
-	//filter all elements starting with a
-	toolbox.FilterSliceElements(source, func(item string) bool {
-		return strings.HasPrefix(item, "a")
-	}, &target)
-	assert.Equal(t, 2, len(target))
-	assert.Equal(t, "abc", target[0])
-	assert.Equal(t, "adc", target[1])
+
+	{
+		source := []interface{}{
+			"abc", "def", "cyz", "adc",
+		}
+		var target = make([]string, 0)
+		//filter all elements starting with a
+		toolbox.FilterSliceElements(source, func(item string) bool {
+			return strings.HasPrefix(item, "a")
+		}, &target)
+		assert.Equal(t, 2, len(target))
+		assert.Equal(t, "abc", target[0])
+		assert.Equal(t, "adc", target[1])
+	}
+
 
 }
 
@@ -237,4 +293,19 @@ func TestTransformSlice(t *testing.T) {
 	})
 	assert.Equal(t, 4, len(vendors))
 	assert.Equal(t, "Vendor1", vendors[3])
+}
+
+
+func TestMakeStringMap(t *testing.T) {
+	aMap := toolbox.MakeStringMap("a:1, b:2", ":", ",")
+	assert.Equal(t, 2, len(aMap))
+	assert.Equal(t, "1", aMap["a"])
+	assert.Equal(t, "2", aMap["b"])
+}
+
+func TestMakeReverseStringMap(t *testing.T) {
+	aMap := toolbox.MakeReverseStringMap("a:1, b:2", ":", ",")
+	assert.Equal(t, 2, len(aMap))
+	assert.Equal(t, "a", aMap["1"])
+	assert.Equal(t, "b", aMap["2"])
 }
