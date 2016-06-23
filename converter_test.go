@@ -205,6 +205,15 @@ func TestConverter(t *testing.T) {
 	}
 
 	{
+		var value float64
+		for _, item := range []interface{}{int(102), int64(102), float64(102), float32(102), "102"} {
+			err := converter.AssignConverted(&value, item)
+			assert.Nil(t, err)
+			assert.Equal(t, float64(102), value)
+		}
+	}
+
+	{
 		var value int64
 		for _, item := range []interface{}{int(102), int64(102), float64(102), float32(102), "102"} {
 			err := converter.AssignConverted(&value, item)
@@ -250,20 +259,29 @@ func TestConverter(t *testing.T) {
 	{
 		var value *bool
 		sTrue := "true"
-		for _, item := range []interface{}{1, true, "true", &sTrue} {
+		vTrue :=  true
+
+		for _, item := range []interface{}{1, true, "true", &sTrue, &vTrue} {
 			err := converter.AssignConverted(&value, item)
 			assert.Nil(t, err)
 			assert.True(t, *value)
 		}
+		err := converter.AssignConverted(&value, "abc")
+		assert.NotNil(t, err)
+
 	}
 	{
 		var value bool
 		sTrue := "true"
-		for _, item := range []interface{}{1, true, "true", &sTrue} {
+		vTrue :=  true
+		for _, item := range []interface{}{1, true, "true", &sTrue, &vTrue} {
 			err := converter.AssignConverted(&value, item)
 			assert.Nil(t, err)
 			assert.True(t, value)
 		}
+		err := converter.AssignConverted(&value, "abc")
+		assert.NotNil(t, err)
+
 	}
 	{
 

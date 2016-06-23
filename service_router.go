@@ -231,6 +231,7 @@ func RouteToServiceWithCustomFormat(method, url string, request, response interf
 		serverResponse, err = http.Post(url, jsonContentType, buffer)
 	case "delete":
 		var httpRequest *http.Request
+		
 		httpRequest, err = http.NewRequest("DELETE", url, nil)
 		serverResponse, err = http.DefaultClient.Do(httpRequest)
 	default:

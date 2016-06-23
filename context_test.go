@@ -37,6 +37,8 @@ func (this Message) Message() string {
 	return this.message
 }
 
+
+
 func TestContext(t *testing.T) {
 	context := toolbox.NewContext()
 	message1 := Message{message: "abc"}
