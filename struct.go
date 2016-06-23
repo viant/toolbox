@@ -16,6 +16,8 @@
  *  the License.
  *
  */
+
+// Package toolbox - struct utilities
 package toolbox
 
 import (

@@ -16,6 +16,8 @@
  *  the License.
  *
  */
+
+// Package toolbox - predicate
 package toolbox
 
 //Predicate represents a generic predicate

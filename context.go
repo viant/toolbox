@@ -16,6 +16,8 @@
  *  the License.
  *
  */
+
+// Package toolbox - type safe map context
 package toolbox
 
 import (

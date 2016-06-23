@@ -16,6 +16,8 @@
  *  the License.
  *
  */
+
+// Package toolbox - data type conversion, data converter
 package toolbox
 
 import (

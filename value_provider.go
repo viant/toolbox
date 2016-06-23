@@ -16,6 +16,8 @@
  *  the License.
  *
  */
+
+// Package toolbox - macro value provider/registry
 package toolbox
 
 import (

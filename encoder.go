@@ -16,6 +16,8 @@
  *  the License.
  *
  */
+
+// Package toolbox - encoder factory
 package toolbox
 
 import (

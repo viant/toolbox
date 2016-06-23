@@ -16,6 +16,8 @@
  *  the License.
  *
  */
+
+// Package toolbox - decoder factory
 package toolbox
 
 import (

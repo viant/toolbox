@@ -16,6 +16,8 @@
  *  the License.
  *
  */
+
+// Package toolbox - time format to layout helper
 package toolbox
 
 import "strings"

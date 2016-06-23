@@ -16,6 +16,8 @@
  *  the License.
  *
  */
+
+// Package toolbox - tokenizer
 package toolbox
 
 import (

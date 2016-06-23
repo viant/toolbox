@@ -16,6 +16,8 @@
  *  the License.
  *
  */
+
+// Package toolbox - macro evaluator
 package toolbox
 
 import (

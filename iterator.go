@@ -16,6 +16,8 @@
 *  the License.
 *
  */
+
+// Package toolbox - iterator
 package toolbox
 
 import (

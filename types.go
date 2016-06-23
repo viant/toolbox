@@ -16,6 +16,8 @@
  *  the License.
  *
  */
+
+// Package toolbox - type utilities
 package toolbox
 
 import (
