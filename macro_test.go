@@ -4,7 +4,7 @@
  * Copyright 2012-2016 Viant.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- *  use this file except in compliance with the License. You may obtain a copy of
+ *  use t file except in compliance with the License. You may obtain a copy of
  *  the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
@@ -24,12 +24,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
+	"errors"
 )
 
 func TestMacroExpansion(t *testing.T) {
 	valueRegistry := toolbox.NewValueProviderRegistry()
-	valueRegistry.Register("abc", TestValueProvider{"Called with %v %v!"})
-
+	valueRegistry.Register("abc", TestValueProvider{"Called with %v %v!", nil})
+	valueRegistry.Register("klm", TestValueProvider{"Called with %v %v!", errors.New("Test error")})
 	evaluator := toolbox.MacroEvaluator{ValueProviderRegistry: valueRegistry, Prefix: "<ds:", Postfix: ">"}
 	{
 		//simple macro test
@@ -80,6 +81,18 @@ func TestMacroExpansion(t *testing.T) {
 	}
 
 	{
+		//value provider with error
+		_, err := evaluator.Expand(nil, "<ds:abc [1, \"<ds:klm>\"]>")
+		assert.NotNil(t, err, "macro argument value provider returns error")
+	}
+
+	{
+		//value provider with error
+		_, err := evaluator.Expand(nil, "<ds:klm>")
+		assert.NotNil(t, err, "value provider returns error")
+	}
+
+	{
 		//simple macro with arguments
 
 		_, err := evaluator.Expand(nil, "<ds:agg>")
@@ -87,44 +100,72 @@ func TestMacroExpansion(t *testing.T) {
 
 	}
 }
+
+
 type TestValueProvider struct {
 	expandeWith string
+	err error
 }
 
-func (this TestValueProvider) Init() error {
+func (t TestValueProvider) Init() error {
 	return nil
 }
 
-func (this TestValueProvider) Get(context toolbox.Context, arguments ...interface{}) (interface{}, error) {
+func (t TestValueProvider) Get(context toolbox.Context, arguments ...interface{}) (interface{}, error) {
 	if len(arguments) > 0 {
-		return fmt.Sprintf(this.expandeWith, arguments...), nil
+		return fmt.Sprintf(t.expandeWith, arguments...), t.err
 	}
-	return this.expandeWith, nil
+	return t.expandeWith, t.err
 }
 
-func (this TestValueProvider) Destroy() error {
+func (t TestValueProvider) Destroy() error {
 	return nil
 }
 
 
 func TestExpandParameters(t *testing.T) {
 	valueRegistry := toolbox.NewValueProviderRegistry()
-	valueRegistry.Register("abc", TestValueProvider{"Called with %v %v!"})
+	valueRegistry.Register("abc", TestValueProvider{"Called with %v %v!", nil})
+	valueRegistry.Register("klm", TestValueProvider{"Called with %v %v!", errors.New("Test error")})
 	evaluator := toolbox.MacroEvaluator{ValueProviderRegistry: valueRegistry, Prefix: "<ds:", Postfix: ">"}
-	aMap := map[string]string {
-		"k1": "!<ds:abc>!",
-	}
 
-	err := toolbox.ExpandParameters(&evaluator, aMap)
-	assert.Nil(t, err)
-	assert.Equal(t, "!Called with %v %v!!", aMap["k1"])
+	{
+		aMap := map[string]string {
+			"k1": "!<ds:klm>!",
+		}
+		err := toolbox.ExpandParameters(&evaluator, aMap)
+		assert.NotNil(t, err)
+	}
+	{
+		aMap := map[string]string {
+			"k1": "!<ds:abc>!",
+		}
+		err := toolbox.ExpandParameters(&evaluator, aMap)
+		assert.Nil(t, err)
+		assert.Equal(t, "!Called with %v %v!!", aMap["k1"])
+	}
 }
 
 func TestExpandValue(t *testing.T) {
 	valueRegistry := toolbox.NewValueProviderRegistry()
-	valueRegistry.Register("abc", TestValueProvider{"Called with %v %v!"})
+	valueRegistry.Register("abc", TestValueProvider{"Called with %v %v!", nil})
+	valueRegistry.Register("klm", TestValueProvider{"Called with %v %v!", errors.New("Test error")})
 	evaluator := toolbox.MacroEvaluator{ValueProviderRegistry: valueRegistry, Prefix: "<ds:", Postfix: ">"}
-	expanded, err:= toolbox.ExpandValue(&evaluator, "!<ds:abc>!")
-	assert.Nil(t, err)
-	assert.Equal(t, "!Called with %v %v!!", expanded)
+	{
+		expanded, err := toolbox.ExpandValue(&evaluator, "!<ds:abc>!")
+		assert.Nil(t, err)
+		assert.Equal(t, "!Called with %v %v!!", expanded)
+	}
+	{
+		expanded, err:= toolbox.ExpandValue(&evaluator, "!!")
+		assert.Nil(t, err)
+		assert.Equal(t, "!!", expanded)
+
+	}
+	{
+		_, err:= toolbox.ExpandValue(&evaluator, "<ds:klm>")
+		assert.NotNil(t, err)
+	}
+
+
 }

@@ -59,6 +59,16 @@ func TestNewCastedValueProvider(t *testing.T) {
 		assert.Equal(t, int64(1456144321), timeValue.Unix())
 	}
 
+	{
+		_, err := provider.Get(nil, "time", "2016/02-22 12:32:01 UTC", toolbox.DateFormatToLayout("yyyy-MM-dd hh:mm:ss"))
+		assert.NotNil(t, err, "invalid format")
+	}
+
+	{
+		_, err := provider.Get(nil, "time", "2016-02-22 12:32:01 UTC", toolbox.DateFormatToLayout("yyyy-MM-dd hh:mm:ss z"), "1")
+		assert.NotNil(t, err, "to many parameters")
+	}
+
 
 	{
 		_, err := provider.Get(nil, "ABC", "1")

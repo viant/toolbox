@@ -231,8 +231,11 @@ func RouteToServiceWithCustomFormat(method, url string, request, response interf
 		serverResponse, err = http.Post(url, jsonContentType, buffer)
 	case "delete":
 		var httpRequest *http.Request
-		
-		httpRequest, err = http.NewRequest("DELETE", url, nil)
+		if request != nil {
+			httpRequest, err = http.NewRequest("DELETE", url, buffer)
+		} else {
+			httpRequest, err = http.NewRequest("DELETE", url, nil)
+		}
 		serverResponse, err = http.DefaultClient.Do(httpRequest)
 	default:
 		err = fmt.Errorf("%v is not yet supproted", method)
@@ -240,6 +243,7 @@ func RouteToServiceWithCustomFormat(method, url string, request, response interf
 	if err != nil {
 		return fmt.Errorf("Failed to get response %v %v", err, serverResponse.Header.Get("error"))
 	}
+
 	err = decoderFactory.Create(serverResponse.Body).Decode(response)
 	if err != nil {
 		return fmt.Errorf("Failed to decode response to %T : %v, %v", response, err, serverResponse.Header.Get("error"))

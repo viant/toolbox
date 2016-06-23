@@ -26,17 +26,17 @@ import (
 //Context represents type safe map.
 type Context interface {
 
-	//GetRequired returns a value for a target type of panic if it does not exist
-	GetRequired(targetType interface{}) interface{}
+	//GetRequired returns a value for a target type of error if it does not exist
+	GetRequired(targetType interface{}) (interface{}, error)
 
 	//GetRequired  returns a value for a target type
 	GetOptional(targetType interface{}) interface{}
 
-	//Put puts target type value to the context, or panic if value exists,  is nil or incompatible with target type
-	Put(targetType interface{}, value interface{})
+	//Put puts target type value to the context, or error if value exists,  is nil or incompatible with target type
+	Put(targetType interface{}, value interface{}) error
 
 	//Replace repaces value in the context
-	Replace(targetType interface{}, value interface{})
+	Replace(targetType interface{}, value interface{}) error
 
 	//Remove removes value from the context
 	Remove(targetType interface{}) interface{}
@@ -64,12 +64,12 @@ func (c *contextImpl) getKey(targetType interface{}) string {
 	return reflectType.String()
 }
 
-func (c *contextImpl) GetRequired(targetType interface{}) interface{} {
+func (c *contextImpl) GetRequired(targetType interface{}) (interface{}, error) {
 	if !c.Contains(targetType) {
 		key := c.getKey(targetType)
-		panic("Failed to lookup key:" + key)
+		return nil, fmt.Errorf("Failed to lookup key:" + key)
 	}
-	return c.GetOptional(targetType)
+	return c.GetOptional(targetType), nil
 }
 
 func (c *contextImpl) GetOptional(targetType interface{}) interface{} {
@@ -80,25 +80,23 @@ func (c *contextImpl) GetOptional(targetType interface{}) interface{} {
 	return nil
 }
 
-func (c *contextImpl) Put(targetType interface{}, value interface{}) {
+func (c *contextImpl) Put(targetType interface{}, value interface{}) error {
 	if c.Contains(targetType) {
 		key := c.getKey(targetType)
-		panic("Failed to put key - already exist: " + key)
+		return fmt.Errorf("Failed to put key - already exist: " + key)
 	}
-	c.Replace(targetType, value)
+	return c.Replace(targetType, value)
 }
 
-func (c *contextImpl) Replace(targetType interface{}, value interface{}) {
+func (c *contextImpl) Replace(targetType interface{}, value interface{})  error {
 	key := c.getKey(targetType)
 	targetReflectType := c.getReflectType(targetType)
 	valueReflectType := reflect.TypeOf(value)
 	if valueReflectType == targetReflectType {
 		c.context[key] = value
-		return
+		return nil
 	}
-	if valueReflectType.AssignableTo(targetReflectType) {
-		panic(fmt.Sprintf("value of type %v is not assignable to %v", valueReflectType, targetReflectType))
-	}
+
 	if targetReflectType.Kind() == reflect.Ptr {
 		converted := reflect.ValueOf(value).Elem().Convert(targetReflectType.Elem())
 		convertedPointer := reflect.New(targetReflectType.Elem())
@@ -106,9 +104,13 @@ func (c *contextImpl) Replace(targetType interface{}, value interface{}) {
 		value = convertedPointer.Interface()
 
 	} else {
+		if ! valueReflectType.AssignableTo(targetReflectType) {
+			return fmt.Errorf("value of type %v is not assignable to %v", valueReflectType, targetReflectType)
+		}
 		value = reflect.ValueOf(value).Convert(targetReflectType).Interface()
 	}
 	c.context[key] = value
+	return nil
 }
 
 func (c *contextImpl) Remove(targetType interface{}) interface{} {

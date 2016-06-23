@@ -100,8 +100,8 @@ func TestTypeDetection(t *testing.T) {
 
 	aString := ""
 	assert.True(t, toolbox.IsPointer(&aString))
-	assert.False(t, toolbox.IsPointer(aString))
-
+	assert.False(t, toolbox.IsPointer(reflect.TypeOf(aString)))
+	assert.True(t, toolbox.IsPointer(&aString))
 
 
 }
@@ -113,5 +113,9 @@ func TestIsValueOfKind(t *testing.T) {
 	assert.True(t, toolbox.IsValueOfKind(&text, reflect.Ptr))
 	assert.False(t, toolbox.IsValueOfKind(&text, reflect.Struct))
 	assert.True(t, toolbox.IsValueOfKind(&text, reflect.String))
+
+	values := make([]interface{}, 1)
+	values[0] = 1
+	assert.True(t, toolbox.IsValueOfKind(&values[0], reflect.Int))
 
 }

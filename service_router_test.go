@@ -71,7 +71,7 @@ func StartServer(port string, t *testing.T) {
 		},
 	)
 
-	http.HandleFunc("/v1/reverse/", func(writer http.ResponseWriter, reader *http.Request) {
+	http.HandleFunc("/v1/", func(writer http.ResponseWriter, reader *http.Request) {
 		err := router.Route(writer, reader)
 		assert.Nil(t, err)
 	})
@@ -102,6 +102,14 @@ func TestServiceRouter(t *testing.T) {
 		err := toolbox.RouteToService("post", "http://127.0.0.1:8082/v1/reverse/", []int{1, 7, 3}, &result)
 		if err != nil {
 			t.Errorf("Failed to send get request  %v", err)
+		}
+		assert.EqualValues(t, []int{3, 7, 1}, result)
+	}
+	{
+
+		err := toolbox.RouteToService("delete", "http://127.0.0.1:8082/v1/delete/", []int{1, 7, 3}, &result)
+		if err != nil {
+			t.Errorf("Failed to send delete request  %v", err)
 		}
 		assert.EqualValues(t, []int{3, 7, 1}, result)
 	}
