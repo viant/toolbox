@@ -87,7 +87,12 @@ func (i *interfaceSliceIterator) Next(itemPointer interface{}) {
 	value := i.sliceValue[i.index]
 	i.index++
 	itemPointerValue := reflect.ValueOf(itemPointer)
-	itemPointerValue.Elem().Set(reflect.ValueOf(value))
+	if value != nil {
+		itemPointerValue.Elem().Set(reflect.ValueOf(value))
+	} else {
+		itemPointerValue.Elem().Set(reflect.Zero(reflect.TypeOf(itemPointer).Elem()))
+
+	}
 }
 
 
