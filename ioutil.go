@@ -36,7 +36,7 @@ var FileSchema = "file://"
 func ExtractMimeType(file string) string {
 	extension := path.Ext(file)
 	if len(extension) > 1 {
-		extension = extension[1:len(extension)]
+		extension = extension[1:]
 	}
 
 	if mimeType, ok := FileExtensionMimeType[extension]; ok {

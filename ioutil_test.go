@@ -79,5 +79,5 @@ func getCallerInfo(callerIndex int) (string, string, int) {
 	file, line := callerInfo.FileLine(callerPointer[0])
 	callerName := callerInfo.Name()
 	dotPosition := strings.LastIndex(callerName, ".")
-	return file, callerName[dotPosition+1 : len(callerName)], line
+	return file, callerName[dotPosition+1:], line
 }

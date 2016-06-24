@@ -35,7 +35,7 @@ func TestIndexSlice(t *testing.T) {
 			name string
 		}
 
-		var fooCollection = []Foo{Foo{1, "A"}, Foo{2, "B"}}
+		var fooCollection = []Foo{{1, "A"}, {2, "B"}}
 		var indexedMap = make(map[int]Foo)
 		toolbox.IndexSlice(fooCollection, indexedMap, func(foo Foo) int {
 			return foo.id
@@ -116,7 +116,7 @@ func TestMakeMapFromSlice(t *testing.T) {
 		name string
 	}
 
-	var fooCollection = []Foo{Foo{1, "A"}, Foo{2, "B"}}
+	var fooCollection = []Foo{{1, "A"}, {2, "B"}}
 	var testMap = make(map[int]string)
 	toolbox.SliceToMap(fooCollection, testMap, func(foo Foo) int {
 		return foo.id
@@ -132,13 +132,13 @@ func TestMakeMapFromSlice(t *testing.T) {
 
 func TestProcess2DSliceInBatches(t *testing.T) {
 	slice := [][]interface{}{
-		[]interface{}{1, 2, 3},
-		[]interface{}{4, 5, 7},
-		[]interface{}{7, 8, 9},
-		[]interface{}{10, 11, 12},
-		[]interface{}{13, 14, 15},
-		[]interface{}{16, 17, 18},
-		[]interface{}{19, 20, 21},
+		{1, 2, 3},
+		{4, 5, 7},
+		{7, 8, 9},
+		{10, 11, 12},
+		{13, 14, 15},
+		{16, 17, 18},
+		{19, 20, 21},
 	}
 
 	actualItemCount := 0
@@ -263,10 +263,10 @@ func TestCopyMapEntries(t *testing.T) {
 func TestIndexMultimap(t *testing.T) {
 	type Product struct{ vendor, name string }
 	products := []Product{
-		Product{"Vendor1", "Product1"},
-		Product{"Vendor2", "Product2"},
-		Product{"Vendor1", "Product3"},
-		Product{"Vendor1", "Product4"},
+		{"Vendor1", "Product1"},
+		{"Vendor2", "Product2"},
+		{"Vendor1", "Product3"},
+		{"Vendor1", "Product4"},
 	}
 
 	productsByVendor := make(map[string][]Product)
@@ -286,10 +286,10 @@ func TestSliceToMultiMap(t *testing.T) {
 	}
 
 	products := []Product{
-		Product{"Vendor1", "Product1", 1},
-		Product{"Vendor2", "Product2", 2},
-		Product{"Vendor1", "Product3", 3},
-		Product{"Vendor1", "Product4", 4},
+		{"Vendor1", "Product1", 1},
+		{"Vendor2", "Product2", 2},
+		{"Vendor1", "Product3", 3},
+		{"Vendor1", "Product4", 4},
 	}
 
 	productsByVendor := make(map[string][]int)
@@ -309,10 +309,10 @@ func TestSliceToMultiMap(t *testing.T) {
 func TestTransformSlice(t *testing.T) {
 	type Product struct{ vendor, name string }
 	products := []Product{
-		Product{"Vendor1", "Product1"},
-		Product{"Vendor2", "Product2"},
-		Product{"Vendor1", "Product3"},
-		Product{"Vendor1", "Product4"},
+		{"Vendor1", "Product1"},
+		{"Vendor2", "Product2"},
+		{"Vendor1", "Product3"},
+		{"Vendor1", "Product4"},
 	}
 	var vendors = make([]string, 0)
 	toolbox.TransformSlice(products, &vendors, func(product Product) string {
