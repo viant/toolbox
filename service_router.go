@@ -26,15 +26,28 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
+	"errors"
+	"io/ioutil"
 )
 
 var jsonContentType = "application/json"
 var textPlainContentType = "text/plain"
+var httpMethods = map[string]bool{
+	http.MethodDelete:true,
+	http.MethodGet:true,
+	http.MethodPatch:true,
+	http.MethodPost:true,
+	http.MethodPut:true,
+	http.MethodHead:true,
+	http.MethodTrace:true,
+	http.MethodOptions:true,
+}
+
 
 //ServiceRouting represents a simple web services routing rule, which is matched with http request
 type ServiceRouting struct {
-	URI                 string      //matching uri
-	Handler             interface{} //has to be func
+	URI                 string                    //matching uri
+	Handler             interface{}               //has to be func
 	HTTPMethod          string
 	Parameters          []string
 	ContentTypeEncoders map[string]EncoderFactory //content type encoder factory
@@ -217,6 +230,9 @@ func RouteToService(method, url string, request, response interface{}) (err erro
 
 //RouteToServiceWithCustomFormat calls web service url, with passed in custom format request, and encodes custom format http response into passed response
 func RouteToServiceWithCustomFormat(method, url string, request, response interface{}, encoderFactory EncoderFactory, decoderFactory DecoderFactory) (err error) {
+	if _, found := httpMethods[strings.ToUpper(method)]; !found {
+		return errors.New("Unsupported method:" + method)
+	}
 	var buffer *bytes.Buffer
 	if request != nil {
 		buffer = new(bytes.Buffer)
@@ -226,29 +242,29 @@ func RouteToServiceWithCustomFormat(method, url string, request, response interf
 		}
 	}
 	var serverResponse *http.Response
-	switch strings.ToLower(method) {
-	case "get":
-		serverResponse, err = http.Get(url)
-	case "post":
-		serverResponse, err = http.Post(url, jsonContentType, buffer)
-	case "delete":
-		var httpRequest *http.Request
-		if request != nil {
-			httpRequest, err = http.NewRequest("DELETE", url, buffer)
-		} else {
-			httpRequest, err = http.NewRequest("DELETE", url, nil)
-		}
-		serverResponse, err = http.DefaultClient.Do(httpRequest)
-	default:
-		err = fmt.Errorf("%v is not yet supproted", method)
+	var httpRequest *http.Request
+	httpMethod := strings.ToUpper(method)
+	if request != nil {
+		httpRequest, err = http.NewRequest(httpMethod, url, buffer)
+		httpRequest.Header.Set("Content-Type", jsonContentType)
+	} else {
+		httpRequest, err = http.NewRequest(httpMethod, url, nil)
 	}
-	if err != nil {
+
+	serverResponse, err = http.DefaultClient.Do(httpRequest)
+	if err != nil && serverResponse != nil {
 		return fmt.Errorf("Failed to get response %v %v", err, serverResponse.Header.Get("error"))
 	}
 
-	err = decoderFactory.Create(serverResponse.Body).Decode(response)
-	if err != nil {
-		return fmt.Errorf("Failed to decode response to %T : %v, %v", response, err, serverResponse.Header.Get("error"))
+	if response != nil {
+		body, err := ioutil.ReadAll(serverResponse.Body)
+		if err != nil {
+			return fmt.Errorf("Failed to read response %v", err)
+		}
+		err = decoderFactory.Create(strings.NewReader(string(body))).Decode(response)
+		if err != nil {
+			return fmt.Errorf("Failed to decode response to %T: body: %v: %v, %v", response, string(body), err, serverResponse.Header.Get("error"))
+		}
 	}
 	return nil
 }
