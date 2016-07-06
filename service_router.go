@@ -2,32 +2,31 @@ package toolbox
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"reflect"
 	"strings"
-	"errors"
-	"io/ioutil"
 )
 
 var jsonContentType = "application/json"
 var textPlainContentType = "text/plain"
 var httpMethods = map[string]bool{
-	http.MethodDelete:true,
-	http.MethodGet:true,
-	http.MethodPatch:true,
-	http.MethodPost:true,
-	http.MethodPut:true,
-	http.MethodHead:true,
-	http.MethodTrace:true,
-	http.MethodOptions:true,
+	http.MethodDelete:  true,
+	http.MethodGet:     true,
+	http.MethodPatch:   true,
+	http.MethodPost:    true,
+	http.MethodPut:     true,
+	http.MethodHead:    true,
+	http.MethodTrace:   true,
+	http.MethodOptions: true,
 }
-
 
 //ServiceRouting represents a simple web services routing rule, which is matched with http request
 type ServiceRouting struct {
-	URI                 string                    //matching uri
-	Handler             interface{}               //has to be func
+	URI                 string      //matching uri
+	Handler             interface{} //has to be func
 	HTTPMethod          string
 	Parameters          []string
 	ContentTypeEncoders map[string]EncoderFactory //content type encoder factory
