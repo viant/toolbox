@@ -146,7 +146,7 @@ func ExpandFileTemplate(template string) string {
 	return strings.Replace(template, source, formatedTime, 1)
 }
 
-//NewLogStream
+//NewLogStream creat a new LogStream for passed om path and file config
 func (l *FileLogger) NewLogStream(path string, config *FileLoggerConfig) (*LogStream, error) {
 	osFile, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
@@ -181,8 +181,8 @@ func (l *FileLogger) acquireLogStream(messageType string) (*LogStream, error) {
 }
 
 //Log logs message into stream
-func (f *FileLogger) Log(message *LogMessage) error {
-	logStream, err := f.acquireLogStream(message.MessageType)
+func (l *FileLogger) Log(message *LogMessage) error {
+	logStream, err := l.acquireLogStream(message.MessageType)
 	if err != nil {
 		return err
 	}
