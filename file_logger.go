@@ -2,6 +2,7 @@ package toolbox
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 	"sync"
@@ -61,9 +62,13 @@ func (s *LogStream) Log(message *LogMessage) {
 	s.LastAddQueueTime = time.Now()
 }
 
-func (s *LogStream) write(message string) {
+func (s *LogStream) write(message string) error {
 	atomic.StoreUint64(&s.LastWriteTime, uint64(time.Now().UnixNano()))
-	s.File.WriteString(message)
+	_, err := s.File.WriteString(message)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 //Close closes stream.
@@ -86,7 +91,10 @@ func (s *LogStream) manageWritesInBatch() {
 			if messageCount > 0 {
 				elapsedInMs := (int(time.Now().UnixNano()) - int(atomic.LoadUint64(&s.LastWriteTime))) / 1000000
 				if elapsedInMs < 0 || elapsedInMs >= s.Config.FlushRequencyInMs {
-					s.write(messages)
+					err := s.write(messages)
+					if err != nil {
+						fmt.Printf("Failed to write to log due to %v", err)
+					}
 					messages = ""
 					messageCount = 0
 				}
