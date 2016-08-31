@@ -68,7 +68,7 @@ func (s *LogStream) write(message string) error {
 	if err != nil {
 		return err
 	}
-	return nil
+	return s.File.Sync()
 }
 
 //Close closes stream.
