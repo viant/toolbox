@@ -80,6 +80,12 @@ func (s *LogStream) Close() {
 
 }
 
+
+func (s *LogStream) isFrequencyFlushNeeded() bool {
+	elapsedInMs := (int(time.Now().UnixNano()) - int(atomic.LoadUint64(&s.LastWriteTime))) / 1000000
+	return  elapsedInMs >= s.Config.FlushRequencyInMs;
+}
+
 func (s *LogStream) manageWritesInBatch() {
 	var message, messages string
 	var messageCount = 0
@@ -89,8 +95,7 @@ func (s *LogStream) manageWritesInBatch() {
 
 		case <-time.After(timeout):
 			if messageCount > 0 {
-				elapsedInMs := (int(time.Now().UnixNano()) - int(atomic.LoadUint64(&s.LastWriteTime))) / 1000000
-				if elapsedInMs < 0 || elapsedInMs >= s.Config.FlushRequencyInMs {
+				if s.isFrequencyFlushNeeded() {
 					err := s.write(messages)
 					if err != nil {
 						fmt.Printf("Failed to write to log due to %v", err)
@@ -112,11 +117,12 @@ func (s *LogStream) manageWritesInBatch() {
 			s.RecordCount++
 
 			var hasReachMaxRecrods = messageCount >= s.Config.QueueFlashCount && s.Config.QueueFlashCount > 0
-			if hasReachMaxRecrods {
+			if hasReachMaxRecrods  || s.isFrequencyFlushNeeded() {
 				s.write(messages)
 				messages = ""
 				messageCount = 0
 			}
+
 		}
 
 	}

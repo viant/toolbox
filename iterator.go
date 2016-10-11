@@ -11,7 +11,7 @@ type Iterator interface {
 	HasNext() bool
 
 	//Next sets item pointer with next element.
-	Next(itemPointer interface{})
+	Next(itemPointer interface{}) error
 }
 
 type sliceIterator struct {
@@ -23,11 +23,12 @@ func (i *sliceIterator) HasNext() bool {
 	return i.index < i.sliceValue.Len()
 }
 
-func (i *sliceIterator) Next(itemPointer interface{}) {
+func (i *sliceIterator) Next(itemPointer interface{}) error {
 	value := i.sliceValue.Index(i.index)
 	i.index++
 	itemPointerValue := reflect.ValueOf(itemPointer)
 	itemPointerValue.Elem().Set(value)
+	return nil
 }
 
 type stringSliceIterator struct {
@@ -39,15 +40,16 @@ func (i *stringSliceIterator) HasNext() bool {
 	return i.index < len(i.sliceValue)
 }
 
-func (i *stringSliceIterator) Next(itemPointer interface{}) {
+func (i *stringSliceIterator) Next(itemPointer interface{}) error {
 	value := i.sliceValue[i.index]
 	i.index++
 	if stringPointer, ok := itemPointer.(*string); ok {
 		*stringPointer = value
-		return
+		return nil
 	}
 	interfacePointer := itemPointer.(*interface{})
 	*interfacePointer = value
+	return nil
 }
 
 type interfaceSliceIterator struct {
@@ -59,7 +61,7 @@ func (i *interfaceSliceIterator) HasNext() bool {
 	return i.index < len(i.sliceValue)
 }
 
-func (i *interfaceSliceIterator) Next(itemPointer interface{}) {
+func (i *interfaceSliceIterator) Next(itemPointer interface{}) error {
 	value := i.sliceValue[i.index]
 	i.index++
 	itemPointerValue := reflect.ValueOf(itemPointer)
@@ -69,6 +71,7 @@ func (i *interfaceSliceIterator) Next(itemPointer interface{}) {
 		itemPointerValue.Elem().Set(reflect.Zero(reflect.TypeOf(itemPointer).Elem()))
 
 	}
+	return nil
 }
 
 //NewSliceIterator creates a new slice iterator.

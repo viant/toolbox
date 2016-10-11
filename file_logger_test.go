@@ -91,9 +91,9 @@ func TestLogger(t *testing.T) {
 	logger, err := toolbox.NewFileLogger(toolbox.FileLoggerConfig{
 		LogType:           "test",
 		FileTemplate:      "/tmp/test[yyyy].log",
-		QueueFlashCount:   5,
+		QueueFlashCount:   4,
 		MaxQueueSize:      100,
-		FlushRequencyInMs: 250,
+		FlushRequencyInMs: 1200,
 		MaxIddleTimeInSec: 2,
 	})
 
@@ -104,7 +104,10 @@ func TestLogger(t *testing.T) {
 			MessageType: "test",
 			Message:     fmt.Sprintf("Abc%v", i),
 		})
+		time.Sleep(10 * time.Millisecond)
 	}
+
+
 	time.Sleep(400 * time.Millisecond)
 	if file, err := os.Open(testFile); err == nil {
 		defer file.Close()
