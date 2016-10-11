@@ -16,15 +16,18 @@ func TestSliceIterator(t *testing.T) {
 		value := values[0]
 
 		assert.True(t, iterator.HasNext())
-		iterator.Next(&value)
+		err := iterator.Next(&value)
+		assert.Nil(t, err)
 		assert.Equal(t, "a", value)
 
 		assert.True(t, iterator.HasNext())
-		iterator.Next(&value)
+		err = iterator.Next(&value)
+		assert.Nil(t, err)
 		assert.Equal(t, "r", value)
 
 		assert.True(t, iterator.HasNext())
-		iterator.Next(&value)
+		err = iterator.Next(&value)
+		assert.Nil(t, err)
 
 		assert.Equal(t, "c", value)
 
@@ -35,16 +38,18 @@ func TestSliceIterator(t *testing.T) {
 		value := ""
 
 		assert.True(t, iterator.HasNext())
-		iterator.Next(&value)
+		err :=iterator.Next(&value)
+		assert.Nil(t, err)
 		assert.Equal(t, "a", value)
 
 		assert.True(t, iterator.HasNext())
-		iterator.Next(&value)
+		err = iterator.Next(&value)
+		assert.Nil(t, err)
 		assert.Equal(t, "r", value)
 
 		assert.True(t, iterator.HasNext())
-		iterator.Next(&value)
-
+		err = iterator.Next(&value)
+		assert.Nil(t, err)
 		assert.Equal(t, "c", value)
 
 	}
@@ -54,16 +59,19 @@ func TestSliceIterator(t *testing.T) {
 		value := ""
 
 		assert.True(t, iterator.HasNext())
-		iterator.Next(&value)
+		err :=iterator.Next(&value)
+		assert.Nil(t, err)
 		assert.Equal(t, "a", value)
 
 		assert.True(t, iterator.HasNext())
-		iterator.Next(&value)
+		err = iterator.Next(&value)
+		assert.Nil(t, err)
 		assert.Equal(t, "z", value)
 
 		var values = make([]interface{}, 1)
 		assert.True(t, iterator.HasNext())
-		iterator.Next(&values[0])
+		err = iterator.Next(&values[0])
+		assert.Nil(t, err)
 		assert.Equal(t, "c", values[0])
 
 	}
@@ -73,15 +81,19 @@ func TestSliceIterator(t *testing.T) {
 		iterator := toolbox.NewSliceIterator(slice)
 		value := 0
 		assert.True(t, iterator.HasNext())
-		iterator.Next(&value)
+
+		err := iterator.Next(&value)
+		assert.Nil(t, err)
 		assert.Equal(t, 3, value)
 
 		assert.True(t, iterator.HasNext())
-		iterator.Next(&value)
+		err = iterator.Next(&value)
+		assert.Nil(t, err)
 		assert.Equal(t, 2, value)
 
 		assert.True(t, iterator.HasNext())
-		iterator.Next(&value)
+		err = iterator.Next(&value)
+		assert.Nil(t, err)
 		assert.Equal(t, 1, value)
 	}
 
