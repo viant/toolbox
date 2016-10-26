@@ -107,7 +107,6 @@ func TestLogger(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 	}
 
-
 	time.Sleep(400 * time.Millisecond)
 	if file, err := os.Open(testFile); err == nil {
 		defer file.Close()

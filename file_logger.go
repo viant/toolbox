@@ -80,10 +80,9 @@ func (s *LogStream) Close() {
 
 }
 
-
 func (s *LogStream) isFrequencyFlushNeeded() bool {
 	elapsedInMs := (int(time.Now().UnixNano()) - int(atomic.LoadUint64(&s.LastWriteTime))) / 1000000
-	return  elapsedInMs >= s.Config.FlushRequencyInMs;
+	return elapsedInMs >= s.Config.FlushRequencyInMs
 }
 
 func (s *LogStream) manageWritesInBatch() {
@@ -117,7 +116,7 @@ func (s *LogStream) manageWritesInBatch() {
 			s.RecordCount++
 
 			var hasReachMaxRecrods = messageCount >= s.Config.QueueFlashCount && s.Config.QueueFlashCount > 0
-			if hasReachMaxRecrods  || s.isFrequencyFlushNeeded() {
+			if hasReachMaxRecrods || s.isFrequencyFlushNeeded() {
 				s.write(messages)
 				messages = ""
 				messageCount = 0

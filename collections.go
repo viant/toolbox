@@ -68,6 +68,7 @@ func ProcessSliceWithIndex(slice interface{}, handler func(index int, item inter
 //IndexSlice reads passed in slice and applies function that takes a slice item as argument to return a key value.
 //passed in resulting map needs to match key type return by a key function, and accept slice item type as argument.
 func IndexSlice(slice, resultingMap, keyFunction interface{}) {
+
 	mapValue := DiscoverValueByKind(resultingMap, reflect.Map)
 	ProcessSlice(slice, func(item interface{}) bool {
 		result := CallFunction(keyFunction, item)
@@ -157,6 +158,20 @@ func HasSliceAnyElements(sourceSlice interface{}, elements ...interface{}) (resu
 
 //SliceToMap reads passed in slice to to apply the key and value function for each item. Result of these calls is placed in the resulting map.
 func SliceToMap(sourceSlice, targetMap, keyFunction, valueFunction interface{}) {
+	//optimized case
+	if stringBoolMap, ok := targetMap.(map[string]bool); ok {
+		if stringSlice, ok := sourceSlice.([]string); ok {
+			if valueFunction, ok := keyFunction.(func(string) bool); ok {
+				if keyFunction, ok := keyFunction.(func(string) string); ok {
+					for _, item := range stringSlice {
+						stringBoolMap[keyFunction(item)] = valueFunction(item)
+					}
+					return
+				}
+			}
+		}
+	}
+
 	mapValue := DiscoverValueByKind(targetMap, reflect.Map)
 	ProcessSlice(sourceSlice, func(item interface{}) bool {
 		key := CallFunction(keyFunction, item)

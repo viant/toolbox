@@ -111,6 +111,19 @@ func TestMakeMapFromSlice(t *testing.T) {
 
 }
 
+func TestSliceToMap(t *testing.T) {
+	aSlice := []string{"a", "c"}
+	aMap := make(map[string]bool)
+
+	toolbox.SliceToMap(aSlice, aMap, func(s string) string {
+		return s
+	}, func(s string) bool {
+		return true
+	})
+	assert.Equal(t, 2, len(aMap))
+
+}
+
 func TestProcess2DSliceInBatches(t *testing.T) {
 	slice := [][]interface{}{
 		{1, 2, 3},

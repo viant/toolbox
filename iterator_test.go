@@ -38,7 +38,7 @@ func TestSliceIterator(t *testing.T) {
 		value := ""
 
 		assert.True(t, iterator.HasNext())
-		err :=iterator.Next(&value)
+		err := iterator.Next(&value)
 		assert.Nil(t, err)
 		assert.Equal(t, "a", value)
 
@@ -59,7 +59,7 @@ func TestSliceIterator(t *testing.T) {
 		value := ""
 
 		assert.True(t, iterator.HasNext())
-		err :=iterator.Next(&value)
+		err := iterator.Next(&value)
 		assert.Nil(t, err)
 		assert.Equal(t, "a", value)
 
