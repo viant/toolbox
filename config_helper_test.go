@@ -9,7 +9,7 @@ import (
 
 func TestLoadConfigFromUrl(t *testing.T) {
 
-	fileName, _, _ := getCallerInfo(2)
+	fileName, _, _ := toolbox.CallerInfo(2)
 	basePath := path.Dir(fileName)
 	url := toolbox.FileSchema + path.Join(basePath, "test", "config.json")
 	config := &TestConfig{}
@@ -23,7 +23,7 @@ func TestLoadConfigFromUrl(t *testing.T) {
 
 func TestLoadConfigFromUrl_Corrupted(t *testing.T) {
 
-	fileName, _, _ := getCallerInfo(2)
+	fileName, _, _ := toolbox.CallerInfo(2)
 	basePath := path.Dir(fileName)
 	url := toolbox.FileSchema + path.Join(basePath, "test", "corrupted_config.json")
 	config := &TestConfig{}
@@ -32,7 +32,7 @@ func TestLoadConfigFromUrl_Corrupted(t *testing.T) {
 }
 
 func TestLoadConfigFromUrl_NonExisting(t *testing.T) {
-	fileName, _, _ := getCallerInfo(2)
+	fileName, _, _ := toolbox.CallerInfo(2)
 	basePath := path.Dir(fileName)
 	url := toolbox.FileSchema + path.Join(basePath, "test", "non_existing_config.json")
 	config := &TestConfig{}

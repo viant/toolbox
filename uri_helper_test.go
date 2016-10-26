@@ -2,8 +2,6 @@ package toolbox_test
 
 import (
 	"os"
-	"runtime"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,7 +9,7 @@ import (
 )
 
 func TestOpenURL(t *testing.T) {
-	fileName, _, _ := getCallerInfo(2)
+	fileName, _, _ := toolbox.CallerInfo(2)
 	{
 		file, err := toolbox.OpenURL(toolbox.FileSchema+fileName, os.O_RDONLY, 0644)
 		assert.Nil(t, err)
@@ -30,7 +28,7 @@ func TestOpenURL(t *testing.T) {
 }
 
 func TestOpenReaderFromURL(t *testing.T) {
-	fileName, _, _ := getCallerInfo(2)
+	fileName, _, _ := toolbox.CallerInfo(2)
 	{
 		file, _, err := toolbox.OpenReaderFromURL(toolbox.FileSchema + fileName)
 		assert.Nil(t, err)
@@ -53,12 +51,3 @@ func TestOpenReaderFromURL(t *testing.T) {
 	}
 }
 
-func getCallerInfo(callerIndex int) (string, string, int) {
-	var callerPointer = make([]uintptr, 10) // at least 1 entry needed
-	runtime.Callers(callerIndex, callerPointer)
-	callerInfo := runtime.FuncForPC(callerPointer[0])
-	file, line := callerInfo.FileLine(callerPointer[0])
-	callerName := callerInfo.Name()
-	dotPosition := strings.LastIndex(callerName, ".")
-	return file, callerName[dotPosition+1:], line
-}
