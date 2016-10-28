@@ -1,8 +1,8 @@
 package toolbox
 
 import (
-	"strings"
 	"runtime"
+	"strings"
 )
 
 func CallerInfo(callerIndex int) (string, string, int) {

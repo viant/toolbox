@@ -7,6 +7,7 @@ import (
 
 var dirMode os.FileMode = 0644
 
+// RemoveFileIfExist remove file if exists
 func RemoveFileIfExist(filenames ...string) error {
 	for _, filename := range filenames {
 		if !FileExists(filename) {
@@ -20,6 +21,7 @@ func RemoveFileIfExist(filenames ...string) error {
 	return nil
 }
 
+// FileExists checks if file exists
 func FileExists(filename string) bool {
 	if _, err := os.Stat(filename); err != nil {
 		return false
@@ -27,6 +29,7 @@ func FileExists(filename string) bool {
 	return true
 }
 
+// CreateDirIfNotExist creates directory if they do not exist
 func CreateDirIfNotExist(dirs ...string) error {
 	for _, dir := range dirs {
 		if !FileExists(dir) {

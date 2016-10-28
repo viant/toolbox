@@ -50,4 +50,3 @@ func TestOpenReaderFromURL(t *testing.T) {
 		assert.NotNil(t, err)
 	}
 }
-
