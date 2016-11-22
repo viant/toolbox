@@ -55,16 +55,20 @@ func (e *marshalerEncoder) Encode(v interface{}) error {
 	if err != nil {
 		return err
 	}
-
-	for i := 0; i < len(bytes); i++ {
-		count, err := e.writer.Write(bytes)
+	var totalByteWritten int = 0
+	var bytesLen = len(bytes)
+	for i := 0; i < bytesLen; i++ {
+		bytesWritten, err := e.writer.Write(bytes[totalByteWritten:])
 		if err != nil {
-			return err
+			return fmt.Errorf("Failed to write data %v", err)
 		}
-		if count == len(bytes) {
+		totalByteWritten = totalByteWritten + bytesWritten
+		if totalByteWritten == bytesLen {
 			break
 		}
-		bytes = bytes[count:]
+	}
+	if totalByteWritten != bytesLen {
+		return fmt.Errorf("Failed to write all data, written %v, expected: %v", totalByteWritten, bytesLen)
 	}
 	return nil
 }
