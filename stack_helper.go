@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+// CallerInfo return filename, function or file line from the stack
 func CallerInfo(callerIndex int) (string, string, int) {
 	var callerPointer = make([]uintptr, 10) // at least 1 entry needed
 	runtime.Callers(callerIndex, callerPointer)

@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-var dirMode os.FileMode = 0644
+var dirMode os.FileMode = 0744
 
 // RemoveFileIfExist remove file if exists
 func RemoveFileIfExist(filenames ...string) error {
