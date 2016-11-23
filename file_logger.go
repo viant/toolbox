@@ -4,9 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/signal"
 	"strings"
 	"sync"
 	"sync/atomic"
+	"syscall"
 	"time"
 )
 
@@ -53,6 +55,7 @@ type LogStream struct {
 	LastAddQueueTime time.Time
 	LastWriteTime    uint64
 	Messages         chan string
+	Complete         chan bool
 }
 
 //Log logs message into stream
@@ -86,28 +89,23 @@ func (s *LogStream) isFrequencyFlushNeeded() bool {
 }
 
 func (s *LogStream) manageWritesInBatch() {
+	messageCount := 0
 	var message, messages string
-	var messageCount = 0
 	var timeout = time.Duration(2 * int(s.Config.FlushRequencyInMs) * int(time.Millisecond))
 	for {
 		select {
-
+		case done := <-s.Complete:
+			if done {
+				manageWritesInBatchLoopFlush(s, messageCount, messages)
+				s.Close()
+				os.Exit(0)
+			}
 		case <-time.After(timeout):
-			if messageCount > 0 {
-				if s.isFrequencyFlushNeeded() {
-					err := s.write(messages)
-					if err != nil {
-						fmt.Printf("Failed to write to log due to %v", err)
-					}
-					messages = ""
-					messageCount = 0
-				}
+			if !manageWritesInBatchLoopFlush(s, messageCount, messages) {
+				return
 			} else {
-				elapsedInMs := (int(time.Now().UnixNano()) - int(atomic.LoadUint64(&s.LastWriteTime))) / 1000000
-				if elapsedInMs > s.Config.MaxIddleTimeInSec*1000 {
-					s.Close()
-					return
-				}
+				messageCount = 0
+				messages = ""
 			}
 		case message = <-s.Messages:
 			messages += message + "\n"
@@ -123,8 +121,25 @@ func (s *LogStream) manageWritesInBatch() {
 			}
 
 		}
-
 	}
+}
+
+func manageWritesInBatchLoopFlush(s *LogStream, messageCount int, messages string) bool {
+	if messageCount > 0 {
+		if s.isFrequencyFlushNeeded() {
+			err := s.write(messages)
+			if err != nil {
+				fmt.Printf("Failed to write to log due to %v", err)
+			}
+			return true
+		}
+	}
+	elapsedInMs := (int(time.Now().UnixNano()) - int(atomic.LoadUint64(&s.LastWriteTime))) / 1000000
+	if elapsedInMs > s.Config.MaxIddleTimeInSec*1000 {
+		s.Close()
+		return false
+	}
+	return true
 }
 
 //FileLogger represents a file logger
@@ -165,7 +180,7 @@ func (l *FileLogger) NewLogStream(path string, config *FileLoggerConfig) (*LogSt
 	if err != nil {
 		return nil, err
 	}
-	logStream := &LogStream{Name: path, Logger: l, Config: config, File: osFile, Messages: make(chan string, config.MaxQueueSize)}
+	logStream := &LogStream{Name: path, Logger: l, Config: config, File: osFile, Messages: make(chan string, config.MaxQueueSize), Complete: make(chan bool)}
 	go func() {
 		logStream.manageWritesInBatch()
 	}()
@@ -218,5 +233,22 @@ func NewFileLogger(configs ...FileLoggerConfig) (*FileLogger, error) {
 		}
 		result.config[configs[i].LogType] = &configs[i]
 	}
+	// If there's a signal to quit the program send it to channel
+	sigc := make(chan os.Signal, 1)
+	signal.Notify(sigc,
+		syscall.SIGINT,
+		syscall.SIGTERM)
+	go func() {
+		// Block until receive a quit signal
+		_quit := <-sigc
+		_ = _quit // don't care which type
+		for _, value := range result.streams {
+			// No wait flush
+			value.Config.FlushRequencyInMs = 0
+			// Write logs now
+			value.Complete <- true
+		}
+	}()
+
 	return result, nil
 }
