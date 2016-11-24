@@ -14,12 +14,13 @@ import (
 
 //FileLoggerConfig represents FileLogger
 type FileLoggerConfig struct {
-	LogType           string
-	FileTemplate      string
-	QueueFlashCount   int
-	MaxQueueSize      int
-	FlushRequencyInMs int
-	MaxIddleTimeInSec int
+	LogType            string
+	FileTemplate       string
+	QueueFlashCount    int
+	MaxQueueSize       int
+	FlushRequencyInMs  int //type backward-forward compatibility
+	FlushFrequencyInMs int
+	MaxIddleTimeInSec  int
 }
 
 //Validate valides configuration sttings
@@ -27,9 +28,13 @@ func (c *FileLoggerConfig) Validate() error {
 	if len(c.LogType) == 0 {
 		return errors.New("Log type was empty")
 	}
-	if c.FlushRequencyInMs == 0 {
-		return errors.New("FlushRequencyInMs was 0")
+	if c.FlushFrequencyInMs == 0 {
+		c.FlushFrequencyInMs = c.FlushRequencyInMs
 	}
+	if c.FlushFrequencyInMs == 0 {
+		return errors.New("FlushFrequencyInMs was 0")
+	}
+
 	if c.MaxQueueSize == 0 {
 		return errors.New("MaxQueueSize was 0")
 	}
@@ -85,13 +90,13 @@ func (s *LogStream) Close() {
 
 func (s *LogStream) isFrequencyFlushNeeded() bool {
 	elapsedInMs := (int(time.Now().UnixNano()) - int(atomic.LoadUint64(&s.LastWriteTime))) / 1000000
-	return elapsedInMs >= s.Config.FlushRequencyInMs
+	return elapsedInMs >= s.Config.FlushFrequencyInMs
 }
 
 func (s *LogStream) manageWritesInBatch() {
 	messageCount := 0
 	var message, messages string
-	var timeout = time.Duration(2 * int(s.Config.FlushRequencyInMs) * int(time.Millisecond))
+	var timeout = time.Duration(2 * int(s.Config.FlushFrequencyInMs) * int(time.Millisecond))
 	for {
 		select {
 		case done := <-s.Complete:
@@ -252,7 +257,7 @@ func NewFileLogger(configs ...FileLoggerConfig) (*FileLogger, error) {
 		_ = _quit // don't care which type
 		for _, stream := range result.streams {
 			// No wait flush
-			stream.Config.FlushRequencyInMs = 0
+			stream.Config.FlushFrequencyInMs = 0
 			// Write logs now
 			stream.Complete <- true
 		}

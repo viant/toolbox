@@ -91,7 +91,7 @@ func TestLogger(t *testing.T) {
 		FileTemplate:      "/tmp/test[yyyy].log",
 		QueueFlashCount:   4,
 		MaxQueueSize:      100,
-		FlushRequencyInMs: 800,
+		FlushRequencyInMs: 600,
 		MaxIddleTimeInSec: 1,
 	})
 

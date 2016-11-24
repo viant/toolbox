@@ -9,7 +9,14 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 
 - [Motivation](#Motivation)
 - [Collection Utilities](#Collection-Utilities)
-
+- [Converter && Conversion Utilities](#Conversion-Utilities)
+- [Struct Utilities](#Struct-Utilities)
+- [Function Utilities](#Function-Utilities)
+- [Time Utilities](#Time Utilities)
+- [Macro](#Macro)
+- [ServiceRouter](#ServiceRouter)
+- [Decoder and Encoder](#Decoder-ndEncoder)
+- [Logger](#Logger)
 - [License](#License)
 - [Credits and Acknowledgements](#Credits-and-Acknowledgements)
 
@@ -255,14 +262,16 @@ Example:
     	})
 ```
 
-
+<a name="Conversion-Utilities"></a>
 ### Converter && Conversion Utilities
 
-
+<a name="Struct-Utilities"></a>
 ### Struct Utilities
  	
+<a name="Function-Utilities"></a>
 ### Function Utilities
 
+<a name="Time Utilities"></a>
 ### Time Utilities	
 	
 **DateFormatToLayout**
@@ -275,14 +284,106 @@ Java date format style to go date layout conversion.
 		timeValue, err := time.Parse(dateLaout, "2016-02-22 12:32:01 UTC")
 ```
 
-
+<a name="Macro"></a>
 ### Macro
 
+<a name="Tokenizer"></a>
 ### Tokenizer
 
+<a name="ServiceRouter"></a>
 ### ServiceRouter
 
+<a name="DecoderandEncoder "></a>
 ### Decoder and Encoder 
+
+#### Decoder
+
+This library defines DecoderFactory interface to delegate  decoder creation, 
+This library comes with standard JSON and UnMarshaler (protobuf) factory implementation.
+
+ Example
+  
+```go
+    factory :=toolbox.NewJsonDecoderFactory()
+    ....
+    
+    decoder := factory.Create(reader)
+    foo := &Foo{}
+    err = decoder.Decode(foo)
+
+
+
+    marshalerFactory := toolbox.NewUnMarshalerDecoderFactory()
+    decoder := marshalerFactory.Create(reader)
+    foo := &Foo{}
+    err = decoder.Decode(foo)
+```
+
+
+#### Encoder
+
+This library defines EncoderFactory interface to delegate encoder creation, 
+This library comes with standard JSON and Marshaler (protobuf) factory implementation.
+
+ Example
+  
+```go
+        factory :=toolbox.NewJsonEncoderFactory()
+        ....
+        buffer := new(bytes.Buffer)
+        
+        
+        decoder := factory.Create(buffer)
+        err = decoder.Encode(foo)
+    
+    
+    
+        marshalerFactory := toolbox.NewMarshalerEncoderFactory()
+        decoder := marshalerFactory.Create(buffer)
+        err = decoder.Encode(foo)
+```
+
+
+
+<a name="Logger"></a>
+### Logger
+
+
+This library provides a file logger implementation that optimizes writes.
+Log messages are queues until max queue size or flush frequency are met.
+On top of that Ctrl-C also forces immediate log messages flush to disk.
+
+File template support java style time format to manage rotation on the file name level.
+
+```go
+    logger, err := toolbox.NewFileLogger(toolbox.FileLoggerConfig{
+		LogType:           "test",
+		FileTemplate:      "/tmp/test[yyyyMMdd-hhmm].log",
+		QueueFlashCount:   4,
+		MaxQueueSize:      100,
+		FlushFrequencyInMs: 800,
+		MaxIddleTimeInSec: 1,
+	}, toolbox.FileLoggerConfig{
+       		LogType:           "transaction",
+       		FileTemplate:      "/tmp/transaction[yyyyMMdd-hhmm].log",
+       		QueueFlashCount:   4,
+       		MaxQueueSize:      100,
+       		FlushFrequencyInMs: 800,
+       		MaxIddleTimeInSec: 1,
+       	},
+	)
+
+    logger.Log(&toolbox.LogMessage{
+        MessageType: "test",
+        Message:     message
+    })
+    
+    logger.Log(&toolbox.LogMessage{
+            MessageType: "transaction",
+            Message:     message
+        })
+```
+		
 
 ## GoCover
 
