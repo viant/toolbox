@@ -50,6 +50,32 @@ func TestProcessSlice(t *testing.T) {
 
 		assert.Equal(t, 4, count)
 	}
+
+	{
+		aSlice := []string{
+			"abc", "def", "cyz", "adc",
+		}
+		count := 0
+		toolbox.ProcessSlice(aSlice, func(item interface{}) bool {
+			count++
+			return false
+		})
+
+		assert.Equal(t, 1, count)
+	}
+
+	{
+		aSlice := []int{
+			1, 2, 3,
+		}
+		count := 0
+		toolbox.ProcessSlice(aSlice, func(item interface{}) bool {
+			count++
+			return false
+		})
+
+		assert.Equal(t, 1, count)
+	}
 	{
 		aSlice := []string{
 			"abc", "def", "cyz", "adc",
@@ -61,6 +87,18 @@ func TestProcessSlice(t *testing.T) {
 		})
 
 		assert.Equal(t, 4, count)
+	}
+	{
+		aSlice := []interface{}{
+			"abc", "def", "cyz", "adc",
+		}
+
+		count := 0
+		toolbox.ProcessSlice(aSlice, func(item interface{}) bool {
+			count++
+			return false
+		})
+		assert.Equal(t, 1, count)
 	}
 }
 

@@ -24,14 +24,29 @@ func ProcessSlice(slice interface{}, handler func(item interface{}) bool) {
 	//The common cases with reflection for speed
 	if aSlice, ok := slice.([]interface{}); ok {
 		for _, item := range aSlice {
-			handler(item)
+			if !handler(item) {
+				break
+			}
+
 		}
 		return
 	}
 	//The common cases with reflection for speed
 	if aSlice, ok := slice.([]string); ok {
 		for _, item := range aSlice {
-			handler(item)
+			if !handler(item) {
+				break
+			}
+		}
+		return
+	}
+
+	//The common cases with reflection for speed
+	if aSlice, ok := slice.([]int); ok {
+		for _, item := range aSlice {
+			if !handler(item) {
+				break
+			}
 		}
 		return
 	}
@@ -47,16 +62,29 @@ func ProcessSlice(slice interface{}, handler func(item interface{}) bool) {
 func ProcessSliceWithIndex(slice interface{}, handler func(index int, item interface{}) bool) {
 	if aSlice, ok := slice.([]interface{}); ok {
 		for i, item := range aSlice {
-			handler(i, item)
+			if !handler(i, item) {
+				break
+			}
 		}
 		return
 	}
 	if aSlice, ok := slice.([]string); ok {
 		for i, item := range aSlice {
-			handler(i, item)
+			if !handler(i, item) {
+				break
+			}
 		}
 		return
 	}
+	if aSlice, ok := slice.([]int); ok {
+		for i, item := range aSlice {
+			if !handler(i, item) {
+				break
+			}
+		}
+		return
+	}
+
 	sliceValue := DiscoverValueByKind(reflect.ValueOf(slice), reflect.Slice)
 	for i := 0; i < sliceValue.Len(); i++ {
 		if !handler(i, sliceValue.Index(i).Interface()) {
