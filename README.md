@@ -359,16 +359,16 @@ File template support java style time format to manage rotation on the file name
     logger, err := toolbox.NewFileLogger(toolbox.FileLoggerConfig{
 		LogType:           "test",
 		FileTemplate:      "/tmp/test[yyyyMMdd-hhmm].log",
-		QueueFlashCount:   4,
-		MaxQueueSize:      100,
-		FlushFrequencyInMs: 800,
+		QueueFlashCount:   250,
+		MaxQueueSize:      500,
+		FlushFrequencyInMs: 2000,
 		MaxIddleTimeInSec: 1,
 	}, toolbox.FileLoggerConfig{
        		LogType:           "transaction",
        		FileTemplate:      "/tmp/transaction[yyyyMMdd-hhmm].log",
-       		QueueFlashCount:   4,
-       		MaxQueueSize:      100,
-       		FlushFrequencyInMs: 800,
+       		QueueFlashCount:   250,
+       		MaxQueueSize:      500,
+       		FlushFrequencyInMs:2000,
        		MaxIddleTimeInSec: 1,
        	},
 	)
