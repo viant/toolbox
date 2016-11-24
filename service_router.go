@@ -12,15 +12,29 @@ import (
 
 var jsonContentType = "application/json"
 var textPlainContentType = "text/plain"
+
+
+const (
+	MethodGet     = "GET"
+	MethodHead    = "HEAD"
+	MethodPost    = "POST"
+	MethodPut     = "PUT"
+	MethodPatch   = "PATCH" // RFC 5789
+	MethodDelete  = "DELETE"
+	MethodOptions = "OPTIONS"
+	MethodTrace   = "TRACE"
+)
+
+
 var httpMethods = map[string]bool{
-	http.MethodDelete:  true,
-	http.MethodGet:     true,
-	http.MethodPatch:   true,
-	http.MethodPost:    true,
-	http.MethodPut:     true,
-	http.MethodHead:    true,
-	http.MethodTrace:   true,
-	http.MethodOptions: true,
+	MethodDelete:  true,
+	MethodGet:     true,
+	MethodPatch:   true,
+	MethodPost:    true,
+	MethodPut:     true,
+	MethodHead:    true,
+	MethodTrace:   true,
+	MethodOptions: true,
 }
 
 //ServiceRouting represents a simple web services routing rule, which is matched with http request
