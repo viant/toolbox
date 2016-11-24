@@ -147,6 +147,7 @@ type FileLogger struct {
 	config         map[string]*FileLoggerConfig
 	streamMapMutex *sync.Mutex
 	streams        map[string]*LogStream
+	siginal        chan os.Signal
 }
 
 func (l *FileLogger) getConfig(messageType string) (*FileLoggerConfig, error) {
@@ -218,6 +219,10 @@ func (l *FileLogger) Log(message *LogMessage) error {
 	return nil
 }
 
+func (l *FileLogger) Notify(siginal os.Signal) {
+	l.siginal <- siginal
+}
+
 //NewFileLogger create new file logger
 func NewFileLogger(configs ...FileLoggerConfig) (*FileLogger, error) {
 	result := &FileLogger{
@@ -233,20 +238,23 @@ func NewFileLogger(configs ...FileLoggerConfig) (*FileLogger, error) {
 		}
 		result.config[configs[i].LogType] = &configs[i]
 	}
+
 	// If there's a signal to quit the program send it to channel
-	sigc := make(chan os.Signal, 1)
-	signal.Notify(sigc,
+	result.siginal = make(chan os.Signal, 1)
+	signal.Notify(result.siginal,
 		syscall.SIGINT,
 		syscall.SIGTERM)
+
 	go func() {
+
 		// Block until receive a quit signal
-		_quit := <-sigc
+		_quit := <-result.siginal
 		_ = _quit // don't care which type
-		for _, value := range result.streams {
+		for _, stream := range result.streams {
 			// No wait flush
-			value.Config.FlushRequencyInMs = 0
+			stream.Config.FlushRequencyInMs = 0
 			// Write logs now
-			value.Complete <- true
+			stream.Complete <- true
 		}
 	}()
 
