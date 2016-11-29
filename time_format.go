@@ -1,6 +1,9 @@
 package toolbox
 
-import "strings"
+import (
+	"strings"
+	"time"
+)
 
 //DateFormatKeyword constant 'dateFormat' key
 var DateFormatKeyword = "dateFormat"
@@ -70,4 +73,11 @@ func HasTimeLayout(settings map[string]string) bool {
 		return true
 	}
 	return false
+}
+
+//TimestampToString formats timestamp to passed in java style date format
+func TimestampToString(dateFormat string, unixTimestamp, unixNanoTimestamp int64) string {
+	t := time.Unix(unixTimestamp, unixNanoTimestamp)
+	dateLayout := DateFormatToLayout(dateFormat)
+	return t.Format(dateLayout)
 }

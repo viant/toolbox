@@ -1,11 +1,11 @@
 package toolbox_test
 
 import (
-	"testing"
-	"time"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
+	"strings"
+	"testing"
+	"time"
 )
 
 func TestTimeFormat(t *testing.T) {
@@ -67,4 +67,9 @@ func TestGetTimeLayout(t *testing.T) {
 		assert.False(t, toolbox.HasTimeLayout(settings))
 
 	}
+}
+
+func TestTimestampToString(t *testing.T) {
+	date := toolbox.TimestampToString("yyyy-MM-dd HH:mm:ss z", int64(0), 1480435743722684356)
+	assert.True(t, strings.Contains(date, "2016-11"))
 }
