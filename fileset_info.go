@@ -214,6 +214,8 @@ func (v *FileInfo) Visit(node ast.Node) ast.Visitor {
 		case *ast.TypeSpec:
 			typeName := value.Name.Name
 			structInfo := NewStructInfo(typeName)
+			structInfo.Package = v.packageName
+			structInfo.FileName = v.filename
 			v.currentStructInfo = structInfo
 			v.structs[typeName] = structInfo
 		case *ast.StructType:
