@@ -11,8 +11,8 @@ type Address struct {
 }
 
 //User represents a test struct
-type User struct {//my comments
-			 ///abc comment
+type User struct { //my comments
+	///abc comment
 	ID          *int //  comment1 type
 	Name        string
 	DateOfBirth time.Time `foo="bar"`
@@ -27,9 +27,13 @@ func (u User) Test() {
 	fmt.Printf("Abc %v", u)
 }
 
-
 //Test1 represents a test method
 func (u User) Test1() bool {
 	fmt.Printf("Abc %v", u)
 	return false
+}
+
+//Test represents a test method
+func (u *User) Test2() {
+	fmt.Printf("Abc %v", u)
 }

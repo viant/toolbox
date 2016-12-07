@@ -75,11 +75,14 @@ func NewFunctionInfo(funcDeclaration *ast.FuncDecl) *FunctionInfo {
 	if funcDeclaration.Name != nil {
 		result.Name = funcDeclaration.Name.Name
 	}
-
 	if funcDeclaration.Recv != nil {
 		receiverType := funcDeclaration.Recv.List[0].Type
 		if ident, ok := receiverType.(*ast.Ident); ok {
 			result.ReceiverTypeName = ident.Name
+		} else if startExpr, ok := receiverType.(*ast.StarExpr); ok {
+			if ident, ok := startExpr.X.(*ast.Ident); ok {
+				result.ReceiverTypeName = ident.Name
+			}
 		}
 	}
 	return result
