@@ -20,6 +20,8 @@ func TestNewFileSetInfoInfo(t *testing.T) {
 	assert.False(t, fileInfo.HasStructInfo("F"))
 	assert.True(t, fileInfo.HasStructInfo("User"))
 
+	assert.Equal(t, 2, len(fileInfo.Structs()))
+
 	address := fileSetInfo.Struct("Address")
 	assert.NotNil(t, address)
 

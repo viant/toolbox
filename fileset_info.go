@@ -175,6 +175,15 @@ func (f *FileInfo) Struct(name string) *StructInfo {
 	return f.structs[name]
 }
 
+//Struct returns all struct info
+func (f *FileInfo) Structs() []*StructInfo {
+	var result = make([]*StructInfo, 0)
+	for _, v := range f.structs {
+		result = append(result, v)
+	}
+	return result
+}
+
 //HasStructInfo returns truc if struct info is defined in a file
 func (f *FileInfo) HasStructInfo(name string) bool {
 	_, found := f.structs[name]
