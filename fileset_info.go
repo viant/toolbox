@@ -164,6 +164,7 @@ type FileInfo struct {
 	basePath            string
 	filename            string
 	structs             map[string]*StructInfo
+	functions           map[string][]*FunctionInfo
 	packageName         string
 	currentStructInfo   *StructInfo
 	fileSet             *token.FileSet
@@ -173,6 +174,16 @@ type FileInfo struct {
 //Struct returns a struct info for passed in name
 func (f *FileInfo) Struct(name string) *StructInfo {
 	return f.structs[name]
+}
+
+//Struct returns a struct info for passed in name
+func (f *FileInfo) addFunction(funcion *FunctionInfo) {
+	functions, found := f.functions[funcion.ReceiverTypeName]
+	if !found {
+		functions = make([]*FunctionInfo, 0)
+		f.functions[funcion.ReceiverTypeName] = functions
+	}
+	f.functions[funcion.ReceiverTypeName] = append(f.functions[funcion.ReceiverTypeName], funcion)
 }
 
 //Struct returns all struct info
@@ -238,7 +249,7 @@ func (v *FileInfo) Visit(node ast.Node) ast.Visitor {
 			functionInfo := NewFunctionInfo(value)
 			v.currentFunctionInfo = functionInfo
 			if len(functionInfo.ReceiverTypeName) > 0 {
-				v.structs[functionInfo.ReceiverTypeName].AddReceivers(functionInfo)
+				v.addFunction(functionInfo)
 			}
 		case *ast.FuncType:
 
@@ -263,6 +274,7 @@ func NewFileInfo(basePath, packageName, filename string, fileSet *token.FileSet)
 		filename:    filename,
 		packageName: packageName,
 		structs:     make(map[string]*StructInfo),
+		functions:   make(map[string][]*FunctionInfo),
 		fileSet:     fileSet}
 	return result
 }
@@ -312,5 +324,15 @@ func NewFileSetInfo(baseDir string) (*FileSetInfo, error) {
 		}
 	}
 
+	for _, fileInfo := range result.files {
+
+		for k, functionsInfo := range fileInfo.functions {
+			structInfo := result.Struct(k)
+			if structInfo != nil {
+				structInfo.AddReceivers(functionsInfo...)
+			}
+		}
+
+	}
 	return result, nil
 }

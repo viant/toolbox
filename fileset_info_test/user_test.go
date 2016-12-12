@@ -1,4 +1,4 @@
-package fileset_info_test
+package fileset_info
 
 import (
 	"fmt"
@@ -31,9 +31,4 @@ func (u User) Test() {
 func (u User) Test1() bool {
 	fmt.Printf("Abc %v", u)
 	return false
-}
-
-//Test represents a test method
-func (u *User) Test2() {
-	fmt.Printf("Abc %v", u)
 }

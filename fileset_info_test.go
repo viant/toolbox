@@ -9,7 +9,7 @@ import (
 
 func TestNewFileSetInfoInfo(t *testing.T) {
 
-	fileSetInfo, err := toolbox.NewFileSetInfo("./fileset_info_test/")
+	fileSetInfo, err := toolbox.NewFileSetInfo("./fileset_info/")
 	if err != nil {
 		panic(err)
 	}
