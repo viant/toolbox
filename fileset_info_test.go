@@ -9,11 +9,11 @@ import (
 
 func TestNewFileSetInfoInfo(t *testing.T) {
 
-	fileSetInfo, err := toolbox.NewFileSetInfo("./fileset_info/")
+	fileSetInfo, err := toolbox.NewFileSetInfo("./fileset_info_test/")
 	if err != nil {
 		panic(err)
 	}
-	assert.Equal(t, 1, len(fileSetInfo.FilesInfo()))
+	assert.Equal(t, 2, len(fileSetInfo.FilesInfo()))
 
 	fileInfo := fileSetInfo.FileInfo("user_test.go")
 	assert.NotNil(t, fileInfo)
@@ -53,6 +53,10 @@ func TestNewFileSetInfoInfo(t *testing.T) {
 
 	mInfo := userInfo.Field("M")
 	assert.True(t, mInfo.IsMap)
+	assert.Equal(t, "string", mInfo.KeyTypeName)
+	assert.Equal(t, "[]string", mInfo.ValueTypeName)
+
+
 
 	intsInfo := userInfo.Field("Ints")
 	assert.True(t, intsInfo.IsSlice)

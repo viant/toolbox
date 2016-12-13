@@ -15,6 +15,8 @@ import (
 type FieldInfo struct {
 	Name        string
 	TypeName    string
+	KeyTypeName string
+	ValueTypeName string
 	TypePackage string
 	IsMap       bool
 	IsChannel   bool
@@ -23,6 +25,7 @@ type FieldInfo struct {
 	IsPointer   bool
 	Tag         string
 	Comment     string
+
 }
 
 //NewFieldInfo creates a new field info.
@@ -52,6 +55,10 @@ func NewFieldInfo(field *ast.Field) *FieldInfo {
 			result.IsStruct = kind == "type"
 		}
 
+	}
+	if mapType, ok := field.Type.(*ast.MapType);ok {
+		result.KeyTypeName = types.ExprString(mapType.Key)
+		result.ValueTypeName = types.ExprString(mapType.Value)
 	}
 	return result
 }
