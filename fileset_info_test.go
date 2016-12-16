@@ -35,11 +35,12 @@ func TestNewFileSetInfoInfo(t *testing.T) {
 	assert.True(t, userInfo.HasField("Name"))
 	assert.False(t, userInfo.HasField("FF"))
 
-	assert.Equal(t, 7, len(userInfo.Fields()))
+	assert.Equal(t, 8, len(userInfo.Fields()))
 
 	idInfo := userInfo.Field("ID")
 	assert.True(t, idInfo.IsPointer)
-	assert.Equal(t, "*int", idInfo.TypeName)
+	assert.Equal(t, "int", idInfo.TypeName)
+	assert.Equal(t, true, idInfo.IsPointer)
 
 	dobInfo := userInfo.Field("DateOfBirth")
 	assert.True(t, dobInfo.IsStruct)
@@ -48,6 +49,11 @@ func TestNewFileSetInfoInfo(t *testing.T) {
 
 	assert.Equal(t, "`foo=\"bar\"`", dobInfo.Tag)
 
+	addressPointer := userInfo.Field("AddressPointer")
+	assert.NotNil(t, addressPointer)
+	assert.Equal(t, true, addressPointer.IsStruct)
+	assert.Equal(t, "Address", addressPointer.TypeName)
+
 	cInfo := userInfo.Field("C")
 	assert.True(t, cInfo.IsChannel)
 
@@ -55,8 +61,6 @@ func TestNewFileSetInfoInfo(t *testing.T) {
 	assert.True(t, mInfo.IsMap)
 	assert.Equal(t, "string", mInfo.KeyTypeName)
 	assert.Equal(t, "[]string", mInfo.ValueTypeName)
-
-
 
 	intsInfo := userInfo.Field("Ints")
 	assert.True(t, intsInfo.IsSlice)

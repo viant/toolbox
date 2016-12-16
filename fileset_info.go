@@ -8,24 +8,24 @@ import (
 	"go/types"
 	"io/ioutil"
 	"path"
+	"reflect"
 	"strings"
 )
 
 //FieldInfo represents a filed info
 type FieldInfo struct {
-	Name        string
-	TypeName    string
-	KeyTypeName string
+	Name          string
+	TypeName      string
+	KeyTypeName   string
 	ValueTypeName string
-	TypePackage string
-	IsMap       bool
-	IsChannel   bool
-	IsSlice     bool
-	IsStruct    bool
-	IsPointer   bool
-	Tag         string
-	Comment     string
-
+	TypePackage   string
+	IsMap         bool
+	IsChannel     bool
+	IsSlice       bool
+	IsStruct      bool
+	IsPointer     bool
+	Tag           string
+	Comment       string
 }
 
 //NewFieldInfo creates a new field info.
@@ -46,6 +46,19 @@ func NewFieldInfo(field *ast.Field) *FieldInfo {
 		result.TypePackage = types.ExprString(selector.X)
 		result.IsStruct = true
 	}
+
+	if result.IsPointer {
+		if pointerExpr, casted := field.Type.(*ast.StarExpr); casted {
+			if identExpr, ok := pointerExpr.X.(*ast.Ident); ok {
+				result.TypeName = identExpr.Name
+				if reflect.ValueOf(identExpr.Obj).Elem().Kind() == reflect.Struct {
+					result.IsStruct = true
+				}
+
+			}
+		}
+	}
+
 	if field.Tag != nil {
 		result.Tag = field.Tag.Value
 	}
@@ -56,7 +69,7 @@ func NewFieldInfo(field *ast.Field) *FieldInfo {
 		}
 
 	}
-	if mapType, ok := field.Type.(*ast.MapType);ok {
+	if mapType, ok := field.Type.(*ast.MapType); ok {
 		result.KeyTypeName = types.ExprString(mapType.Key)
 		result.ValueTypeName = types.ExprString(mapType.Value)
 	}

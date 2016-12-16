@@ -17,6 +17,7 @@ type User struct { //my comments
 	Name        string
 	DateOfBirth time.Time `foo="bar"`
 	Address     Address
+	AddressPointer     *Address
 	Ints        []int
 	M           map[string][]string
 	C           chan *bool
