@@ -51,7 +51,7 @@ func NewFieldInfo(field *ast.Field) *FieldInfo {
 		if pointerExpr, casted := field.Type.(*ast.StarExpr); casted {
 			if identExpr, ok := pointerExpr.X.(*ast.Ident); ok {
 				result.TypeName = identExpr.Name
-				if reflect.ValueOf(identExpr.Obj).Elem().Kind() == reflect.Struct {
+				if reflect.TypeOf(identExpr.Obj).Elem().Kind() == reflect.Struct {
 					result.IsStruct = true
 				}
 
