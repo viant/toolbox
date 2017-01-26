@@ -62,7 +62,7 @@ func NewFieldInfo(field *ast.Field) *FieldInfo {
 	if field.Tag != nil {
 		result.Tag = field.Tag.Value
 	}
-	
+
 	if mapType, ok := field.Type.(*ast.MapType); ok {
 		result.KeyTypeName = types.ExprString(mapType.Key)
 		result.ValueTypeName = types.ExprString(mapType.Value)

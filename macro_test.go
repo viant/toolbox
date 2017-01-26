@@ -13,6 +13,7 @@ import (
 func TestMacroExpansion(t *testing.T) {
 	valueRegistry := toolbox.NewValueProviderRegistry()
 	valueRegistry.Register("abc", TestValueProvider{"Called with %v %v!", nil})
+	valueRegistry.Register("xyz", TestValueProvider{"XXXX", nil})
 	valueRegistry.Register("klm", TestValueProvider{"Called with %v %v!", errors.New("Test error")})
 	evaluator := toolbox.MacroEvaluator{ValueProviderRegistry: valueRegistry, Prefix: "<ds:", Postfix: ">"}
 	{
@@ -23,6 +24,16 @@ func TestMacroExpansion(t *testing.T) {
 			t.Errorf("Failed expand macro %v", err.Error())
 		}
 		assert.Equal(t, "Called with %v %v!", actual)
+	}
+
+	{
+		//simple macro test
+
+		actual, err := evaluator.Expand(nil, "< <ds:abc[]>> <ds:xyz[]>")
+		if err != nil {
+			t.Errorf("Failed expand macro %v", err.Error())
+		}
+		assert.Equal(t, "< Called with %v %v!> XXXX", actual)
 	}
 
 	{

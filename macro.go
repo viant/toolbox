@@ -20,8 +20,8 @@ func (e *MacroEvaluator) HasMacro(candidate string) bool {
 	if prefixPosition == -1 {
 		return false
 	}
-	postfixPosition := strings.Index(candidate, postfix)
-	return postfixPosition > prefixPosition
+	postfixPosition := strings.Index(string(candidate[prefixPosition:]), postfix)
+	return postfixPosition != -1
 }
 
 func (e *MacroEvaluator) expandArguments(context Context, arguments *[]interface{}) error {

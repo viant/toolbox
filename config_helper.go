@@ -9,7 +9,7 @@ import (
 func LoadConfigFromUrl(url string, config interface{}) error {
 	var configType = reflect.TypeOf(config).Elem().Name()
 	if len(url) == 0 {
-		return fmt.Errorf("%v and %Url were empty", configType, configType)
+		return fmt.Errorf("%v and %vUrl were empty", configType, configType)
 	}
 	reader, _, err := OpenReaderFromURL(url)
 	if err != nil {
@@ -18,7 +18,7 @@ func LoadConfigFromUrl(url string, config interface{}) error {
 
 	err = NewJSONDecoderFactory().Create(reader).Decode(config)
 	if err != nil {
-		return fmt.Errorf("Failed to decode DbConfig from url %v %v", url, err)
+		return fmt.Errorf("Failed to decode Config from url %v %v", url, err)
 	}
 	return nil
 }
