@@ -1,13 +1,24 @@
 package toolbox_test
 
 import (
-	"testing"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
+	"testing"
 )
 
 func TestExtractURIParameters(t *testing.T) {
+
+	{
+		parameters, matched := toolbox.ExtractURIParameters("/v1/path/{app}/{version}/", "/v1/path/app/1.0/?v=12")
+		assert.True(t, matched)
+		if !matched {
+			t.FailNow()
+		}
+		assert.Equal(t, 2, len(parameters))
+		assert.Equal(t, "app", parameters["app"])
+		assert.Equal(t, "1.0", parameters["version"])
+	}
+
 	{
 		parameters, matched := toolbox.ExtractURIParameters("/v1/path/{ids}/{sub}/a/{name}", "/v1/path/1,2,3,4,5/subpath/a/abc")
 		assert.True(t, matched)
@@ -50,4 +61,5 @@ func TestExtractURIParameters(t *testing.T) {
 		assert.Equal(t, "subpath", parameters["sub"])
 		assert.Equal(t, "abcwrwr", parameters["name"])
 	}
+
 }

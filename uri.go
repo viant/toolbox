@@ -1,5 +1,9 @@
 package toolbox
 
+import (
+	"strings"
+)
+
 //ExtractURIParameters parses URIs to extract {<param>} defined in templateURI from requestURI, it returns extracted parameters and flag if requestURI matched templateURI
 func ExtractURIParameters(templateURI, requestURI string) (map[string]string, bool) {
 	var expectingValue, expectingName bool
@@ -7,8 +11,15 @@ func ExtractURIParameters(templateURI, requestURI string) (map[string]string, bo
 	var uriParameters = make(map[string]string)
 	maxLength := len(templateURI) + len(requestURI)
 	var requestURIIndex, templateURIIndex int
+
+	questionMarkPosition := strings.Index(requestURI, "?")
+	if questionMarkPosition != -1 {
+		requestURI = string(requestURI[:questionMarkPosition])
+	}
+
 	for k := 0; k < maxLength; k++ {
 		var requestChar, routingChar string
+
 		if requestURIIndex < len(requestURI) {
 			requestChar = requestURI[requestURIIndex : requestURIIndex+1]
 		}
@@ -16,7 +27,6 @@ func ExtractURIParameters(templateURI, requestURI string) (map[string]string, bo
 		if templateURIIndex < len(templateURI) {
 			routingChar = templateURI[templateURIIndex : templateURIIndex+1]
 		}
-
 		if (!expectingValue && !expectingName) && requestChar == routingChar && routingChar != "" {
 			requestURIIndex++
 			templateURIIndex++
@@ -30,10 +40,6 @@ func ExtractURIParameters(templateURI, requestURI string) (map[string]string, bo
 
 		if expectingValue && requestChar == "/" {
 			expectingValue = false
-			requestURIIndex++
-			if requestChar == routingChar {
-				templateURIIndex++
-			}
 		}
 
 		if expectingName && templateURIIndex < len(templateURI) {
@@ -45,22 +51,25 @@ func ExtractURIParameters(templateURI, requestURI string) (map[string]string, bo
 			expectingValue = true
 			expectingName = true
 			templateURIIndex++
+
 		}
+
 		if expectingValue && requestURIIndex < len(requestURI) {
 			value += requestChar
 			requestURIIndex++
 		}
 
-		if !expectingValue && !expectingName {
+		if !expectingValue && !expectingName && len(name) > 0 {
 			uriParameters[name] = value
 			name = ""
 			value = ""
 		}
+
 	}
+
 	if len(name) > 0 && len(value) > 0 {
 		uriParameters[name] = value
 	}
-
 	matched := requestURIIndex == len(requestURI) && templateURIIndex == len(templateURI)
 	return uriParameters, matched
 }

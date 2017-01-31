@@ -74,3 +74,35 @@ func OpenURL(fileURL string, flag int, permissions os.FileMode) (*os.File, error
 	}
 	return file, nil
 }
+
+//QueryIntValue returns query value for passed in url's name or default value
+func QueryIntValue(u *url.URL, name string, defaultValue int) int {
+	value := u.Query().Get(name)
+	if value == "" {
+		return defaultValue
+	}
+
+	result := AsInt(value)
+	if result != 0 {
+		return result
+	}
+	return defaultValue
+}
+
+//QueryBoolValue returns query value for passed in url's name or default value
+func QueryBoolValue(u *url.URL, name string, defaultValue bool) bool {
+	value := u.Query().Get(name)
+	if value == "" {
+		return defaultValue
+	}
+	return AsBoolean(value)
+}
+
+//QueryValue returns query value for passed in url's name or default value
+func QueryValue(u *url.URL, name, defaultValue string) string {
+	value := u.Query().Get(name)
+	if value == "" {
+		return defaultValue
+	}
+	return value
+}
