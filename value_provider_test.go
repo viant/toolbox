@@ -82,6 +82,13 @@ func TestNewCurrentTimeProvider(t *testing.T) {
 	assert.NotNil(t, value)
 }
 
+func TestNewCurrentDateProvider(t *testing.T) {
+	provider := toolbox.NewCurrentDateProvider()
+	value, err := provider.Get(nil)
+	assert.Nil(t, err)
+	assert.NotNil(t, value)
+}
+
 func TestNewNilProvider(t *testing.T) {
 	provider := toolbox.NewNilValueProvider()
 	value, err := provider.Get(nil)

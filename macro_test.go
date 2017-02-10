@@ -93,6 +93,14 @@ func TestMacroExpansion(t *testing.T) {
 		assert.NotNil(t, err)
 
 	}
+
+	{
+		//value provider with error
+
+		_, err := evaluator.Expand(nil, "<ds:pos [\"events\"]>")
+		assert.NotNil(t, err)
+
+	}
 }
 
 type TestValueProvider struct {
