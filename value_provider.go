@@ -132,3 +132,16 @@ func NewNilValueProvider() ValueProvider {
 	var result ValueProvider = &nilValueProvider{}
 	return result
 }
+
+type currentDateProvider struct{}
+
+func (p currentDateProvider) Get(context Context, arguments ...interface{}) (interface{}, error) {
+	currentTime := time.Now().Local()
+	return currentTime.Format("20170205"), nil
+}
+
+//NewCurrentDateProvider returns a provider that returns current date in the format YYYYMMDD, i.e. 20170205
+func NewCurrentDateProvider() ValueProvider {
+	var result ValueProvider = &currentDateProvider{}
+	return result
+}
