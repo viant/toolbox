@@ -113,7 +113,7 @@ func (e *MacroEvaluator) Expand(context Context, input string) (interface{}, err
 
 	valueProviderRegistry := e.ValueProviderRegistry
 	if !valueProviderRegistry.Contains(macroName) {
-		return nil, fmt.Errorf("Failed to lookup macro: '%v'", macroName)
+		return nil, fmt.Errorf("Failed to lookup macro: '%v' while processing: %v", macroName, input)
 	}
 	arguments, err := e.decodeArguments(context, macroArguments, macro)
 	if err != nil {
