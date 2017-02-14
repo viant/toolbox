@@ -13,7 +13,6 @@ import (
 var jsonContentType = "application/json"
 var textPlainContentType = "text/plain"
 
-
 const (
 	MethodGet     = "GET"
 	MethodHead    = "HEAD"
@@ -24,7 +23,6 @@ const (
 	MethodOptions = "OPTIONS"
 	MethodTrace   = "TRACE"
 )
-
 
 var httpMethods = map[string]bool{
 	MethodDelete:  true,
@@ -89,6 +87,7 @@ func (sr ServiceRouting) extractParameterFromBody(parameterName string, targetTy
 
 func (sr ServiceRouting) extractParameters(request *http.Request, response http.ResponseWriter) (map[string]interface{}, error) {
 	var result = make(map[string]interface{})
+	request.ParseForm()
 	functionSignature := GetFuncSignature(sr.Handler)
 	uriParameters, _ := ExtractURIParameters(sr.URI, request.RequestURI)
 	for _, name := range sr.Parameters {
@@ -137,6 +136,7 @@ type ServiceRouter struct {
 func (r *ServiceRouter) match(request *http.Request) []ServiceRouting {
 	var result = make([]ServiceRouting, 0)
 	for _, candidate := range r.serviceRouting {
+
 		if candidate.HTTPMethod == request.Method {
 			_, matched := ExtractURIParameters(candidate.URI, request.RequestURI)
 			if matched {
@@ -180,12 +180,12 @@ func (r *ServiceRouter) Route(response http.ResponseWriter, request *http.Reques
 	var finalError error
 
 	for _, serviceRouting := range candidates {
+
 		parameterValues, err := serviceRouting.extractParameters(request, response)
 		if err != nil {
 			finalError = fmt.Errorf("unable to extract parameters due to %v", err)
 			continue
 		}
-
 		functionParameters, err := BuildFunctionParameters(serviceRouting.Handler, serviceRouting.Parameters, parameterValues)
 		if err != nil {
 			finalError = fmt.Errorf("unable to build function parameters %T due to %v", serviceRouting.Handler, err)
