@@ -11,8 +11,11 @@ type Context interface {
 	//GetRequired returns a value for a target type of error if it does not exist
 	GetRequired(targetType interface{}) (interface{}, error)
 
-	//GetRequired  returns a value for a target type
+	//GetOptional  returns a value for a target type
 	GetOptional(targetType interface{}) interface{}
+
+	//GetOptional into sets requested context value into target, returns true if value was found
+	GetInto(targetType interface{}, target interface{}) bool
 
 	//Put puts target type value to the context, or error if value exists,  is nil or incompatible with target type
 	Put(targetType interface{}, value interface{}) error
@@ -60,6 +63,15 @@ func (c *contextImpl) GetOptional(targetType interface{}) interface{} {
 		return result
 	}
 	return nil
+}
+
+func (c *contextImpl) GetInto(targetType, target interface{}) bool {
+	key := c.getKey(targetType)
+	if result, ok := c.context[key]; ok {
+		reflect.ValueOf(target).Elem().Set(reflect.ValueOf(result))
+		return true
+	}
+	return false
 }
 
 func (c *contextImpl) Put(targetType interface{}, value interface{}) error {

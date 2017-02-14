@@ -34,8 +34,14 @@ func TestContext(t *testing.T) {
 	assert.Nil(t, err)
 	m1 := value.(*Message)
 	assert.Equal(t, "abc", m1.message, "should have the same value field")
+
+	m10 := &Message{}
+	context.GetInto((*Message)(nil), &m10)
+	assert.Equal(t, "abc", m10.message, "should have the same value field")
+
 	m1.message = "xyz"
 	assert.Equal(t, "xyz", message1.message, "should have the same value field")
+	assert.Equal(t, "xyz", m10.message, "should have the same value field")
 
 	err = context.Put((*IMessage)(nil), &message1)
 	assert.Nil(t, err)
