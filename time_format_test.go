@@ -70,6 +70,15 @@ func TestGetTimeLayout(t *testing.T) {
 }
 
 func TestTimestampToString(t *testing.T) {
-	date := toolbox.TimestampToString("yyyy-MM-dd HH:mm:ss z", int64(0), 1480435743722684356)
-	assert.True(t, strings.Contains(date, "2016-11"))
+
+	{
+		date := toolbox.TimestampToString("yyyy-MM-dd HH:mm:ss z", int64(0), 1480435743722684356)
+		assert.True(t, strings.Contains(date, "2016-11"))
+	}
+	{
+
+		date := toolbox.TimestampToString("yyyyMMddhh", int64(0), 1489512277722684356)
+		assert.True(t, strings.Contains(date, "201703"))
+	}
+
 }
