@@ -260,6 +260,7 @@ func (c *Converter) assignConvertedSlice(target, input interface{}, targetIndire
 	slicePointer := reflect.New(sliceType)
 	slice := slicePointer.Elem()
 	componentType := DiscoverComponentType(target)
+
 	var err error
 	ProcessSlice(input, func(item interface{}) bool {
 		targetComponentPointer := reflect.New(componentType)
@@ -268,6 +269,7 @@ func (c *Converter) assignConvertedSlice(target, input interface{}, targetIndire
 			err = fmt.Errorf("Failed to convert slice tiem %v to %v due to %v", item, targetComponentPointer.Interface(), err)
 			return false
 		}
+
 		slice.Set(reflect.Append(slice, targetComponentPointer.Elem()))
 		return true
 	})
@@ -285,7 +287,9 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 	newStruct := newStructPointer.Elem()
 	fieldsMapping := NewFieldSettingByKey(newStructPointer.Interface(), c.MappedKeyTag)
 	for key, value := range inputMap {
-		if mapping, ok := fieldsMapping[strings.ToLower(key)]; ok {
+		mapping, found := fieldsMapping[strings.ToLower(key)];
+		if found {
+
 			fieldName := mapping["fieldName"]
 			field := newStruct.FieldByName(fieldName)
 
@@ -632,6 +636,18 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 		if inputMap, ok := input.(map[string]interface{}); ok {
 			return c.assignConvertedStruct(target, inputMap, targetIndirectValue, targetIndirectPointerType)
 		}
+	} else if targetIndirectPointerType.Kind() == reflect.Struct {
+		structPointer := reflect.New(targetIndirectPointerType)
+
+		if inputMap, ok := input.(map[string]interface{}); ok {
+			err := c.assignConvertedStruct(target, inputMap, structPointer.Elem(), targetIndirectPointerType)
+			if err != nil {
+				return err
+			}
+			targetIndirectValue.Set(structPointer)
+			return nil
+		}
+
 	}
 
 	if inputValue.IsValid() && inputValue.Type().AssignableTo(targetIndirectValue.Type()) {
@@ -643,6 +659,7 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 		targetIndirectValue.Set(converted)
 		return nil
 	}
+
 	return fmt.Errorf("Unable to convert type %T into type %T", input, target)
 }
 
