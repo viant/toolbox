@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strings"
 )
 
 //FileSchema file://
@@ -26,7 +27,18 @@ func ExtractMimeType(file string) string {
 }
 
 //OpenReaderFromURL opens a reader from URL
+// to indicate a relative path from the working directory
+// the schema must start with "file://.../". "..." will be replaced by
+// the working directory. Note that you can not have a relative path
+// in the middle of the uri. for instance, "file:///local/../path
+// is not valid
 func OpenReaderFromURL(rawURL string) (io.ReadCloser, string, error) {
+	//this indicates a relative path
+	if strings.HasPrefix(rawURL, "file://.../") {
+		baseDirectory, _ := os.Getwd()
+		rawURL = strings.Replace(rawURL, "...", baseDirectory, 1)
+	}
+	
 	var url, err = url.Parse(rawURL)
 	if err != nil {
 		return nil, "", err
