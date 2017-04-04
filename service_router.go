@@ -91,7 +91,8 @@ func (sr ServiceRouting) extractParameters(request *http.Request, response http.
 	functionSignature := GetFuncSignature(sr.Handler)
 	uriParameters, _ := ExtractURIParameters(sr.URI, request.RequestURI)
 	for _, name := range sr.Parameters {
-		if value, found := uriParameters[name]; found {
+		value, found := uriParameters[name]
+		if found {
 			if strings.Contains(value, ",") {
 				result[name] = strings.Split(value, ",")
 			} else {
@@ -99,11 +100,12 @@ func (sr ServiceRouting) extractParameters(request *http.Request, response http.
 			}
 			continue
 		}
-		value := request.Form.Get(name)
+
+		value = request.Form.Get(name)
 		if len(value) > 0 {
 			result[name] = value
 		} else {
-			break
+			continue
 		}
 	}
 	if HasSliceAnyElements(sr.Parameters, "@httpRequest") {
@@ -239,9 +241,15 @@ func RouteToServiceWithCustomFormat(method, url string, request, response interf
 	httpMethod := strings.ToUpper(method)
 	if request != nil {
 		httpRequest, err = http.NewRequest(httpMethod, url, buffer)
+		if err != nil {
+			return err
+		}
 		httpRequest.Header.Set("Content-Type", jsonContentType)
 	} else {
 		httpRequest, err = http.NewRequest(httpMethod, url, nil)
+		if err != nil {
+			return err
+		}
 	}
 
 	serverResponse, err = http.DefaultClient.Do(httpRequest)

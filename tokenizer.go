@@ -122,7 +122,7 @@ func (m LiteralMatcher) Match(input string, offset int) (matched int) {
 	var i = 1
 	for ; i < len(input)-offset; i++ {
 		aChar := input[offset+i : offset+i+1]
-		if !((isLetter(aChar)) || isDigit(aChar) || aChar == "_") {
+		if !((isLetter(aChar)) || isDigit(aChar) || aChar == "_" || aChar == ".") {
 			break
 		}
 	}

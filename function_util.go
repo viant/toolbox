@@ -36,12 +36,14 @@ func BuildFunctionParameters(function interface{}, parameters []string, paramete
 		return nil, fmt.Errorf("Invalid number of parameters wanted: [%T],  had: %v", function, 0)
 	}
 	var functionParameters = make([]interface{}, 0)
+
 	for i, name := range parameters {
 		parameterValue := parameterValues[name]
 		reflectValue := reflect.ValueOf(parameterValue)
 		if reflectValue.Kind() == reflect.Slice && funcSignature[i].Kind() != reflectValue.Kind() {
 			return nil, fmt.Errorf("Incompatible types expected: %v, but had %v", funcSignature[i].Kind(), reflectValue.Kind())
 		}
+
 		if reflectValue.Type() != funcSignature[i] {
 			newValuePointer := reflect.New(funcSignature[i])
 			err := converter.AssignConverted(newValuePointer.Interface(), parameterValue)

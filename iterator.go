@@ -74,7 +74,6 @@ func (i *interfaceSliceIterator) Next(itemPointer interface{}) error {
 	return nil
 }
 
-
 //NewSliceIterator creates a new slice iterator.
 func NewSliceIterator(slice interface{}) Iterator {
 	if aSlice, ok := slice.([]interface{}); ok {
