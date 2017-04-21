@@ -26,17 +26,24 @@ type DecoderFactory interface {
 	Create(reader io.Reader) Decoder
 }
 
-type jsonDecoderFactory struct{}
+type jsonDecoderFactory struct{ useNumber bool }
 
 func (d jsonDecoderFactory) Create(reader io.Reader) Decoder {
 	decoder := json.NewDecoder(reader)
-	decoder.UseNumber()
+	if d.useNumber {
+		decoder.UseNumber()
+	}
 	return decoder
 }
 
 //NewJSONDecoderFactory create a new JSONDecoderFactory
 func NewJSONDecoderFactory() DecoderFactory {
 	return &jsonDecoderFactory{}
+}
+
+//NewJSONDecoderFactoryWithOption create a new JSONDecoderFactory, it takes useNumber decoder parameter
+func NewJSONDecoderFactoryWithOption(useNumber bool) DecoderFactory {
+	return &jsonDecoderFactory{useNumber: useNumber}
 }
 
 type unMarshalerDecoderFactory struct {
