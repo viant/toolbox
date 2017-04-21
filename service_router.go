@@ -35,6 +35,12 @@ var httpMethods = map[string]bool{
 	MethodOptions: true,
 }
 
+//DefaultEncoderFactory  - NewJSONEncoderFactory
+var DefaultEncoderFactory = NewJSONEncoderFactory()
+
+//DefaultDecoderFactory - NewJSONDecoderFactory
+var DefaultDecoderFactory = NewJSONDecoderFactory()
+
 //ServiceRouting represents a simple web services routing rule, which is matched with http request
 type ServiceRouting struct {
 	URI                 string      //matching uri
@@ -51,7 +57,7 @@ func (sr ServiceRouting) getDecoderFactory(contentType string) DecoderFactory {
 			return factory
 		}
 	}
-	return NewJSONDecoderFactory()
+	return DefaultDecoderFactory
 }
 
 func (sr ServiceRouting) getEncoderFactory(contentType string) EncoderFactory {
@@ -60,7 +66,7 @@ func (sr ServiceRouting) getEncoderFactory(contentType string) EncoderFactory {
 			return factory
 		}
 	}
-	return NewJSONEncoderFactory()
+	return DefaultEncoderFactory
 }
 
 func (sr ServiceRouting) extractParameterFromBody(parameterName string, targetType reflect.Type, request *http.Request) (interface{}, error) {
@@ -150,7 +156,7 @@ func (r *ServiceRouter) match(request *http.Request) []ServiceRouting {
 }
 
 func getContentTypeOrJSONContentType(contentType string) string {
-	if contentType == textPlainContentType || contentType == jsonContentType || contentType == "" {
+	if strings.Contains(contentType, textPlainContentType) || strings.Contains(contentType, jsonContentType) || contentType == "" {
 		return jsonContentType
 	}
 	return contentType
@@ -205,7 +211,6 @@ func (r *ServiceRouter) Route(response http.ResponseWriter, request *http.Reques
 			return nil
 		}
 		response.Header().Set("Content-Type", textPlainContentType)
-
 	}
 	if finalError != nil {
 		return fmt.Errorf("Failed to route request - %v", finalError)
