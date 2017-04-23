@@ -67,3 +67,12 @@ func TestKeywordsMatcher(t *testing.T) {
 		assert.Equal(t, 0, matcher.Match("abcde", 0))
 	}
 }
+
+
+func TestBodyMatcher(t *testing.T) {
+	{
+		matcher := toolbox.BodyMatcher{Begin:"{", End:"}"}
+		var text = " {    {  \n}     }  "
+		assert.Equal(t, 15, matcher.Match(text, 1))
+	}
+}

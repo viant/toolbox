@@ -7,7 +7,6 @@ import (
 
 //Matcher represents a matcher, that matches input from offset position, it returns number of characters matched.
 type Matcher interface {
-
 	//Match matches input starting from offset, it return number of characters matched
 	Match(input string, offset int) (matched int)
 }
@@ -49,7 +48,7 @@ func (t *Tokenizer) Next(candidate int) *Token {
 		matchedSize := matcher.Match(t.Input, offset)
 		if matchedSize > 0 {
 			t.Index = t.Index + matchedSize
-			return &Token{candidate, t.Input[offset : offset+matchedSize]}
+			return &Token{candidate, t.Input[offset : offset + matchedSize]}
 		}
 
 	} else {
@@ -77,11 +76,11 @@ type CharactersMatcher struct {
 //Match matches any characters defined in Chars in the input, returns 1 if character has been matched
 func (m CharactersMatcher) Match(input string, offset int) (matched int) {
 	var result = 0
-outer:
-	for i := 0; i < len(input)-offset; i++ {
-		aChar := input[offset+i : offset+i+1]
+	outer:
+	for i := 0; i < len(input) - offset; i++ {
+		aChar := input[offset + i : offset + i + 1]
 		for j := 0; j < len(m.Chars); j++ {
-			if aChar == m.Chars[j:j+1] {
+			if aChar == m.Chars[j:j + 1] {
 				result++
 				continue outer
 			}
@@ -105,7 +104,7 @@ type EOFMatcher struct {
 
 //Match returns 1 if end of input has been reached otherwise 0
 func (m EOFMatcher) Match(input string, offset int) (matched int) {
-	if offset+1 == len(input) {
+	if offset + 1 == len(input) {
 		return 1
 	}
 	return 0
@@ -116,18 +115,51 @@ type LiteralMatcher struct{}
 
 //Match matches a literal in the input, it returns number of character matched.
 func (m LiteralMatcher) Match(input string, offset int) (matched int) {
-	if !isLetter(input[offset : offset+1]) {
+	if !isLetter(input[offset : offset + 1]) {
 		return 0
 	}
 	var i = 1
-	for ; i < len(input)-offset; i++ {
-		aChar := input[offset+i : offset+i+1]
+	for ; i < len(input) - offset; i++ {
+		aChar := input[offset + i : offset + i + 1]
 		if !((isLetter(aChar)) || isDigit(aChar) || aChar == "_" || aChar == ".") {
 			break
 		}
 	}
 	return i
 }
+
+
+//LiteralMatcher represents a matcher that finds any literals in the input
+type BodyMatcher struct {
+	Begin string
+	End   string
+}
+
+//Match matches a literal in the input, it returns number of character matched.
+func (m BodyMatcher) Match(input string, offset int) (matched int) {
+	if (input[offset : offset + 1] != m.Begin) {
+		return 0
+	}
+	var depth = 1;
+	var i = 1
+	for ; i < len(input) - offset; i++ {
+		aChar := input[offset + i : offset + i + 1]
+		switch aChar {
+		case m.Begin:
+			depth++
+			break
+		case m.End:
+			depth--
+
+		}
+		if depth == 0 {
+			i++
+			break
+		}
+	}
+	return i
+}
+
 
 //KeywordMatcher represents a keyword matcher
 type KeywordMatcher struct {
@@ -137,16 +169,16 @@ type KeywordMatcher struct {
 
 //Match matches keyword in the input,  it returns number of character matched.
 func (m KeywordMatcher) Match(input string, offset int) (matched int) {
-	if !(offset+len(m.Keyword)-1 < len(input)) {
+	if !(offset + len(m.Keyword) - 1 < len(input)) {
 		return 0
 	}
 
 	if m.CaseSensitive {
-		if input[offset:offset+len(m.Keyword)] == m.Keyword {
+		if input[offset:offset + len(m.Keyword)] == m.Keyword {
 			return len(m.Keyword)
 		}
 	} else {
-		if strings.ToLower(input[offset:offset+len(m.Keyword)]) == strings.ToLower(m.Keyword) {
+		if strings.ToLower(input[offset:offset + len(m.Keyword)]) == strings.ToLower(m.Keyword) {
 			return len(m.Keyword)
 		}
 	}
@@ -162,15 +194,15 @@ type KeywordsMatcher struct {
 //Match matches any specified keyword,  it returns number of character matched.
 func (m KeywordsMatcher) Match(input string, offset int) (matched int) {
 	for _, keyword := range m.Keywords {
-		if len(input)-offset < len(keyword) {
+		if len(input) - offset < len(keyword) {
 			continue
 		}
 		if m.CaseSensitive {
-			if input[offset:offset+len(keyword)] == keyword {
+			if input[offset:offset + len(keyword)] == keyword {
 				return len(keyword)
 			}
 		} else {
-			if strings.ToLower(input[offset:offset+len(keyword)]) == strings.ToLower(keyword) {
+			if strings.ToLower(input[offset:offset + len(keyword)]) == strings.ToLower(keyword) {
 				return len(keyword)
 			}
 		}
