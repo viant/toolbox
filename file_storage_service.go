@@ -49,6 +49,19 @@ func (s *fileStorageService) List(URL string) ([]StorageObject, error) {
 	return result, nil
 }
 
+//Exists returns true if resource exists
+func (s *fileStorageService) Exists(URL string) (bool, error) {
+	parsedUrl, err := url.Parse(URL)
+	if err != nil {
+		return false,  err
+	}
+	if parsedUrl.Scheme != "file" {
+		return false, fmt.Errorf("Invalid schema, expected file but had: %v", parsedUrl.Scheme)
+	}
+	return FileExists(parsedUrl.Path), nil
+}
+
+
 //StorageObject returns a StorageObject for supplied url
 func (s *fileStorageService) StorageObject(URL string) (StorageObject, error) {
 	file, err := openFileFromUrl(URL)

@@ -46,6 +46,11 @@ func TestStorageService_List(t *testing.T) {
 	var newFileUrl = baseUrl + "/file3.txt"
 	err = service.Upload(baseUrl+"/file3.txt", bytes.NewReader([]byte("abc")))
 	assert.Nil(t, err)
+
+	exists, err := service.Exists(baseUrl+"/file3.txt")
+	assert.Nil(t, err)
+	assert.True(t, exists)
+
 	{
 		object, err := service.StorageObject(newFileUrl)
 		assert.Nil(t, err)
