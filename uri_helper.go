@@ -38,7 +38,7 @@ func OpenReaderFromURL(rawURL string) (io.ReadCloser, string, error) {
 		baseDirectory, _ := os.Getwd()
 		rawURL = strings.Replace(rawURL, "...", baseDirectory, 1)
 	}
-	
+
 	var url, err = url.Parse(rawURL)
 	if err != nil {
 		return nil, "", err

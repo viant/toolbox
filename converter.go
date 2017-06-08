@@ -287,7 +287,7 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 	newStruct := newStructPointer.Elem()
 	fieldsMapping := NewFieldSettingByKey(newStructPointer.Interface(), c.MappedKeyTag)
 	for key, value := range inputMap {
-		mapping, found := fieldsMapping[strings.ToLower(key)];
+		mapping, found := fieldsMapping[strings.ToLower(key)]
 		if found {
 
 			fieldName := mapping["fieldName"]

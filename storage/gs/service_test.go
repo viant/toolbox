@@ -2,16 +2,16 @@ package gs_test
 
 import (
 	"github.com/stretchr/testify/assert"
-	"github.vianttech.com/core-adservers/cloud/storage/gs"
 	"google.golang.org/api/option"
 	"testing"
+	"github.com/viant/toolbox/storage/gs"
 )
 
 func TestService_List(t *testing.T) {
 
-	credential := option.WithServiceAccountFile("/Users/awitas/Adelphic-af77adaff66a.json")
+	credential := option.WithServiceAccountFile("***")
 	service := gs.NewService(credential)
-	assert.Nil(t, service)
+	assert.NotNil(t, service)
 
 	//objects, err := service.List("gs://s3adlogs/ad.log.go")
 	//assert.Nil(t, err)
