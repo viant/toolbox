@@ -1,4 +1,4 @@
-package toolbox
+package storage
 
 import "time"
 
@@ -8,8 +8,8 @@ const (
 	StorageObjectContentType
 )
 
-//StorageObject represents a storage object
-type StorageObject interface {
+//Object represents a storage object
+type Object interface {
 
 	//URL return storage url
 	URL() string
@@ -36,9 +36,9 @@ type StorageObject interface {
 	Unwrap(target interface{}) error
 }
 
-//AbstractStorageObject represents abstract storage object
-type AbstractStorageObject struct {
-	StorageObject
+//AbstractObject represents abstract storage object
+type AbstractObject struct {
+	Object
 	url          string
 	objectType   int
 	lastModified *time.Time
@@ -47,43 +47,43 @@ type AbstractStorageObject struct {
 }
 
 //URL return storage url
-func (o *AbstractStorageObject) URL() string {
+func (o *AbstractObject) URL() string {
 	return o.url
 }
 
 //Type returns storage type  StorageObjectFolderType or StorageObjectContentType
-func (o *AbstractStorageObject) Type() int {
+func (o *AbstractObject) Type() int {
 	return o.objectType
 }
 
 //IsFolder returns true if object is a folder
-func (o *AbstractStorageObject) IsFolder() bool {
+func (o *AbstractObject) IsFolder() bool {
 	return o.objectType == StorageObjectFolderType
 }
 
 //IsContent returns true if object is a file
-func (o *AbstractStorageObject) IsContent() bool {
+func (o *AbstractObject) IsContent() bool {
 	return o.objectType == StorageObjectContentType
 }
 
 //LastModified returns last modification time
-func (o *AbstractStorageObject) LastModified() *time.Time {
+func (o *AbstractObject) LastModified() *time.Time {
 	return o.lastModified
 }
 
 //Size returns content size
-func (o *AbstractStorageObject) Size() int64 {
+func (o *AbstractObject) Size() int64 {
 	return o.size
 }
 
 //Wrap wraps source storage object
-func (o *AbstractStorageObject) Wrap(source interface{}) {
+func (o *AbstractObject) Wrap(source interface{}) {
 	o.Source = source
 }
 
 //NewAbstractStorageObject creates a new abstract storage object
-func NewAbstractStorageObject(url string, source interface{}, objectType int, lastModified *time.Time, size int64) *AbstractStorageObject {
-	return &AbstractStorageObject{
+func NewAbstractStorageObject(url string, source interface{}, objectType int, lastModified *time.Time, size int64) *AbstractObject {
+	return &AbstractObject{
 		url:          url,
 		Source:       source,
 		objectType:   objectType,

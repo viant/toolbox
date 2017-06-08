@@ -1,9 +1,10 @@
-package toolbox_test
+package storage_test
 
 import (
 	"bytes"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/storage"
 	"io/ioutil"
 	"os"
 	"path"
@@ -11,21 +12,21 @@ import (
 )
 
 func TestStorageService_List(t *testing.T) {
-	service := toolbox.NewStorageService()
+	service := storage.NewService()
 	assert.NotNil(t, service)
 	fileName, _, _ := toolbox.CallerInfo(2)
 	parent, _ := path.Split(fileName)
 
-	if toolbox.FileExists(parent + "/storage_test/file3.txt") {
-		os.Remove(parent + "/storage_test/file3.txt")
+	if toolbox.FileExists(parent + "/test/file3.txt") {
+		os.Remove(parent + "/test/file3.txt")
 	}
-	defer os.Remove(parent + "/storage_test/file3.txt")
+	defer os.Remove(parent + "/test/file3.txt")
 
-	baseUrl := "file://" + parent + "/storage_test"
+	baseUrl := "file://" + parent + "/test"
 	objects, err := service.List(baseUrl)
 	assert.Nil(t, err)
 	assert.Equal(t, 3, len(objects))
-	var objectByUrl = make(map[string]toolbox.StorageObject)
+	var objectByUrl = make(map[string]storage.Object)
 	for _, object := range objects {
 		objectByUrl[object.URL()] = object
 	}
@@ -47,7 +48,7 @@ func TestStorageService_List(t *testing.T) {
 	err = service.Upload(baseUrl+"/file3.txt", bytes.NewReader([]byte("abc")))
 	assert.Nil(t, err)
 
-	exists, err := service.Exists(baseUrl+"/file3.txt")
+	exists, err := service.Exists(baseUrl + "/file3.txt")
 	assert.Nil(t, err)
 	assert.True(t, exists)
 
