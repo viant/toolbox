@@ -45,7 +45,7 @@ func (s *service) List(URL string) ([]tstorage.Object, error) {
 	responseIterator := client.Bucket(parsedUrl.Host).Objects(ctx, query)
 	var result = make([]tstorage.Object, 0)
 	for obj, err := responseIterator.Next(); err == nil; obj, err = responseIterator.Next() {
-		path := "gc://" + parsedUrl.Host + "/" + obj.Name
+		path := "gs://" + parsedUrl.Host + "/" + obj.Name
 		storageType := tstorage.StorageObjectContentType
 		if strings.HasSuffix(obj.Name, "/") {
 			storageType = tstorage.StorageObjectFolderType

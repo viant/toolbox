@@ -44,7 +44,7 @@ func (s *storageService) getServiceForSchema(URL string) (Service, error) {
 		return result, nil
 	}
 
-	return nil, fmt.Errorf("Failed to lookup %v", parsedUrl.Scheme)
+	return nil, fmt.Errorf("Failed to lookup url schema %v in %v", parsedUrl.Scheme, URL)
 }
 
 func (s *storageService) List(URL string) ([]Object, error) {
