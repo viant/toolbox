@@ -68,7 +68,7 @@ func listContent(client *s3.S3, parsedUrl *url.URL, result *[]storage.Object) er
 }
 
 func (s *service) getAwsConfig() (*aws.Config, error) {
-	awsCredentials := credentials.NewStaticCredentials(s.config.Key, s.config.Secrect, s.config.Token)
+	awsCredentials := credentials.NewStaticCredentials(s.config.Key, s.config.Secret, s.config.Token)
 	_, err := awsCredentials.Get()
 	if err != nil {
 		return nil, fmt.Errorf("bad credentials: %s", err)

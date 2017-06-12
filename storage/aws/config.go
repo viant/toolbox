@@ -4,6 +4,6 @@ package aws
 type Config struct {
 	Region  string
 	Key     string
-	Secrect string
+	Secret string
 	Token   string
 }
