@@ -3,9 +3,9 @@ package storage
 import "time"
 
 const (
-	undefined int = iota
-	StorageObjectFolderType
-	StorageObjectContentType
+	undefined                int = iota
+	StorageObjectFolderType      //folder type
+	StorageObjectContentType     //file type
 )
 
 //Object represents a storage object

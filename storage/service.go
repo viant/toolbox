@@ -47,6 +47,7 @@ func (s *storageService) getServiceForSchema(URL string) (Service, error) {
 	return nil, fmt.Errorf("Failed to lookup url schema %v in %v", parsedUrl.Scheme, URL)
 }
 
+//List lists all object for passed in URL
 func (s *storageService) List(URL string) ([]Object, error) {
 	service, err := s.getServiceForSchema(URL)
 	if err != nil {
@@ -64,6 +65,7 @@ func (s *storageService) Exists(URL string) (bool, error) {
 	return service.Exists(URL)
 }
 
+//StorageObject returns storage object for provided URL
 func (s *storageService) StorageObject(URL string) (Object, error) {
 	service, err := s.getServiceForSchema(URL)
 	if err != nil {
@@ -72,6 +74,7 @@ func (s *storageService) StorageObject(URL string) (Object, error) {
 	return service.StorageObject(URL)
 }
 
+//Download downloads content for passed in object
 func (s *storageService) Download(object Object) (io.Reader, error) {
 	service, err := s.getServiceForSchema(object.URL())
 	if err != nil {
@@ -80,6 +83,7 @@ func (s *storageService) Download(object Object) (io.Reader, error) {
 	return service.Download(object)
 }
 
+//Uploads content for passed in URL
 func (s *storageService) Upload(URL string, reader io.Reader) error {
 	service, err := s.getServiceForSchema(URL)
 	if err != nil {
@@ -88,6 +92,7 @@ func (s *storageService) Upload(URL string, reader io.Reader) error {
 	return service.Upload(URL, reader)
 }
 
+//Delete remove storage object
 func (s *storageService) Delete(object Object) error {
 	service, err := s.getServiceForSchema(object.URL())
 	if err != nil {
@@ -96,11 +101,13 @@ func (s *storageService) Delete(object Object) error {
 	return service.Delete(object)
 }
 
+//Register register storage schema
 func (s *storageService) Register(schema string, service Service) error {
 	s.registry[schema] = service
 	return nil
 }
 
+//NewService creates a new storage service
 func NewService() Service {
 	var result = &storageService{
 		registry: make(map[string]Service),
