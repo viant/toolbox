@@ -12,7 +12,7 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 - [Converter && Conversion Utilities](#Conversion-Utilities)
 - [Struct Utilities](#Struct-Utilities)
 - [Function Utilities](#Function-Utilities)
-- [Time Utilities](#Time Utilities)
+- [Time Utilities](#TimeUtilities)
 - [Macro](#Macro)
 - [ServiceRouter](#ServiceRouter)
 - [Decoder and Encoder](#DecoderandEncoder)
@@ -272,7 +272,7 @@ Example:
 <a name="Function-Utilities"></a>
 ### Function Utilities
 
-<a name="Time Utilities"></a>
+<a name="TimeUtilities"></a>
 ### Time Utilities	
 	
 **DateFormatToLayout**
