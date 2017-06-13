@@ -2,9 +2,9 @@ package gs_test
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/toolbox/storage/gs"
 	"google.golang.org/api/option"
 	"testing"
-	"github.com/viant/toolbox/storage/gs"
 )
 
 func TestService_List(t *testing.T) {
