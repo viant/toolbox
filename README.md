@@ -17,6 +17,7 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 - [ServiceRouter](#ServiceRouter)
 - [Decoder and Encoder](#Decoder-ndEncoder)
 - [Logger](#Logger)
+- [BatchLimiter] (#BatchLimiter)
 - [License](#License)
 - [Credits and Acknowledgements](#Credits-and-Acknowledgements)
 
@@ -384,6 +385,29 @@ File template support java style time format to manage rotation on the file name
         })
 ```
 		
+<a name="BatchLimiter"></a>
+### BatchLimiter
+
+
+This library provides a batch limiter, that enables controling number of active go routines.
+
+
+```go
+
+     var tasks []*Task
+     var batchSize = 4
+	 limiter:= toolbox.NewBatchLimiter(batchSize, len(tasks))
+   	 for i, _ :=  range tasks {
+            go func(task *Task) {
+                    limiter.Acquire()
+                    defer limiter.Done()
+                    task.Run();
+        	}(tasks[i])
+	}
+	limiter.Wait()
+
+```
+
 
 ## GoCover
 
