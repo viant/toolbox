@@ -15,9 +15,9 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 - [Time Utilities](#Time Utilities)
 - [Macro](#Macro)
 - [ServiceRouter](#ServiceRouter)
-- [Decoder and Encoder](#Decoder-ndEncoder)
+- [Decoder and Encoder](#DecoderandEncoder)
 - [Logger](#Logger)
-- [BatchLimiter] (#BatchLimiter)
+- [BatchLimiter](#BatchLimiter)
 - [License](#License)
 - [Credits and Acknowledgements](#Credits-and-Acknowledgements)
 
@@ -294,7 +294,7 @@ Java date format style to go date layout conversion.
 <a name="ServiceRouter"></a>
 ### ServiceRouter
 
-<a name="DecoderandEncoder "></a>
+<a name="DecoderandEncoder"></a>
 ### Decoder and Encoder 
 
 #### Decoder
