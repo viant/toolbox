@@ -42,8 +42,12 @@ func BuildFunctionParameters(function interface{}, parameters []string, paramete
 		reflectValue := reflect.ValueOf(parameterValue)
 		if reflectValue.Kind() == reflect.Slice && funcSignature[i].Kind() != reflectValue.Kind() {
 			return nil, fmt.Errorf("Incompatible types expected: %v, but had %v", funcSignature[i].Kind(), reflectValue.Kind())
+		} else if ! reflectValue.IsValid() {
+			if funcSignature[i].Kind() == reflect.Slice {
+				parameterValue = reflect.New(funcSignature[i]).Interface()
+				reflectValue = reflect.ValueOf(parameterValue)
+			}
 		}
-
 		if reflectValue.Type() != funcSignature[i] {
 			newValuePointer := reflect.New(funcSignature[i])
 			err := converter.AssignConverted(newValuePointer.Interface(), parameterValue)
