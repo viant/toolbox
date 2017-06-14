@@ -5,6 +5,7 @@ import (
 	"github.com/viant/toolbox/storage/gs"
 	"google.golang.org/api/option"
 	"testing"
+	"fmt"
 )
 
 func TestService_List(t *testing.T) {
@@ -12,10 +13,11 @@ func TestService_List(t *testing.T) {
 	credential := option.WithServiceAccountFile("***")
 	service := gs.NewService(credential)
 	assert.NotNil(t, service)
-
-	//objects, err := service.List("gs://s3adlogs/ad.log.go")
+	//
+	//objects, err := service.List("gs://erwerew/")
 	//assert.Nil(t, err)
 	//assert.Equal(t, 1, len(objects));
+
 
 	//_, err := service.Download(objects[0])
 	//assert.Nil(t, err)

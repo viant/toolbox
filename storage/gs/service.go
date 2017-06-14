@@ -11,7 +11,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/url"
-	"strings"
 )
 
 type service struct {
@@ -45,9 +44,9 @@ func (s *service) List(URL string) ([]tstorage.Object, error) {
 	responseIterator := client.Bucket(parsedUrl.Host).Objects(ctx, query)
 	var result = make([]tstorage.Object, 0)
 	for obj, err := responseIterator.Next(); err == nil; obj, err = responseIterator.Next() {
-		path := "gs://" + parsedUrl.Host + "/" + obj.Name
+		path := "gs://" + parsedUrl.Host + "/" + obj.Prefix + obj.Name
 		storageType := tstorage.StorageObjectContentType
-		if strings.HasSuffix(obj.Name, "/") {
+		if obj.Prefix != "" {
 			storageType = tstorage.StorageObjectFolderType
 		}
 		result = append(result, newStorageObject(path, storageType, obj, &obj.Updated, obj.Size))
@@ -128,6 +127,7 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 	//		"Cache-Control": "private, max-age=" + expiry,
 	//	}
 	//}
+
 	io.Copy(writer, reader)
 	return writer.Close()
 
