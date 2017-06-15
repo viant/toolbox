@@ -12,13 +12,13 @@ import (
 
 func TestService_List(t *testing.T) {
 
-	fmt.Print("Has service\n")
-	config := &aws.Config{
-		Region: "",
-		Key:    "",
-		Secret: "",
-		Token:  "",
-	}
+	//fmt.Print("Has service\n")
+	//config := &aws.Config{
+	//	Region: "",
+	//	Key:    "",
+	//	Secret: "",
+	//	Token:  "",
+	//}
 	//
 	//service := aws.NewService(config)
 	//assert.NotNil(t, service)
