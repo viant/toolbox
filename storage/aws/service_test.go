@@ -1,14 +1,14 @@
 package aws_test
 
 import (
-	"compress/gzip"
-	"fmt"
-	"github.com/stretchr/testify/assert"
-	aws "github.com/viant/toolbox/storage/aws"
-	"io/ioutil"
-	"strings"
-	"testing"
+	//"compress/gzip"
+	//"fmt"
+	//"github.com/stretchr/testify/assert"
+	//aws "github.com/viant/toolbox/storage/aws"
+	//"io/ioutil"
+	//"strings"
 )
+import "testing"
 
 func TestService_List(t *testing.T) {
 
@@ -40,6 +40,6 @@ func TestService_List(t *testing.T) {
 	//
 	//fmt.Printf("%v", strings.Join(lines[0:10], "\n"))
 
-	assert.True(t, false)
+//	assert.True(t, false)
 
 }
