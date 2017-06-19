@@ -44,13 +44,6 @@ func TestTimeFormat(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, int64(1464903979), timeValue.Unix())
 	}
-	{
-
-
-		testTime := time.Unix(1464903979, 0)
-		assert.True(t,strings.Contains(testTime.Format(toolbox.DateFormatToLayout("yyyy-MM-dd HH:mm:ss.SSSZ")), "2016-06-02 "))
-
-	}
 
 }
 
