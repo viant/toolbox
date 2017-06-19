@@ -3,6 +3,10 @@ package aws
 import (
 	"bytes"
 	"fmt"
+	"io"
+	"net/url"
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -10,9 +14,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
-	"io"
-	"net/url"
-	"strings"
 )
 
 type service struct {
@@ -25,14 +26,20 @@ func listFolders(client *s3.S3, url *url.URL, result *[]storage.Object) error {
 		Prefix:    aws.String(url.Path[1:]),
 		Delimiter: aws.String("/"),
 	}
-	resp, err := client.ListObjects(folderRequest)
+	prefixes := make([]*s3.CommonPrefix, 0)
+	err := client.ListObjectsPages(folderRequest,
+		func(page *s3.ListObjectsOutput, lastPage bool) bool {
+			prefixes = append(prefixes, page.CommonPrefixes...)
+			return len(page.CommonPrefixes) > 0
+		})
+
 	if err != nil {
 		if strings.Contains(err.Error(), "BucketRegionError") {
 			return nil
 		}
 		return err
 	}
-	for _, prefix := range resp.CommonPrefixes {
+	for _, prefix := range prefixes {
 		path := "s3://" + url.Host + "/" + *prefix.Prefix
 		var object = newObject(path, storage.StorageObjectFolderType, prefix, nil, 0)
 		*result = append(*result, object)
@@ -40,25 +47,31 @@ func listFolders(client *s3.S3, url *url.URL, result *[]storage.Object) error {
 	return nil
 }
 
-func listContent(client *s3.S3, parsedUrl *url.URL, result *[]storage.Object) error {
-	var path = parsedUrl.Path
+func listContent(client *s3.S3, parsedURL *url.URL, result *[]storage.Object) error {
+	var path = parsedURL.Path
 
 	folderRequest := &s3.ListObjectsInput{
-		Bucket:    aws.String(parsedUrl.Host),
+		Bucket:    aws.String(parsedURL.Host),
 		Delimiter: aws.String("/"),
 	}
 	if len(path) > 0 {
-		folderRequest.Prefix = aws.String(parsedUrl.Path[1:])
+		folderRequest.Prefix = aws.String(parsedURL.Path[1:])
 	}
-	resp, err := client.ListObjects(folderRequest)
+	contents := make([]*s3.Object, 0)
+	err := client.ListObjectsPages(folderRequest,
+		func(page *s3.ListObjectsOutput, lastPage bool) bool {
+			contents = append(contents, page.Contents...)
+			return len(page.Contents) > 0
+		})
+
 	if err != nil {
 		if strings.Contains(err.Error(), "BucketRegionError") {
 			return nil
 		}
 		return err
 	}
-	for _, content := range resp.Contents {
-		path := "s3://" + parsedUrl.Host + "/" + *content.Key
+	for _, content := range contents {
+		path := "s3://" + parsedURL.Host + "/" + *content.Key
 
 		var object = newObject(path, storage.StorageObjectContentType, content, content.LastModified, *content.Size)
 
@@ -143,7 +156,7 @@ func (s *service) Download(object storage.Object) (io.Reader, error) {
 }
 
 func (s *service) Upload(URL string, reader io.Reader) error {
-	parsedUrl, err := url.Parse(URL)
+	parsedURL, err := url.Parse(URL)
 	if err != nil {
 		return err
 	}
@@ -154,8 +167,8 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 	uploader := s3manager.NewUploader(session.New(config))
 	_, err = uploader.Upload(&s3manager.UploadInput{
 		Body:   reader,
-		Bucket: aws.String(parsedUrl.Host),
-		Key:    aws.String(parsedUrl.Path),
+		Bucket: aws.String(parsedURL.Host),
+		Key:    aws.String(parsedURL.Path),
 	})
 	if err != nil {
 		return fmt.Errorf("Failed to upload %v", err)
@@ -164,14 +177,14 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 }
 
 func (s *service) Delete(object storage.Object) error {
-	parsedUrl, err := url.Parse(object.URL())
+	parsedURL, err := url.Parse(object.URL())
 	if err != nil {
 		return err
 	}
 	target := &s3.Object{}
 	object.Unwrap(&target)
 	request := &s3.DeleteObjectInput{
-		Bucket: aws.String(parsedUrl.Host),
+		Bucket: aws.String(parsedURL.Host),
 		Key:    target.Key,
 	}
 	config, err := s.getAwsConfig()
