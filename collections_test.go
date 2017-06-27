@@ -37,6 +37,16 @@ func TestIndexSlice(t *testing.T) {
 	}
 }
 
+func TestReverseSlice(t *testing.T) {
+	aSlice := []interface{}{
+		"abc", "def", "cyz", "adc","z",
+	}
+
+	toolbox.ReverseSlice(aSlice)
+	assert.Equal(t,  []interface{}{"z", "adc","cyz","def","abc"}, aSlice)
+
+}
+
 func TestProcessSlice(t *testing.T) {
 	{
 		aSlice := []interface{}{
