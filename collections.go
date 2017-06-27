@@ -26,6 +26,9 @@ func ReverseSlice(source interface{}) {
 		sliceValue = sliceValue.Elem()
 	}
 	var sliceLen = sliceValue.Len()
+	if sliceLen <= 1 {
+		return
+	}
 	var j = 0;
 	for i := sliceLen - 1; i >= (sliceLen/2); i-- {
 		value := sliceValue.Index(i).Elem()
