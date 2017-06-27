@@ -37,13 +37,32 @@ func TestIndexSlice(t *testing.T) {
 	}
 }
 
+type sliceItem struct {
+	Id int
+}
+
 func TestReverseSlice(t *testing.T) {
-	aSlice := []interface{}{
-		"abc", "def", "cyz", "adc","z",
+
+	{
+		aSlice := []interface{}{
+			"abc", "def", "cyz", "adc", "z",
+		}
+
+		toolbox.ReverseSlice(aSlice)
+		assert.Equal(t, []interface{}{"z", "adc", "cyz", "def", "abc"}, aSlice)
 	}
 
-	toolbox.ReverseSlice(aSlice)
-	assert.Equal(t,  []interface{}{"z", "adc","cyz","def","abc"}, aSlice)
+	toolbox.ReverseSlice(nil)
+	{
+		aSlice := []*sliceItem{
+			&sliceItem{1},&sliceItem{10},
+		}
+
+		toolbox.ReverseSlice(aSlice)
+		assert.Equal(t, []*sliceItem{
+			&sliceItem{10},&sliceItem{1},
+		}, aSlice)
+	}
 
 }
 

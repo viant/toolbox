@@ -21,7 +21,13 @@ var CopyStringValueProvider = func(source string) string {
 
 //ProcessSlice iterates over any slice, it calls handler with each element unless handler returns false,
 func ReverseSlice(source interface{}) {
+	if source == nil {
+		return
+	}
 	sliceValue := reflect.ValueOf(source);
+	if sliceValue.IsNil() || ! sliceValue.IsValid() {
+		return
+	}
 	if sliceValue.Kind() == reflect.Ptr {
 		sliceValue = sliceValue.Elem()
 	}
@@ -31,10 +37,15 @@ func ReverseSlice(source interface{}) {
 	}
 	var j = 0;
 	for i := sliceLen - 1; i >= (sliceLen/2); i-- {
-		value := sliceValue.Index(i).Elem()
-		sliceValue.Index(i).Set(sliceValue.Index(j).Elem())
-		sliceValue.Index(j).Set(value)
-
+		indexItem := sliceValue.Index(i)
+			indexItemValue := indexItem.Elem()
+		if indexItem.Kind() == reflect.Ptr {
+			sliceValue.Index(i).Set(sliceValue.Index(j).Elem().Addr())
+			sliceValue.Index(j).Set(indexItemValue.Addr())
+		} else {
+			sliceValue.Index(i).Set(sliceValue.Index(j).Elem())
+			sliceValue.Index(j).Set(indexItemValue)
+		}
 		j++
 	}
 }
