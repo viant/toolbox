@@ -134,7 +134,6 @@ func (s *service) Download(object storage.Object) (io.Reader, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	config, err := s.getAwsConfig()
 	if err != nil {
 		return nil, err
@@ -203,4 +202,13 @@ func (s *service) Register(schema string, service storage.Service) error {
 //NewService creates a new aws storage service
 func NewService(config *Config) storage.Service {
 	return &service{config: config}
+}
+
+//NewService creates a new aws storage service
+func NewServiceWithCredential(credentials string) (storage.Service, error) {
+	config, err := NewConfig("file://" + credentials)
+	if err != nil {
+		return nil, err
+	}
+	return NewService(config), nil
 }

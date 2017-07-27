@@ -120,13 +120,13 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 		Object(name).
 		NewWriter(context.Background())
 
-	//expiry := parsedUrl.Query().Get("expiry")
-	//fmt.Printf("expiry :%v\n", expiry )
-	//if expiry != "" {
-	//	writer.Metadata = map[string]string{
-	//		"Cache-Control": "private, max-age=" + expiry,
-	//	}
-	//}
+
+	expiry := parsedUrl.Query().Get("expiry")
+	if expiry != "" {
+		writer.Metadata = map[string]string{
+			"Cache-Control": "private, max-age=" + expiry,
+		}
+	}
 
 	io.Copy(writer, reader)
 	return writer.Close()
