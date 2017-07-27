@@ -6,18 +6,14 @@ import (
 
 //ByteWriterAt  represents a bytes writer at
 type ByteWriterAt struct {
-	mutex *sync.Mutex
+	mutex    *sync.Mutex
 	Buffer   []byte
 	position int
 }
 
-
 //WriteAt returns number of written bytes or error
 func (w *ByteWriterAt) WriteAt(p []byte, offset int64) (n int, err error) {
 	w.mutex.Lock()
-
-
-
 
 	if int(offset) == w.position {
 		w.Buffer = append(w.Buffer, p...)
@@ -49,7 +45,7 @@ func (w *ByteWriterAt) WriteAt(p []byte, offset int64) (n int, err error) {
 //NewWriterAt returns a new instance of byte writer at
 func NewByteWriterAt() *ByteWriterAt {
 	return &ByteWriterAt{
-		mutex:&sync.Mutex{},
+		mutex:  &sync.Mutex{},
 		Buffer: make([]byte, 0),
 	}
 }
