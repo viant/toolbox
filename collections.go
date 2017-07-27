@@ -24,8 +24,8 @@ func ReverseSlice(source interface{}) {
 	if source == nil {
 		return
 	}
-	sliceValue := reflect.ValueOf(source);
-	if sliceValue.IsNil() || ! sliceValue.IsValid() {
+	sliceValue := reflect.ValueOf(source)
+	if sliceValue.IsNil() || !sliceValue.IsValid() {
 		return
 	}
 	if sliceValue.Kind() == reflect.Ptr {
@@ -35,10 +35,10 @@ func ReverseSlice(source interface{}) {
 	if sliceLen <= 1 {
 		return
 	}
-	var j = 0;
-	for i := sliceLen - 1; i >= (sliceLen/2); i-- {
+	var j = 0
+	for i := sliceLen - 1; i >= (sliceLen / 2); i-- {
 		indexItem := sliceValue.Index(i)
-			indexItemValue := indexItem.Elem()
+		indexItemValue := indexItem.Elem()
 		if indexItem.Kind() == reflect.Ptr {
 			sliceValue.Index(i).Set(sliceValue.Index(j).Elem().Addr())
 			sliceValue.Index(j).Set(indexItemValue.Addr())
@@ -49,7 +49,6 @@ func ReverseSlice(source interface{}) {
 		j++
 	}
 }
-
 
 //ProcessSlice iterates over any slice, it calls handler with each element unless handler returns false,
 func ProcessSlice(slice interface{}, handler func(item interface{}) bool) {

@@ -55,12 +55,12 @@ func TestReverseSlice(t *testing.T) {
 	toolbox.ReverseSlice(nil)
 	{
 		aSlice := []*sliceItem{
-			&sliceItem{1},&sliceItem{10},
+			{1}, {10},
 		}
 
 		toolbox.ReverseSlice(aSlice)
 		assert.Equal(t, []*sliceItem{
-			&sliceItem{10},&sliceItem{1},
+			{10}, {1},
 		}, aSlice)
 	}
 
