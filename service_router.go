@@ -262,7 +262,7 @@ func RouteToServiceWithCustomFormat(method, url string, request, response interf
 		return fmt.Errorf("Failed to get response %v %v", err, serverResponse.Header.Get("error"))
 	}
 
-	if response != nil  {
+	if response != nil {
 		if serverResponse == nil || serverResponse.Body == nil {
 			return fmt.Errorf("Failed to recieve response %v", err)
 		}
