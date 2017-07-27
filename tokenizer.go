@@ -110,6 +110,24 @@ func (m EOFMatcher) Match(input string, offset int) (matched int) {
 	return 0
 }
 
+//IntMatcher represents a matcher that finds any int in the input
+type IntMatcher struct{}
+
+//Match matches a literal in the input, it returns number of character matched.
+func (m IntMatcher) Match(input string, offset int) (matched int) {
+	if !isDigit(input[offset : offset+1]) {
+		return 0
+	}
+	var i = 1
+	for ; i < len(input)-offset; i++ {
+		aChar := input[offset+i : offset+i+1]
+		if !isDigit(aChar) {
+			break
+		}
+	}
+	return i
+}
+
 //LiteralMatcher represents a matcher that finds any literals in the input
 type LiteralMatcher struct{}
 
