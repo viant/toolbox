@@ -85,7 +85,7 @@ func (s *fileStorageService) StorageObject(URL string) (Object, error) {
 		objectType = StorageObjectContentType
 	}
 	modTime := fileInfo.ModTime()
-	return newFileObject(URL, objectType, fileInfo, &modTime, fileInfo.Size()), nil
+	return newFileObject(URL, objectType, &fileInfo, &modTime, fileInfo.Size()), nil
 }
 
 //Download returns reader for downloaded storage object
@@ -122,9 +122,11 @@ func (s *fileStorageService) Register(schema string, service Service) error {
 
 //Delete removes passed in storage object
 func (s *fileStorageService) Delete(object Object) error {
-	var fileInfo *os.FileInfo
-	object.Unwrap(fileInfo)
-	return os.Remove((*fileInfo).Name())
+	fileName, err := toolbox.FileFromURL(object.URL())
+	if err != nil {
+		return err
+	}
+	return os.Remove(fileName)
 }
 
 type fileStorageObject struct {
@@ -133,13 +135,16 @@ type fileStorageObject struct {
 
 func (o *fileStorageObject) Unwrap(target interface{}) error {
 	if fileInfo, casted := target.(**os.FileInfo); casted {
+
+
 		source, ok := o.Source.(*os.FileInfo)
 		if !ok {
-			return fmt.Errorf("Failed to case %T into %T", o.Source, target)
+			return fmt.Errorf("Failed to cast %T into %T", o.Source, target)
 		}
 		*fileInfo = source
 		return nil
 	}
+
 	return fmt.Errorf("unsuported target %T", target)
 }
 
