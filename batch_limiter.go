@@ -12,12 +12,10 @@ func (r *BatchLimiter) Acquire() {
 	<-r.queue
 }
 
-
 func (r *BatchLimiter) Done() {
 	r.group.Done()
-	r.queue <-uint8(1)
+	r.queue <- uint8(1)
 }
-
 
 func (r *BatchLimiter) Wait() {
 	r.group.Wait()
@@ -25,7 +23,7 @@ func (r *BatchLimiter) Wait() {
 
 func NewBatchLimiter(batchSize, total int) *BatchLimiter {
 	var queue = make(chan uint8, batchSize)
-	for i := 0; i< batchSize;i++ {
+	for i := 0; i < batchSize; i++ {
 		queue <- uint8(1)
 	}
 	result := &BatchLimiter{
@@ -37,5 +35,3 @@ func NewBatchLimiter(batchSize, total int) *BatchLimiter {
 	result.group.Add(total)
 	return result
 }
-
-
