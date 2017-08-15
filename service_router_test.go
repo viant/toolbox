@@ -2,12 +2,12 @@ package toolbox_test
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
+	"github.com/viant/toolbox"
 	"log"
 	"net/http"
 	"testing"
 	"time"
-	"github.com/stretchr/testify/assert"
-	"github.com/viant/toolbox"
 )
 
 type ReverseService struct{}
@@ -48,25 +48,25 @@ var ReverseInvoker = func(serviceRouting *toolbox.ServiceRouting, request *http.
 func StartServer(port string, t *testing.T) {
 	service := ReverseService{}
 	router := toolbox.NewServiceRouter(
-		&toolbox.ServiceRouting{
+		toolbox.ServiceRouting{
 			HTTPMethod: "GET",
 			URI:        "/v1/reverse/{ids}",
 			Handler:    service.Reverse,
 			Parameters: []string{"ids"},
 		},
-		&toolbox.ServiceRouting{
+		toolbox.ServiceRouting{
 			HTTPMethod: "POST",
 			URI:        "/v1/reverse/",
 			Handler:    service.Reverse,
 			Parameters: []string{"ids"},
 		},
-		&toolbox.ServiceRouting{
+		toolbox.ServiceRouting{
 			HTTPMethod: "DELETE",
 			URI:        "/v1/delete/{ids}",
 			Handler:    service.Reverse,
 			Parameters: []string{"ids"},
 		},
-		&toolbox.ServiceRouting{
+		toolbox.ServiceRouting{
 			HTTPMethod:     "DELETE",
 			URI:            "/v1/delete2/{ids}",
 			Handler:        service.Reverse,
@@ -132,7 +132,7 @@ func TestServiceRouter(t *testing.T) {
 		assert.NotNil(t, err)
 	}
 
-	{//Test custom handler invocation without reflection
+	{ //Test custom handler invocation without reflection
 
 		err := toolbox.RouteToService("delete", "http://127.0.0.1:8082/v1/delete2/1,7,3", nil, &result)
 		if err != nil {

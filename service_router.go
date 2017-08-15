@@ -38,7 +38,6 @@ var httpMethods = map[string]bool{
 //HandlerInvoker method is responsible  of passing required parameters to router handler.
 type HandlerInvoker func(serviceRouting *ServiceRouting, request *http.Request, response http.ResponseWriter, uriParameters map[string]interface{}) error
 
-
 //DefaultEncoderFactory  - NewJSONEncoderFactory
 var DefaultEncoderFactory = NewJSONEncoderFactory()
 
@@ -141,9 +140,6 @@ func (sr ServiceRouting) extractParameters(request *http.Request, response http.
 	return result, nil
 }
 
-
-
-
 //ServiceRouter represents routing rule
 type ServiceRouter struct {
 	serviceRouting []*ServiceRouting
@@ -170,7 +166,6 @@ func getContentTypeOrJSONContentType(contentType string) string {
 	return contentType
 }
 
-
 //Route matches  service routing by http method , and number of parameters, then it call routing method, and sent back its response.
 func (r *ServiceRouter) Route(response http.ResponseWriter, request *http.Request) error {
 	candidates := r.match(request)
@@ -185,13 +180,11 @@ func (r *ServiceRouter) Route(response http.ResponseWriter, request *http.Reques
 
 	for _, serviceRouting := range candidates {
 
-
 		parameterValues, err := serviceRouting.extractParameters(request, response)
 		if err != nil {
 			finalError = fmt.Errorf("unable to extract parameters due to %v", err)
 			continue
 		}
-
 
 		if serviceRouting.HandlerInvoker != nil {
 			err := serviceRouting.HandlerInvoker(serviceRouting, request, response, parameterValues)
@@ -200,8 +193,6 @@ func (r *ServiceRouter) Route(response http.ResponseWriter, request *http.Reques
 			}
 			continue
 		}
-
-
 
 		functionParameters, err := BuildFunctionParameters(serviceRouting.Handler, serviceRouting.Parameters, parameterValues)
 		if err != nil {
@@ -225,12 +216,11 @@ func (r *ServiceRouter) Route(response http.ResponseWriter, request *http.Reques
 	return nil
 }
 
+//WriteServiceRoutingResponse writes service router response
 func WriteServiceRoutingResponse(response http.ResponseWriter, request *http.Request, serviceRouting *ServiceRouting, result interface{}) error {
 	requestContentType := request.Header.Get("Content-Type")
 	responseContentType := getContentTypeOrJSONContentType(requestContentType)
 	encoderFactory := serviceRouting.getEncoderFactory(responseContentType)
-
-
 
 	encoder := encoderFactory.Create(response)
 	response.Header().Set("Content-Type", responseContentType)
@@ -240,18 +230,19 @@ func WriteServiceRoutingResponse(response http.ResponseWriter, request *http.Req
 	}
 	return nil
 
-
-
 	if err != nil {
 		return fmt.Errorf("Failed to write response response %v, due to %v", result, err)
 	}
 	return nil
 }
 
-
 //NewServiceRouter creates a new service router, is takes list of service routing as arguments
-func NewServiceRouter(serviceRouting ...*ServiceRouting) *ServiceRouter {
-	return &ServiceRouter{serviceRouting}
+func NewServiceRouter(serviceRouting ...ServiceRouting) *ServiceRouter {
+	var routings = make([]*ServiceRouting, 0)
+	for _, routing := range serviceRouting {
+		routings = append(routings, &routing)
+	}
+	return &ServiceRouter{routings}
 }
 
 //RouteToService calls web service url, with passed in json request, and encodes http json response into passed response
