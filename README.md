@@ -294,6 +294,127 @@ Java date format style to go date layout conversion.
 <a name="ServiceRouter"></a>
 ### ServiceRouter
 
+This ServiceRouter provides simple WebService Endpoint abstractin and RESET Client utilities.
+
+
+Take as example of a ReverseService defined as follow
+
+```go
+
+type ReverseService interface {
+        Reverse(values []int) []int 
+}
+
+type reverseService struct{}
+
+func (r *reverseService) Reverse(values []int) []int {
+	var result = make([]int, 0)
+	for i := len(values) - 1; i >= 0; i-- {
+		result = append(result, values[i])
+	}
+
+	return result
+}
+
+```
+
+In order to define Endpoint for this service,  define a server, a router with the service routes;
+
+
+
+```qo
+
+
+type Server struct {
+    service ReverseService
+    port string
+}
+
+func (s *Server) Start() {
+    
+    router := toolbox.NewServiceRouter(
+		toolbox.ServiceRouting{
+			HTTPMethod: "GET",
+			URI:        "/v1/reverse/{ids}",
+			Handler:    s.service.Reverse,
+			Parameters: []string{"ids"}, 
+		},
+		toolbox.ServiceRouting{
+			HTTPMethod: "POST",
+			URI:        "/v1/reverse/",
+			Handler:    s.service.Reverse,
+			Parameters: []string{"ids"},
+		})
+		
+        http.HandleFunc("/v1/", func(writer http.ResponseWriter, reader *http.Request) {
+            err := router.Route(writer, reader)
+            if err != nil {
+                response.WriteHeader(http.StatusInternalServerError)
+            }
+        })
+    
+        fmt.Printf("Started test server on port %v\n", port)
+        log.Fatal(http.ListenAndServe(":"+port, nil))
+}
+
+```
+**ServiceRouting** parameters define handler parameters that can be extracted from URI, QueryString, or from Post Body (json payload)
+In addition two special parameter names are supported: @httpRequest, @httpResponseWriter  to pass in request, and response object respectively.
+
+
+The REST client utility invoking our reverse service may look as follow
+ 
+ 
+```go
+
+               var result = make([]int, 0)
+               err := toolbox.RouteToService("get", "http://127.0.0.1:8082/v1/reverse/1,7,3", nil, &result)
+               //...
+               err := toolbox.RouteToService("post", "http://127.0.0.1:8082/v1/reverse/", []int{1, 7, 3}, &result)
+
+``` 
+
+
+By default a service router uses reflection to call the matched routes handler, it is possible to avoid reflection overhead by providing the custom handler invoker.
+
+```go
+
+
+var ReverseInvoker = func(serviceRouting *toolbox.ServiceRouting, request *http.Request, response http.ResponseWriter, uriParameters map[string]interface{}) error {
+	var function = serviceRouting.Handler.(func(values []int) []int)
+	idsParam := uriParameters["ids"]
+	ids := idsParam.([]string)
+	values := make([]int, 0)
+	for _, item := range ids {
+		values = append(values, toolbox.AsInt(item))
+	}
+	var result = function(values)
+	err := toolbox.WriteServiceRoutingResponse(response, request, serviceRouting, result)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+//...
+
+ 
+        router := toolbox.NewServiceRouter(
+		toolbox.ServiceRouting{
+			HTTPMethod: "GET",
+			URI:        "/v1/reverse/{ids}",
+			Handler:    s.service.Reverse,
+			Parameters: []string{"ids"},
+			HandlerInvoker: ReverseInvoker,
+		})
+//...		
+		
+
+```
+
+
+
+
 <a name="DecoderandEncoder"></a>
 ### Decoder and Encoder 
 

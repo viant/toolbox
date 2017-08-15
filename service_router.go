@@ -36,7 +36,7 @@ var httpMethods = map[string]bool{
 }
 
 //HandlerInvoker method is responsible  of passing required parameters to router handler.
-type HandlerInvoker func(serviceRouting *ServiceRouting, request *http.Request, response http.ResponseWriter, uriParameters map[string]interface{}) error
+type HandlerInvoker func(serviceRouting *ServiceRouting, request *http.Request, response http.ResponseWriter, parameters map[string]interface{}) error
 
 //DefaultEncoderFactory  - NewJSONEncoderFactory
 var DefaultEncoderFactory = NewJSONEncoderFactory()
@@ -249,11 +249,12 @@ func (r *ServiceRouter) WriteResponse(encoderFactory EncoderFactory, response in
 }
 
 
+
 //NewServiceRouter creates a new service router, is takes list of service routing as arguments
 func NewServiceRouter(serviceRouting ...ServiceRouting) *ServiceRouter {
 	var routings = make([]*ServiceRouting, 0)
-	for _, routing := range serviceRouting {
-		routings = append(routings, &routing)
+	for i, _ := range serviceRouting {
+		routings = append(routings, &serviceRouting[i])
 	}
 	return &ServiceRouter{routings}
 }

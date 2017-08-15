@@ -67,8 +67,8 @@ func StartServer(port string, t *testing.T) {
 			Parameters: []string{"ids"},
 		},
 		toolbox.ServiceRouting{
-			HTTPMethod:     "DELETE",
-			URI:            "/v1/delete2/{ids}",
+			HTTPMethod:     "GET",
+			URI:            "/v1/reverse2/{ids}",
 			Handler:        service.Reverse,
 			Parameters:     []string{"ids"},
 			HandlerInvoker: ReverseInvoker,
@@ -126,15 +126,11 @@ func TestServiceRouter(t *testing.T) {
 		assert.EqualValues(t, []int{3, 7, 1}, result)
 	}
 
-	{
 
-		err := toolbox.RouteToService("werew", "http://127.0.0.1:8082/v1/delete/1,7,3", nil, &result)
-		assert.NotNil(t, err)
-	}
 
 	{ //Test custom handler invocation without reflection
 
-		err := toolbox.RouteToService("delete", "http://127.0.0.1:8082/v1/delete2/1,7,3", nil, &result)
+		err := toolbox.RouteToService("get", "http://127.0.0.1:8082/v1/reverse2/1,7,3", nil, &result)
 		if err != nil {
 			t.Errorf("Failed to send delete request  %v", err)
 		}
