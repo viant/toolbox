@@ -221,7 +221,6 @@ func WriteServiceRoutingResponse(response http.ResponseWriter, request *http.Req
 	requestContentType := request.Header.Get("Content-Type")
 	responseContentType := getContentTypeOrJSONContentType(requestContentType)
 	encoderFactory := serviceRouting.getEncoderFactory(responseContentType)
-
 	encoder := encoderFactory.Create(response)
 	response.Header().Set("Content-Type", responseContentType)
 	err := encoder.Encode(result)
@@ -235,6 +234,20 @@ func WriteServiceRoutingResponse(response http.ResponseWriter, request *http.Req
 	}
 	return nil
 }
+
+//WriteResponse writes response to response writer, it used encoder factory to encode passed in response to the writer, it sets back request contenttype to response.
+func (r *ServiceRouter) WriteResponse(encoderFactory EncoderFactory, response interface{}, request *http.Request, responseWriter http.ResponseWriter) error {
+	requestContentType := request.Header.Get("Content-Type")
+	responseContentType := getContentTypeOrJSONContentType(requestContentType)
+	encoder := encoderFactory.Create(responseWriter)
+	responseWriter.Header().Set("Content-Type", responseContentType)
+	err := encoder.Encode(response)
+	if err != nil {
+		return fmt.Errorf("Failed to encode response %v, due to %v", response, err)
+	}
+	return nil
+}
+
 
 //NewServiceRouter creates a new service router, is takes list of service routing as arguments
 func NewServiceRouter(serviceRouting ...ServiceRouting) *ServiceRouter {
