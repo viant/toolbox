@@ -35,6 +35,10 @@ var httpMethods = map[string]bool{
 	MethodOptions: true,
 }
 
+//HandlerInvoker method is responsible  of passing required parameters to router handler.
+type HandlerInvoker func(serviceRouting *ServiceRouting, request *http.Request, response http.ResponseWriter, uriParameters map[string]interface{}) error
+
+
 //DefaultEncoderFactory  - NewJSONEncoderFactory
 var DefaultEncoderFactory = NewJSONEncoderFactory()
 
@@ -49,6 +53,7 @@ type ServiceRouting struct {
 	Parameters          []string
 	ContentTypeEncoders map[string]EncoderFactory //content type encoder factory
 	ContentTypeDecoders map[string]DecoderFactory //content type decoder factory
+	HandlerInvoker      HandlerInvoker            //optional function that will be used instead of reflection to invoke a handler.
 }
 
 func (sr ServiceRouting) getDecoderFactory(contentType string) DecoderFactory {
@@ -136,13 +141,16 @@ func (sr ServiceRouting) extractParameters(request *http.Request, response http.
 	return result, nil
 }
 
+
+
+
 //ServiceRouter represents routing rule
 type ServiceRouter struct {
-	serviceRouting []ServiceRouting
+	serviceRouting []*ServiceRouting
 }
 
-func (r *ServiceRouter) match(request *http.Request) []ServiceRouting {
-	var result = make([]ServiceRouting, 0)
+func (r *ServiceRouter) match(request *http.Request) []*ServiceRouting {
+	var result = make([]*ServiceRouting, 0)
 	for _, candidate := range r.serviceRouting {
 
 		if candidate.HTTPMethod == request.Method {
@@ -162,18 +170,6 @@ func getContentTypeOrJSONContentType(contentType string) string {
 	return contentType
 }
 
-//WriteResponse writes response to response writer, it used encoder factory to encode passed in response to the writer, it sets back request contenttype to response.
-func (r *ServiceRouter) WriteResponse(encoderFactory EncoderFactory, response interface{}, request *http.Request, responseWriter http.ResponseWriter) error {
-	requestContentType := request.Header.Get("Content-Type")
-	responseContentType := getContentTypeOrJSONContentType(requestContentType)
-	encoder := encoderFactory.Create(responseWriter)
-	responseWriter.Header().Set("Content-Type", responseContentType)
-	err := encoder.Encode(response)
-	if err != nil {
-		return fmt.Errorf("Failed to encode response %v, due to %v", response, err)
-	}
-	return nil
-}
 
 //Route matches  service routing by http method , and number of parameters, then it call routing method, and sent back its response.
 func (r *ServiceRouter) Route(response http.ResponseWriter, request *http.Request) error {
@@ -189,22 +185,33 @@ func (r *ServiceRouter) Route(response http.ResponseWriter, request *http.Reques
 
 	for _, serviceRouting := range candidates {
 
+
 		parameterValues, err := serviceRouting.extractParameters(request, response)
 		if err != nil {
 			finalError = fmt.Errorf("unable to extract parameters due to %v", err)
 			continue
 		}
+
+
+		if serviceRouting.HandlerInvoker != nil {
+			err := serviceRouting.HandlerInvoker(serviceRouting, request, response, parameterValues)
+			if err != nil {
+				finalError = fmt.Errorf("unable to extract parameters due to %v", err)
+			}
+			continue
+		}
+
+
+
 		functionParameters, err := BuildFunctionParameters(serviceRouting.Handler, serviceRouting.Parameters, parameterValues)
 		if err != nil {
 			finalError = fmt.Errorf("unable to build function parameters %T due to %v", serviceRouting.Handler, err)
 			continue
 		}
+
 		result := CallFunction(serviceRouting.Handler, functionParameters...)
 		if len(result) > 0 {
-			requestContentType := request.Header.Get("Content-Type")
-			responseContentType := getContentTypeOrJSONContentType(requestContentType)
-			factory := serviceRouting.getEncoderFactory(responseContentType)
-			err := r.WriteResponse(factory, result[0], request, response)
+			err = WriteServiceRoutingResponse(response, request, serviceRouting, result[0])
 			if err != nil {
 				return fmt.Errorf("Failed to write response response %v, due to %v", result[0], err)
 			}
@@ -218,8 +225,32 @@ func (r *ServiceRouter) Route(response http.ResponseWriter, request *http.Reques
 	return nil
 }
 
+func WriteServiceRoutingResponse(response http.ResponseWriter, request *http.Request, serviceRouting *ServiceRouting, result interface{}) error {
+	requestContentType := request.Header.Get("Content-Type")
+	responseContentType := getContentTypeOrJSONContentType(requestContentType)
+	encoderFactory := serviceRouting.getEncoderFactory(responseContentType)
+
+
+
+	encoder := encoderFactory.Create(response)
+	response.Header().Set("Content-Type", responseContentType)
+	err := encoder.Encode(result)
+	if err != nil {
+		return fmt.Errorf("Failed to encode response %v, due to %v", response, err)
+	}
+	return nil
+
+
+
+	if err != nil {
+		return fmt.Errorf("Failed to write response response %v, due to %v", result, err)
+	}
+	return nil
+}
+
+
 //NewServiceRouter creates a new service router, is takes list of service routing as arguments
-func NewServiceRouter(serviceRouting ...ServiceRouting) *ServiceRouter {
+func NewServiceRouter(serviceRouting ...*ServiceRouting) *ServiceRouter {
 	return &ServiceRouter{serviceRouting}
 }
 

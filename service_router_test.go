@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"testing"
 	"time"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
 )
@@ -30,26 +29,49 @@ func (this ReverseService) Reverse2(values []int) []int {
 	return result
 }
 
+var ReverseInvoker = func(serviceRouting *toolbox.ServiceRouting, request *http.Request, response http.ResponseWriter, uriParameters map[string]interface{}) error {
+	var function = serviceRouting.Handler.(func(values []int) []int)
+	idsParam := uriParameters["ids"]
+	ids := idsParam.([]string)
+	values := make([]int, 0)
+	for _, item := range ids {
+		values = append(values, toolbox.AsInt(item))
+	}
+	var result = function(values)
+	err := toolbox.WriteServiceRoutingResponse(response, request, serviceRouting, result)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func StartServer(port string, t *testing.T) {
 	service := ReverseService{}
 	router := toolbox.NewServiceRouter(
-		toolbox.ServiceRouting{
+		&toolbox.ServiceRouting{
 			HTTPMethod: "GET",
 			URI:        "/v1/reverse/{ids}",
 			Handler:    service.Reverse,
 			Parameters: []string{"ids"},
 		},
-		toolbox.ServiceRouting{
+		&toolbox.ServiceRouting{
 			HTTPMethod: "POST",
 			URI:        "/v1/reverse/",
 			Handler:    service.Reverse,
 			Parameters: []string{"ids"},
 		},
-		toolbox.ServiceRouting{
+		&toolbox.ServiceRouting{
 			HTTPMethod: "DELETE",
 			URI:        "/v1/delete/{ids}",
 			Handler:    service.Reverse,
 			Parameters: []string{"ids"},
+		},
+		&toolbox.ServiceRouting{
+			HTTPMethod:     "DELETE",
+			URI:            "/v1/delete2/{ids}",
+			Handler:        service.Reverse,
+			Parameters:     []string{"ids"},
+			HandlerInvoker: ReverseInvoker,
 		},
 	)
 
@@ -109,4 +131,14 @@ func TestServiceRouter(t *testing.T) {
 		err := toolbox.RouteToService("werew", "http://127.0.0.1:8082/v1/delete/1,7,3", nil, &result)
 		assert.NotNil(t, err)
 	}
+
+	{//Test custom handler invocation without reflection
+
+		err := toolbox.RouteToService("delete", "http://127.0.0.1:8082/v1/delete2/1,7,3", nil, &result)
+		if err != nil {
+			t.Errorf("Failed to send delete request  %v", err)
+		}
+		assert.EqualValues(t, []int{3, 7, 1}, result)
+	}
+
 }
