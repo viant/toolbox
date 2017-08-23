@@ -248,12 +248,10 @@ func (r *ServiceRouter) WriteResponse(encoderFactory EncoderFactory, response in
 	return nil
 }
 
-
-
 //NewServiceRouter creates a new service router, is takes list of service routing as arguments
 func NewServiceRouter(serviceRouting ...ServiceRouting) *ServiceRouter {
 	var routings = make([]*ServiceRouting, 0)
-	for i, _ := range serviceRouting {
+	for i := range serviceRouting {
 		routings = append(routings, &serviceRouting[i])
 	}
 	return &ServiceRouter{routings}

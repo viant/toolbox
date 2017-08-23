@@ -25,3 +25,19 @@ func TestNewClient(t *testing.T) {
 		assert.Nil(t, client)
 	}
 }
+
+func TestClient_Upload(t *testing.T) {
+	client, err := ssh.NewClient("127.0.0.1", 22, nil)
+	if err == nil {
+		assert.NotNil(t, client)
+		err = client.Upload("/tmp/a/abcd.bin", []byte{0x1, 0x6, 0x10})
+		assert.Nil(t, err)
+
+		content, err := client.Download("/tmp/a/abcd.bin")
+		assert.Nil(t, err)
+		assert.Equal(t, []byte{0x1, 0x6, 0x10}, (content))
+
+	} else {
+		assert.Nil(t, client)
+	}
+}

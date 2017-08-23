@@ -156,4 +156,5 @@ func TestNewHttpBridgeWithRecordingHandler(t *testing.T) {
 		assert.Equal(t, "Response1 from 9098", string(content))
 	}
 
+
 }

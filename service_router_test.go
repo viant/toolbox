@@ -126,8 +126,6 @@ func TestServiceRouter(t *testing.T) {
 		assert.EqualValues(t, []int{3, 7, 1}, result)
 	}
 
-
-
 	{ //Test custom handler invocation without reflection
 
 		err := toolbox.RouteToService("get", "http://127.0.0.1:8082/v1/reverse2/1,7,3", nil, &result)
