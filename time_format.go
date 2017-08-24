@@ -37,12 +37,6 @@ func DateFormatToLayout(dateFormat string) string {
 	dateFormat = strings.Replace(dateFormat, "yy", "06", 1)
 	dateFormat = strings.Replace(dateFormat, "y", "06", 1)
 
-	dateFormat = strings.Replace(dateFormat, "z", "MST", 1)
-	dateFormat = strings.Replace(dateFormat, "zzzz", "Z0700", 1)
-	dateFormat = strings.Replace(dateFormat, "zzzz", "Z07:00", 1)
-	dateFormat = strings.Replace(dateFormat, "Z", "-07", 1)
-	dateFormat = strings.Replace(dateFormat, "EEEE", "Monday", 1)
-	dateFormat = strings.Replace(dateFormat, "E", "Mon", 1)
 
 	dateFormat = strings.Replace(dateFormat, "SSS", "000", 1)
 
@@ -50,6 +44,13 @@ func DateFormatToLayout(dateFormat string) string {
 	dateFormat = strings.Replace(dateFormat, "MMM", "Jan", 1)
 	dateFormat = strings.Replace(dateFormat, "MM", "01", 1)
 	dateFormat = strings.Replace(dateFormat, "M", "1", 1)
+
+	dateFormat = strings.Replace(dateFormat, "z", "MST", 1)
+	dateFormat = strings.Replace(dateFormat, "zzzz", "Z0700", 1)
+	dateFormat = strings.Replace(dateFormat, "zzzz", "Z07:00", 1)
+	dateFormat = strings.Replace(dateFormat, "Z", "-07", 1)
+	dateFormat = strings.Replace(dateFormat, "EEEE", "Monday", 1)
+	dateFormat = strings.Replace(dateFormat, "E", "Mon", 1)
 
 	return dateFormat
 }
