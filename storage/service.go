@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"path"
 )
 
 //Service represents abstract way to accessing local or remote storage
@@ -114,4 +115,73 @@ func NewService() Service {
 	}
 	result.Register("file", &fileStorageService{})
 	return result
+}
+
+//NewServiceForURL creates a new storage service for provided URL scheme and optional credential file
+func NewServiceForURL(URL, credentialFile string) (Service, error) {
+	parsedURL, err := url.Parse(URL)
+	if err != nil {
+		return nil, err
+	}
+	service := NewService()
+	provider := NewStorageProvider().Get(parsedURL.Scheme)
+	if provider != nil {
+		serviceForScheme, err := provider(credentialFile)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to get storage for url %v", URL)
+		}
+		service.Register(parsedURL.Scheme, serviceForScheme)
+	} else if parsedURL.Scheme != "file" {
+		return nil, fmt.Errorf("Unsupported scheme %v", parsedURL.Scheme)
+	}
+	return service, nil
+}
+
+func copy(sourceService Service, sourceURL string, targetService Service, targetURL string, modifyContentHandler func(reader io.Reader) io.Reader, subPath string) error {
+	sourceListURL := sourceURL
+	if subPath != "" {
+		sourceListURL = path.Join(sourceURL, subPath)
+	}
+	objects, err := sourceService.List(sourceListURL)
+	var objectRelativePath string
+	for _, object := range objects {
+
+		if object.URL() == sourceURL {
+			continue
+		}
+		if len(object.URL()) > len(sourceURL) {
+			objectRelativePath = object.URL()[len(sourceURL):]
+		}
+
+		var targetObjectURL = path.Join(targetURL, objectRelativePath)
+		var reader io.Reader
+		if object.IsContent() {
+			reader, err = sourceService.Download(object)
+			if err != nil {
+				err = fmt.Errorf("Failed to copy %v -> %v: unable download, %v", object.URL(), targetObjectURL, err)
+			}
+			if modifyContentHandler != nil {
+				reader = modifyContentHandler(reader)
+			}
+			err = targetService.Upload(targetObjectURL, reader)
+			if err != nil {
+				err = fmt.Errorf("Failed to copy %v -> %v: unable upload, %v", object.URL(), targetObjectURL, err)
+			}
+		} else {
+			err = copy(sourceService, sourceURL, targetService, targetURL, modifyContentHandler, objectRelativePath)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+//Copy downloads objects from source URL to upload them to target URL.
+func Copy(sourceService Service, sourceURL string, targetService Service, targetURL string, modifyContentHandler func(reader io.Reader) io.Reader) (err error) {
+	err = copy(sourceService, sourceURL, targetService, targetURL, modifyContentHandler, "")
+	if err != nil {
+		err = fmt.Errorf("Failed to copy %v -> %v: %v", sourceURL, targetURL, err)
+	}
+	return err
 }
