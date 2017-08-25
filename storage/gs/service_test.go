@@ -5,7 +5,6 @@ import (
 	"github.com/viant/toolbox/storage/gs"
 	"google.golang.org/api/option"
 	"testing"
-	"fmt"
 )
 
 func TestService_List(t *testing.T) {

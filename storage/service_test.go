@@ -25,6 +25,7 @@ func TestStorageService_List(t *testing.T) {
 
 	objects, err := service.List(baseUrl)
 	assert.Nil(t, err)
+
 	assert.Equal(t, 5, len(objects))
 	var objectByUrl = make(map[string]storage.Object)
 	for _, object := range objects {
