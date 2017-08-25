@@ -3,6 +3,8 @@ package toolbox
 import (
 	"fmt"
 	"os"
+	"path"
+	"strings"
 )
 
 var dirMode os.FileMode = 0744
@@ -32,6 +34,13 @@ func FileExists(filename string) bool {
 // CreateDirIfNotExist creates directory if they do not exist
 func CreateDirIfNotExist(dirs ...string) error {
 	for _, dir := range dirs {
+		if len(dir) > 1 && strings.HasSuffix(dir, "/")  {
+			dir = dir[:len(dir)-1]
+		}
+		parent, _ := path.Split(dir)
+		if parent != "/" && parent != dir {
+			CreateDirIfNotExist(parent)
+		}
 		if !FileExists(dir) {
 			err := os.Mkdir(dir, dirMode)
 			if err != nil {
