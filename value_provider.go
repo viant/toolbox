@@ -8,7 +8,6 @@ import (
 
 //ValueProvider represents a value provider
 type ValueProvider interface {
-
 	//Get returns a value for passed in context and arguments. Context can be used to manage state.
 	Get(context Context, arguments ...interface{}) (interface{}, error)
 }
@@ -143,4 +142,51 @@ func (p currentDateProvider) Get(context Context, arguments ...interface{}) (int
 func NewCurrentDateProvider() ValueProvider {
 	var result ValueProvider = &currentDateProvider{}
 	return result
+}
+
+//Dictionary represents simply lookup interface
+type Dictionary interface {
+
+	//Get returns value for passed in key or error
+	Get(key string) (interface{}, error)
+
+	//Exists checks if key exists
+	Exists(key string) bool
+}
+
+//MapDictionary alias to map of string and interface{}
+type MapDictionary map[string]interface{}
+
+func (d *MapDictionary) Get(name string) (interface{}, error) {
+	if result, found := (*d)[name]; found {
+		return result, nil
+	}
+	return nil, fmt.Errorf("Failed to lookup: %v", name)
+}
+
+func (d *MapDictionary) Exists(name string) bool {
+	_, found := (*d)[name]
+	return found
+}
+
+type dictionaryProvider struct {
+	dictionaryContentKey interface{}
+}
+
+func (p dictionaryProvider) Get(context Context, arguments ...interface{}) (interface{}, error) {
+	if len(arguments) == 0 {
+		return nil, fmt.Errorf("Expected at least one argument but had 0")
+	}
+	var key = AsString(arguments[0])
+	var dictionary Dictionary
+	context.GetInto(p.dictionaryContentKey, &dictionary)
+	if len(arguments) == 1 && !dictionary.Exists(key) {
+		return nil, nil
+	}
+	return dictionary.Get(key)
+}
+
+//NewDictionaryProvider creates a new Dictionary provider, it takes a key context that is a MapDictionary pointer
+func NewDictionaryProvider(contextKey interface{}) ValueProvider {
+	return &dictionaryProvider{contextKey}
 }

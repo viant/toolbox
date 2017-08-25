@@ -105,3 +105,37 @@ func TestNewValueProviderRegistry(t *testing.T) {
 	assert.NotNil(t, provider)
 	assert.Equal(t, 1, len(registry.Names()))
 }
+
+func TestNewDictionaryProviderRegistry(t *testing.T) {
+
+	var dictionary toolbox.MapDictionary = make(map[string]interface{})
+	var key toolbox.MapDictionary
+
+	dictionary["k1"] = "123"
+	dictionary["k2"] = "xyz"
+
+	provider := toolbox.NewDictionaryProvider(&key)
+	context := toolbox.NewContext()
+	context.Put(&key, &dictionary)
+
+	{
+		value, err := provider.Get(context, "k1")
+		assert.Nil(t, err)
+		assert.Equal(t, "123", value)
+
+	}
+	{
+		value, err := provider.Get(context, "k2")
+		assert.Nil(t, err)
+		assert.Equal(t, "xyz", value)
+
+	}
+
+	{
+		value, err := provider.Get(context, "k13", "true")
+		assert.NotNil(t, err)
+		assert.Nil(t, value)
+
+	}
+
+}
