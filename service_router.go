@@ -275,17 +275,22 @@ func NewHttpClient(options ...*HttpOptions) (*http.Client, error) {
 		return http.DefaultClient, nil
 	}
 
-	var RequestTimeoutMs, TimeoutMs, KeepAliveTimeMs, TLSHandshakeTimeoutMs, ResponseHeaderTimeoutMs time.Duration
-	var MaxIdleConnections int
+	var (
+		RequestTimeoutMs,
+		TimeoutMs,
+		KeepAliveTimeMs,
+		TLSHandshakeTimeoutMs,
+		ResponseHeaderTimeoutMs time.Duration
+
+		MaxIdleConnections int
+	)
 
 	for _, option := range options {
-
 		switch option.Key {
 		case "RequestTimeoutMs":
 			RequestTimeoutMs = time.Duration(AsInt(option.Value))
 		case "TimeoutMs":
 			TimeoutMs = time.Duration(AsInt(option.Value))
-
 		case "KeepAliveTimeMs":
 			KeepAliveTimeMs = time.Duration(AsInt(option.Value))
 		case "TLSHandshakeTimeoutMs":
