@@ -17,14 +17,16 @@ func init() {
 }
 
 func serviceProvider(credentialFile string) (storage.Service, error) {
-	if !strings.HasPrefix(credentialFile, "/") {
+	if credentialFile != "" && !strings.HasPrefix(credentialFile, "/") {
 		dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 		credentialFile = path.Join(dir, credentialFile)
 	}
 	config := &ssh.AuthConfig{}
-	err := toolbox.LoadConfigFromUrl("file://"+credentialFile, config)
-	if err != nil {
-		return nil, err
+	if credentialFile != "" {
+		err := toolbox.LoadConfigFromUrl("file://"+credentialFile, config)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return NewService(config), nil
 }
