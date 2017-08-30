@@ -13,6 +13,8 @@ import (
 
 const defaultShell = "/bin/bash"
 
+const defautTimeoutMs = 5000
+
 //MultiCommandSession represents a multi command session
 //a new command are send vi stdin
 type MultiCommandSession struct {
@@ -51,7 +53,7 @@ func (s *MultiCommandSession) init(shell string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return s.readResponse(5000)
+	return s.readResponse(defautTimeoutMs)
 }
 
 func (s *MultiCommandSession) drain(reader io.Reader, out chan string) {
@@ -113,6 +115,9 @@ func (s *MultiCommandSession) Close() {
 }
 
 func (s *MultiCommandSession) readResponse(timeoutMs int, expects ...string) (out string, err error) {
+	if timeoutMs == 0 {
+		timeoutMs = defautTimeoutMs
+	}
 	if len(expects) == 0 {
 		if s.shellPrompt == "" {
 			expects = []string{s.shellPrompt + "$"}

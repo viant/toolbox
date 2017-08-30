@@ -2,13 +2,21 @@ package ssh
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"golang.org/x/crypto/ssh"
+	"io"
 	"path"
+	"sync/atomic"
+	"time"
 )
 
 const (
 	createFileSequence = "C0644"
 )
+
+var bufferSize = 64 * 1024
+var scpUploadSleep = time.Millisecond
+var commandResponseDelaySleep = 200 * time.Millisecond
 
 var endTransferSequence = []byte("\x00")
 
@@ -31,9 +39,35 @@ func (c *Client) Run(comand string) error {
 	return session.Run(comand)
 }
 
+//listenForMessage this function read data from reader to filer textual output to result channel.
+func listenForMessage(reader io.Reader, result chan string, done *int32) {
+	for {
+		if atomic.LoadInt32(done) == 1 {
+			return
+		}
+		var buf = make([]byte, bufferSize)
+		read, _ := reader.Read(buf)
+		if read > 0 {
+
+			data := buf[:read]
+			var text = ""
+			for _, b := range data {
+				if b >= 32 {
+					text += string(b)
+				}
+			}
+			if text != "" {
+				result <- text
+			}
+		}
+	}
+}
+
 //Upload uploads passed in content into remote destination
 func (c *Client) Upload(destination string, content []byte) error {
 	dir, file := path.Split(destination)
+
+	fmt.Printf("destination: %v => file: %v \n", destination, file)
 	if len(dir) > 0 {
 		c.Run("mkdir -p " + dir)
 	}
@@ -49,8 +83,15 @@ func (c *Client) Upload(destination string, content []byte) error {
 	}
 	defer writer.Close()
 
+	var done int32
+	defer func() {
+		atomic.StoreInt32(&done, 1)
+	}()
 	output, err := session.StdoutPipe()
-	cmd := "scp -tr " + dir
+	var messages = make(chan string, 1)
+	go listenForMessage(output, messages, &done)
+
+	cmd := "scp -qtr " + dir
 	err = session.Start(cmd)
 	if err != nil {
 		return err
@@ -60,17 +101,39 @@ func (c *Client) Upload(destination string, content []byte) error {
 	if err != nil {
 		return err
 	}
-	_, err = writer.Write(content)
-	if err != nil {
-		return err
+	var message string
+	select {
+	case message = <-messages:
+	case <-time.After(commandResponseDelaySleep):
 	}
-	_, err = writer.Write(endTransferSequence)
-	if err != nil {
-		return err
+	if message != "" {
+		return errors.New(message)
 	}
 
-	buf := make([]byte, 128)
-	_, err = output.Read(buf)
+	//This is terrible hack, but  it looks like writer.Write at once or using io.Copy causes some data being lost in the final file,
+	//so slowing down writes addresses this issue
+	for i := 0; i < (len(content)/bufferSize)+1; i++ {
+		maxLength := (i + 1) * bufferSize
+		if maxLength >= len(content) {
+			maxLength = len(content)
+		}
+		buffer := content[i*bufferSize : maxLength]
+		_, err = writer.Write(buffer)
+		if err != nil {
+			if err.Error() == io.EOF.Error() {
+				break
+			}
+			return fmt.Errorf("Failed to write content %v %v %v", err, len(content), i)
+		}
+		time.Sleep(scpUploadSleep)
+	}
+
+	if err == nil {
+		_, err = writer.Write(endTransferSequence)
+		if err != nil {
+			return err
+		}
+	}
 	return err
 }
 
