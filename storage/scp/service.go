@@ -177,7 +177,7 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 
 	content, err := ioutil.ReadAll(reader)
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to upload - unable read: %v", err)
 	}
 	return client.Upload(parsedUrl.Path, content)
 }
