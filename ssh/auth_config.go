@@ -64,3 +64,9 @@ func (c *AuthConfig) ClientConfig() (*ssh.ClientConfig, error) {
 	c.clientConfig = result
 	return result, nil
 }
+
+func NewAuthConfigFromURL(URL string) (*AuthConfig, error) {
+	result := &AuthConfig{}
+	err := toolbox.LoadConfigFromUrl(URL, result)
+	return result, err
+}
