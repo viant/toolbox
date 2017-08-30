@@ -73,3 +73,11 @@ func ExtractURIParameters(templateURI, requestURI string) (map[string]string, bo
 	matched := requestURIIndex == len(requestURI) && templateURIIndex == len(templateURI)
 	return uriParameters, matched
 }
+
+
+func URLPathJoin(baseURL, path string)  string {
+	if strings.HasSuffix(baseURL, "/") {
+		return baseURL + path
+	}
+	return baseURL + "/" + path
+}
