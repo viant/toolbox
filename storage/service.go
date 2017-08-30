@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+	"github.com/viant/toolbox"
 	"io"
 	"net/url"
 	"path"
@@ -128,44 +129,65 @@ func NewServiceForURL(URL, credentialFile string) (Service, error) {
 	if provider != nil {
 		serviceForScheme, err := provider(credentialFile)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to get storage for url %v", URL)
+			return nil, fmt.Errorf("Failed to get storage for url %v: %v", URL, err)
 		}
-		service.Register(parsedURL.Scheme, serviceForScheme)
+		err = service.Register(parsedURL.Scheme, serviceForScheme)
+		if err != nil {
+			return nil, err
+		}
 	} else if parsedURL.Scheme != "file" {
 		return nil, fmt.Errorf("Unsupported scheme %v", parsedURL.Scheme)
 	}
 	return service, nil
 }
 
-func copy(sourceService Service, sourceURL string, targetService Service, targetURL string, modifyContentHandler func(reader io.Reader) io.Reader, subPath string) error {
+func copy(sourceService Service, sourceURL string, targetService Service, targetURL string, modifyContentHandler func(reader io.Reader) (io.Reader, error), subPath string) error {
 	sourceListURL := sourceURL
 	if subPath != "" {
-		sourceListURL = path.Join(sourceURL, subPath)
+		sourceListURL = toolbox.URLPathJoin(sourceURL, subPath)
 	}
 	objects, err := sourceService.List(sourceListURL)
 	var objectRelativePath string
 	for _, object := range objects {
 
-		if object.URL() == sourceURL {
+		if object.URL() == sourceURL && object.IsFolder() {
 			continue
 		}
 		if len(object.URL()) > len(sourceURL) {
 			objectRelativePath = object.URL()[len(sourceURL):]
 		}
 
-		var targetObjectURL = path.Join(targetURL, objectRelativePath)
+		var targetObjectURL = targetURL
+		if objectRelativePath != "" {
+			targetObjectURL = toolbox.URLPathJoin(targetURL, objectRelativePath)
+		}
 		var reader io.Reader
 		if object.IsContent() {
 			reader, err = sourceService.Download(object)
 			if err != nil {
-				err = fmt.Errorf("Failed to copy %v -> %v: unable download, %v", object.URL(), targetObjectURL, err)
+				err = fmt.Errorf("Unable download, %v", object.URL(), targetObjectURL, err)
+				return err
 			}
 			if modifyContentHandler != nil {
-				reader = modifyContentHandler(reader)
+				reader, err = modifyContentHandler(reader)
+				if err != nil {
+					err = fmt.Errorf("Unable modify content, %v", object.URL(), targetObjectURL, err)
+					return err
+				}
 			}
+
+			targetObjects, err := targetService.List(targetObjectURL)
+			if err == nil && len(targetObjects) > 0 {
+				if targetObjects[0].IsFolder() {
+					_, file := path.Split(object.URL())
+					targetObjectURL = toolbox.URLPathJoin(targetObjectURL, file)
+				}
+			}
+
 			err = targetService.Upload(targetObjectURL, reader)
 			if err != nil {
-				err = fmt.Errorf("Failed to copy %v -> %v: unable upload, %v", object.URL(), targetObjectURL, err)
+				err = fmt.Errorf("Unable upload, %v %v %v", object.URL(), targetObjectURL, err)
+				return err
 			}
 		} else {
 			err = copy(sourceService, sourceURL, targetService, targetURL, modifyContentHandler, objectRelativePath)
@@ -178,7 +200,7 @@ func copy(sourceService Service, sourceURL string, targetService Service, target
 }
 
 //Copy downloads objects from source URL to upload them to target URL.
-func Copy(sourceService Service, sourceURL string, targetService Service, targetURL string, modifyContentHandler func(reader io.Reader) io.Reader) (err error) {
+func Copy(sourceService Service, sourceURL string, targetService Service, targetURL string, modifyContentHandler func(reader io.Reader) (io.Reader, error)) (err error) {
 	err = copy(sourceService, sourceURL, targetService, targetURL, modifyContentHandler, "")
 	if err != nil {
 		err = fmt.Errorf("Failed to copy %v -> %v: %v", sourceURL, targetURL, err)
