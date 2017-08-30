@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"reflect"
 	"strings"
+	"time"
 )
 
 var jsonContentType = "application/json"
@@ -262,8 +264,63 @@ func RouteToService(method, url string, request, response interface{}) (err erro
 	return RouteToServiceWithCustomFormat(method, url, request, response, NewJSONEncoderFactory(), NewJSONDecoderFactory())
 }
 
+type HttpOptions struct {
+	Key   string
+	Value interface{}
+}
+
+func NewHttpClient(options ...*HttpOptions) (*http.Client, error) {
+
+	if len(options) == 0 {
+		return http.DefaultClient, nil
+	}
+
+	var RequestTimeoutMs, TimeoutMs, KeepAliveTimeMs, TLSHandshakeTimeoutMs, ResponseHeaderTimeoutMs time.Duration
+	var MaxIdleConnections int
+
+	for _, option := range options {
+
+		switch option.Key {
+		case "RequestTimeoutMs":
+			RequestTimeoutMs = time.Duration(AsInt(option.Value))
+		case "TimeoutMs":
+			TimeoutMs = time.Duration(AsInt(option.Value))
+
+		case "KeepAliveTimeMs":
+			KeepAliveTimeMs = time.Duration(AsInt(option.Value))
+		case "TLSHandshakeTimeoutMs":
+			KeepAliveTimeMs = time.Duration(AsInt(option.Value))
+		case "TLSHandshakeTimeout":
+			KeepAliveTimeMs = time.Duration(AsInt(option.Value))
+		case "ResponseHeaderTimeoutMs":
+			ResponseHeaderTimeoutMs = time.Duration(AsInt(option.Value))
+		case "MaxIdleConnections":
+			MaxIdleConnections = AsInt(option.Value)
+		default:
+			return nil, fmt.Errorf("Invalid option: %v", option.Key)
+
+		}
+	}
+	roundTripper := http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		Dial: (&net.Dialer{
+			Timeout:   RequestTimeoutMs * time.Millisecond,
+			KeepAlive: KeepAliveTimeMs * time.Millisecond,
+		}).Dial,
+		TLSHandshakeTimeout:   TLSHandshakeTimeoutMs * time.Millisecond,
+		MaxIdleConnsPerHost:   MaxIdleConnections,
+		ResponseHeaderTimeout: ResponseHeaderTimeoutMs * time.Millisecond,
+	}
+
+	return &http.Client{
+		Transport: &roundTripper,
+		Timeout:   TimeoutMs * time.Millisecond,
+	}, nil
+
+}
+
 //RouteToServiceWithCustomFormat calls web service url, with passed in custom format request, and encodes custom format http response into passed response
-func RouteToServiceWithCustomFormat(method, url string, request, response interface{}, encoderFactory EncoderFactory, decoderFactory DecoderFactory) (err error) {
+func RouteToServiceWithCustomFormat(method, url string, request, response interface{}, encoderFactory EncoderFactory, decoderFactory DecoderFactory, options ...*HttpOptions) (err error) {
 	if _, found := httpMethods[strings.ToUpper(method)]; !found {
 		return errors.New("Unsupported method:" + method)
 	}
@@ -291,7 +348,12 @@ func RouteToServiceWithCustomFormat(method, url string, request, response interf
 		}
 	}
 
-	serverResponse, err = http.DefaultClient.Do(httpRequest)
+	client, err := NewHttpClient(options...)
+	if err != nil {
+		return err
+	}
+
+	serverResponse, err = client.Do(httpRequest)
 	if err != nil && serverResponse != nil {
 		return fmt.Errorf("Failed to get response %v %v", err, serverResponse.Header.Get("error"))
 	}
