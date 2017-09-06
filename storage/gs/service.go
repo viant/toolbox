@@ -2,15 +2,16 @@ package gs
 
 import (
 	"bytes"
-	"cloud.google.com/go/storage"
 	"context"
 	"errors"
 	"fmt"
-	tstorage "github.com/viant/toolbox/storage"
-	"google.golang.org/api/option"
 	"io"
 	"io/ioutil"
 	"net/url"
+
+	"cloud.google.com/go/storage"
+	tstorage "github.com/viant/toolbox/storage"
+	"google.golang.org/api/option"
 )
 
 type service struct {
@@ -107,7 +108,7 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 	if err != nil {
 		return err
 	}
-	client, _, err := s.NewClient()
+	client, ctx, err := s.NewClient()
 	if err != nil {
 		return err
 	}
@@ -118,8 +119,7 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 	}
 	writer := client.Bucket(parsedUrl.Host).
 		Object(name).
-		NewWriter(context.Background())
-
+		NewWriter(ctx)
 
 	expiry := parsedUrl.Query().Get("expiry")
 	if expiry != "" {
@@ -127,9 +127,9 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 			"Cache-Control": "private, max-age=" + expiry,
 		}
 	}
-
-	io.Copy(writer, reader)
-	return writer.Close()
+	_, err = io.Copy(writer, reader)
+	defer writer.Close()
+	return err
 
 }
 
