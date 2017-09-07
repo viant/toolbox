@@ -275,27 +275,35 @@ func NewHttpClient(options ...*HttpOptions) (*http.Client, error) {
 		return http.DefaultClient, nil
 	}
 
-	var RequestTimeoutMs, TimeoutMs, KeepAliveTimeMs, TLSHandshakeTimeoutMs, ResponseHeaderTimeoutMs time.Duration
-	var MaxIdleConnections int
+	var (
+		// Default values matching DefaultHttpClient
+		RequestTimeoutMs      = 30 * time.Second
+		KeepAliveTimeMs       = 30 * time.Second
+		TLSHandshakeTimeoutMs = 10 * time.Second
+		ExpectContinueTimeout = 1 * time.Second
+		IdleConnTimeout       = 90 * time.Second
+		DualStack             = true
+		MaxIdleConnsPerHost   = http.DefaultMaxIdleConnsPerHost
+		MaxIdleConns          = 100
+
+		ResponseHeaderTimeoutMs time.Duration
+		TimeoutMs               time.Duration
+	)
 
 	for _, option := range options {
-
 		switch option.Key {
 		case "RequestTimeoutMs":
-			RequestTimeoutMs = time.Duration(AsInt(option.Value))
+			RequestTimeoutMs = time.Duration(AsInt(option.Value)) * time.Millisecond
 		case "TimeoutMs":
-			TimeoutMs = time.Duration(AsInt(option.Value))
-
+			TimeoutMs = time.Duration(AsInt(option.Value)) * time.Millisecond
 		case "KeepAliveTimeMs":
-			KeepAliveTimeMs = time.Duration(AsInt(option.Value))
+			KeepAliveTimeMs = time.Duration(AsInt(option.Value)) * time.Millisecond
 		case "TLSHandshakeTimeoutMs":
-			KeepAliveTimeMs = time.Duration(AsInt(option.Value))
-		case "TLSHandshakeTimeout":
-			KeepAliveTimeMs = time.Duration(AsInt(option.Value))
+			KeepAliveTimeMs = time.Duration(AsInt(option.Value)) * time.Millisecond
 		case "ResponseHeaderTimeoutMs":
-			ResponseHeaderTimeoutMs = time.Duration(AsInt(option.Value))
-		case "MaxIdleConnections":
-			MaxIdleConnections = AsInt(option.Value)
+			ResponseHeaderTimeoutMs = time.Duration(AsInt(option.Value)) * time.Millisecond
+		case "MaxIdleConns":
+			MaxIdleConns = AsInt(option.Value)
 		default:
 			return nil, fmt.Errorf("Invalid option: %v", option.Key)
 
@@ -304,17 +312,21 @@ func NewHttpClient(options ...*HttpOptions) (*http.Client, error) {
 	roundTripper := http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		Dial: (&net.Dialer{
-			Timeout:   RequestTimeoutMs * time.Millisecond,
-			KeepAlive: KeepAliveTimeMs * time.Millisecond,
+			Timeout:   RequestTimeoutMs,
+			KeepAlive: KeepAliveTimeMs,
+			DualStack: DualStack,
 		}).Dial,
-		TLSHandshakeTimeout:   TLSHandshakeTimeoutMs * time.Millisecond,
-		MaxIdleConnsPerHost:   MaxIdleConnections,
-		ResponseHeaderTimeout: ResponseHeaderTimeoutMs * time.Millisecond,
+		MaxIdleConns:          MaxIdleConns,
+		ExpectContinueTimeout: ExpectContinueTimeout,
+		IdleConnTimeout:       IdleConnTimeout,
+		TLSHandshakeTimeout:   TLSHandshakeTimeoutMs,
+		MaxIdleConnsPerHost:   MaxIdleConnsPerHost,
+		ResponseHeaderTimeout: ResponseHeaderTimeoutMs,
 	}
 
 	return &http.Client{
 		Transport: &roundTripper,
-		Timeout:   TimeoutMs * time.Millisecond,
+		Timeout:   TimeoutMs,
 	}, nil
 
 }
