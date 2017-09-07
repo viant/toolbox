@@ -22,8 +22,10 @@ func TestNewClient(t *testing.T) {
 		assert.Equal(t, "/etc/hosts", out)
 
 	} else {
+
 		assert.Nil(t, client)
 	}
+
 }
 
 func TestClient_Upload(t *testing.T) {
@@ -41,3 +43,6 @@ func TestClient_Upload(t *testing.T) {
 		assert.Nil(t, client)
 	}
 }
+
+
+

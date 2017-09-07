@@ -66,8 +66,6 @@ func listenForMessage(reader io.Reader, result chan string, done *int32) {
 //Upload uploads passed in content into remote destination
 func (c *Client) Upload(destination string, content []byte) error {
 	dir, file := path.Split(destination)
-
-	fmt.Printf("destination: %v => file: %v \n", destination, file)
 	if len(dir) > 0 {
 		c.Run("mkdir -p " + dir)
 	}
