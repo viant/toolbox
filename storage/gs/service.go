@@ -3,6 +3,7 @@ package gs
 import (
 	"bytes"
 	"context"
+	"crypto/md5"
 	"errors"
 	"fmt"
 	"io"
@@ -127,10 +128,19 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 			"Cache-Control": "private, max-age=" + expiry,
 		}
 	}
-	_, err = io.Copy(writer, reader)
-	defer writer.Close()
+	content, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return err
+	}
+	md5Value := md5.New().Sum(content)
+	writer.MD5 = md5Value
+	if _, err = io.Copy(writer, reader); err != nil {
+		return err
+	}
+	if err = writer.Close(); err != nil {
+		return err
+	}
 	return err
-
 }
 
 func (s *service) Register(schema string, service tstorage.Service) error {
