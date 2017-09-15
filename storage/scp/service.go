@@ -39,6 +39,7 @@ func (s *service) List(URL string) ([]storage.Object, error) {
 		return nil, err
 	}
 
+
 	port := toolbox.AsInt(parsedUrl.Port())
 	if port == 0 {
 		port = 22
@@ -53,13 +54,15 @@ func (s *service) List(URL string) ([]storage.Object, error) {
 		return nil, err
 	}
 	defer session.Close()
+	var result = make([]storage.Object, 0)
 
-	output, err := session.Output("ls -lTtr " + parsedUrl.Path)
+	output, err := session.CombinedOutput("ls -lTtr " + parsedUrl.Path)
+	if strings.Contains(string(output), "No such file or directory") {
+		return result, nil
+	}
 	if err != nil {
 		return nil, err
 	}
-
-	var result = make([]storage.Object, 0)
 	for _, line := range strings.Split(string(output), "\n") {
 		fileInfo := extractFileInfo(line)
 		if fileInfo.name == "" {
