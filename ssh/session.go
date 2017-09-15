@@ -22,7 +22,7 @@ type MultiCommandSession struct {
 	stdOutput   chan string
 	stdError    chan string
 	stdInput    io.WriteCloser
-	shellPrompt string
+	ShellPrompt string
 	running     int32
 }
 
@@ -89,8 +89,8 @@ func (s *MultiCommandSession) drain(reader io.Reader, out chan string) {
 	}
 }
 
-func hasExpected(source string, expects ...string) bool {
-	for _, candidate := range expects {
+func hasTerminator(source string, terminators ...string) bool {
+	for _, candidate := range terminators {
 		candidateLen := len(candidate)
 		if candidateLen == 0 {
 			continue
@@ -114,15 +114,15 @@ func (s *MultiCommandSession) Close() {
 
 }
 
-func (s *MultiCommandSession) readResponse(timeoutMs int, expects ...string) (out string, err error) {
+func (s *MultiCommandSession) readResponse(timeoutMs int, terminators ...string) (out string, err error) {
 	if timeoutMs == 0 {
 		timeoutMs = defautTimeoutMs
 	}
-	if len(expects) == 0 {
-		if s.shellPrompt == "" {
-			expects = []string{s.shellPrompt + "$"}
+	if len(terminators) == 0 {
+		if s.ShellPrompt == "" {
+			terminators = []string{s.ShellPrompt + "$"}
 		} else {
-			expects = []string{"$ $"}
+			terminators = []string{"$ $"}
 		}
 	}
 	var done int32
@@ -134,12 +134,13 @@ outer:
 
 		case o := <-s.stdOutput:
 			out += o
-			if hasExpected(out, expects...) {
+
+			if hasTerminator(out, terminators...) && len(s.stdOutput) ==  0  {
 				break outer
 			}
 		case e := <-s.stdError:
 			errOut += e
-			if hasExpected(errOut, expects...) {
+			if hasTerminator(errOut, terminators...) && len(s.stdOutput) ==  0   {
 				break outer
 			}
 
@@ -150,23 +151,21 @@ outer:
 	if errOut != "" {
 		err = errors.New(errOut)
 	}
-
 	if len(out) > 0 {
-		index := strings.LastIndex(out, "\r\n"+s.shellPrompt)
+		index := strings.LastIndex(out, "\r\n"+s.ShellPrompt)
 		if index > 0 {
 			out = string(out[:index])
 		}
 	}
-
 	return out, err
 }
 
-func (s *MultiCommandSession) Run(command string, timeoutMs int, expects ...string) (string, error) {
+func (s *MultiCommandSession) Run(command string, timeoutMs int, terminators ...string) (string, error) {
 	_, err := s.stdInput.Write([]byte(command + "\n"))
 	if err != nil {
 		return "", fmt.Errorf("Failed to execute command: %v, err: %v", command, err)
 	}
-	return s.readResponse(timeoutMs, expects...)
+	return s.readResponse(timeoutMs, terminators...)
 }
 
 func newMultiCommandSession(client *ssh.Client, config *SessionConfig) (result *MultiCommandSession, err error) {
@@ -215,7 +214,7 @@ func newMultiCommandSession(client *ssh.Client, config *SessionConfig) (result *
 	if result.closeIfError(err) {
 		return nil, err
 	}
-	result.shellPrompt, err = result.Run("", 1000)
+	result.ShellPrompt, err = result.Run("", 1000)
 	if result.closeIfError(err) {
 		return nil, err
 	}
