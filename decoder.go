@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"strings"
 )
 
 //Decoder represents a decoder.
@@ -75,4 +76,88 @@ func (d *unMarshalerDecoder) Decode(v interface{}) error {
 //NewUnMarshalerDecoderFactory returns a decoder factory
 func NewUnMarshalerDecoderFactory() DecoderFactory {
 	return &unMarshalerDecoderFactory{}
+}
+
+type DelimiteredRecord struct {
+	Columns   []string
+	Delimiter string
+	Record    map[string]interface{}
+}
+
+type delimiterDecoder struct {
+	reader io.Reader
+}
+
+func (d *delimiterDecoder) Decode(target interface{}) error {
+	delimiteredRecord, ok := target.(*DelimiteredRecord)
+	if !ok {
+		return fmt.Errorf("Invalid target type, expected %T but had %T", &DelimiteredRecord{}, target)
+	}
+	if delimiteredRecord.Record == nil {
+		delimiteredRecord.Record = make(map[string]interface{})
+	}
+
+	var isInDoubleQuote = false
+	var index = 0
+	var value = ""
+	var delimiter = delimiteredRecord.Delimiter
+	payload, err := ioutil.ReadAll(d.reader)
+	if err != nil {
+		return err
+	}
+	encoded := string(payload)
+	hasColumns := len(delimiteredRecord.Columns) > 0
+	if !hasColumns {
+		delimiteredRecord.Columns = make([]string, 0)
+	}
+	for i := 0; i < len(encoded); i++ {
+		aChar := string(encoded[i : i+1])
+		//escape " only if value is already inside "s
+		if isInDoubleQuote && (aChar == "\\" || aChar == "\"") {
+			nextChar := encoded[i+1 : i+2]
+			if nextChar == "\"" {
+				i++
+				value = value + nextChar
+				continue
+			}
+		}
+		//allow unescaped " be inside text if the whole text is not enclosed in "s
+		if aChar == "\"" && (len(value) == 0 || isInDoubleQuote) {
+			isInDoubleQuote = !isInDoubleQuote
+			continue
+		}
+
+		if encoded[i:i+1] == delimiter && !isInDoubleQuote {
+			if !hasColumns {
+				delimiteredRecord.Columns = append(delimiteredRecord.Columns, strings.TrimSpace(value))
+			} else {
+				var columnName = delimiteredRecord.Columns[index]
+				delimiteredRecord.Record[columnName] = value
+			}
+
+			value = ""
+			index++
+			continue
+		}
+		value = value + aChar
+	}
+	if len(value) > 0 {
+		if !hasColumns {
+			delimiteredRecord.Columns = append(delimiteredRecord.Columns, strings.TrimSpace(value))
+		} else {
+			var columnName = delimiteredRecord.Columns[index]
+			delimiteredRecord.Record[columnName] = value
+		}
+	}
+	return nil
+}
+
+type delimiterDecoderFactory struct{}
+
+func (f *delimiterDecoderFactory) Create(reader io.Reader) Decoder {
+	return &delimiterDecoder{reader: reader}
+}
+
+func NewDelimiterDecoderFactory() DecoderFactory {
+	return &delimiterDecoderFactory{}
 }
