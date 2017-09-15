@@ -623,6 +623,10 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 	}
 
 	if targetIndirectValue.Kind() == reflect.Slice || targetIndirectPointerType.Kind() == reflect.Slice {
+
+		if inputValue.Kind() == reflect.Ptr && inputValue.Elem().Kind() == reflect.Slice {
+			inputValue = inputValue.Elem()
+		}
 		if inputValue.Kind() == reflect.Slice {
 			return c.assignConvertedSlice(target, input, targetIndirectValue, targetIndirectPointerType)
 		}
@@ -638,8 +642,19 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 		}
 	} else if targetIndirectPointerType.Kind() == reflect.Struct {
 		structPointer := reflect.New(targetIndirectPointerType)
+		inputMap, ok := input.(map[string]interface{})
 
-		if inputMap, ok := input.(map[string]interface{}); ok {
+		if !ok {
+			inputMap = make(map[string]interface{})
+			mapType :=reflect.TypeOf(inputMap)
+			if inputValue.Type().AssignableTo(mapType) {
+				inputValue = inputValue.Convert(mapType)
+				inputMap, _ = inputValue.Interface().(map[string]interface{})
+			} else {
+				CopyMapEntries(input, inputMap)
+			}
+		}
+		if inputMap != nil {
 			err := c.assignConvertedStruct(target, inputMap, structPointer.Elem(), targetIndirectPointerType)
 			if err != nil {
 				return err
@@ -647,6 +662,9 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 			targetIndirectValue.Set(structPointer)
 			return nil
 		}
+
+
+
 
 	}
 
