@@ -87,7 +87,7 @@ type DelimiteredRecord struct {
 
 //IsEmpty returns true if all values are empty or null
 func (r *DelimiteredRecord) IsEmpty() bool {
-	var result  = true
+	var result = true
 	for _, value := range r.Record {
 		if value == nil {
 			continue

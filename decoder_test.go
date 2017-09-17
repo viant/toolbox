@@ -53,11 +53,10 @@ type Foo101 struct {
 	Attr string
 }
 
-
 func TestDelimiterDecoderFactory(t *testing.T) {
 
 	record := &toolbox.DelimiteredRecord{
-		Delimiter:",",
+		Delimiter: ",",
 	}
 	{
 		decoder := toolbox.NewDelimiterDecoderFactory().Create(strings.NewReader("column1,\"column2\", column3,column4"))
@@ -71,12 +70,11 @@ func TestDelimiterDecoderFactory(t *testing.T) {
 		decoder := toolbox.NewDelimiterDecoderFactory().Create(strings.NewReader("1,2,\"ab,cd\",3"))
 		err := decoder.Decode(record)
 		if assert.Nil(t, err) {
-			assert.EqualValues(t, "1",  record.Record["column1"])
-			assert.EqualValues(t, "2",  record.Record["column2"])
-			assert.EqualValues(t, "ab,cd",  record.Record["column3"])
-			assert.EqualValues(t, "3",  record.Record["column4"])
+			assert.EqualValues(t, "1", record.Record["column1"])
+			assert.EqualValues(t, "2", record.Record["column2"])
+			assert.EqualValues(t, "ab,cd", record.Record["column3"])
+			assert.EqualValues(t, "3", record.Record["column4"])
 		}
 	}
-
 
 }
