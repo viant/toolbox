@@ -78,12 +78,14 @@ func NewUnMarshalerDecoderFactory() DecoderFactory {
 	return &unMarshalerDecoderFactory{}
 }
 
+//DelimiteredRecord represents a delimitered record
 type DelimiteredRecord struct {
 	Columns   []string
 	Delimiter string
 	Record    map[string]interface{}
 }
 
+//IsEmpty returns true if all values are empty or null
 func (r *DelimiteredRecord) IsEmpty() bool {
 	var result  = true
 	for _, value := range r.Record {
@@ -172,6 +174,7 @@ func (f *delimiterDecoderFactory) Create(reader io.Reader) Decoder {
 	return &delimiterDecoder{reader: reader}
 }
 
+//NewDelimiterDecoderFactory returns a new delimitered decoder factory.
 func NewDelimiterDecoderFactory() DecoderFactory {
 	return &delimiterDecoderFactory{}
 }
