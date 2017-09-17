@@ -13,11 +13,11 @@ var DefaultDateLayout = "2006-01-02 15:04:05.000"
 
 //AsString converts an input to string.
 func AsString(input interface{}) string {
-	switch inputValue := input.(type) {
+	switch sourceValue := input.(type) {
 	case string:
-		return inputValue
+		return sourceValue
 	case []byte:
-		return string(inputValue)
+		return string(sourceValue)
 	}
 
 	reflectValue := reflect.ValueOf(input)
@@ -319,71 +319,71 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 	return nil
 }
 
-//AssignConverted assign to the target input, target needs to be pointer, input has to be convertible or compatible type
-func (c *Converter) AssignConverted(target, input interface{}) error {
+//AssignConverted assign to the target source, target needs to be pointer, input has to be convertible or compatible type
+func (c *Converter) AssignConverted(target, source interface{}) error {
 	if target == nil {
-		return fmt.Errorf("destinationPointer was nil %v %v", target, input)
+		return fmt.Errorf("destinationPointer was nil %v %v", target, source)
 	}
-	if input == nil {
+	if source == nil {
 		return nil
 	}
 
 	switch targetValuePointer := target.(type) {
 	case *string:
-		switch inputValue := input.(type) {
+		switch sourceValue := source.(type) {
 		case string:
-			*targetValuePointer = inputValue
+			*targetValuePointer = sourceValue
 			return nil
 		case *string:
-			*targetValuePointer = *inputValue
+			*targetValuePointer = *sourceValue
 			return nil
 		case []byte:
-			*targetValuePointer = string(inputValue)
+			*targetValuePointer = string(sourceValue)
 			return nil
 		case *[]byte:
-			*targetValuePointer = string(NewBytes(*inputValue))
+			*targetValuePointer = string(NewBytes(*sourceValue))
 			return nil
 		default:
-			*targetValuePointer = AsString(input)
+			*targetValuePointer = AsString(source)
 			return nil
 		}
 
 	case **string:
-		switch inputValue := input.(type) {
+		switch sourceValue := source.(type) {
 		case string:
-			*targetValuePointer = &inputValue
+			*targetValuePointer = &sourceValue
 			return nil
 		case *string:
-			*targetValuePointer = inputValue
+			*targetValuePointer = sourceValue
 			return nil
 		case []byte:
-			var stringSourceValue = string(inputValue)
+			var stringSourceValue = string(sourceValue)
 			*targetValuePointer = &stringSourceValue
 			return nil
 		case *[]byte:
-			var stringSourceValue = string(NewBytes(*inputValue))
+			var stringSourceValue = string(NewBytes(*sourceValue))
 			*targetValuePointer = &stringSourceValue
 			return nil
 		default:
-			stringSourceValue := AsString(input)
+			stringSourceValue := AsString(source)
 			*targetValuePointer = &stringSourceValue
 			return nil
 		}
 
 	case *bool:
-		switch inputValue := input.(type) {
+		switch sourceValue := source.(type) {
 		case bool:
-			*targetValuePointer = inputValue
+			*targetValuePointer = sourceValue
 			return nil
 		case *bool:
-			*targetValuePointer = *inputValue
+			*targetValuePointer = *sourceValue
 			return nil
 
 		case int:
-			*targetValuePointer = inputValue != 0
+			*targetValuePointer = sourceValue != 0
 			return nil
 		case string:
-			boolValue, err := strconv.ParseBool(inputValue)
+			boolValue, err := strconv.ParseBool(sourceValue)
 			if err != nil {
 				return err
 			}
@@ -391,7 +391,7 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 			*targetValuePointer = boolValue
 			return nil
 		case *string:
-			boolValue, err := strconv.ParseBool(*inputValue)
+			boolValue, err := strconv.ParseBool(*sourceValue)
 			if err != nil {
 				return err
 			}
@@ -400,19 +400,19 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 		}
 
 	case **bool:
-		switch inputValue := input.(type) {
+		switch sourceValue := source.(type) {
 		case bool:
-			*targetValuePointer = &inputValue
+			*targetValuePointer = &sourceValue
 			return nil
 		case *bool:
-			*targetValuePointer = inputValue
+			*targetValuePointer = sourceValue
 			return nil
 		case int:
-			boolValue := inputValue != 0
+			boolValue := sourceValue != 0
 			*targetValuePointer = &boolValue
 			return nil
 		case string:
-			boolValue, err := strconv.ParseBool(inputValue)
+			boolValue, err := strconv.ParseBool(sourceValue)
 			if err != nil {
 				return err
 			}
@@ -420,7 +420,7 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 			*targetValuePointer = &boolValue
 			return nil
 		case *string:
-			boolValue, err := strconv.ParseBool(*inputValue)
+			boolValue, err := strconv.ParseBool(*sourceValue)
 			if err != nil {
 				return err
 			}
@@ -428,49 +428,49 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 			return nil
 		}
 	case *[]byte:
-		switch inputValue := input.(type) {
+		switch sourceValue := source.(type) {
 		case []byte:
-			*targetValuePointer = inputValue
+			*targetValuePointer = sourceValue
 			return nil
 		case *[]byte:
-			*targetValuePointer = *inputValue
+			*targetValuePointer = *sourceValue
 			return nil
 		case string:
-			*targetValuePointer = []byte(inputValue)
+			*targetValuePointer = []byte(sourceValue)
 			return nil
 		case *string:
-			var stringValue = *inputValue
+			var stringValue = *sourceValue
 			*targetValuePointer = []byte(stringValue)
 			return nil
 		}
 
 	case **[]byte:
-		switch inputValue := input.(type) {
+		switch sourceValue := source.(type) {
 		case []byte:
-			bytes := NewBytes(inputValue)
+			bytes := NewBytes(sourceValue)
 			*targetValuePointer = &bytes
 			return nil
 		case *[]byte:
-			bytes := NewBytes(*inputValue)
+			bytes := NewBytes(*sourceValue)
 			*targetValuePointer = &bytes
 			return nil
 		case string:
-			bytes := []byte(inputValue)
+			bytes := []byte(sourceValue)
 			*targetValuePointer = &bytes
 			return nil
 		case *string:
-			bytes := []byte(*inputValue)
+			bytes := []byte(*sourceValue)
 			*targetValuePointer = &bytes
 			return nil
 		}
 
 	case *int, *int8, *int16, *int32, *int64:
 		directValue := reflect.Indirect(reflect.ValueOf(targetValuePointer))
-		inputValue := reflect.ValueOf(input)
-		if inputValue.Kind() == reflect.Ptr {
-			inputValue = inputValue.Elem()
+		sourceValue := reflect.ValueOf(source)
+		if sourceValue.Kind() == reflect.Ptr {
+			sourceValue = sourceValue.Elem()
 		}
-		stringValue := AsString(inputValue.Interface())
+		stringValue := AsString(sourceValue.Interface())
 		value, err := strconv.ParseInt(stringValue, 10, directValue.Type().Bits())
 		if err != nil {
 			return err
@@ -480,11 +480,11 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 
 	case **int, **int8, **int16, **int32, **int64:
 		directType := reflect.TypeOf(targetValuePointer).Elem().Elem()
-		inputValue := reflect.ValueOf(input)
-		if inputValue.Kind() == reflect.Ptr {
-			inputValue = inputValue.Elem()
+		sourceValue := reflect.ValueOf(source)
+		if sourceValue.Kind() == reflect.Ptr {
+			sourceValue = sourceValue.Elem()
 		}
-		stringValue := AsString(inputValue.Interface())
+		stringValue := AsString(sourceValue.Interface())
 
 		value, err := strconv.ParseInt(stringValue, 10, directType.Bits())
 		if err != nil {
@@ -494,11 +494,11 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 		return nil
 	case *uint, *uint8, *uint16, *uint32, *uint64:
 		directValue := reflect.Indirect(reflect.ValueOf(targetValuePointer))
-		inputValue := reflect.ValueOf(input)
-		if inputValue.Kind() == reflect.Ptr {
-			inputValue = inputValue.Elem()
+		sourceValue := reflect.ValueOf(source)
+		if sourceValue.Kind() == reflect.Ptr {
+			sourceValue = sourceValue.Elem()
 		}
-		stringValue := AsString(inputValue.Interface())
+		stringValue := AsString(sourceValue.Interface())
 		value, err := strconv.ParseUint(stringValue, 10, directValue.Type().Bits())
 		if err != nil {
 			return err
@@ -507,11 +507,11 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 		return nil
 	case **uint, **uint8, **uint16, **uint32, **uint64:
 		directType := reflect.TypeOf(targetValuePointer).Elem().Elem()
-		inputValue := reflect.ValueOf(input)
-		if inputValue.Kind() == reflect.Ptr {
-			inputValue = inputValue.Elem()
+		sourceValue := reflect.ValueOf(source)
+		if sourceValue.Kind() == reflect.Ptr {
+			sourceValue = sourceValue.Elem()
 		}
-		stringValue := AsString(inputValue.Interface())
+		stringValue := AsString(sourceValue.Interface())
 
 		value, err := strconv.ParseUint(stringValue, 10, directType.Bits())
 		if err != nil {
@@ -521,11 +521,11 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 		return nil
 	case *float32, *float64:
 		directValue := reflect.Indirect(reflect.ValueOf(targetValuePointer))
-		inputValue := reflect.ValueOf(input)
-		if inputValue.Kind() == reflect.Ptr {
-			inputValue = inputValue.Elem()
+		sourceValue := reflect.ValueOf(source)
+		if sourceValue.Kind() == reflect.Ptr {
+			sourceValue = sourceValue.Elem()
 		}
-		stringValue := AsString(inputValue.Interface())
+		stringValue := AsString(sourceValue.Interface())
 		value, err := strconv.ParseFloat(stringValue, directValue.Type().Bits())
 		if err != nil {
 			return err
@@ -534,11 +534,11 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 		return nil
 	case **float32, **float64:
 		directType := reflect.TypeOf(targetValuePointer).Elem().Elem()
-		inputValue := reflect.ValueOf(input)
-		if inputValue.Kind() == reflect.Ptr {
-			inputValue = inputValue.Elem()
+		sourceValue := reflect.ValueOf(source)
+		if sourceValue.Kind() == reflect.Ptr {
+			sourceValue = sourceValue.Elem()
 		}
-		stringValue := AsString(inputValue.Interface())
+		stringValue := AsString(sourceValue.Interface())
 		value, err := strconv.ParseFloat(stringValue, directType.Bits())
 		if err != nil {
 			return err
@@ -546,25 +546,25 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 		reflect.ValueOf(targetValuePointer).Elem().Set(reflect.ValueOf(&value))
 		return nil
 	case *time.Time:
-		switch inputValue := input.(type) {
+		switch sourceValue := source.(type) {
 		case string:
-			timeValue := AsTime(inputValue, c.DataLayout)
+			timeValue := AsTime(sourceValue, c.DataLayout)
 			if timeValue == nil {
-				_, err := time.Parse(c.DataLayout, inputValue)
+				_, err := time.Parse(c.DataLayout, sourceValue)
 				return err
 			}
 			*targetValuePointer = *timeValue
 			return nil
 		case *string:
-			timeValue := AsTime(inputValue, c.DataLayout)
+			timeValue := AsTime(sourceValue, c.DataLayout)
 			if timeValue == nil {
-				_, err := time.Parse(c.DataLayout, *inputValue)
+				_, err := time.Parse(c.DataLayout, *sourceValue)
 				return err
 			}
 			*targetValuePointer = *timeValue
 			return nil
 		case int, int64, uint, uint64, float32, float64, *int, *int64, *uint, *uint64, *float32, *float64:
-			intValue := int(AsFloat(inputValue))
+			intValue := int(AsFloat(sourceValue))
 			timeValue := time.Unix(int64(intValue), 0)
 			*targetValuePointer = timeValue
 			return nil
@@ -572,25 +572,25 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 		}
 
 	case **time.Time:
-		switch inputValue := input.(type) {
+		switch sourceValue := source.(type) {
 		case string:
-			timeValue := AsTime(inputValue, c.DataLayout)
+			timeValue := AsTime(sourceValue, c.DataLayout)
 			if timeValue == nil {
-				_, err := time.Parse(c.DataLayout, inputValue)
+				_, err := time.Parse(c.DataLayout, sourceValue)
 				return err
 			}
 			*targetValuePointer = timeValue
 			return nil
 		case *string:
-			timeValue := AsTime(inputValue, c.DataLayout)
+			timeValue := AsTime(sourceValue, c.DataLayout)
 			if timeValue == nil {
-				_, err := time.Parse(c.DataLayout, *inputValue)
+				_, err := time.Parse(c.DataLayout, *sourceValue)
 				return err
 			}
 			*targetValuePointer = timeValue
 			return nil
 		case int, int64, uint, uint64, float32, float64, *int, *int64, *uint, *uint64, *float32, *float64:
-			intValue := int(AsFloat(inputValue))
+			intValue := int(AsFloat(sourceValue))
 			timeValue := time.Unix(int64(intValue), 0)
 			*targetValuePointer = &timeValue
 			return nil
@@ -598,22 +598,23 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 		}
 
 	case *interface{}:
-		(*targetValuePointer) = input
+
+		(*targetValuePointer) = source
 		return nil
 	case **interface{}:
-		(*targetValuePointer) = &input
+		(*targetValuePointer) = &source
 		return nil
 
 	}
 
-	inputValue := reflect.ValueOf(input)
-	if input == nil || !inputValue.IsValid() || (inputValue.CanSet() && inputValue.IsNil()) {
+	sourceValue := reflect.ValueOf(source)
+	if source == nil || !sourceValue.IsValid() || (sourceValue.CanSet() && sourceValue.IsNil()) {
 		return nil
 	}
 
 	targetIndirectValue := reflect.Indirect(reflect.ValueOf(target))
-	if inputValue.IsValid() && inputValue.Type().AssignableTo(reflect.TypeOf(target)) {
-		targetIndirectValue.Set(inputValue.Elem())
+	if sourceValue.IsValid() && sourceValue.Type().AssignableTo(reflect.TypeOf(target)) {
+		targetIndirectValue.Set(sourceValue.Elem())
 		return nil
 	}
 
@@ -624,36 +625,37 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 
 	if targetIndirectValue.Kind() == reflect.Slice || targetIndirectPointerType.Kind() == reflect.Slice {
 
-		if inputValue.Kind() == reflect.Ptr && inputValue.Elem().Kind() == reflect.Slice {
-			inputValue = inputValue.Elem()
+		if sourceValue.Kind() == reflect.Ptr && sourceValue.Elem().Kind() == reflect.Slice {
+			sourceValue = sourceValue.Elem()
 		}
-		if inputValue.Kind() == reflect.Slice {
-			return c.assignConvertedSlice(target, input, targetIndirectValue, targetIndirectPointerType)
+		if sourceValue.Kind() == reflect.Slice {
+			return c.assignConvertedSlice(target, source, targetIndirectValue, targetIndirectPointerType)
 		}
 	}
-
 	if targetIndirectValue.Kind() == reflect.Map || targetIndirectPointerType.Kind() == reflect.Map {
-		if inputValue.Kind() == reflect.Map {
-			return c.assignConvertedMap(target, input, targetIndirectValue, targetIndirectPointerType)
-		}
-	} else if targetIndirectValue.Kind() == reflect.Struct {
-		if inputMap, ok := input.(map[string]interface{}); ok {
-			return c.assignConvertedStruct(target, inputMap, targetIndirectValue, targetIndirectPointerType)
-		}
-	} else if targetIndirectPointerType.Kind() == reflect.Struct {
-		structPointer := reflect.New(targetIndirectPointerType)
-		inputMap, ok := input.(map[string]interface{})
 
-		if !ok {
-			inputMap = make(map[string]interface{})
-			mapType :=reflect.TypeOf(inputMap)
-			if inputValue.Type().AssignableTo(mapType) {
-				inputValue = inputValue.Convert(mapType)
-				inputMap, _ = inputValue.Interface().(map[string]interface{})
-			} else {
-				CopyMapEntries(input, inputMap)
-			}
+		if sourceValue.Kind() == reflect.Ptr {
+			sourceValue = sourceValue.Elem()
 		}
+
+		if sourceValue.Kind() == reflect.Map {
+			return c.assignConvertedMap(target, source, targetIndirectValue, targetIndirectPointerType)
+		} else if sourceValue.Kind() == reflect.Struct {
+			return c.assignConvertedMapFromStruct(source, target, sourceValue)
+		}
+
+	} else if targetIndirectValue.Kind() == reflect.Struct {
+
+		inputMap := asMap(source, sourceValue)
+		if inputMap != nil {
+			err := c.assignConvertedStruct(target, inputMap, targetIndirectValue, targetIndirectPointerType)
+			return err
+		}
+
+	} else if targetIndirectPointerType.Kind() == reflect.Struct {
+
+		structPointer := reflect.New(targetIndirectPointerType)
+		inputMap := asMap(source, sourceValue)
 		if inputMap != nil {
 			err := c.assignConvertedStruct(target, inputMap, structPointer.Elem(), targetIndirectPointerType)
 			if err != nil {
@@ -663,22 +665,86 @@ func (c *Converter) AssignConverted(target, input interface{}) error {
 			return nil
 		}
 
-
-
-
 	}
 
-	if inputValue.IsValid() && inputValue.Type().AssignableTo(targetIndirectValue.Type()) {
-		targetIndirectValue.Set(inputValue)
+	if sourceValue.IsValid() && sourceValue.Type().AssignableTo(targetIndirectValue.Type()) {
+		targetIndirectValue.Set(sourceValue)
 		return nil
 	}
-	if inputValue.IsValid() && inputValue.Type().ConvertibleTo(targetIndirectValue.Type()) {
-		converted := inputValue.Convert(targetIndirectValue.Type())
+	if sourceValue.IsValid() && sourceValue.Type().ConvertibleTo(targetIndirectValue.Type()) {
+		converted := sourceValue.Convert(targetIndirectValue.Type())
 		targetIndirectValue.Set(converted)
 		return nil
 	}
 
-	return fmt.Errorf("Unable to convert type %T into type %T", input, target)
+	return fmt.Errorf("Unable to convert type %T into type %T", source, target)
+}
+
+func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sourceValue reflect.Value) error {
+	targetMap, ok := target.(map[string]interface{})
+	if !ok {
+		if targetMapPointer, ok := target.(*map[string]interface{}); ok {
+			targetMap = *targetMapPointer
+		} else {
+			return fmt.Errorf("Unable to covert %T to %T", source, target)
+		}
+	}
+	sourceType := sourceValue.Type()
+	for i := 0; i < sourceValue.NumField(); i++ {
+		field := sourceValue.Field(i)
+		if !field.CanAddr() {
+			continue
+		}
+		var value interface{}
+		fieldInfo := field
+		fieldKind := field.Kind()
+
+		for fieldKind == reflect.Ptr {
+			fieldInfo = fieldInfo.Elem()
+			fieldKind = fieldInfo.Kind()
+		}
+
+		if fieldKind == reflect.Struct {
+			aMap := make(map[string]interface{})
+			err := c.AssignConverted(&aMap, field.Interface())
+			if err != nil {
+				return err
+			}
+			value = aMap
+		} else if fieldKind == reflect.Slice {
+			slice := make([]interface{}, 0)
+			err := c.AssignConverted(&slice, field.Interface())
+			if err != nil {
+				return err
+			}
+			value = slice
+		} else {
+			err := c.AssignConverted(&value, field.Interface())
+			if err != nil {
+				return err
+			}
+		}
+
+		fieldType := sourceType.Field(i)
+		targetMap[fieldType.Name] = value
+
+	}
+	return nil
+}
+
+func asMap(input interface{}, sourceValue reflect.Value) map[string]interface{} {
+	inputMap, ok := input.(map[string]interface{})
+	if !ok {
+		inputMap = make(map[string]interface{})
+		mapType := reflect.TypeOf(inputMap)
+		if sourceValue.Type().AssignableTo(mapType) {
+			sourceValue = sourceValue.Convert(mapType)
+			inputMap, _ = sourceValue.Interface().(map[string]interface{})
+		} else {
+			CopyMapEntries(input, inputMap)
+		}
+	}
+	return inputMap
 }
 
 //NewColumnConverter create a new converter, that has abbility to convert map to struct using column mapping
