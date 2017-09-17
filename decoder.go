@@ -84,6 +84,20 @@ type DelimiteredRecord struct {
 	Record    map[string]interface{}
 }
 
+func (r *DelimiteredRecord) IsEmpty() bool {
+	var result  = true
+	for _, value := range r.Record {
+		if value == nil {
+			continue
+		}
+		if AsString(value) == "" {
+			continue
+		}
+		return false
+	}
+	return result
+}
+
 type delimiterDecoder struct {
 	reader io.Reader
 }
