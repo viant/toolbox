@@ -136,7 +136,7 @@ func NewServiceForURL(URL, credentialFile string) (Service, error) {
 			return nil, err
 		}
 	} else if parsedURL.Scheme != "file" {
-		return nil, fmt.Errorf("Unsupported scheme %v", parsedURL.Scheme)
+		return nil, fmt.Errorf("Unsupported scheme %v", URL)
 	}
 	return service, nil
 }
@@ -168,6 +168,8 @@ func copy(sourceService Service, sourceURL string, targetService Service, target
 				err = fmt.Errorf("Unable download, %v", object.URL(), targetObjectURL, err)
 				return err
 			}
+
+
 			if modifyContentHandler != nil {
 				reader, err = modifyContentHandler(reader)
 				if err != nil {
