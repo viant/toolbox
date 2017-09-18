@@ -35,6 +35,17 @@ func (s *fileStorageService) List(URL string) ([]Object, error) {
 		return nil, err
 	}
 	defer file.Close()
+
+	stat, err := file.Stat()
+	if err == nil {
+		if ! stat.IsDir() {
+			modTime := stat.ModTime()
+			return []Object{
+				newFileObject(URL, StorageObjectContentType, stat, &modTime, stat.Size()),
+			}, nil
+		}
+	}
+
 	files, err := file.Readdir(0)
 	if err != nil {
 		return nil, err
