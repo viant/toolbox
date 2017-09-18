@@ -374,6 +374,24 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 			return nil
 		}
 
+	case *[]string:
+		switch sourceValue := source.(type) {
+		case []string:
+			*targetValuePointer = sourceValue
+			return nil
+		case *[]string:
+			*targetValuePointer = *sourceValue
+			return nil
+		default:
+			var stingItems = make([]string, 0)
+			ProcessSlice(source, func(item interface{}) bool {
+				stingItems = append(stingItems, AsString(item))
+				return true
+			})
+			*targetValuePointer = stingItems
+			return nil
+		}
+
 	case *bool:
 		switch sourceValue := source.(type) {
 		case bool:
@@ -625,6 +643,7 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 	var targetIndirectPointerType = reflect.TypeOf(target).Elem()
 	if targetIndirectPointerType.Kind() == reflect.Ptr || targetIndirectPointerType.Kind() == reflect.Slice || targetIndirectPointerType.Kind() == reflect.Map {
 		targetIndirectPointerType = targetIndirectPointerType.Elem()
+
 	}
 
 	if targetIndirectValue.Kind() == reflect.Slice || targetIndirectPointerType.Kind() == reflect.Slice {
@@ -712,12 +731,27 @@ func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sou
 			}
 			value = aMap
 		} else if fieldKind == reflect.Slice {
-			slice := make([]map[string]interface{}, 0)
-			err := c.AssignConverted(&slice, field.Interface())
-			if err != nil {
-				return err
+
+			var componentType = DiscoverComponentType(field.Interface())
+			for componentType.Kind() == reflect.Ptr {
+				componentType = componentType.Elem()
 			}
-			value = slice
+			if componentType.Kind() == reflect.Struct {
+				slice := make([]map[string]interface{}, 0)
+				err := c.AssignConverted(&slice, field.Interface())
+				if err != nil {
+					return err
+				}
+				value = slice
+			} else {
+				slice := make([]interface{}, 0)
+				err := c.AssignConverted(&slice, field.Interface())
+				if err != nil {
+					return err
+				}
+				value = slice
+			}
+
 		} else {
 			err := c.AssignConverted(&value, field.Interface())
 			if err != nil {
