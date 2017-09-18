@@ -124,6 +124,20 @@ func ProcessSliceWithIndex(slice interface{}, handler func(index int, item inter
 	}
 }
 
+//AsSlice converts underlying slice as []interface{}
+func AsSlice(sourceSlice interface{}) []interface{} {
+	var result, ok = sourceSlice.([]interface{})
+	if ok {
+		return result
+	}
+	if resultPointer, ok := sourceSlice.(*[]interface{}); ok {
+		return *resultPointer
+	}
+	result = make([]interface{}, 0)
+	CopySliceElements(sourceSlice, &result)
+	return result
+}
+
 //IndexSlice reads passed in slice and applies function that takes a slice item as argument to return a key value.
 //passed in resulting map needs to match key type return by a key function, and accept slice item type as argument.
 func IndexSlice(slice, resultingMap, keyFunction interface{}) {
@@ -317,11 +331,39 @@ func ProcessMap(sourceMap interface{}, handler func(key, value interface{}) bool
 	}
 }
 
+//AsMap converts underlying map as map[string]interface{}
+func AsMap(sourceMap interface{}) map[string]interface{} {
+	result, ok := sourceMap.(map[string]interface{})
+	if ok {
+		return result
+	} else {
+		sourceMapValue := reflect.ValueOf(sourceMap)
+		mapType := reflect.TypeOf(result)
+		if sourceMapValue.Type().AssignableTo(mapType) {
+			result, _ = sourceMapValue.Convert(mapType).Interface().(map[string]interface{})
+			return result
+		}
+	}
+	if resultPointer, ok := sourceMap.(*map[string]interface{}); ok {
+		return *resultPointer
+	}
+	result = make(map[string]interface{})
+	CopyMapEntries(sourceMap, result)
+	return result
+}
+
 //CopyMapEntries appends map entry from source map to target map
 func CopyMapEntries(sourceMap, targetMap interface{}) {
 	targetMapValue := reflect.ValueOf(targetMap)
 	if targetMapValue.Kind() == reflect.Ptr {
 		targetMapValue = targetMapValue.Elem()
+	}
+	if target, ok := targetMap.(map[string]interface{}); ok {
+		ProcessMap(sourceMap, func(key, value interface{}) bool {
+			target[AsString(key)] = value
+			return true
+		})
+		return
 	}
 	ProcessMap(sourceMap, func(key, value interface{}) bool {
 		targetMapValue.SetMapIndex(reflect.ValueOf(key), reflect.ValueOf(value))
