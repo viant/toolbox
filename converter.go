@@ -200,7 +200,6 @@ func NewBytes(input []byte) []byte {
 
 //ParseTime parses time, adjusting date layout to length of input
 func ParseTime(input, layout string) (time.Time, error) {
-
 	if len(layout) == 0 {
 		layout = DefaultDateLayout
 	} //GetFieldValue returns field value
@@ -255,15 +254,20 @@ func (c *Converter) assignConvertedMap(target, input interface{}, targetIndirect
 
 }
 
-func (c *Converter) assignConvertedSlice(target, input interface{}, targetIndirectValue reflect.Value, targetIndirectPointerType reflect.Type) error {
+func (c *Converter) assignConvertedSlice(target, source interface{}, targetIndirectValue reflect.Value, targetIndirectPointerType reflect.Type) error {
 	sliceType := DiscoverTypeByKind(target, reflect.Slice)
 	slicePointer := reflect.New(sliceType)
 	slice := slicePointer.Elem()
-	componentType := DiscoverComponentType(target)
 
+	componentType := DiscoverComponentType(target)
 	var err error
-	ProcessSlice(input, func(item interface{}) bool {
-		targetComponentPointer := reflect.New(componentType)
+	ProcessSlice(source, func(item interface{}) bool {
+		var targetComponentPointer = reflect.New(componentType)
+
+		if componentType.Kind() == reflect.Map {
+			targetComponent := reflect.MakeMap(componentType)
+			targetComponentPointer.Elem().Set(targetComponent)
+		}
 		err = c.AssignConverted(targetComponentPointer.Interface(), item)
 		if err != nil {
 			err = fmt.Errorf("Failed to convert slice tiem %v to %v due to %v", item, targetComponentPointer.Interface(), err)
@@ -646,7 +650,7 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 
 	} else if targetIndirectValue.Kind() == reflect.Struct {
 
-		inputMap := asMap(source, sourceValue)
+		inputMap := AsMap(source)
 		if inputMap != nil {
 			err := c.assignConvertedStruct(target, inputMap, targetIndirectValue, targetIndirectPointerType)
 			return err
@@ -655,7 +659,7 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 	} else if targetIndirectPointerType.Kind() == reflect.Struct {
 
 		structPointer := reflect.New(targetIndirectPointerType)
-		inputMap := asMap(source, sourceValue)
+		inputMap := AsMap(source)
 		if inputMap != nil {
 			err := c.assignConvertedStruct(target, inputMap, structPointer.Elem(), targetIndirectPointerType)
 			if err != nil {
@@ -681,13 +685,9 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 }
 
 func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sourceValue reflect.Value) error {
-	targetMap, ok := target.(map[string]interface{})
-	if !ok {
-		if targetMapPointer, ok := target.(*map[string]interface{}); ok {
-			targetMap = *targetMapPointer
-		} else {
-			return fmt.Errorf("Unable to covert %T to %T", source, target)
-		}
+	targetMap := AsMap(target)
+	if targetMap == nil {
+		return fmt.Errorf("target %T is not a map", target)
 	}
 	sourceType := sourceValue.Type()
 	for i := 0; i < sourceValue.NumField(); i++ {
@@ -703,7 +703,7 @@ func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sou
 			fieldInfo = fieldInfo.Elem()
 			fieldKind = fieldInfo.Kind()
 		}
-
+		fieldType := sourceType.Field(i)
 		if fieldKind == reflect.Struct {
 			aMap := make(map[string]interface{})
 			err := c.AssignConverted(&aMap, field.Interface())
@@ -712,7 +712,7 @@ func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sou
 			}
 			value = aMap
 		} else if fieldKind == reflect.Slice {
-			slice := make([]interface{}, 0)
+			slice := make([]map[string]interface{}, 0)
 			err := c.AssignConverted(&slice, field.Interface())
 			if err != nil {
 				return err
@@ -724,27 +724,10 @@ func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sou
 				return err
 			}
 		}
-
-		fieldType := sourceType.Field(i)
 		targetMap[fieldType.Name] = value
 
 	}
 	return nil
-}
-
-func asMap(input interface{}, sourceValue reflect.Value) map[string]interface{} {
-	inputMap, ok := input.(map[string]interface{})
-	if !ok {
-		inputMap = make(map[string]interface{})
-		mapType := reflect.TypeOf(inputMap)
-		if sourceValue.Type().AssignableTo(mapType) {
-			sourceValue = sourceValue.Convert(mapType)
-			inputMap, _ = sourceValue.Interface().(map[string]interface{})
-		} else {
-			CopyMapEntries(input, inputMap)
-		}
-	}
-	return inputMap
 }
 
 //NewColumnConverter create a new converter, that has abbility to convert map to struct using column mapping
