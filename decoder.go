@@ -129,7 +129,7 @@ func (d *delimiterDecoder) Decode(target interface{}) error {
 	for i := 0; i < len(encoded); i++ {
 		aChar := string(encoded[i : i+1])
 		//escape " only if value is already inside "s
-		if isInDoubleQuote && (aChar == "\\" || aChar == "\"") {
+		if isInDoubleQuote && ((aChar == "\\" || aChar == "\"") && i+2 <len(encoded) ) {
 			nextChar := encoded[i+1 : i+2]
 			if nextChar == "\"" {
 				i++
