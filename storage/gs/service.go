@@ -132,9 +132,12 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 	if err != nil {
 		return err
 	}
-	md5Value := md5.New().Sum(content)
-	writer.MD5 = md5Value
-	if _, err = io.Copy(writer, reader); err != nil {
+	hashReader := bytes.NewBuffer(content)
+	contentReader := bytes.NewBuffer(content)
+	h := md5.New()
+	io.Copy(h, hashReader)
+	writer.MD5 = h.Sum(nil)
+	if _, err = io.Copy(writer, contentReader); err != nil {
 		return err
 	}
 	if err = writer.Close(); err != nil {
