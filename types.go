@@ -39,7 +39,7 @@ func IsBool(input interface{}) bool {
 	return false
 }
 
-//IsString returns true if input is an string
+//IsString returns true if input is a string
 func IsString(input interface{}) bool {
 	switch input.(type) {
 	case string:
@@ -60,6 +60,34 @@ func IsTime(input interface{}) bool {
 		return true
 	}
 	return false
+}
+
+//IsMap returns true if input is a map
+func IsMap(input interface{}) bool {
+	switch input.(type) {
+	case map[string]interface{}:
+		return true
+	}
+	candidateType := reflect.TypeOf(input)
+	for candidateType.Kind() == reflect.Ptr {
+		candidateType = candidateType.Elem()
+	}
+	return candidateType.Kind() == reflect.Map
+}
+
+//IsSlice returns true if input is a map
+func IsSlice(input interface{}) bool {
+	switch input.(type) {
+	case []interface{}:
+		return true
+	case []string:
+		return true
+	}
+	candidateType := reflect.TypeOf(input)
+	for candidateType.Kind() == reflect.Ptr {
+		candidateType = candidateType.Elem()
+	}
+	return candidateType.Kind() == reflect.Slice
 }
 
 //IsZero returns true if input is a zeroable

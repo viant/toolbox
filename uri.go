@@ -2,6 +2,7 @@ package toolbox
 
 import (
 	"strings"
+	"net/url"
 )
 
 //ExtractURIParameters parses URIs to extract {<param>} defined in templateURI from requestURI, it returns extracted parameters and flag if requestURI matched templateURI
@@ -21,11 +22,11 @@ func ExtractURIParameters(templateURI, requestURI string) (map[string]string, bo
 		var requestChar, routingChar string
 
 		if requestURIIndex < len(requestURI) {
-			requestChar = requestURI[requestURIIndex : requestURIIndex+1]
+			requestChar = requestURI[requestURIIndex: requestURIIndex+1]
 		}
 
 		if templateURIIndex < len(templateURI) {
-			routingChar = templateURI[templateURIIndex : templateURIIndex+1]
+			routingChar = templateURI[templateURIIndex: templateURIIndex+1]
 		}
 		if (!expectingValue && !expectingName) && requestChar == routingChar && routingChar != "" {
 			requestURIIndex++
@@ -74,10 +75,26 @@ func ExtractURIParameters(templateURI, requestURI string) (map[string]string, bo
 	return uriParameters, matched
 }
 
-
-func URLPathJoin(baseURL, path string)  string {
+func URLPathJoin(baseURL, path string) string {
 	if strings.HasSuffix(baseURL, "/") {
 		return baseURL + path
 	}
-	return baseURL + "/" + path
+	if ! strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+
+	return baseURL + path
+}
+
+//URLBase returns base URL
+func URLBase(URL string) string {
+	parsedURL, err := url.Parse(URL)
+	if err != nil || parsedURL.Path == "" {
+		return URL
+	}
+	pathPosition := strings.Index(URL, parsedURL.Path)
+	if pathPosition == -1 {
+		return URL
+	}
+	return string(URL[:pathPosition])
 }

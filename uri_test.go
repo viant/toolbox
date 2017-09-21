@@ -63,3 +63,12 @@ func TestExtractURIParameters(t *testing.T) {
 	}
 
 }
+
+
+func TestURLBase(t *testing.T) {
+
+	URL := "http://github.com/abc"
+	baseURL:= toolbox.URLBase(URL)
+	assert.Equal(t, "http://github.com", baseURL)
+
+}

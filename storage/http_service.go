@@ -95,7 +95,7 @@ func (s *httpStorageService) List(URL string) ([]Object, error) {
 		return nil, fmt.Errorf("Invalid response code: %v", response.Status)
 	}
 
-	 isGitUrl := strings.Contains(URL, "github.com")
+	isGitUrl := strings.Contains(URL, "github.com")
 	if strings.Contains(contentType, "text/html") {
 
 		links := extractLinks(string(body))
@@ -103,10 +103,9 @@ func (s *httpStorageService) List(URL string) ([]Object, error) {
 		if isGitUrl {
 
 			for _, link := range links {
-				if  ! ((strings.Contains(link.URL, "/blob/") || strings.Contains(link.URL, "/tree/")) &&strings.HasSuffix(link.URL, link.Value)) {
+				if ! ((strings.Contains(link.URL, "/blob/") || strings.Contains(link.URL, "/tree/")) && strings.HasSuffix(link.URL, link.Value)) {
 					continue
 				}
-
 
 				linkType := StorageObjectContentType
 				if strings.Contains(link.URL, "/tree/") {
