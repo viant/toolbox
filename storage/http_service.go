@@ -35,10 +35,44 @@ func (s *httpStorageService) addCredentialToURLIfNeeded(URL string) string {
 	if err != nil {
 		return URL
 	}
-	if prasedURL.User != nil  {
+	if prasedURL.User != nil {
 		return URL
 	}
 	return strings.Replace(URL, "://", fmt.Sprintf("://%v:%v@", s.Credential.Username, s.Credential.Password), 1)
+}
+
+type hRef struct {
+	URL   string
+	Value string
+}
+
+func extractLinks(body string) []*hRef {
+	var result = make([]*hRef, 0)
+	var linkContents = strings.Split(string(body), "href=\"")
+	for i := 1; i < len(linkContents); i++ {
+		var linkContent = linkContents[i]
+		linkEndPosition := strings.Index(linkContent, "\"")
+		if linkEndPosition == -1 {
+			continue
+		}
+		var content = ""
+		contentStartPosition := strings.Index(linkContent, ">")
+		if contentStartPosition != 1 {
+			content = string(linkContent[contentStartPosition+1:])
+			contentEndPosition := strings.Index(content, "<")
+			if contentEndPosition != -1 {
+				content = string(content[:contentEndPosition])
+			}
+		}
+
+		link := &hRef{
+			URL:   string(linkContent[:linkEndPosition]),
+			Value: strings.Trim(content, " \t\r\n"),
+		}
+		result = append(result, link)
+
+	}
+	return result
 }
 
 //List returns a list of object for supplied url
@@ -60,21 +94,46 @@ func (s *httpStorageService) List(URL string) ([]Object, error) {
 	if response.Status != "200 OK" {
 		return nil, fmt.Errorf("Invalid response code: %v", response.Status)
 	}
+
+	 isGitUrl := strings.Contains(URL, "github.com")
 	if strings.Contains(contentType, "text/html") {
-		var linkContents = strings.Split(string(body), "href=\"")
-		for i := 1; i < len(linkContents); i++ {
-			var linkContent = linkContents[i]
-			linkEndPosition := strings.Index(linkContent, "\"")
-			if linkEndPosition != -1 {
-				linkURL := string(linkContent[:linkEndPosition])
-				if  linkURL == "" || strings.Contains(linkURL, ":") || strings.HasPrefix(linkURL, "#") || strings.HasPrefix(linkURL, "?") || strings.HasPrefix(linkURL, ".") || strings.HasPrefix(linkURL, "/") {
+
+		links := extractLinks(string(body))
+
+		if isGitUrl {
+
+			for _, link := range links {
+				if  ! ((strings.Contains(link.URL, "/blob/") || strings.Contains(link.URL, "/tree/")) &&strings.HasSuffix(link.URL, link.Value)) {
+					continue
+				}
+
+
+				linkType := StorageObjectContentType
+				if strings.Contains(link.URL, "/tree/") {
+					linkType = StorageObjectFolderType
+				}
+
+				baseURL := toolbox.URLBase(URL)
+				objectURL := toolbox.URLPathJoin(baseURL, link.URL)
+
+				if linkType == StorageObjectContentType {
+					objectURL = strings.Replace(objectURL, "/blob/", "/", 1)
+					objectURL = strings.Replace(objectURL, "github.com", "raw.githubusercontent.com", 1)
+				}
+				storageObject := newHttpFileObject(objectURL, linkType, nil, &now, 0)
+				result = append(result, storageObject)
+			}
+
+		} else {
+			for _, link := range links {
+				if link.URL == "" || strings.Contains(link.URL, ":") || strings.HasPrefix(link.URL, "#") || strings.HasPrefix(link.URL, "?") || strings.HasPrefix(link.URL, ".") || strings.HasPrefix(link.URL, "/") {
 					continue
 				}
 				linkType := StorageObjectContentType
-				if strings.HasSuffix(linkURL, "/") {
+				if strings.HasSuffix(link.URL, "/") {
 					linkType = StorageObjectFolderType
 				}
-				objectURL := toolbox.URLPathJoin(URL, linkURL)
+				objectURL := toolbox.URLPathJoin(URL, link.URL)
 				storageObject := newHttpFileObject(objectURL, linkType, nil, &now, 0)
 				result = append(result, storageObject)
 			}
@@ -88,7 +147,6 @@ func (s *httpStorageService) List(URL string) ([]Object, error) {
 	result = append(result, storageObject)
 	return result, err
 }
-
 
 //Exists returns true if resource exists
 func (s *httpStorageService) Exists(URL string) (bool, error) {
@@ -191,7 +249,6 @@ func serviceProvider(credentialFile string) (Service, error) {
 	if credentialFile == "" {
 		return NewHttpStorageService(nil), nil
 	}
-
 
 	if !strings.HasPrefix(credentialFile, "/") {
 		dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
