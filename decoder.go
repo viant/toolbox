@@ -161,6 +161,9 @@ func (d *delimiterDecoder) Decode(target interface{}) error {
 		if !hasColumns {
 			delimiteredRecord.Columns = append(delimiteredRecord.Columns, strings.TrimSpace(value))
 		} else {
+			if index >= len(delimiteredRecord.Columns) {
+				return fmt.Errorf("Index %v out of bound: columns: %v, values:%v", index, delimiteredRecord.Columns, encoded)
+			}
 			var columnName = delimiteredRecord.Columns[index]
 			delimiteredRecord.Record[columnName] = value
 		}
