@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 	"github.com/viant/toolbox/bridge"
+	"strings"
 )
 
 func startTargetProxyTestEndpoint(port string, responses map[string]string) error {
@@ -20,6 +21,17 @@ func startTargetProxyTestEndpoint(port string, responses map[string]string) erro
 		return err
 	}
 	mux.HandleFunc("/", func(response http.ResponseWriter, request *http.Request) {
+
+		if strings.ToUpper(request.Method) == "POST" {
+			response.WriteHeader(http.StatusOK)
+			data, err  := ioutil.ReadAll(request.Body)
+			if err != nil {
+				log.Fatal(err)
+			}
+			response.Write(data)
+			return
+		}
+
 		if body, ok := responses[request.URL.Path]; ok {
 			response.WriteHeader(http.StatusOK)
 			response.Write([]byte(body))
@@ -95,7 +107,7 @@ func TestNewHttpBridge(t *testing.T) {
 	}
 }
 
-func TestNewHttpBridgeWithRecordingHandler(t *testing.T) {
+func TestNewHttpBridgeWithListeningHandler(t *testing.T) {
 	basePort := 9098
 	for i := 0; i < 2; i++ {
 		responses := make(map[string]string)
@@ -104,6 +116,10 @@ func TestNewHttpBridgeWithRecordingHandler(t *testing.T) {
 		assert.Nil(t, err)
 	}
 
+	var responses = make([]*http.Response, 0)
+	var listener = func(request *http.Request, response *http.Response) {
+		responses = append(responses, response)
+	}
 	routes := make([]*bridge.HttpBridgeProxyRoute, 0)
 	for i := 0; i < 2; i++ {
 		targetURL, err := url.Parse(fmt.Sprintf("http://127.0.0.1:%v/test%v", basePort+i, i+1))
@@ -114,13 +130,18 @@ func TestNewHttpBridgeWithRecordingHandler(t *testing.T) {
 		route := &bridge.HttpBridgeProxyRoute{
 			Pattern:   fmt.Sprintf("/test%v", i+1),
 			TargetURL: targetURL,
+			Listener:listener,
 		}
 		routes = append(routes, route)
 	}
-	handlers, err := startTestHttpBridge("9085", bridge.NewProxyRecordingHandler, routes...)
+	_, err := startTestHttpBridge("9085", bridge.NewProxyRecordingHandler, routes...)
 	assert.Nil(t, err)
 
 	time.Sleep(1 * time.Second)
+
+
+
+
 	//Test direct responses
 	for i := 0; i < 2; i++ {
 		response, err := http.Get(fmt.Sprintf("http://127.0.0.1:%v/test%v", basePort+i, i+1))
@@ -141,19 +162,29 @@ func TestNewHttpBridgeWithRecordingHandler(t *testing.T) {
 	}
 
 	{
+		i := 0;
+		response, err := http.Post(fmt.Sprintf("http://127.0.0.1:9085/test%v", i+1), "text/json", strings.NewReader("{\"a\":1}"))
+		assert.Nil(t, err)
+		content, err := ioutil.ReadAll(response.Body)
+		assert.Nil(t, err)
+		assert.Equal(t, "{\"a\":1}", string(content))
+	}
+
+	{
+		assert.Equal(t, 3, len(responses))
 		time.Sleep(1 * time.Second)
-		handler1 := bridge.AsRecordingRoundTripHandler(handlers["/test1"])
-		if !assert.Equal(t, 1, len(handler1.RoundTrips())) {
-			return
-		}
-		roundTrip := handler1.RoundTrips()[0]
-		request := roundTrip.Request
+		request := responses[0].Request
 		assert.Equal(t, "/test1", request.URL.Path)
 
-		response := roundTrip.Response()
+		response := responses[0]
 		content, err := ioutil.ReadAll(response.Body)
 		assert.Nil(t, err)
 		assert.Equal(t, "Response1 from 9098", string(content))
+
+		response = responses[2]
+		content, err = ioutil.ReadAll(response.Body)
+		assert.Nil(t, err)
+		assert.Equal(t, "{\"a\":1}", string(content))
 	}
 
 

@@ -27,6 +27,7 @@ type HttpBridgeProxyRoute struct {
 	Pattern          string
 	TargetURL        *url.URL
 	ResponseModifier func(*http.Response) error
+	Listener         func(request *http.Request, response *http.Response)
 }
 
 //HttpBridgeProxyConfig represent proxy config
@@ -116,15 +117,15 @@ func NewProxyHandler(proxyConfig *HttpBridgeProxyConfig, route *HttpBridgeProxyR
 	return reverseProxy, nil
 }
 
-//RecordedRoundTrip represents recorded round trip.
-type RecordedRoundTrip struct {
+//HttpTrip represents recorded round trip.
+type HttpTrip struct {
 	responseWriter     http.ResponseWriter
 	Request            *http.Request
 	responseBody       *bytes.Buffer
 	responseStatusCode int
 }
 
-func (w *RecordedRoundTrip) Response() *http.Response {
+func (w *HttpTrip) Response() *http.Response {
 	return &http.Response{
 		Request:    w.Request,
 		StatusCode: w.responseStatusCode,
@@ -133,91 +134,82 @@ func (w *RecordedRoundTrip) Response() *http.Response {
 	}
 }
 
-func (w *RecordedRoundTrip) Write(b []byte) (int, error) {
+func (w *HttpTrip) Write(b []byte) (int, error) {
 	w.responseBody.Write(b)
 	return w.responseWriter.Write(b)
 }
 
-func (w *RecordedRoundTrip) Header() http.Header {
+func (w *HttpTrip) Header() http.Header {
 	return w.responseWriter.Header()
 }
 
-func (w *RecordedRoundTrip) WriteHeader(status int) {
+func (w *HttpTrip) WriteHeader(status int) {
 	w.responseStatusCode = status
 	w.responseWriter.WriteHeader(status)
 }
 
-func (w *RecordedRoundTrip) Flush() {
+func (w *HttpTrip) Flush() {
 	if flusher, ok := w.responseWriter.(http.Flusher); ok {
 		flusher.Flush()
 	}
 }
 
-func (w *RecordedRoundTrip) CloseNotify() <-chan bool {
+func (w *HttpTrip) CloseNotify() <-chan bool {
 	if closer, ok := w.responseWriter.(http.CloseNotifier); ok {
 		return closer.CloseNotify()
 	}
 	return make(chan bool, 1)
 }
 
-//RecordingRoundTripHandler represents endpoint recording handler
-type RecordingRoundTripHandler struct {
+//ListeningTripHandler represents endpoint recording handler
+type ListeningTripHandler struct {
 	handler         http.Handler
 	pool            httputil.BufferPool
-	roundTrips      *[]*RecordedRoundTrip
+	listener        func(request *http.Request, response *http.Response)
 	roundTripsMutex *sync.RWMutex
 }
 
-func (h *RecordingRoundTripHandler) AddRoundTrip(roundTrip *RecordedRoundTrip) {
-	h.roundTripsMutex.Lock()
-	defer h.roundTripsMutex.Unlock()
-
-	*h.roundTrips = append((*h.roundTrips), roundTrip)
-}
-
-func (h *RecordingRoundTripHandler) RoundTrips() []*RecordedRoundTrip {
-	h.roundTripsMutex.RLock()
-	defer h.roundTripsMutex.RUnlock()
-	return *h.roundTrips
+func (h *ListeningTripHandler) Notify(roundTrip *HttpTrip) {
+	if h.listener != nil {
+		h.listener(roundTrip.Request, roundTrip.Response())
+	}
 }
 
 //drainBody reads all of b to memory and then returns two equivalent (modified version from  httputil)
-func (h RecordingRoundTripHandler) drainBody(reader io.ReadCloser) (io.ReadCloser, io.ReadCloser, error) {
+func (h ListeningTripHandler) drainBody(reader io.ReadCloser) (io.ReadCloser, io.ReadCloser, error) {
 	if reader == http.NoBody {
 		return http.NoBody, http.NoBody, nil
 	}
 	var buf = new(bytes.Buffer)
 	toolbox.CopyWithBufferPool(reader, buf, h.pool)
-	return ioutil.NopCloser(buf), ioutil.NopCloser(bytes.NewReader(buf.Bytes())), nil
+	return ioutil.NopCloser(bytes.NewReader(buf.Bytes())), ioutil.NopCloser(bytes.NewReader(buf.Bytes())), nil
 }
 
-func (h RecordingRoundTripHandler) ServeHTTP(responseWriter http.ResponseWriter, request *http.Request) {
+func (h ListeningTripHandler) ServeHTTP(responseWriter http.ResponseWriter, request *http.Request) {
 	var err error
-	var originalRequest = request
+	var originalRequest = request.WithContext(request.Context())
 	if request.ContentLength > 0 {
-		request := originalRequest.WithContext(request.Context())
 		request.Body, originalRequest.Body, err = h.drainBody(request.Body)
 		if err != nil {
 			log.Printf("Faled to serve request :%v due to %v\n", request, err)
 			return
 		}
 	}
-	var recordedRoundTrip = &RecordedRoundTrip{
+	var recordedRoundTrip = &HttpTrip{
 		responseWriter: responseWriter,
 		Request:        originalRequest,
 		responseBody:   new(bytes.Buffer),
 	}
 	responseWriter = http.ResponseWriter(recordedRoundTrip)
-	defer h.AddRoundTrip(recordedRoundTrip)
+	defer h.Notify(recordedRoundTrip)
 	h.handler.ServeHTTP(responseWriter, request)
 }
 
-func NewRecordingHandler(handler http.Handler, bufferPoolSize, bufferSize int) *RecordingRoundTripHandler {
-	var roundTrips = make([]*RecordedRoundTrip, 0)
-	var result = &RecordingRoundTripHandler{
+func NewListeningHandler(handler http.Handler, bufferPoolSize, bufferSize int, listener func(request *http.Request, response *http.Response)) *ListeningTripHandler {
+	var result = &ListeningTripHandler{
 		handler:         handler,
+		listener:        listener,
 		pool:            toolbox.NewBytesBufferPool(bufferPoolSize, bufferSize),
-		roundTrips:      &roundTrips,
 		roundTripsMutex: &sync.RWMutex{},
 	}
 	return result
@@ -228,12 +220,12 @@ func NewProxyRecordingHandler(proxyConfig *HttpBridgeProxyConfig, route *HttpBri
 	if err != nil {
 		return nil, err
 	}
-	response := NewRecordingHandler(handler, proxyConfig.BufferPoolSize, proxyConfig.BufferSize)
+	response := NewListeningHandler(handler, proxyConfig.BufferPoolSize, proxyConfig.BufferSize, route.Listener)
 	return response, nil
 }
 
-func AsRecordingRoundTripHandler(handler http.Handler) *RecordingRoundTripHandler {
-	if result, ok := handler.(*RecordingRoundTripHandler); ok {
+func AsListeningTripHandler(handler http.Handler) *ListeningTripHandler {
+	if result, ok := handler.(*ListeningTripHandler); ok {
 		return result
 	}
 	return nil
