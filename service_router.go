@@ -261,7 +261,7 @@ func NewServiceRouter(serviceRouting ...ServiceRouting) *ServiceRouter {
 
 //RouteToService calls web service url, with passed in json request, and encodes http json response into passed response
 func RouteToService(method, url string, request, response interface{}) (err error) {
-	client, err := NewToolboxHttpClient()
+	client, err := NewToolboxHTTPClient()
 	if err != nil {
 		return err
 	}
@@ -334,22 +334,22 @@ func NewHttpClient(options ...*HttpOptions) (*http.Client, error) {
 
 }
 
-// TooboxHTTPClient contains preconfigured http client
-type TooboxHTTPClient struct {
+// ToolboxHTTPClient contains preconfigured http client
+type ToolboxHTTPClient struct {
 	httpClient *http.Client
 }
 
 // NewToolboxHTTPClient instantiate new client with provided options
-func NewToolboxHTTPClient(options ...*HttpOptions) (*TooboxHTTPClient, error) {
+func NewToolboxHTTPClient(options ...*HttpOptions) (*ToolboxHTTPClient, error) {
 	client, err := NewHttpClient(options...)
 	if err != nil {
 		return nil, err
 	}
-	return &TooboxHTTPClient{client}, nil
+	return &ToolboxHTTPClient{client}, nil
 }
 
 // Request sends http request using the existing client
-func (c *TooboxHTTPClient) Request(method, url string, request, response interface{}, encoderFactory EncoderFactory, decoderFactory DecoderFactory) (err error) {
+func (c *ToolboxHTTPClient) Request(method, url string, request, response interface{}, encoderFactory EncoderFactory, decoderFactory DecoderFactory) (err error) {
 	if _, found := httpMethods[strings.ToUpper(method)]; !found {
 		return errors.New("Unsupported method:" + method)
 	}

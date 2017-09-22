@@ -12,6 +12,13 @@ import (
 	"sync"
 	"time"
 	"github.com/viant/toolbox"
+	"fmt"
+	"path"
+	"os"
+	"encoding/json"
+	"encoding/base64"
+	"unicode/utf8"
+	"unicode"
 )
 
 //HttpBridgeConfig represent http bridge config
@@ -229,4 +236,119 @@ func AsListeningTripHandler(handler http.Handler) *ListeningTripHandler {
 		return result
 	}
 	return nil
+}
+
+type HttpRequest struct {
+	Method string
+	URL    string
+	Header http.Header
+	Body   string
+}
+
+type HttpResponse struct {
+	Code   int
+	Header http.Header
+	Body   string
+}
+
+func ReaderAsText(reader io.Reader) string {
+
+	if reader == nil {
+		return ""
+	}
+	body, err := ioutil.ReadAll(reader)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if isBinary(body) {
+		buf := new(bytes.Buffer)
+		encoder := base64.NewEncoder(base64.StdEncoding, buf)
+		encoder.Write(body)
+		encoder.Close()
+		return fmt.Sprintf("base64:%v", string(buf.Bytes()))
+
+	} else {
+		return fmt.Sprintf("text:%v", string(body))
+	}
+}
+
+func isBinary(input []byte) bool {
+	for i, w := 0, 0; i < len(input); i += w {
+		runeValue, width := utf8.DecodeRune(input[i:])
+		if unicode.IsControl(runeValue) {
+			return true
+		}
+		w = width
+	}
+	return false
+}
+
+func writeData(filename string, source interface{}, printStrOut bool) error  {
+	toolbox.FileExists(filename)
+	os.Remove(filename)
+
+	logfile, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v, %v", err, filename)
+	}
+	defer logfile.Close()
+
+	buf, err := json.MarshalIndent(source, "", "\t")
+	if err != nil {
+		return err
+	}
+	_, err = logfile.Write(buf)
+
+	if printStrOut {
+		fmt.Printf("%v: %v\n", filename, string(buf))
+	}
+
+	return err
+}
+
+//HttpFileRecorder returns http route listener that will record request response to the passed in directory
+func HttpFileRecorder(directory string, printStdOut bool) func(request *http.Request, response *http.Response) {
+	tripCounter := 0
+
+	err := toolbox.CreateDirIfNotExist(directory)
+	if err != nil {
+		fmt.Printf("failed to create directory%v %v\n, ", err, directory)
+	}
+
+	return func(request *http.Request, response *http.Response) {
+
+		var body string
+
+		if request.Body != nil {
+			body = ReaderAsText(request.Body)
+		}
+
+		httpRequest := &HttpRequest{
+		Method: request.Method,
+		URL:    request.URL.String(),
+		Header: request.Header,
+		Body:   body,
+		}
+
+		err = writeData(path.Join(directory, fmt.Sprintf("%T-%v.json", *httpRequest, tripCounter)), httpRequest, printStdOut)
+		if err != nil {
+			fmt.Printf("failed to write request %v %v\n, ", err, request)
+		}
+
+		body = ReaderAsText(response.Body)
+		request.Body = nil
+		httpResponse := &HttpResponse{
+		Code:   response.StatusCode,
+		Header: response.Header,
+		Body:   body,
+		}
+
+		err = writeData(path.Join(directory, fmt.Sprintf("%T-%v.json", *httpResponse, tripCounter)), httpResponse, printStdOut)
+		if err != nil {
+			fmt.Printf("failed to write response %v %v\n, ", err, response)
+		}
+
+		tripCounter++
+	}
+
 }
