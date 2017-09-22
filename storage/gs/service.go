@@ -6,6 +6,7 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
+	"hash/crc32"
 	"io"
 	"io/ioutil"
 	"net/url"
@@ -134,12 +135,18 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 	}
 	contentReader := bytes.NewBuffer(content)
 
-
-	if parsedUrl.Query().Get("disableMd5") == "" {
+	if parsedUrl.Query().Get("disableMD5") == "" {
 		hashReader := bytes.NewBuffer(content)
 		h := md5.New()
 		io.Copy(h, hashReader)
 		writer.MD5 = h.Sum(nil)
+	}
+
+	if parsedUrl.Query().Get("disableCRC32") == "" {
+		crc32HashReader := bytes.NewBuffer(content)
+		crc32Hash := crc32.New(crc32.MakeTable(crc32.Castagnoli))
+		io.Copy(crc32Hash, crc32HashReader)
+		writer.CRC32C = crc32Hash.Sum32()
 	}
 
 	if _, err = io.Copy(writer, contentReader); err != nil {
