@@ -64,11 +64,19 @@ func TestExtractURIParameters(t *testing.T) {
 
 }
 
-
 func TestURLBase(t *testing.T) {
 
 	URL := "http://github.com/abc"
-	baseURL:= toolbox.URLBase(URL)
+	baseURL := toolbox.URLBase(URL)
 	assert.Equal(t, "http://github.com", baseURL)
+
+}
+
+func TestURLSploy(t *testing.T) {
+
+	URL := "http://github.com/abc/trter/rds"
+	parentURL, resource := toolbox.URLSplit(URL)
+	assert.Equal(t, "http://github.com/abc/trter", parentURL)
+	assert.Equal(t, "rds", resource)
 
 }
