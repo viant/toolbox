@@ -28,6 +28,9 @@ type Context interface {
 
 	//Contains chekcs if a value of a terget type is in contet
 	Contains(targetType interface{}) bool
+
+	//Clone create a shallow copy of a context
+	Clone() Context
 }
 
 type contextImpl struct {
@@ -120,6 +123,14 @@ func (c *contextImpl) Contains(targetType interface{}) bool {
 		return true
 	}
 	return false
+}
+
+func (c *contextImpl) Clone() Context {
+	var result = &contextImpl{context: make(map[string]interface{})}
+	for k, v := range c.context {
+		result.context[k] = v
+	}
+	return result
 }
 
 //NewContext creates a new context
