@@ -678,6 +678,9 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 	} else if targetIndirectPointerType.Kind() == reflect.Struct {
 
 		structPointer := reflect.New(targetIndirectPointerType)
+		if !IsMap(source) {
+			return fmt.Errorf("unable transfer to %T,  source should be a map but was %T(%v)", target, source, source)
+		}
 		inputMap := AsMap(source)
 		if inputMap != nil {
 			err := c.assignConvertedStruct(target, inputMap, structPointer.Elem(), targetIndirectPointerType)
@@ -700,7 +703,7 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		return nil
 	}
 
-	return fmt.Errorf("Unable to convert type %T into type %T", source, target)
+	return fmt.Errorf("Unable to convert type %T into type %T\n\t%v", source, target, source)
 }
 
 func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sourceValue reflect.Value) error {
