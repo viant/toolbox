@@ -3,7 +3,6 @@ package scp
 import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
-	"path"
 	"strings"
 	"time"
 )
@@ -25,9 +24,12 @@ type object struct {
 	permission       string
 }
 
-//URL return storage url
+//URL return storage URL
 func (i *object) URL() string {
-	return path.Join(i.url, i.name)
+	if strings.Contains(i.url, i.name) {
+		return i.url
+	}
+	return toolbox.URLPathJoin(i.url, i.name)
 }
 
 //Type returns storage type  StorageObjectFolderType or StorageObjectContentType

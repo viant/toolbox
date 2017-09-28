@@ -32,7 +32,7 @@ type service struct {
 	config *ssh.AuthConfig
 }
 
-//List returns a list of object for supplied url
+//List returns a list of object for supplied URL
 func (s *service) List(URL string) ([]storage.Object, error) {
 	parsedUrl, err := url.Parse(URL)
 	if err != nil {
@@ -68,7 +68,7 @@ func (s *service) List(URL string) ([]storage.Object, error) {
 		if fileInfo.name == "" {
 			continue
 		}
-
+		fileInfo.url = URL
 		result = append(result, fileInfo)
 	}
 	return result, nil
@@ -161,7 +161,7 @@ func (s *service) Download(object storage.Object) (io.Reader, error) {
 	return bytes.NewReader(content), nil
 }
 
-//Upload uploads provided reader content for supplied url.
+//Upload uploads provided reader content for supplied URL.
 func (s *service) Upload(URL string, reader io.Reader) error {
 	parsedUrl, err := url.Parse(URL)
 	if err != nil {
