@@ -1,8 +1,9 @@
 package toolbox
 
 import (
-	"strings"
+	"fmt"
 	"net/url"
+	"strings"
 )
 
 //ExtractURIParameters parses URIs to extract {<param>} defined in templateURI from requestURI, it returns extracted parameters and flag if requestURI matched templateURI
@@ -22,11 +23,11 @@ func ExtractURIParameters(templateURI, requestURI string) (map[string]string, bo
 		var requestChar, routingChar string
 
 		if requestURIIndex < len(requestURI) {
-			requestChar = requestURI[requestURIIndex: requestURIIndex+1]
+			requestChar = requestURI[requestURIIndex : requestURIIndex+1]
 		}
 
 		if templateURIIndex < len(templateURI) {
-			routingChar = templateURI[templateURIIndex: templateURIIndex+1]
+			routingChar = templateURI[templateURIIndex : templateURIIndex+1]
 		}
 		if (!expectingValue && !expectingName) && requestChar == routingChar && routingChar != "" {
 			requestURIIndex++
@@ -79,7 +80,7 @@ func URLPathJoin(baseURL, path string) string {
 	if strings.HasSuffix(baseURL, "/") {
 		return baseURL + path
 	}
-	if ! strings.HasPrefix(path, "/") {
+	if !strings.HasPrefix(path, "/") {
 		path = "/" + path
 	}
 
@@ -97,4 +98,17 @@ func URLBase(URL string) string {
 		return URL
 	}
 	return string(URL[:pathPosition])
+}
+
+//URLSplit returns URL with parent path and resource name
+func URLSplit(URL string) (string, string) {
+	parsedURL, err := url.Parse(URL)
+	if err != nil || parsedURL.Path == "" {
+		return URL, ""
+	}
+	splitPosition := strings.LastIndex(parsedURL.Path, "/")
+	if splitPosition == -1 {
+		return URL, ""
+	}
+	return fmt.Sprintf("%v%v", URLBase(URL), string(parsedURL.Path[:splitPosition])), string(parsedURL.Path[splitPosition+1:])
 }
