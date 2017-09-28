@@ -161,26 +161,17 @@ func (s *httpStorageService) Exists(URL string) (bool, error) {
 
 //Object returns a Object for supplied url
 func (s *httpStorageService) StorageObject(URL string) (Object, error) {
-	file, err := openFileFromUrl(URL)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-	fileInfo, err := os.Stat(file.Name())
-	if err != nil {
-		return nil, err
-	}
-	objectType := 0
-	switch mode := fileInfo.Mode(); {
 
-	case mode.IsDir():
-		// do directory stuff
-		objectType = StorageObjectFolderType
-	case mode.IsRegular():
-		objectType = StorageObjectContentType
+
+	objects, err := s.List(URL)
+	if err != nil {
+		return nil, err
 	}
-	modTime := fileInfo.ModTime()
-	return newFileObject(URL, objectType, &fileInfo, &modTime, fileInfo.Size()), nil
+	if len(objects) == 0 {
+		return nil, fmt.Errorf("Resource not found: %v", URL)
+	}
+
+	return objects[0], nil
 }
 
 //Download returns reader for downloaded storage object
@@ -239,8 +230,9 @@ const HttpProviderScheme = "http"
 const HttpsProviderScheme = "https"
 
 func init() {
-	NewStorageProvider().Registry[HttpProviderScheme] = serviceProvider
 	NewStorageProvider().Registry[HttpsProviderScheme] = serviceProvider
+	NewStorageProvider().Registry[HttpProviderScheme] = serviceProvider
+
 }
 
 func serviceProvider(credentialFile string) (Service, error) {
