@@ -126,6 +126,7 @@ func NewServiceForURL(URL, credentialFile string) (Service, error) {
 	}
 	service := NewService()
 	provider := NewStorageProvider().Get(parsedURL.Scheme)
+
 	if provider != nil {
 		serviceForScheme, err := provider(credentialFile)
 		if err != nil {
@@ -153,10 +154,11 @@ func copy(sourceService Service, sourceURL string, targetService Service, target
 		if object.URL() == sourceURL && object.IsFolder() {
 			continue
 		}
+
+
 		if len(object.URL()) > len(sourceURL) {
 			objectRelativePath = object.URL()[len(sourceURL):]
 		}
-
 		var targetObjectURL = targetURL
 		if objectRelativePath != "" {
 			targetObjectURL = toolbox.URLPathJoin(targetURL, objectRelativePath)
@@ -165,7 +167,7 @@ func copy(sourceService Service, sourceURL string, targetService Service, target
 		if object.IsContent() {
 			reader, err = sourceService.Download(object)
 			if err != nil {
-				err = fmt.Errorf("Unable download, %v", object.URL(), targetObjectURL, err)
+				err = fmt.Errorf("Unable download, %v -> %v, %v", object.URL(), targetObjectURL, err)
 				return err
 			}
 
@@ -173,7 +175,7 @@ func copy(sourceService Service, sourceURL string, targetService Service, target
 			if modifyContentHandler != nil {
 				reader, err = modifyContentHandler(reader)
 				if err != nil {
-					err = fmt.Errorf("Unable modify content, %v", object.URL(), targetObjectURL, err)
+					err = fmt.Errorf("Unable modify content, %v %v %v", object.URL(), targetObjectURL, err)
 					return err
 				}
 			}
