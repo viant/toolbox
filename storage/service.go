@@ -155,7 +155,6 @@ func copy(sourceService Service, sourceURL string, targetService Service, target
 			continue
 		}
 
-
 		if len(object.URL()) > len(sourceURL) {
 			objectRelativePath = object.URL()[len(sourceURL):]
 		}
@@ -171,7 +170,6 @@ func copy(sourceService Service, sourceURL string, targetService Service, target
 				return err
 			}
 
-
 			if modifyContentHandler != nil {
 				reader, err = modifyContentHandler(reader)
 				if err != nil {
@@ -180,12 +178,13 @@ func copy(sourceService Service, sourceURL string, targetService Service, target
 				}
 			}
 
-			targetObjects, err := targetService.List(targetObjectURL)
-			if err == nil && len(targetObjects) > 0 {
-				if targetObjects[0].IsFolder() {
-					_, file := path.Split(object.URL())
-					targetObjectURL = toolbox.URLPathJoin(targetObjectURL, file)
-				}
+			targetObject, err := targetService.StorageObject(targetObjectURL)
+
+			fmt.Printf("%v %v %v\n", targetObjectURL, targetObject,  err)
+
+			if (targetObject != nil && targetObject.IsFolder()) {
+				_, file := path.Split(object.URL())
+				targetObjectURL = toolbox.URLPathJoin(targetObjectURL, file)
 			}
 
 			err = targetService.Upload(targetObjectURL, reader)
