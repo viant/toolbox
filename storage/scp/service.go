@@ -11,6 +11,8 @@ import (
 	"io/ioutil"
 	"net/url"
 	"strings"
+
+	"path"
 )
 
 const defaultSSHPort = 22
@@ -32,13 +34,11 @@ type service struct {
 	config *ssh.AuthConfig
 }
 
-//List returns a list of object for supplied URL
-func (s *service) List(URL string) ([]storage.Object, error) {
+func (s *service) runCommand(URL string, command string) (string, error) {
 	parsedUrl, err := url.Parse(URL)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-
 
 	port := toolbox.AsInt(parsedUrl.Port())
 	if port == 0 {
@@ -46,30 +46,54 @@ func (s *service) List(URL string) ([]storage.Object, error) {
 	}
 	client, err := ssh.NewClient(parsedUrl.Hostname(), toolbox.AsInt(port), s.config)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	defer client.Close()
 	session, err := client.NewSession()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	defer session.Close()
-	var result = make([]storage.Object, 0)
+	output, err := session.CombinedOutput(command)
+	if err != nil {
+		return "", err
+	}
+	return toolbox.AsString(output), err
 
-	output, err := session.CombinedOutput("ls -lTtr " + parsedUrl.Path)
+}
+
+//List returns a list of object for supplied URL
+func (s *service) List(URL string) ([]storage.Object, error) {
+	parsedUrl, err := url.Parse(URL)
+	if err != nil {
+		return nil, err
+	}
+
+	var result = make([]storage.Object, 0)
+	output, err := s.runCommand(URL, "ls -lTtr "+parsedUrl.Path)
 	if strings.Contains(string(output), "No such file or directory") {
 		return result, nil
+	}
+
+	var fileNameFilter = ""
+	if err == nil && output == "" {
+		parent, fileName := path.Split(parsedUrl.Path)
+		fileNameFilter = fileName
+		output, err = s.runCommand(URL, "ls -lTtr "+parent+" | grep "+fileName)
 	}
 	if err != nil {
 		return nil, err
 	}
+
 	for _, line := range strings.Split(string(output), "\n") {
 		fileInfo := extractFileInfo(line)
 		if fileInfo.name == "" {
 			continue
 		}
 		fileInfo.url = URL
-		result = append(result, fileInfo)
+		if fileNameFilter == "" || fileNameFilter == fileInfo.name {
+			result = append(result, fileInfo)
+		}
 	}
 	return result, nil
 }
@@ -116,11 +140,16 @@ func extractFileInfo(line string) *object {
 }
 
 func (s *service) Exists(URL string) (bool, error) {
-	objects, err := s.List(URL)
+	parsedUrl, err := url.Parse(URL)
 	if err != nil {
 		return false, err
 	}
-	return len(objects) > 0, nil
+	output, err := s.runCommand(URL, "ls -lTtr "+parsedUrl.Path)
+	if strings.Contains(string(output), "No such file or directory") {
+		return false, nil
+	}
+	return true, nil
+
 }
 
 func (s *service) StorageObject(URL string) (storage.Object, error) {
