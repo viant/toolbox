@@ -134,13 +134,12 @@ outer:
 
 		case o := <-s.stdOutput:
 			out += o
-
-			if hasTerminator(out, terminators...) && len(s.stdOutput) ==  0  {
+			if hasTerminator(out, terminators...) && len(s.stdOutput) == 0 {
 				break outer
 			}
 		case e := <-s.stdError:
 			errOut += e
-			if hasTerminator(errOut, terminators...) && len(s.stdOutput) ==  0   {
+			if hasTerminator(errOut, terminators...) && len(s.stdOutput) == 0 {
 				break outer
 			}
 
