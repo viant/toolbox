@@ -512,7 +512,19 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		if err != nil {
 			return err
 		}
-		reflect.ValueOf(targetValuePointer).Elem().Set(reflect.ValueOf(&value))
+		switch directType.Kind() {
+		case reflect.Int8:
+			alignValue := int8(value)
+			reflect.ValueOf(targetValuePointer).Elem().Set(reflect.ValueOf(&alignValue))
+		case reflect.Int16:
+			alignValue := int16(value)
+			reflect.ValueOf(targetValuePointer).Elem().Set(reflect.ValueOf(&alignValue))
+		case reflect.Int32:
+			alignValue := int32(value)
+			reflect.ValueOf(targetValuePointer).Elem().Set(reflect.ValueOf(&alignValue))
+		default:
+			reflect.ValueOf(targetValuePointer).Elem().Set(reflect.ValueOf(&value))
+		}
 		return nil
 	case *uint, *uint8, *uint16, *uint32, *uint64:
 		directValue := reflect.Indirect(reflect.ValueOf(targetValuePointer))
@@ -539,7 +551,20 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		if err != nil {
 			return err
 		}
-		reflect.ValueOf(targetValuePointer).Elem().Set(reflect.ValueOf(&value))
+
+		switch directType.Kind() {
+		case reflect.Uint8:
+			alignValue := uint8(value)
+			reflect.ValueOf(targetValuePointer).Elem().Set(reflect.ValueOf(&alignValue))
+		case reflect.Uint16:
+			alignValue := uint16(value)
+			reflect.ValueOf(targetValuePointer).Elem().Set(reflect.ValueOf(&alignValue))
+		case reflect.Uint32:
+			alignValue := int32(value)
+			reflect.ValueOf(targetValuePointer).Elem().Set(reflect.ValueOf(&alignValue))
+		default:
+			reflect.ValueOf(targetValuePointer).Elem().Set(reflect.ValueOf(&value))
+		}
 		return nil
 	case *float32, *float64:
 		directValue := reflect.Indirect(reflect.ValueOf(targetValuePointer))
@@ -565,7 +590,12 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		if err != nil {
 			return err
 		}
-		reflect.ValueOf(targetValuePointer).Elem().Set(reflect.ValueOf(&value))
+		if directType.Kind() == reflect.Float32 {
+			float32Value := float32(value)
+			reflect.ValueOf(targetValuePointer).Elem().Set(reflect.ValueOf(&float32Value))
+		} else {
+
+		}
 		return nil
 	case *time.Time:
 		switch sourceValue := source.(type) {
@@ -770,4 +800,63 @@ func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sou
 //NewColumnConverter create a new converter, that has abbility to convert map to struct using column mapping
 func NewColumnConverter(dataFormat string) *Converter {
 	return &Converter{dataFormat, "column"}
+}
+
+//DereferenceValues replaces pointer to its value within a generic  map or slice
+func DereferenceValues(source interface{}) interface{} {
+	if IsMap(source) {
+		var aMap = make(map[string]interface{})
+		ProcessMap(source, func(key, value interface{}) bool {
+			if value == nil {
+				return true
+			}
+			aMap[AsString(key)] = DereferenceValue(value)
+
+			return true
+		})
+		return aMap
+
+	} else if IsSlice(source) {
+		var aSlice = make([]interface{}, 0)
+		ProcessSlice(source, func(item interface{}) bool {
+			aSlice = append(aSlice, DereferenceValue(item))
+			return true
+		})
+		return aSlice
+
+	}
+	return DereferenceValue(source)
+}
+
+//DereferenceValue dereference passed in value
+func DereferenceValue(value interface{}) interface{} {
+	if value == nil {
+		return nil
+	}
+	reflectValue := reflect.ValueOf(value)
+
+	for {
+		if !reflectValue.IsValid() {
+			break
+		}
+
+		if !reflectValue.CanInterface() {
+			break
+		}
+		if reflectValue.Type().Kind() != reflect.Ptr {
+			break
+		}
+
+		reflectValue = reflectValue.Elem()
+	}
+
+	var result interface{}
+	if reflectValue.IsValid() && reflectValue.CanInterface() {
+		result = reflectValue.Interface()
+	}
+
+	if result != nil && (IsMap(result) || IsSlice(result)) {
+		return DereferenceValues(value)
+	}
+	return result
 }
