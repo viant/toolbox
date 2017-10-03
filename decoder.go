@@ -16,7 +16,6 @@ type Decoder interface {
 
 //UnMarshaler represent an struct that can be converted to bytes
 type UnMarshaler interface {
-
 	//Unmarshal converts a struct to bytes
 	Unmarshal(data []byte) error
 }
@@ -128,10 +127,20 @@ func (d *delimiterDecoder) Decode(target interface{}) error {
 	}
 	for i := 0; i < len(encoded); i++ {
 		aChar := string(encoded[i : i+1])
-		//escape " only if value is already inside "s
+		nextChar := ""
+		if i+2 < len(encoded) {
+			nextChar = encoded[i+1 : i+2]
+		}
 		if isInDoubleQuote && ((aChar == "\\" || aChar == "\"") && i+2 < len(encoded)) {
-			nextChar := encoded[i+1 : i+2]
 			if nextChar == "\"" {
+				if i+3 < len(encoded) {
+					nextAfterNext := encoded[i+2 : i+3]
+					if nextAfterNext == "\"" {
+						value = value + aChar + nextChar
+						i += 2
+						continue
+					}
+				}
 				i++
 				value = value + nextChar
 				continue
