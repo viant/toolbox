@@ -34,7 +34,7 @@ func FileExists(filename string) bool {
 // CreateDirIfNotExist creates directory if they do not exist
 func CreateDirIfNotExist(dirs ...string) error {
 	for _, dir := range dirs {
-		if len(dir) > 1 && strings.HasSuffix(dir, "/")  {
+		if len(dir) > 1 && strings.HasSuffix(dir, "/") {
 			dir = dir[:len(dir)-1]
 		}
 		parent, _ := path.Split(dir)
