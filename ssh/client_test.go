@@ -4,6 +4,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox/ssh"
 	"testing"
+	"os"
+	"path"
+	"github.com/viant/toolbox"
+	"io/ioutil"
 )
 
 func TestNewClient(t *testing.T) {
@@ -46,3 +50,36 @@ func TestClient_Upload(t *testing.T) {
 
 
 
+func TestClient_UploadLargeFile(t *testing.T) {
+
+	client, err := ssh.NewClient("127.0.0.1", 22, nil)
+	if err == nil {
+
+		tempdir := os.TempDir()
+		filename := path.Join(tempdir, "largefile.bin")
+		toolbox.RemoveFileIfExist(filename)
+		defer toolbox.RemoveFileIfExist(filename)
+		//file, err := os.OpenFile(filename, os.O_RDWR | os.O_CREATE, 0644)
+		//assert.Nil(t, err)
+
+		var payload = make([]byte, 1024*1024 *16)
+		for i := 0;i<len(payload);i+=32 {
+			payload[i] = byte(i%256)
+		}
+		//file.Write(payload)
+		//file.Close()
+
+
+		err := client.Upload(filename, payload)
+		assert.Nil(t, err)
+
+		data, err := ioutil.ReadFile(filename)
+		assert.Nil(t, err)
+		if assert.Equal(t, len(data), len(payload)) {
+			assert.EqualValues(t, data, payload)
+		}
+	}
+
+
+
+}

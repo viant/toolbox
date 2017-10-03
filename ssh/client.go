@@ -15,7 +15,7 @@ const (
 )
 
 var bufferSize = 64 * 1024
-var scpUploadSleep = time.Millisecond
+var scpUploadSleep = 100 * time.Millisecond
 var commandResponseDelaySleep = 200 * time.Millisecond
 
 var endTransferSequence = []byte("\x00")
@@ -108,14 +108,15 @@ func (c *Client) Upload(destination string, content []byte) error {
 		return errors.New(message)
 	}
 
+	var interationCount = (len(content) / bufferSize) + 1
 	//This is terrible hack, but  it looks like writer.Write at once or using io.Copy causes some data being lost in the final file,
 	//so slowing down writes addresses this issue
-	for i := 0; i < (len(content)/bufferSize)+1; i++ {
+	for i := 0; i < interationCount; i++ {
 		maxLength := (i + 1) * bufferSize
 		if maxLength >= len(content) {
 			maxLength = len(content)
 		}
-		buffer := content[i*bufferSize : maxLength]
+		buffer := content[i*bufferSize: maxLength]
 		_, err = writer.Write(buffer)
 		if err != nil {
 			if err.Error() == io.EOF.Error() {
@@ -123,7 +124,9 @@ func (c *Client) Upload(destination string, content []byte) error {
 			}
 			return fmt.Errorf("Failed to write content %v %v %v", err, len(content), i)
 		}
-		time.Sleep(scpUploadSleep)
+		if i+2 > interationCount {
+			time.Sleep(scpUploadSleep)
+		}
 	}
 
 	if err == nil {
