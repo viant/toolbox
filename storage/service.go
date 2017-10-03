@@ -179,9 +179,6 @@ func copy(sourceService Service, sourceURL string, targetService Service, target
 			}
 
 			targetObject, err := targetService.StorageObject(targetObjectURL)
-
-			fmt.Printf("%v %v %v\n", targetObjectURL, targetObject,  err)
-
 			if (targetObject != nil && targetObject.IsFolder()) {
 				_, file := path.Split(object.URL())
 				targetObjectURL = toolbox.URLPathJoin(targetObjectURL, file)
