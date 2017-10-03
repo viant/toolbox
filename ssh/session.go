@@ -159,7 +159,19 @@ outer:
 	return out, err
 }
 
+func (s *MultiCommandSession) drainStdout() {
+	//read any outstanding output
+	for ;; {
+		out,  _:= s.readResponse(1, "")
+		if len(out) == 0 {
+			return
+		}
+
+	}
+}
+
 func (s *MultiCommandSession) Run(command string, timeoutMs int, terminators ...string) (string, error) {
+	s.drainStdout()
 	_, err := s.stdInput.Write([]byte(command + "\n"))
 	if err != nil {
 		return "", fmt.Errorf("Failed to execute command: %v, err: %v", command, err)
