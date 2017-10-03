@@ -66,6 +66,7 @@ func TestDelimiterDecoderFactory(t *testing.T) {
 
 		}
 	}
+
 	{
 		decoder := toolbox.NewDelimiterDecoderFactory().Create(strings.NewReader("1,2,\"ab,cd\",3"))
 		err := decoder.Decode(record)
@@ -73,6 +74,17 @@ func TestDelimiterDecoderFactory(t *testing.T) {
 			assert.EqualValues(t, "1", record.Record["column1"])
 			assert.EqualValues(t, "2", record.Record["column2"])
 			assert.EqualValues(t, "ab,cd", record.Record["column3"])
+			assert.EqualValues(t, "3", record.Record["column4"])
+		}
+	}
+
+	{
+		decoder := toolbox.NewDelimiterDecoderFactory().Create(strings.NewReader("1,2,\" \"\"location:[\\\"\"BE\\\"\"]\"\"  \",3"))
+		err := decoder.Decode(record)
+		if assert.Nil(t, err) {
+			assert.EqualValues(t, "1", record.Record["column1"])
+			assert.EqualValues(t, "2", record.Record["column2"])
+			assert.EqualValues(t, " \"location:[\\\"BE\\\"]\"  ", record.Record["column3"])
 			assert.EqualValues(t, "3", record.Record["column4"])
 		}
 	}
