@@ -242,15 +242,15 @@ func (c *Converter) assignConvertedMap(target, input interface{}, targetIndirect
 			err = fmt.Errorf("Failed to assigned converted map key %v to %v due to %v", input, target, err)
 			return false
 		}
-		var elementKey  = targetMapKeyPointer.Elem();
-		var elementValue =   targetMapValuePointer.Elem()
+		var elementKey = targetMapKeyPointer.Elem()
+		var elementValue = targetMapValuePointer.Elem()
 
 		if elementKey.Type() != mapKeyType {
 			if elementKey.Type().AssignableTo(mapKeyType) {
 				elementKey = elementKey.Convert(mapKeyType)
 			}
 		}
-		if ! elementValue.Type().AssignableTo(newMap.Type().Elem()) {
+		if !elementValue.Type().AssignableTo(newMap.Type().Elem()) {
 			var compatibleValue = reflect.New(newMap.Type().Elem())
 			err = c.AssignConverted(compatibleValue.Interface(), elementValue.Interface())
 			if err != nil {
