@@ -222,10 +222,11 @@ func (c *Converter) assignConvertedMap(target, input interface{}, targetIndirect
 	mapType := DiscoverTypeByKind(target, reflect.Map)
 	mapPointer := reflect.New(mapType)
 	mapValueType := mapType.Elem()
-	keyKeyType := mapType.Key()
+	mapKeyType := mapType.Key()
 	newMap := mapPointer.Elem()
 	newMap.Set(reflect.MakeMap(mapType))
 	var err error
+
 	ProcessMap(input, func(key, value interface{}) bool {
 		mapValueType = reflect.TypeOf(value)
 		targetMapValuePointer := reflect.New(mapValueType)
@@ -235,13 +236,29 @@ func (c *Converter) assignConvertedMap(target, input interface{}, targetIndirect
 			return false
 		}
 
-		targetMapKeyPointer := reflect.New(keyKeyType)
+		targetMapKeyPointer := reflect.New(mapKeyType)
 		err = c.AssignConverted(targetMapKeyPointer.Interface(), key)
 		if err != nil {
 			err = fmt.Errorf("Failed to assigned converted map key %v to %v due to %v", input, target, err)
 			return false
 		}
-		newMap.SetMapIndex(targetMapKeyPointer.Elem(), targetMapValuePointer.Elem())
+		var elementKey  = targetMapKeyPointer.Elem();
+		var elementValue =   targetMapValuePointer.Elem()
+
+		if elementKey.Type() != mapKeyType {
+			if elementKey.Type().AssignableTo(mapKeyType) {
+				elementKey = elementKey.Convert(mapKeyType)
+			}
+		}
+		if ! elementValue.Type().AssignableTo(newMap.Type().Elem()) {
+			var compatibleValue = reflect.New(newMap.Type().Elem())
+			err = c.AssignConverted(compatibleValue.Interface(), elementValue.Interface())
+			if err != nil {
+				return false
+			}
+			elementValue = compatibleValue.Elem()
+		}
+		newMap.SetMapIndex(elementKey, elementValue)
 		return true
 	})
 
