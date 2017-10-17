@@ -146,6 +146,28 @@ func (m LiteralMatcher) Match(input string, offset int) (matched int) {
 	return i
 }
 
+
+//LiteralMatcher represents a matcher that finds any literals in the input
+type IdMatcher struct{}
+
+//Match matches a literal in the input, it returns number of character matched.
+func (m IdMatcher) Match(input string, offset int) (matched int) {
+	if !isLetter(input[offset : offset+1]) && !isDigit(input[offset : offset+1])  {
+		return 0
+	}
+	var i = 1
+	for ; i < len(input)-offset; i++ {
+		aChar := input[offset+i : offset+i+1]
+		if !((isLetter(aChar)) || isDigit(aChar) || aChar == "_" || aChar == ".") {
+			break
+		}
+	}
+	return i
+}
+
+
+
+
 //LiteralMatcher represents a matcher that finds any literals in the input
 type BodyMatcher struct {
 	Begin string
