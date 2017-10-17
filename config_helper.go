@@ -15,7 +15,7 @@ func LoadConfigFromUrl(url string, config interface{}) error {
 	if err != nil {
 		return fmt.Errorf("Failed to load %v from url %v %v", configType, url, err)
 	}
-	reader.Close()
+	defer reader.Close()
 	err = NewJSONDecoderFactory().Create(reader).Decode(config)
 	if err != nil {
 		return fmt.Errorf("Failed to decode Config from url %v %v", url, err)
