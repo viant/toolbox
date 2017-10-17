@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"time"
+	"strings"
 )
 
 //ValueProvider represents a value provider
@@ -120,6 +121,65 @@ func NewCurrentTimeProvider() ValueProvider {
 	return result
 }
 
+type timeDiffProvider struct{}
+
+func (p timeDiffProvider) Get(context Context, arguments ...interface{}) (interface{}, error) {
+
+	var resultTime time.Time
+	var durationDelta time.Duration
+
+	if len(arguments) >= 1 {
+		if strings.ToLower(AsString(arguments[0])) == "now" {
+			resultTime = time.Now()
+		} else {
+			extractedTime := AsTime(arguments[0], "")
+			if extractedTime != nil {
+				resultTime = *extractedTime
+			}
+		}
+	}
+
+	if len(arguments) >= 3 {
+		var amount = AsInt(arguments[1])
+		switch strings.ToLower(AsString(arguments[2])) {
+		case "day":
+			durationDelta = time.Duration(amount*24) * time.Hour
+		case "week":
+			durationDelta = time.Duration(amount*24*7) * time.Hour
+		case "hour":
+			durationDelta = time.Duration(amount) * time.Hour
+		case "min":
+			durationDelta = time.Duration(amount) * time.Minute
+		case "sec":
+			durationDelta = time.Duration(amount) * time.Second
+		}
+	}
+	var format = ""
+	if len(arguments) == 4 {
+		format = AsString(arguments[3])
+	}
+	resultTime = resultTime.Add(durationDelta)
+	switch format {
+	case "unix":
+		return int(resultTime.Unix()+resultTime.UnixNano()) / 1000000000, nil
+	case "timestamp":
+		return int(resultTime.Unix()+resultTime.UnixNano()) / 1000000, nil
+
+	default:
+		if len(format) > 0 {
+			return resultTime.Format(DateFormatToLayout(format)), nil
+		}
+	}
+	return resultTime, nil
+}
+
+//NewTimeProviderreturns a provder that takes operation, add,sub,get as first parametrs, optionally delta, unit, and format
+//format as java date format or unix or timestamp
+func NewTimeDiffProvider() ValueProvider {
+	var result ValueProvider = &timeDiffProvider{}
+	return result
+}
+
 type nilValueProvider struct{}
 
 func (p nilValueProvider) Get(context Context, arguments ...interface{}) (interface{}, error) {
@@ -146,7 +206,6 @@ func NewCurrentDateProvider() ValueProvider {
 
 //Dictionary represents simply lookup interface
 type Dictionary interface {
-
 	//Get returns value for passed in key or error
 	Get(key string) (interface{}, error)
 
