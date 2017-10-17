@@ -10,6 +10,22 @@ import (
 
 //DefaultDateLayout is set to 2006-01-02 15:04:05.000
 var DefaultDateLayout = "2006-01-02 15:04:05.000"
+var numericTypes = []reflect.Type{
+	reflect.TypeOf(int(0)),
+	reflect.TypeOf(int8(0)),
+	reflect.TypeOf(int16(0)),
+	reflect.TypeOf(int32(0)),
+	reflect.TypeOf(int64(0)),
+
+	reflect.TypeOf(uint(0)),
+	reflect.TypeOf(uint8(0)),
+	reflect.TypeOf(uint16(0)),
+	reflect.TypeOf(uint32(0)),
+	reflect.TypeOf(uint64(0)),
+
+	reflect.TypeOf(float32(0.0)),
+	reflect.TypeOf(float64(0.0)),
+}
 
 //AsString converts an input to string.
 func AsString(input interface{}) string {
@@ -287,7 +303,7 @@ func (c *Converter) assignConvertedSlice(target, source interface{}, targetIndir
 		}
 		err = c.AssignConverted(targetComponentPointer.Interface(), item)
 		if err != nil {
-			err = fmt.Errorf("Failed to convert slice tiem %v to %v due to %v", item, targetComponentPointer.Interface(), err)
+			err = fmt.Errorf("Failed to convert slice item from %T to %T, values: from %v to %v, due to %v", item, targetComponentPointer.Interface(), item, targetComponentPointer.Interface(), err)
 			return false
 		}
 
@@ -750,6 +766,21 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		return nil
 	}
 
+	targetDereferecedType := DereferenceType(target)
+
+	for _, candidate := range numericTypes {
+		if candidate.Kind() == targetDereferecedType.Kind() {
+			var pointerCount = CountPointers(target)
+			var compatibleTarget = reflect.New(candidate)
+			for i := 0; i < pointerCount-1; i++ {
+				compatibleTarget = reflect.New(compatibleTarget.Type())
+			}
+			c.AssignConverted(compatibleTarget.Interface(), source)
+			targetValue := reflect.ValueOf(target)
+			targetValue.Elem().Set(compatibleTarget.Elem().Convert(targetValue.Elem().Type()))
+			return nil
+		}
+	}
 	return fmt.Errorf("Unable to convert type %T into type %T\n\t%v", source, target, source)
 }
 
@@ -875,5 +906,46 @@ func DereferenceValue(value interface{}) interface{} {
 	if result != nil && (IsMap(result) || IsSlice(result)) {
 		return DereferenceValues(value)
 	}
+	return result
+}
+
+//DereferenceType dereference passed in value
+func DereferenceType(value interface{}) reflect.Type {
+	if value == nil {
+		return nil
+	}
+	reflectType, ok := value.(reflect.Type)
+	if !ok {
+		reflectType = reflect.TypeOf(value)
+	}
+	for {
+		if reflectType.Kind() != reflect.Ptr {
+			break
+		}
+		reflectType = reflectType.Elem()
+	}
+
+	return reflectType
+}
+
+//CountPointers count pointers to undelying non pointer type
+func CountPointers(value interface{}) int {
+	if value == nil {
+		return 0
+	}
+	var result = 0
+	reflectType, ok := value.(reflect.Type)
+	if !ok {
+		reflectType = reflect.TypeOf(value)
+	}
+
+	for {
+		if reflectType.Kind() != reflect.Ptr {
+			break
+		}
+		result++
+		reflectType = reflectType.Elem()
+	}
+
 	return result
 }
