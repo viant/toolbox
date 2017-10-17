@@ -239,16 +239,16 @@ func AsListeningTripHandler(handler http.Handler) *ListeningTripHandler {
 }
 
 type HttpRequest struct {
-	Method string
-	URL    string
-	Header http.Header
-	Body   string
+	Method string `json:",omitempty"`
+	URL    string `json:",omitempty"`
+	Header http.Header `json:",omitempty"`
+	Body   string `json:",omitempty"`
 }
 
 type HttpResponse struct {
 	Code   int
-	Header http.Header
-	Body   string
+	Header http.Header `json:",omitempty"`
+	Body   string `json:",omitempty"`
 }
 
 func ReaderAsText(reader io.Reader) string {

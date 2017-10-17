@@ -34,6 +34,10 @@ func ReadRecordedHttpTrips(directory string) ([]*RecordedHttpTrip, error) {
 		return nil, err
 	}
 
+	if len(requests) != len(responses) {
+		return nil, fmt.Errorf("Request and Response count does not match req:%v, resp:%v ", len(requests), len(responses))
+	}
+
 	for i:=0;i<len(requests);i++ {
 		var ok bool
 		var trip = &RecordedHttpTrip{}
