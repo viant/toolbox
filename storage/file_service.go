@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"time"
+	"bytes"
 )
 
 var fileMode os.FileMode = 0644
@@ -22,7 +23,7 @@ func openFileFromUrl(URL string) (*os.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	if parsedUrl.Scheme != "file" {
+	if parsedUrl.Scheme != "file"  {
 		return nil, fmt.Errorf("Invalid schema, expected file but had: %v", parsedUrl.Scheme)
 	}
 	return os.Open(parsedUrl.Path)
@@ -102,7 +103,14 @@ func (s *fileStorageService) StorageObject(URL string) (Object, error) {
 //Download returns reader for downloaded storage object
 func (s *fileStorageService) Download(object Object) (io.Reader, error) {
 	reader, _, err := toolbox.OpenReaderFromURL(object.URL())
-	return reader, err
+	if err != nil {
+		defer reader.Close()
+	}
+	data, err :=  ioutil.ReadAll(reader)
+	if err != nil {
+		return nil, err
+	}
+	return bytes.NewReader(data), err
 }
 
 //Upload uploads provided reader content for supplied url.
