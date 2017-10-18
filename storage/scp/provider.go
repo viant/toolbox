@@ -1,13 +1,12 @@
 package scp
 
 import (
-	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/ssh"
 	"github.com/viant/toolbox/storage"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+	"github.com/viant/toolbox/cred"
 )
 
 const ProviderScheme = "scp"
@@ -17,13 +16,12 @@ func init() {
 }
 
 func serviceProvider(credentialFile string) (storage.Service, error) {
+	var config = &cred.Config{}
 	if credentialFile != "" && !strings.HasPrefix(credentialFile, "/") {
 		dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 		credentialFile = path.Join(dir, credentialFile)
-	}
-	config := &ssh.AuthConfig{}
-	if credentialFile != "" {
-		err := toolbox.LoadConfigFromUrl("file://"+credentialFile, config)
+		var err error
+		config, err = cred.NewConfig(credentialFile)
 		if err != nil {
 			return nil, err
 		}

@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"path"
+	"github.com/viant/toolbox/cred"
 )
 
 const defaultSSHPort = 22
@@ -31,7 +32,7 @@ const (
 )
 
 type service struct {
-	config *ssh.AuthConfig
+	config *cred.Config
 }
 
 func (s *service) runCommand(URL string, command string) (string, error) {
@@ -248,7 +249,7 @@ func (s *service) Delete(object storage.Object) error {
 }
 
 //NewService create a new gc storage service
-func NewService(config *ssh.AuthConfig) *service {
+func NewService(config *cred.Config) *service {
 	return &service{
 		config: config,
 	}
