@@ -8,6 +8,7 @@ import (
 	"path"
 	"sync/atomic"
 	"time"
+	"github.com/viant/toolbox/cred"
 )
 
 const (
@@ -149,9 +150,9 @@ func (c *Client) Download(source string) ([]byte, error) {
 }
 
 //NewClient create a new client, it takes host port and authentication config
-func NewClient(host string, port int, authConfig *AuthConfig) (*Client, error) {
+func NewClient(host string, port int, authConfig *cred.Config) (*Client, error) {
 	if authConfig == nil {
-		authConfig = &AuthConfig{}
+		authConfig = &cred.Config{}
 	}
 	clientConfig, err := authConfig.ClientConfig()
 	if err != nil {
