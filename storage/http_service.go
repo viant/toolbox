@@ -14,17 +14,12 @@ import (
 	"path/filepath"
 	"time"
 	"bytes"
+	"github.com/viant/toolbox/cred"
 )
-
-//PasswordCredential represents a password based credential
-type PasswordCredential struct {
-	Username string
-	Password string
-}
 
 //httpStorageService represents basic http storage service (only limited listing and full download are supported)
 type httpStorageService struct {
-	Credential *PasswordCredential
+	Credential *cred.Config
 }
 
 
@@ -218,7 +213,7 @@ func (s *httpStorageService) Delete(object Object) error {
 	return os.Remove(fileName)
 }
 
-func NewHttpStorageService(credential *PasswordCredential) Service {
+func NewHttpStorageService(credential *cred.Config) Service {
 	return &httpStorageService{
 		Credential: credential,
 	}
@@ -260,8 +255,7 @@ func serviceProvider(credentialFile string) (Service, error) {
 		dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 		credentialFile = path.Join(dir, credentialFile)
 	}
-	config := &PasswordCredential{}
-	err := toolbox.LoadConfigFromUrl("file://"+credentialFile, config)
+	config, err :=cred.NewConfig(credentialFile)
 	if err != nil {
 		return nil, err
 	}
