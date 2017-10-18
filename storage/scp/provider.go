@@ -17,9 +17,12 @@ func init() {
 
 func serviceProvider(credentialFile string) (storage.Service, error) {
 	var config = &cred.Config{}
-	if credentialFile != "" && !strings.HasPrefix(credentialFile, "/") {
-		dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
-		credentialFile = path.Join(dir, credentialFile)
+	if credentialFile != "" {
+
+		if !strings.HasPrefix(credentialFile, "/") {
+			dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+			credentialFile = path.Join(dir, credentialFile)
+		}
 		var err error
 		config, err = cred.NewConfig(credentialFile)
 		if err != nil {
