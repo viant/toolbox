@@ -37,7 +37,6 @@ func DateFormatToLayout(dateFormat string) string {
 	dateFormat = strings.Replace(dateFormat, "yy", "06", 1)
 	dateFormat = strings.Replace(dateFormat, "y", "06", 1)
 
-
 	dateFormat = strings.Replace(dateFormat, "SSS", "000", 1)
 
 	dateFormat = strings.Replace(dateFormat, "MMMM", "January", 1)
