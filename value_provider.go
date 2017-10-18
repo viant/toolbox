@@ -125,6 +125,7 @@ type timeDiffProvider struct{}
 
 func (p timeDiffProvider) Get(context Context, arguments ...interface{}) (interface{}, error) {
 
+
 	var resultTime time.Time
 	var durationDelta time.Duration
 
@@ -173,12 +174,27 @@ func (p timeDiffProvider) Get(context Context, arguments ...interface{}) (interf
 	return resultTime, nil
 }
 
-//NewTimeProviderreturns a provder that takes operation, add,sub,get as first parametrs, optionally delta, unit, and format
+//NewTimeDiffProvider returns a provider that delta, time unit  and optionally format
 //format as java date format or unix or timestamp
 func NewTimeDiffProvider() ValueProvider {
 	var result ValueProvider = &timeDiffProvider{}
 	return result
 }
+
+
+
+
+type weekdayProvider struct{}
+
+func (p weekdayProvider) Get(context Context, arguments ...interface{}) (interface{}, error) {
+	var now = time.Now()
+	return int(now.Weekday()), nil
+}
+
+func NewWeekdayProvider() ValueProvider {
+	return &weekdayProvider{}
+}
+
 
 type nilValueProvider struct{}
 

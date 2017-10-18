@@ -27,6 +27,11 @@ type httpStorageService struct {
 	Credential *PasswordCredential
 }
 
+
+func newHttpClient() (*http.Client, error) {
+	return toolbox.NewHttpClient(&toolbox.HttpOptions{Key:"MaxIdleConns", Value:0})
+}
+
 func (s *httpStorageService) addCredentialToURLIfNeeded(URL string) string {
 	if s.Credential == nil || s.Credential.Password == "" || s.Credential.Username == "" {
 		return URL
@@ -78,10 +83,16 @@ func extractLinks(body string) []*hRef {
 //List returns a list of object for supplied url
 func (s *httpStorageService) List(URL string) ([]Object, error) {
 	listURL := s.addCredentialToURLIfNeeded(URL)
-	response, err := http.Get(listURL)
+	client, err := newHttpClient()
 	if err != nil {
 		return nil, err
 	}
+	response, err := client.Get(listURL)
+
+	if err != nil {
+		return nil, err
+	}
+
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		return nil, err
@@ -149,20 +160,20 @@ func (s *httpStorageService) List(URL string) ([]Object, error) {
 
 //Exists returns true if resource exists
 func (s *httpStorageService) Exists(URL string) (bool, error) {
-	parsedUrl, err := url.Parse(URL)
+	client, err := newHttpClient()
 	if err != nil {
 		return false, err
 	}
-	if parsedUrl.Scheme != "file" {
-		return false, fmt.Errorf("Invalid schema, expected file but had: %v", parsedUrl.Scheme)
+	response, err := client.Get(URL)
+	if err != nil {
+		return false, err
 	}
-	return toolbox.FileExists(parsedUrl.Path), nil
+	return response.StatusCode == 200, nil
 }
+
 
 //Object returns a Object for supplied url
 func (s *httpStorageService) StorageObject(URL string) (Object, error) {
-
-
 	objects, err := s.List(URL)
 	if err != nil {
 		return nil, err
@@ -176,12 +187,16 @@ func (s *httpStorageService) StorageObject(URL string) (Object, error) {
 
 //Download returns reader for downloaded storage object
 func (s *httpStorageService) Download(object Object) (io.Reader, error) {
-	reader, _, err := toolbox.OpenReaderFromURL(s.addCredentialToURLIfNeeded(object.URL()))
-	defer reader.Close()
-	content, err := ioutil.ReadAll(reader)
+	client, err := newHttpClient()
 	if err != nil {
 		return nil, err
 	}
+	response, err := client.Get(s.addCredentialToURLIfNeeded(object.URL()))
+	content, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
 	return bytes.NewReader(content), err
 }
 

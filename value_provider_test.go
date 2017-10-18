@@ -75,6 +75,14 @@ func TestNewCastedValueProvider(t *testing.T) {
 	}
 }
 
+func TestNewWeekdayProvider(t *testing.T) {
+	provider:= toolbox.NewWeekdayProvider()
+	value, err := provider.Get(toolbox.NewContext(), nil)
+	assert.Nil(t, err)
+	assert.NotNil(t, value)
+	assert.Equal(t, toolbox.AsInt(value), int(time.Now().Weekday()))
+}
+
 func TestNewCurrentTimeProvider(t *testing.T) {
 	provider := toolbox.NewCurrentTimeProvider()
 	value, err := provider.Get(nil)
@@ -142,14 +150,14 @@ func TestNewDictionaryProviderRegistry(t *testing.T) {
 
 func Test_NewNewTimeProvider(t *testing.T) {
 
-	var now = time.Now()
+	var now= time.Now()
 	provider := toolbox.NewTimeDiffProvider()
 
 	{
-		result, err := provider.Get(nil, "now",1, "day")
+		result, err := provider.Get(nil, "now", 1, "day")
 		assert.Nil(t, err)
 
-		var timeResult= toolbox.AsTime(result, "")
+		var timeResult = toolbox.AsTime(result, "")
 		in23Hours := now.Add(23 * time.Hour)
 		in25Hours := now.Add(25 * time.Hour)
 		assert.True(t, timeResult.After(in23Hours))
@@ -157,10 +165,10 @@ func Test_NewNewTimeProvider(t *testing.T) {
 	}
 
 	{
-		result, err := provider.Get(nil, "now", 1, "hour","timestamp")
+		result, err := provider.Get(nil, "now", 1, "hour", "timestamp")
 		assert.Nil(t, err)
 
-		var timeResult= toolbox.AsInt(result)
+		var timeResult = toolbox.AsInt(result)
 		in59Mins := int(now.Add(59 * time.Minute).Unix() * 1000)
 		in61Mins := int(now.Add(61 * time.Minute).Unix() * 1000)
 		assert.True(t, in59Mins < timeResult)
@@ -168,13 +176,23 @@ func Test_NewNewTimeProvider(t *testing.T) {
 	}
 
 	{
-		result, err := provider.Get(nil, "now",1, "week","unix")
+		result, err := provider.Get(nil, "now", 1, "week", "unix")
 		assert.Nil(t, err)
 
-		var timeResult= toolbox.AsInt(result)
+		var timeResult = toolbox.AsInt(result)
 		in6Days := int(now.Add(6 * 24 * time.Hour).Unix())
 		in8Days := int(now.Add(8 * 24 * time.Hour).Unix())
 		assert.True(t, in6Days < timeResult)
 		assert.True(t, timeResult < in8Days)
+	}
+	{
+	result, err := provider.Get(nil, "now", -1, "hour", "h")
+	assert.Nil(t, err)
+	assert.Equal(t, time.Now().Hour() -1, toolbox.AsInt(result))
+	}
+	{
+		result, err := provider.Get(nil, "now", 1, "hour", "h")
+		assert.Nil(t, err)
+		assert.Equal(t, time.Now().Hour() +1, toolbox.AsInt(result))
 	}
 }
