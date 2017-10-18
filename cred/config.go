@@ -45,7 +45,7 @@ func (c *Config) Load(filename string) error {
 	return nil
 }
 
-func (c *Config) Write(filename string) error {
+func (c *Config) Save(filename string) error {
 	var password = c.Password
 	defer func() { c.Password = password }()
 	if password != "" {
