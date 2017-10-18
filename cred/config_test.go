@@ -24,7 +24,7 @@ func TestConfig_Load(t *testing.T) {
 		assert.Equal(t, "adrian", config.Username)
 		assert.Equal(t, "AAAAAAAAAAAXUPcVbxwWlQ==", config.EncryptedPassword)
 		_ = os.Remove(testFile)
-		config.Write(testFile)
+		config.Save(testFile)
 	}
 
 
