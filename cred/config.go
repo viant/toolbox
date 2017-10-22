@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"golang.org/x/crypto/ssh"
 	"path"
+	"gopkg.in/yaml.v2"
 )
 
 var sshKeyFileCandidates = []string{"/.ssh/id_rsa", "/.ssh/id_dsa"}
@@ -28,10 +29,23 @@ func (c *Config) Load(filename string) error {
 	if err != nil {
 		return err
 	}
-	err = json.NewDecoder(reader).Decode(c)
-	if err != nil {
-		return nil
+	ext := path.Ext(filename)
+	if strings.Contains(ext,"yaml")  || strings.Contains(ext,"yml")  {
+		var data, err = ioutil.ReadAll(reader)
+		if err != nil {
+			return err
+		}
+		err =yaml.Unmarshal(data, c)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = json.NewDecoder(reader).Decode(c)
+		if err != nil {
+			return nil
+		}
 	}
+
 	if c.EncryptedPassword != "" {
 		decoder := base64.NewDecoder(base64.StdEncoding, strings.NewReader(c.EncryptedPassword))
 		data, err := ioutil.ReadAll(decoder)
@@ -103,7 +117,10 @@ func (c *Config) ClientConfig() (*ssh.ClientConfig, error) {
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Auth:            make([]ssh.AuthMethod, 0),
 	}
+
+
 	if c.Password != "" {
+
 		result.Auth = append(result.Auth, ssh.Password(c.Password))
 	} else if c.PrivateKeyPath != "" {
 		privateKeyBytes, err := ioutil.ReadFile(c.PrivateKeyPath)
