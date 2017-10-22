@@ -3,6 +3,7 @@ package toolbox
 import (
 	"encoding/json"
 	"fmt"
+	yaml "gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"strings"
@@ -189,4 +190,27 @@ func (f *delimiterDecoderFactory) Create(reader io.Reader) Decoder {
 //NewDelimiterDecoderFactory returns a new delimitered decoder factory.
 func NewDelimiterDecoderFactory() DecoderFactory {
 	return &delimiterDecoderFactory{}
+}
+
+type yamlDecoderFactory struct{}
+
+func (e yamlDecoderFactory) Create(reader io.Reader) Decoder {
+	return &yamlDecoder{reader}
+}
+
+type yamlDecoder struct {
+	io.Reader
+}
+
+func (d *yamlDecoder) Decode(target interface{}) error {
+	var data, err = ioutil.ReadAll(d.Reader)
+	if err != nil {
+		return fmt.Errorf("Failed to read data: %T %v", d.Reader, err)
+	}
+	return yaml.Unmarshal(data, target)
+}
+
+//NewYamlDecoderFactory create a new yaml decoder factory
+func NewYamlDecoderFactory() DecoderFactory {
+	return &yamlDecoderFactory{}
 }
