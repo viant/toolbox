@@ -627,7 +627,7 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 			float32Value := float32(value)
 			reflect.ValueOf(targetValuePointer).Elem().Set(reflect.ValueOf(&float32Value))
 		} else {
-
+			reflect.ValueOf(targetValuePointer).Elem().Set(reflect.ValueOf(&value))
 		}
 		return nil
 	case *time.Time:
