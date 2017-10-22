@@ -76,7 +76,7 @@ func TestNewCastedValueProvider(t *testing.T) {
 }
 
 func TestNewWeekdayProvider(t *testing.T) {
-	provider:= toolbox.NewWeekdayProvider()
+	provider := toolbox.NewWeekdayProvider()
 	value, err := provider.Get(toolbox.NewContext(), nil)
 	assert.Nil(t, err)
 	assert.NotNil(t, value)
@@ -150,7 +150,7 @@ func TestNewDictionaryProviderRegistry(t *testing.T) {
 
 func Test_NewNewTimeProvider(t *testing.T) {
 
-	var now= time.Now()
+	var now = time.Now()
 	provider := toolbox.NewTimeDiffProvider()
 
 	{
@@ -169,8 +169,8 @@ func Test_NewNewTimeProvider(t *testing.T) {
 		assert.Nil(t, err)
 
 		var timeResult = toolbox.AsInt(result)
-		in59Mins := int(now.Add(59 * time.Minute).Unix() * 1000)
-		in61Mins := int(now.Add(61 * time.Minute).Unix() * 1000)
+		in59Mins := int(now.Add(59*time.Minute).Unix() * 1000)
+		in61Mins := int(now.Add(61*time.Minute).Unix() * 1000)
 		assert.True(t, in59Mins < timeResult)
 		assert.True(t, timeResult < in61Mins)
 	}
@@ -186,13 +186,13 @@ func Test_NewNewTimeProvider(t *testing.T) {
 		assert.True(t, timeResult < in8Days)
 	}
 	{
-	result, err := provider.Get(nil, "now", -1, "hour", "h")
-	assert.Nil(t, err)
-	assert.Equal(t, time.Now().Hour() -1, toolbox.AsInt(result))
+		result, err := provider.Get(nil, "now", -1, "hour", "h")
+		assert.Nil(t, err)
+		assert.Equal(t, time.Now().Hour()-1, toolbox.AsInt(result))
 	}
 	{
 		result, err := provider.Get(nil, "now", 1, "hour", "h")
 		assert.Nil(t, err)
-		assert.Equal(t, time.Now().Hour() +1, toolbox.AsInt(result))
+		assert.Equal(t, time.Now().Hour()+1, toolbox.AsInt(result))
 	}
 }

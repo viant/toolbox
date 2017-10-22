@@ -3,8 +3,8 @@ package toolbox
 import (
 	"fmt"
 	"os"
-	"time"
 	"strings"
+	"time"
 )
 
 //ValueProvider represents a value provider
@@ -125,7 +125,6 @@ type timeDiffProvider struct{}
 
 func (p timeDiffProvider) Get(context Context, arguments ...interface{}) (interface{}, error) {
 
-
 	var resultTime time.Time
 	var durationDelta time.Duration
 
@@ -181,9 +180,6 @@ func NewTimeDiffProvider() ValueProvider {
 	return result
 }
 
-
-
-
 type weekdayProvider struct{}
 
 func (p weekdayProvider) Get(context Context, arguments ...interface{}) (interface{}, error) {
@@ -194,7 +190,6 @@ func (p weekdayProvider) Get(context Context, arguments ...interface{}) (interfa
 func NewWeekdayProvider() ValueProvider {
 	return &weekdayProvider{}
 }
-
 
 type nilValueProvider struct{}
 
@@ -250,7 +245,7 @@ type dictionaryProvider struct {
 
 func (p dictionaryProvider) Get(context Context, arguments ...interface{}) (interface{}, error) {
 	if len(arguments) == 0 {
-		return nil, fmt.Errorf("Expected at least one argument but had 0")
+		return nil, fmt.Errorf("ExpectedLogRecords at least one argument but had 0")
 	}
 	var key = AsString(arguments[0])
 	var dictionary Dictionary
