@@ -3,6 +3,7 @@ package toolbox
 import (
 	"encoding/json"
 	"fmt"
+	"gopkg.in/yaml.v2"
 	"io"
 )
 
@@ -76,4 +77,39 @@ func (e *marshalerEncoder) Encode(v interface{}) error {
 //NewMarshalerEncoderFactory create a new encoder factory for marsheler struct
 func NewMarshalerEncoderFactory() EncoderFactory {
 	return &marshalerEncoderFactory{}
+}
+
+type yamlEncoderFactory struct{}
+
+func (e yamlEncoderFactory) Create(writer io.Writer) Encoder {
+	return &yamlEncoder{writer}
+}
+
+type yamlEncoder struct {
+	io.Writer
+}
+
+//Encode converts source into yaml format to write itto writer
+func (d *yamlEncoder) Encode(source interface{}) error {
+	data, err := yaml.Marshal(source)
+	if err != nil {
+		return err
+	}
+	var dataSize = len(data)
+	for i := 0; i < dataSize; i++ {
+		written, err := d.Writer.Write(data)
+		if err != nil {
+			return err
+		}
+		if len(data) == written {
+			break
+		}
+		data = data[written:]
+	}
+	return err
+}
+
+//NewYamlEncoderFactory create a new yaml encoder factory
+func NewYamlEncoderFactory() EncoderFactory {
+	return &yamlEncoderFactory{}
 }
