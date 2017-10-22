@@ -233,10 +233,14 @@ func TestConverter(t *testing.T) {
 
 	{
 		var value *float64
-		for _, item := range []interface{}{int(102), int64(102), float64(102), float32(102), "102"} {
+		var testData = []interface{}{int(102), int64(102), float64(102), float32(102), "102"}
+		for _, item := range testData {
 			err := converter.AssignConverted(&value, item)
-			assert.Nil(t, err)
-			assert.Equal(t, float64(102), *value)
+			if assert.Nil(t, err){
+				if assert.NotNil(t, value) {
+					assert.Equal(t, float64(102), *value)
+				}
+			}
 		}
 	}
 
