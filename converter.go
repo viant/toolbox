@@ -279,7 +279,7 @@ func (c *Converter) assignConvertedMap(target, input interface{}, targetIndirect
 	})
 
 	if targetIndirectPointerType.Kind() == reflect.Map {
-		targetIndirectValue.Set(mapPointer)
+		targetIndirectValue.Set(mapPointer.Elem())
 	} else {
 		targetIndirectValue.Set(newMap)
 	}
@@ -340,6 +340,7 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 				c.DataLayout = previousLayout
 
 			} else {
+
 				err := c.AssignConverted(field.Addr().Interface(), value)
 				if err != nil {
 					return fmt.Errorf("Failed to convert %v to %v due to %v", value, field, err)
@@ -796,13 +797,7 @@ func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sou
 			continue
 		}
 		var value interface{}
-		fieldInfo := field
-		fieldKind := field.Kind()
-
-		for fieldKind == reflect.Ptr {
-			fieldInfo = fieldInfo.Elem()
-			fieldKind = fieldInfo.Kind()
-		}
+		fieldKind := DereferenceType(field.Type()).Kind()
 		fieldType := sourceType.Field(i)
 		if fieldKind == reflect.Struct {
 			aMap := make(map[string]interface{})
