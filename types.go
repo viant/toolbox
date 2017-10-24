@@ -68,10 +68,7 @@ func IsMap(input interface{}) bool {
 	case map[string]interface{}:
 		return true
 	}
-	candidateType := reflect.TypeOf(input)
-	for candidateType.Kind() == reflect.Ptr {
-		candidateType = candidateType.Elem()
-	}
+	candidateType := DereferenceType(reflect.TypeOf(input))
 	return candidateType.Kind() == reflect.Map
 }
 
@@ -83,12 +80,19 @@ func IsSlice(input interface{}) bool {
 	case []string:
 		return true
 	}
-	candidateType := reflect.TypeOf(input)
-	for candidateType.Kind() == reflect.Ptr {
-		candidateType = candidateType.Elem()
-	}
+	candidateType := DereferenceType(reflect.TypeOf(input))
 	return candidateType.Kind() == reflect.Slice
 }
+
+
+
+
+//IsFunc returns true if input is a funct
+func IsFunc(input interface{}) bool {
+	candidateType := DereferenceType(reflect.TypeOf(input))
+	return candidateType.Kind() == reflect.Func
+}
+
 
 //IsZero returns true if input is a zeroable
 func IsZero(input interface{}) bool {
