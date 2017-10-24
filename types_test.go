@@ -89,3 +89,14 @@ func TestIsValueOfKind(t *testing.T) {
 	assert.True(t, toolbox.IsValueOfKind(&values[0], reflect.Int))
 
 }
+
+
+
+func TestIsFunc(t *testing.T) {
+	var f = func(){}
+	assert.True(t, toolbox.IsFunc(&f))
+	assert.True(t, toolbox.IsFunc(f))
+	assert.False(t, toolbox.IsFunc(""))
+
+
+}
