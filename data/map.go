@@ -1,22 +1,21 @@
 package data
 
 import (
+	"bytes"
+	"fmt"
 	"github.com/viant/toolbox"
+	"log"
 	"strings"
 	"time"
 	"unicode"
-	"bytes"
-	"fmt"
-	"log"
-	"errors"
 )
 
 const (
+	disableUDFKey       = "__$__disableUDF"
 	expectVariableStart = iota
 	expectVariableName
 	expectVariableNameEnclosureEnd
 )
-
 
 //Map types is an alias type to map[string]interface{} with extended behaviours
 type Map map[string]interface{}
@@ -49,7 +48,6 @@ func (s *Map) Get(key string) interface{} {
 	}
 	return nil
 }
-
 
 /*
 GetValue returns value for provided expression.
@@ -101,7 +99,7 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 				return nil, false
 			}
 			var candidate = state.Get(fragment)
-			if !isLast &&  candidate == nil {
+			if !isLast && candidate == nil {
 				return nil, false
 			}
 			if isLast {
@@ -239,7 +237,6 @@ func (s *Map) GetFloat(key string) float64 {
 	return 0.0
 }
 
-
 //GetBoolean returns value for provided key as boolean.
 func (s *Map) GetBoolean(key string) bool {
 	if result, found := (*s)[key]; found {
@@ -275,7 +272,7 @@ func (s *Map) GetMap(key string) Map {
 		if ok {
 			return aMap
 		}
-		var result =  toolbox.AsMap(result)
+		var result = toolbox.AsMap(result)
 		(*s)[key] = result
 		return result
 	}
@@ -285,11 +282,11 @@ func (s *Map) GetMap(key string) Map {
 //Range iterates every key, value pair of this map, calling supplied callback as long it does return true.
 func (s *Map) Range(callback func(k string, v interface{}) (bool, error)) error {
 	for k, v := range *s {
-		next, err  := callback(k, v)
+		next, err := callback(k, v)
 		if err != nil {
-			return  err
+			return err
 		}
-		if  !next {
+		if !next {
 			break
 		}
 	}
@@ -309,13 +306,11 @@ func (s *Map) Clone() Map {
 	return result
 }
 
-
-
 //Returns a map that can be encoded by json or other decoders.
 //Since a map can store a function, it filters out any non marshalable types.
 func (s *Map) AsEncodableMap() map[string]interface{} {
 	var result = make(map[string]interface{})
-	for k, v:= range *s {
+	for k, v := range *s {
 		if v == nil {
 			continue
 		}
@@ -330,8 +325,7 @@ func encodableValue(v interface{}) interface{} {
 	}
 	var value interface{} = v
 
-	_, isFunction := v.(func(string) interface {})
-	if isFunction {
+	if toolbox.IsFunc(v) {
 		return "func()"
 	}
 	if toolbox.IsMap(v) {
@@ -343,12 +337,11 @@ func encodableValue(v interface{}) interface{} {
 			aSlice = append(aSlice, encodableValue(item))
 		}
 		value = aSlice
-	} else if toolbox.IsString(v) || toolbox.IsInt(v) || toolbox.IsFloat(v)  {
+	} else if toolbox.IsString(v) || toolbox.IsInt(v) || toolbox.IsFloat(v) {
 		value = toolbox.AsString(v)
 	}
 	return value
 }
-
 
 //Expand expands provided value of any type with dollar sign expression/
 func (s *Map) Expand(source interface{}) interface{} {
@@ -356,30 +349,28 @@ func (s *Map) Expand(source interface{}) interface{} {
 	case bool, []byte, int, uint, int8, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64, time.Time:
 		return source
 	case string:
-		udf, value, suffix, _ := s.getUdfIfDefined(value)
+		var has bool
+		udf, value, suffix := s.getUdfIfDefined(value)
+		var sourceValue = source
 		if strings.HasPrefix(value, "$") {
-			_, has := s.GetValue(string(value[1:]))
-			result := s.expandExpressions(value)
-			if has && udf != nil {
-				transformed, err := udf(result, *s)
-				if err == nil {
-					result = transformed
-				}
+			has = true
+			sourceValue = s.expandExpressions(value)
+		}
+		if udf != nil {
+			transformed, err := udf(sourceValue, *s)
+			if err != nil {
+				log.Printf("Failed to run udf:  %v%v\n", value, err)
+				return source
 			}
 			if suffix != "" {
-				result = toolbox.AsString(result) + suffix
+				transformed = toolbox.AsString(transformed) + suffix
 			}
-			return result
-		} else if udf != nil {
-			transformed, err := udf(value, *s)
-			if err == nil {
-				if suffix != "" {
-					transformed = toolbox.AsString(transformed) + suffix
-				}
-				return transformed
-			}
+			return transformed
+		} else if has {
+			return sourceValue
 		}
 		return s.ExpandAsText(value)
+
 	case map[string]interface{}:
 		var resultMap = make(map[string]interface{})
 		for k, v := range value {
@@ -410,7 +401,6 @@ func (s *Map) Expand(source interface{}) interface{} {
 	return source
 }
 
-
 //ExpandAsText expands all matching expressions starting with dollar sign ($)
 func (s *Map) ExpandAsText(text string) string {
 	result := s.expandExpressions(text)
@@ -423,10 +413,6 @@ func (s *Map) ExpandAsText(text string) string {
 	}
 	return toolbox.AsString(result)
 }
-
-
-
-
 
 //expandExpressions will check provided text with any expression starting with dollar sign ($) to substitute it with key in the map if it is present.
 //The result can be an expanded text or type of key referenced by the expression.
@@ -506,11 +492,22 @@ func (s *Map) expandExpressions(text string) interface{} {
 	return result
 }
 
+//DisableUDF disable udf running and substitution
+func (s *Map) DisableUDF() {
+	s.Put(disableUDFKey, true)
+}
 
+//EnableUDF endable udf running and substitution
+func (s *Map) EnableUDF() {
+	delete((*s), disableUDFKey)
+}
 
-func (s *Map)  getUdfIfDefined(expression string) (func(interface{}, Map) (interface{}, error), string, string, error) {
+func (s *Map) getUdfIfDefined(expression string) (func(interface{}, Map) (interface{}, error), string, string) {
 	if !strings.HasPrefix(expression, "!") {
-		return nil, expression, "", nil
+		return nil, expression, ""
+	}
+	if s.GetBoolean(disableUDFKey) {
+		return nil, expression, ""
 	}
 	startArgumentPosition := strings.Index(expression, "(")
 	endArgumentPosition := strings.LastIndex(expression, ")")
@@ -519,28 +516,23 @@ func (s *Map)  getUdfIfDefined(expression string) (func(interface{}, Map) (inter
 		var has bool
 		udfCandidate, has := s.GetValue(udfName)
 		if !has {
-			return nil, "", "", fmt.Errorf("Failed to lookup udf function %v on %v", udfName, expression)
+			return nil, expression, ""
 		}
 		var udf, ok = udfCandidate.(func(interface{}, Map) (interface{}, error))
-		if  ! ok {
+		if !ok {
 			var errorMessage = fmt.Sprintf("Invalid UDF signature expacted %T but had %v", udf, udfCandidate)
-			log.Printf(errorMessage)
-			return nil, "", "", errors.New(errorMessage)
-
+			panic(errorMessage)
 		}
-
-
 
 		value := string(expression[startArgumentPosition+1 : endArgumentPosition])
 		remaining := ""
-		if ! strings.HasSuffix(expression, ")") {
+		if !strings.HasSuffix(expression, ")") {
 			remaining = expression[endArgumentPosition+1:]
 		}
-		return udf, value, remaining, nil
+		return udf, value, remaining
 	}
-	return nil, expression, "", nil
+	return nil, expression, ""
 }
-
 
 func asExpandedText(source interface{}) string {
 	if toolbox.IsSlice(source) || toolbox.IsMap(source) {
