@@ -353,10 +353,10 @@ func (s *Map) Expand(source interface{}) interface{} {
 	case string:
 		var has bool
 		udf, value, suffix := s.getUdfIfDefined(value)
-		var sourceValue = source
+		var sourceValue interface{}  = value
 		if strings.HasPrefix(value, "$") {
 			sourceValue, has = s.GetValue(string(value[1:]))
-			if ! has && udf != nil {//variable has not expanded, thus delay udf execution
+			if ! has && udf != nil {//variable is not present in the context, thus delay udf execution
 				return source
 			}
 			//you do not want to double evaluate case if there is UDF, just get value for it
