@@ -356,12 +356,17 @@ func (s *Map) Expand(source interface{}) interface{} {
 		var sourceValue = source
 		if strings.HasPrefix(value, "$") {
 			sourceValue, has = s.GetValue(string(value[1:]))
+			if ! has && udf != nil {//variable has not expanded, thus delay udf execution
+				return source
+			}
 			//you do not want to double evaluate case if there is UDF, just get value for it
 			if ! has || udf == nil {
 				sourceValue = s.expandExpressions(value)
 				has = true
 			}
 		}
+
+
 		if udf != nil {
 			transformed, err := udf(sourceValue, *s)
 			if err != nil {
@@ -498,23 +503,11 @@ func (s *Map) expandExpressions(text string) interface{} {
 	return result
 }
 
-//DisableUDF disable udf running and substitution
-func (s *Map) DisableUDF() {
-	s.Put(disableUDFKey, true)
-}
-
-//EnableUDF endable udf running and substitution
-func (s *Map) EnableUDF() {
-	delete((*s), disableUDFKey)
-}
-
 func (s *Map) getUdfIfDefined(expression string) (func(interface{}, Map) (interface{}, error), string, string) {
 	if !strings.HasPrefix(expression, "!") {
 		return nil, expression, ""
 	}
-	if s.GetBoolean(disableUDFKey) {
-		return nil, expression, ""
-	}
+
 	startArgumentPosition := strings.Index(expression, "(")
 	endArgumentPosition := strings.LastIndex(expression, ")")
 	if startArgumentPosition != -1 && endArgumentPosition > startArgumentPosition {
