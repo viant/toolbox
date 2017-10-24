@@ -720,14 +720,11 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		}
 	}
 	if targetIndirectValue.Kind() == reflect.Map || targetIndirectPointerType.Kind() == reflect.Map {
-
-		if sourceValue.Kind() == reflect.Ptr {
-			sourceValue = sourceValue.Elem()
-		}
-
-		if sourceValue.Kind() == reflect.Map {
+		sourceKind := DereferenceType(sourceValue.Type()).Kind()
+		if sourceKind == reflect.Map {
 			return c.assignConvertedMap(target, source, targetIndirectValue, targetIndirectPointerType)
-		} else if sourceValue.Kind() == reflect.Struct {
+		} else if sourceKind == reflect.Struct {
+			sourceValue = reflect.ValueOf(DereferenceValue(source))
 			return c.assignConvertedMapFromStruct(source, target, sourceValue)
 		}
 
@@ -787,15 +784,17 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 
 func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sourceValue reflect.Value) error {
 	targetMap := AsMap(target)
-	if targetMap == nil {
+	if targetMap == nil  {
 		return fmt.Errorf("target %T is not a map", target)
 	}
+	if source == nil  || ! sourceValue.IsValid(){
+		return nil
+	}
+
 	sourceType := sourceValue.Type()
+
 	for i := 0; i < sourceValue.NumField(); i++ {
 		field := sourceValue.Field(i)
-		if !field.CanAddr() {
-			continue
-		}
 		var value interface{}
 		fieldKind := DereferenceType(field.Type()).Kind()
 		fieldType := sourceType.Field(i)
