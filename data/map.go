@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	disableUDFKey       = "__$__disableUDF"
-	expectVariableStart = iota
+	disableUDFKey                  = "__$__disableUDF"
+	expectVariableStart            = iota
 	expectVariableName
 	expectVariableNameEnclosureEnd
 )
@@ -88,7 +88,7 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 
 	state := *s
 	if string(expr[0:1]) == "{" {
-		expr = expr[1 : len(expr)-1]
+		expr = expr[1: len(expr)-1]
 	}
 	if strings.Contains(expr, ".") {
 		fragments := strings.Split(expr, ".")
@@ -174,7 +174,7 @@ func (s *Map) SetValue(expr string, value interface{}) {
 		expr = string(expr[2:])
 	}
 	if string(expr[0:1]) == "{" {
-		expr = expr[1 : len(expr)-1]
+		expr = expr[1: len(expr)-1]
 	}
 	if strings.Contains(expr, ".") {
 		fragments := strings.Split(expr, ".")
@@ -338,6 +338,8 @@ func encodableValue(v interface{}) interface{} {
 		}
 		value = aSlice
 	} else if toolbox.IsString(v) || toolbox.IsInt(v) || toolbox.IsFloat(v) {
+		value = v
+	} else {
 		value = toolbox.AsString(v)
 	}
 	return value
@@ -434,14 +436,14 @@ func (s *Map) expandExpressions(text string) interface{} {
 	var parsingState = expectVariableStart
 	var result = ""
 	for i, rune := range text {
-		aChar := string(text[i : i+1])
+		aChar := string(text[i: i+1])
 		var isLast = i+1 == len(text)
 		switch parsingState {
 		case expectVariableStart:
 			if aChar == "$" {
 				variableName += aChar
 				if i+1 < len(text) {
-					nextChar := string(text[i+1 : i+2])
+					nextChar := string(text[i+1: i+2])
 					if nextChar == "{" {
 						parsingState = expectVariableNameEnclosureEnd
 						continue
@@ -524,7 +526,7 @@ func (s *Map) getUdfIfDefined(expression string) (func(interface{}, Map) (interf
 			panic(errorMessage)
 		}
 
-		value := string(expression[startArgumentPosition+1 : endArgumentPosition])
+		value := string(expression[startArgumentPosition+1: endArgumentPosition])
 		remaining := ""
 		if !strings.HasSuffix(expression, ")") {
 			remaining = expression[endArgumentPosition+1:]
