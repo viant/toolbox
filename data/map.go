@@ -355,8 +355,12 @@ func (s *Map) Expand(source interface{}) interface{} {
 		udf, value, suffix := s.getUdfIfDefined(value)
 		var sourceValue = source
 		if strings.HasPrefix(value, "$") {
-			has = true
-			sourceValue = s.expandExpressions(value)
+			sourceValue, has = s.GetValue(string(value[1:]))
+			//you do not want to double evaluate case if there is UDF, just get value for it
+			if ! has || udf == nil {
+				sourceValue = s.expandExpressions(value)
+				has = true
+			}
 		}
 		if udf != nil {
 			transformed, err := udf(sourceValue, *s)
