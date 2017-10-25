@@ -146,13 +146,13 @@ func (r *Resource) Decode(target interface{}, decoderFactory toolbox.DecoderFact
 }
 
 
-//JsonDecode decodes json resource into target
-func (r *Resource) JsonDecode(target interface{}) error {
+//JSONDecode decodes json resource into target
+func (r *Resource) JSONDecode(target interface{}) error {
 	return r.Decode(target, toolbox.NewJSONDecoderFactory())
 }
 
-//JsonDecode decodes yaml resource into target
-func (r *Resource) YamlDecode(target interface{}) error {
+//JSONDecode decodes yaml resource into target
+func (r *Resource) YAMLDecode(target interface{}) error {
 	return r.Decode(target, toolbox.NewYamlDecoderFactory())
 }
 
