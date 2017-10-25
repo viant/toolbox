@@ -42,7 +42,7 @@ func TestResource_YamlDecode(t *testing.T) {
 	assert.EqualValues(t, resource.ParsedURL.String(), toolbox.FileSchema+filename)
 
 	var resourceData = make(map[string]interface{})
-	err = resource.YamlDecode(&resourceData)
+	err = resource.YAMLDecode(&resourceData)
 	assert.Nil(t, err)
 
 	assert.EqualValues(t, resourceData["a"], 1)
@@ -71,7 +71,7 @@ func TestResource_JsonDecode(t *testing.T) {
 	assert.EqualValues(t, resource.ParsedURL.String(), toolbox.FileSchema+filename)
 
 	var resourceData = make(map[string]interface{})
-	err = resource.JsonDecode(&resourceData)
+	err = resource.JSONDecode(&resourceData)
 	assert.Nil(t, err)
 
 	assert.EqualValues(t, resourceData["a"], 1)
