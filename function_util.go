@@ -5,16 +5,26 @@ import (
 	"reflect"
 )
 
+
+
+//GetFunction returns function for provided owner and name, or error
+func GetFunction(owner interface{}, name string) (interface{}, error) {
+	var ownerType = reflect.TypeOf(owner)
+	var method, has = ownerType.MethodByName(name)
+	if ! has   {
+		return nil, fmt.Errorf("Failed to lookup %T.%v\n", owner, name)
+	}
+	return reflect.ValueOf(owner).MethodByName(method.Name).Interface(), nil
+}
+
 //CallFunction calls passed in function with provided parameters,it returns a function result.
 func CallFunction(function interface{}, parameters ...interface{}) []interface{} {
 	AssertKind(function, reflect.Func, "function")
 	var functionParameters = make([]reflect.Value, 0)
-
 	ProcessSlice(parameters, func(item interface{}) bool {
 		functionParameters = append(functionParameters, reflect.ValueOf(item))
 		return true
 	})
-
 	functionValue := reflect.ValueOf(function)
 	var resultValues = functionValue.Call(functionParameters)
 	var result = make([]interface{}, len(resultValues))
@@ -24,9 +34,8 @@ func CallFunction(function interface{}, parameters ...interface{}) []interface{}
 	return result
 }
 
-//BuildFunctionParameters builds function parameters provided in the parameterValues.
-// Parameters value will be converted if needed to expected by the function signature type. It returns function parameters , or error
-func BuildFunctionParameters(function interface{}, parameters []string, parameterValues map[string]interface{}) ([]interface{}, error) {
+//AsCompatibleFunctionParameters takes incompatible function parameters and converts then into provided function signature compatible
+func AsCompatibleFunctionParameters(function interface{}, parameters []interface{}) ([]interface{}, error) {
 	AssertKind(function, reflect.Func, "function")
 	functionValue := reflect.ValueOf(function)
 	funcSignature := GetFuncSignature(function)
@@ -36,9 +45,7 @@ func BuildFunctionParameters(function interface{}, parameters []string, paramete
 		return nil, fmt.Errorf("Invalid number of parameters wanted: [%T],  had: %v", function, 0)
 	}
 	var functionParameters = make([]interface{}, 0)
-
-	for i, name := range parameters {
-		parameterValue := parameterValues[name]
+	for i, parameterValue := range parameters {
 		reflectValue := reflect.ValueOf(parameterValue)
 		if reflectValue.Kind() == reflect.Slice && funcSignature[i].Kind() != reflectValue.Kind() {
 			return nil, fmt.Errorf("Incompatible types expected: %v, but had %v", funcSignature[i].Kind(), reflectValue.Kind())
@@ -66,6 +73,18 @@ func BuildFunctionParameters(function interface{}, parameters []string, paramete
 		}
 	}
 	return functionParameters, nil
+}
+
+
+
+//BuildFunctionParameters builds function parameters provided in the parameterValues.
+// Parameters value will be converted if needed to expected by the function signature type. It returns function parameters , or error
+func BuildFunctionParameters(function interface{}, parameters []string, parameterValues map[string]interface{}) ([]interface{}, error) {
+	var functionParameters = make([]interface{}, 0)
+	for _, name := range parameters {
+		functionParameters = append(functionParameters, parameterValues[name])
+	}
+	return AsCompatibleFunctionParameters(function, functionParameters)
 }
 
 //GetFuncSignature returns a function signature

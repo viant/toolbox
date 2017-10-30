@@ -8,6 +8,7 @@ import (
 	"github.com/viant/toolbox"
 )
 
+
 func TestCallFunction(t *testing.T) {
 
 	{
@@ -54,4 +55,26 @@ func TestCallFunction(t *testing.T) {
 
 		assert.NotNil(t, err)
 	}
+}
+
+
+func Test_GetFunction(t *testing.T) {
+	var astruct = &AStruct{"ABC"}
+	var function, err = toolbox.GetFunction(astruct, "Message")
+	assert.Nil(t, err)
+	assert.NotNil(t, function)
+	parameters, err := toolbox.AsCompatibleFunctionParameters(function, []interface{}{"aaa"})
+	assert.Nil(t, err)
+	result := toolbox.CallFunction(function, parameters...)
+	assert.Equal(t, 2, len(result))
+	assert.Equal(t, "ABC.aaa", result[0])
+
+}
+
+type AStruct struct {
+	A string
+}
+
+func (s *AStruct) Message(a string) (string, error) {
+	return fmt.Sprintf("%v.%v", s.A, a), nil
 }
