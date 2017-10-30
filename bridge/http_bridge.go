@@ -124,7 +124,7 @@ func NewProxyHandler(proxyConfig *HttpBridgeProxyConfig, route *HttpBridgeProxyR
 	return reverseProxy, nil
 }
 
-//HttpTrip represents recorded round trip.
+//HTTPTrip represents recorded round trip.
 type HttpTrip struct {
 	responseWriter     http.ResponseWriter
 	Request            *http.Request
@@ -284,8 +284,9 @@ func isBinary(input []byte) bool {
 }
 
 func writeData(filename string, source interface{}, printStrOut bool) error  {
-	toolbox.FileExists(filename)
-	os.Remove(filename)
+	if toolbox.FileExists(filename) {
+		os.Remove(filename)
+	}
 
 	logfile, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
