@@ -188,6 +188,17 @@ func (s *service) Download(object storage.Object) (io.Reader, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	//download verification (as sometimes scp failed) with one retry
+	if int(object.Size()) != len(content) {
+		content, err = client.Download(parsedUrl.Path)
+		if err != nil {
+			return nil, err
+		}
+		if int(object.Size()) != len(content) {
+			return nil, fmt.Errorf("Faled to download from %v,  object size was: %v, but scp download was %v", object.URL(), object.Size(), len(content))
+		}
+	}
 	return bytes.NewReader(content), nil
 }
 
@@ -212,7 +223,25 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 	if err != nil {
 		return fmt.Errorf("Failed to upload - unable read: %v", err)
 	}
-	return client.Upload(parsedUrl.Path, content)
+
+
+
+	err = client.Upload(parsedUrl.Path, content)
+	object, err := s.StorageObject(URL)
+	if err != nil {
+		return  err
+	}
+	if int(object.Size()) != len(content) {
+		err = client.Upload(parsedUrl.Path, content)
+		object, err = s.StorageObject(URL)
+		if err != nil {
+			return  err
+		}
+		if int(object.Size()) != len(content) {
+			return fmt.Errorf("Failed to upload to %v, actual size was:%v,  but uploaded size was  ", URL, len(content), int(object.Size()))
+		}
+	}
+	return err
 }
 
 func (s *service) Register(schema string, service storage.Service) error {
