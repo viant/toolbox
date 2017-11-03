@@ -14,6 +14,7 @@ const (
 	disableUDFKey                  = "__$__disableUDF"
 	expectVariableStart            = iota
 	expectVariableName
+	expectElementPosition
 	expectVariableNameEnclosureEnd
 )
 
@@ -86,31 +87,60 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 		}
 	}
 
+
+
 	state := *s
 	if string(expr[0:1]) == "{" {
 		expr = expr[1: len(expr)-1]
 	}
+
+
+
 	if strings.Contains(expr, ".") {
 		fragments := strings.Split(expr, ".")
 		for i, fragment := range fragments {
+			var index *int
+
+			arrayIndexPosition := strings.Index(fragment, "[")
+			if arrayIndexPosition != -1 {
+				arrayEndPosition := strings.Index(fragment, "]");
+				arrayIndex :=  toolbox.AsInt(string(fragment[arrayIndexPosition+1:arrayEndPosition]))
+				index = &arrayIndex
+				fragment =  string(fragment[:arrayIndexPosition])
+			}
+
 			isLast := i+1 == len(fragments)
 			hasKey := state.Has(fragment)
 			if !hasKey {
 				return nil, false
 			}
+
 			var candidate = state.Get(fragment)
 			if !isLast && candidate == nil {
 				return nil, false
 			}
 			if isLast {
 				expr = fragment
-			} else if toolbox.IsMap(candidate) {
-				newState := state.GetMap(fragment)
+				continue
+			}
+
+			if index != nil {
+				if ! toolbox.IsSlice(candidate) {
+					return nil, false
+				}
+				var aSlice = toolbox.AsSlice(candidate)
+				if *index >= len(aSlice) {
+					return nil, false
+				}
+				candidate = aSlice [*index]
+			}
+
+			if toolbox.IsMap(candidate) {
+				newState := toolbox.AsMap(candidate)
 				if newState != nil {
 					state = newState
 				}
 			} else {
-
 				value, _ := state.GetValue(fragment)
 				if f, ok := value.(func(key string) interface{}); ok {
 					return f(fragments[i+1]), true
@@ -145,6 +175,9 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 	}
 	return nil, false
 }
+
+
+
 
 /*
 Set value sets value in the map for the supplied expression.
@@ -444,6 +477,7 @@ func (s *Map) expandExpressions(text string) interface{} {
 	var variableName = ""
 	var parsingState = expectVariableStart
 	var result = ""
+	var expectIndexEnd = false
 	for i, rune := range text {
 		aChar := string(text[i: i+1])
 		var isLast = i+1 == len(text)
@@ -478,7 +512,13 @@ func (s *Map) expandExpressions(text string) interface{} {
 			parsingState = expectVariableStart
 
 		case expectVariableName:
-			if unicode.IsLetter(rune) || unicode.IsDigit(rune) || aChar == "." || aChar == "_" || aChar == "+" || aChar == "<" || aChar == "-" {
+
+			if unicode.IsLetter(rune) || unicode.IsDigit(rune) || aChar == "[" || (expectIndexEnd &&  aChar == "]") || aChar == "." || aChar == "_" || aChar == "+" || aChar == "<" || aChar == "-" {
+				if  aChar == "[" {
+					expectIndexEnd = true
+				} else if  aChar == "]" {
+					expectIndexEnd = false
+				}
 				variableName += aChar
 				continue
 			}
