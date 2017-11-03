@@ -3,15 +3,15 @@ package url
 import (
 	"bytes"
 	"fmt"
+	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
+	"github.com/viant/toolbox/storage"
 	"io/ioutil"
 	"net/url"
 	"os"
 	"path"
 	"strings"
 	"time"
-	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/storage"
 )
 
 //Resource represents a URL based resource, with enriched meta info
@@ -22,11 +22,10 @@ type Resource struct {
 	Cache         string   //Cache path for the resource, if specified resource will be cached in the specified path
 	CacheExpiryMs int      //CacheExpiryMs expiry time in ms
 
-	Name          string   //name of a resource
-	Version       string   //version of resource
-	Type          string   //resource type
+	Name    string //name of a resource
+	Version string //version of resource
+	Type    string //resource type
 }
-
 
 //Clone creates a clone of the resource
 func (r *Resource) Clone() *Resource {
@@ -118,8 +117,6 @@ func (r *Resource) Download() ([]byte, error) {
 	return content, err
 }
 
-
-
 //DownloadText returns a text downloaded from url
 func (r *Resource) DownloadText() (string, error) {
 	var result, err = r.Download()
@@ -129,22 +126,20 @@ func (r *Resource) DownloadText() (string, error) {
 	return string(result), err
 }
 
-
 //Decode decodes url's data into target, it takes decoderFactory which decodes data into target
 func (r *Resource) Decode(target interface{}, decoderFactory toolbox.DecoderFactory) error {
 	if r == nil {
-		return fmt.Errorf("Fail to %T decode on empty resource",decoderFactory)
+		return fmt.Errorf("Fail to %T decode on empty resource", decoderFactory)
 	}
 	if r == nil {
 		return fmt.Errorf("Fail to decode %v,  decoderFactory was empty", r.URL, decoderFactory)
 	}
-	var content, err= r.Download()
+	var content, err = r.Download()
 	if err != nil {
 		return err
 	}
 	return decoderFactory.Create(bytes.NewReader(content)).Decode(target)
 }
-
 
 //JSONDecode decodes json resource into target
 func (r *Resource) JSONDecode(target interface{}) error {
@@ -177,8 +172,6 @@ func (r *Resource) Cachable() bool {
 	return r.Cache != ""
 }
 
-
-
 func normalizeURL(URL string) string {
 	if strings.Contains(URL, "://") {
 		return URL
@@ -195,10 +188,9 @@ func normalizeURL(URL string) string {
 	return toolbox.FileSchema + URL
 }
 
-
 //NewResource returns a new resource for provided URL, followed by optional credential, cache and cache expiryMs.
-func NewResource(Params ... interface{}) *Resource {
-	if len(Params) == 0{
+func NewResource(Params ...interface{}) *Resource {
+	if len(Params) == 0 {
 		return nil
 	}
 	var URL = toolbox.AsString(Params[0])
@@ -218,10 +210,10 @@ func NewResource(Params ... interface{}) *Resource {
 	}
 	parsedURL, _ := url.Parse(URL)
 	return &Resource{
-		ParsedURL: parsedURL,
-		URL:       URL,
-		Credential:credential,
-		Cache:cache,
-		CacheExpiryMs:cacheExpiryMs,
+		ParsedURL:     parsedURL,
+		URL:           URL,
+		Credential:    credential,
+		Cache:         cache,
+		CacheExpiryMs: cacheExpiryMs,
 	}
 }
