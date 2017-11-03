@@ -244,6 +244,9 @@ func (c *Converter) assignConvertedMap(target, input interface{}, targetIndirect
 	var err error
 
 	ProcessMap(input, func(key, value interface{}) bool {
+		if value == nil {
+			return true
+		}
 		mapValueType = reflect.TypeOf(value)
 		targetMapValuePointer := reflect.New(mapValueType)
 		err = c.AssignConverted(targetMapValuePointer.Interface(), value)
