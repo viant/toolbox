@@ -91,6 +91,27 @@ func TestMap_GetValue(t *testing.T) {
 		assert.Equal(t, "20", value)
 
 	}
+	{ //	test array index
+
+		var aCollection = NewCollection()
+		aCollection.Push(map[string]interface{}{
+			"k1":1,
+			"K2":2,
+		})
+		aCollection.Push(map[string]interface{}{
+			"k2":3,
+			"K3":4,
+		})
+		aMap.Put("c", aCollection)
+		value, has := aMap.GetValue("c[0].k1")
+		assert.True(t, has)
+		assert.Equal(t, 1, value)
+
+		value, has = aMap.GetValue("c[1].k2")
+		assert.True(t, has)
+		assert.Equal(t, 3, value)
+
+	}
 
 
 }
