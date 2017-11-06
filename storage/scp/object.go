@@ -15,7 +15,10 @@ type object struct {
 	owner            string
 	group            string
 	size             string
-	modificationTime time.Time
+	modificationTime *time.Time
+	date 			 string
+	time 			 string
+	timezone		 string
 	day              string
 	month            string
 	year             string
@@ -52,13 +55,30 @@ func (i *object) IsContent() bool {
 
 //LastModified returns last modification time
 func (i *object) LastModified() *time.Time {
-	dateTime := i.year + " " + i.month + " " + i.day + " " + i.hour
-	layout := toolbox.DateFormatToLayout("yyyy MMM ddd HH:mm:s")
+	if i.modificationTime != nil {
+		return i.modificationTime
+	}
+	var dateTime, layout string
+	if i.date != "" {
+		timeLen := len(i.time)
+		if timeLen > 12 {
+			i.time = string(i.time[:12])
+		}
+		dateTime = i.date + " " + i.time + " " + i.timezone
+		layout = toolbox.DateFormatToLayout("yyyy-MM-dd HH:mm:ss.SSS ZZ")
+
+	} else {
+
+		dateTime = i.year + " " + i.month + " " + i.day + " " + i.hour
+		layout = toolbox.DateFormatToLayout("yyyy MMM ddd HH:mm:s")
+	}
+
 	result, err := time.Parse(layout, dateTime)
 	if err != nil {
 		return nil
 	}
-	return &result
+	i.modificationTime = &result
+	return i.modificationTime
 
 }
 
