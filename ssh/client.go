@@ -9,6 +9,9 @@ import (
 	"sync/atomic"
 	"time"
 	"github.com/viant/toolbox/cred"
+	"net"
+	"sync"
+	"log"
 )
 
 const (
@@ -24,6 +27,7 @@ var endTransferSequence = []byte("\x00")
 //Client represnt SSH client
 type Client struct {
 	*ssh.Client
+	Forwarding []*Forwarding
 }
 
 //MultiCommandSession create a new MultiCommandSession
@@ -67,18 +71,19 @@ func listenForMessage(reader io.Reader, result chan string, done *int32) {
 //Upload uploads passed in content into remote destination
 func (c *Client) Upload(destination string, content []byte) error {
 	dir, file := path.Split(destination)
+
 	if len(dir) > 0 {
 		c.Run("mkdir -p " + dir)
 	}
 	session, err := c.NewSession()
 	if err != nil {
-		panic("Failed to create session: " + err.Error())
+		return fmt.Errorf("Failed to create session %v", err)
 	}
 	defer session.Close()
 
 	writer, err := session.StdinPipe()
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to acquire stdin %v", err)
 	}
 	defer writer.Close()
 
@@ -93,12 +98,12 @@ func (c *Client) Upload(destination string, content []byte) error {
 	cmd := "scp -qtr " + dir
 	err = session.Start(cmd)
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to start command%v %v",cmd, err)
 	}
 	createFileCommand := fmt.Sprintf("%v %d %s\n", createFileSequence, len(content), file)
 	_, err = writer.Write([]byte(createFileCommand))
 	if err != nil {
-		return err
+		return fmt.Errorf("Failed to write create file sequence: %v %v",content, err)
 	}
 	var message string
 	select {
@@ -119,6 +124,7 @@ func (c *Client) Upload(destination string, content []byte) error {
 		}
 		buffer := content[i*bufferSize: maxLength]
 		_, err = writer.Write(buffer)
+
 		if err != nil {
 			if err.Error() == io.EOF.Error() {
 				break
@@ -133,7 +139,7 @@ func (c *Client) Upload(destination string, content []byte) error {
 	if err == nil {
 		_, err = writer.Write(endTransferSequence)
 		if err != nil {
-			return err
+			return fmt.Errorf("Failed to write end transfer seq: %v", err)
 		}
 	}
 	return err
@@ -147,6 +153,117 @@ func (c *Client) Download(source string) ([]byte, error) {
 	}
 	defer session.Close()
 	return session.Output(fmt.Sprintf("cat %s", source))
+}
+
+
+
+func (c *Client) Close() error {
+	if len(c.Forwarding) > 0 {
+		for _, forwarding := range c.Forwarding {
+			_ = forwarding.Close()
+		}
+	}
+
+	return c.Client.Close()
+}
+
+
+//Forward forwards localAddress to remoteAddress on SSH connection
+func (c *Client) Forward(localAddress, remoteAddress string) (error) {
+	local, err := net.Listen("tcp", localAddress)
+	if err != nil {
+		return fmt.Errorf("Failed to listen on local: %v %v", localAddress, err)
+	}
+	var forwarding = NewForwarding(c.Client, remoteAddress, local)
+	if len(c.Forwarding) == 0 {
+		c.Forwarding = make([]*Forwarding ,0)
+	}
+	c.Forwarding = append(c.Forwarding, forwarding)
+	go forwarding.Handle()
+	return nil
+}
+
+
+//Forwarding represents a SSH forwarding link
+type Forwarding struct {
+	RemoteAddress string
+	client *ssh.Client
+	Local net.Listener
+	Connections []net.Conn
+	mutex *sync.Mutex
+	closed int32
+}
+
+
+
+
+
+func (f *Forwarding) tunnelTraffic(localClient, remote  net.Conn) {
+	defer localClient.Close()
+	defer remote.Close()
+	completionChannel := make(chan bool)
+	go func() {
+		_, err := io.Copy(localClient, remote)
+		if err != nil {
+			log.Printf("Failed to copy remote to local: %v", err)
+		}
+		completionChannel <- true
+	}()
+
+
+	go func() {
+		_, err := io.Copy(remote, localClient)
+		if err != nil {
+			log.Printf("Failed to copy local to remote: %v", err)
+		}
+		completionChannel <- true
+	}()
+	<-completionChannel
+}
+
+
+//Handle wait for local client and forwards traffic
+func (f *Forwarding) Handle() error {
+	for {
+		if atomic.LoadInt32(&f.closed) == 1 {
+			return nil
+		}
+		localClient, err := f.Local.Accept()
+		if err != nil {
+			return err
+		}
+		remote, err := f.client.Dial("tcp", f.RemoteAddress)
+		if err != nil {
+			return fmt.Errorf("Failed to connect to remote: %v %v", f.RemoteAddress, err)
+		}
+		f.Connections = append(f.Connections, remote)
+		f.Connections = append(f.Connections, localClient)
+		go f.tunnelTraffic(localClient, remote)
+	}
+	return nil
+}
+
+
+
+//Close closes forwarding link
+func (f *Forwarding) Close() error {
+	atomic.StoreInt32(&f.closed, 1)
+	_ =f.Local.Close()
+	for _, remote := range f.Connections {
+		_ = remote.Close()
+	}
+	return nil
+}
+
+//NewForwarding creates a new ssh forwarding link
+func NewForwarding(client *ssh.Client, remoteAddress string, local net.Listener) *Forwarding {
+		return &Forwarding{
+			client:client,
+			RemoteAddress:remoteAddress,
+			Connections:make([]net.Conn, 0),
+			Local:local,
+			mutex:&sync.Mutex{},
+		}
 }
 
 //NewClient create a new client, it takes host port and authentication config
