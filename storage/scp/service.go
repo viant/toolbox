@@ -71,10 +71,7 @@ func (s *service) runCommand(URL string, command string) (string, error) {
 		return "", err
 	}
 	defer session.Close()
-	output, err := session.CombinedOutput(command)
-	if err != nil {
-		return "", err
-	}
+	output, _ := session.CombinedOutput(command)
 	return toolbox.AsString(output), err
 
 }
