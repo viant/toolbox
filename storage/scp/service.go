@@ -55,7 +55,6 @@ type service struct {
 
 func (s *service) runCommand(session *ssh.MultiCommandSession, URL string, command string) (string, error) {
 	output, _ := session.Run(command, 0, "$ ", "usage")
-	fmt.Printf("Command: %v %v", command, output)
 	return toolbox.AsString(output), nil
 }
 
