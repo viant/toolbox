@@ -29,7 +29,24 @@ const (
 	fileInfoDateHour
 	fileInfoDateYear
 	fileInfoName
+
+
+
 )
+
+const (
+	fileIsoInfoPermission = iota
+	_
+	fileIsoInfoOwner
+	fileIsoInfoGroup
+	fileIsoInfoSize
+	fileIsoDate
+	fileIsoTime
+	fileIsoTimezone
+	fileIsoInfoName
+)
+
+
 
 type service struct {
 	config *cred.Config
@@ -40,7 +57,6 @@ func (s *service) runCommand(URL string, command string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
 	port := toolbox.AsInt(parsedUrl.Port())
 	if port == 0 {
 		port = 22
@@ -63,6 +79,26 @@ func (s *service) runCommand(URL string, command string) (string, error) {
 
 }
 
+
+func (s *service) canListWithTimeStyle(URL string) (bool, error) {
+	output, err := s.runCommand(URL, "ls -ltr --time-style=full-iso")
+	if err != nil {
+		return false, err
+	}
+	return ! strings.Contains(string(output), "usage"), nil
+}
+
+func normalizeFileInfoOutput(lines string) string {
+	var result = make([]string, 0)
+	for _, line := range strings.Split(lines, "\n") {
+		if strings.HasPrefix(strings.ToLower(line), "total") {
+			continue
+		}
+		result = append(result, line)
+	}
+	return strings.Join(result, "\n")
+}
+
 //List returns a list of object for supplied URL
 func (s *service) List(URL string) ([]storage.Object, error) {
 	parsedUrl, err := url.Parse(URL)
@@ -70,24 +106,44 @@ func (s *service) List(URL string) ([]storage.Object, error) {
 		return nil, err
 	}
 
+	var urlPath = strings.Replace(parsedUrl.Path, "//", "/", len(parsedUrl.Path))
 	var result = make([]storage.Object, 0)
-	output, err := s.runCommand(URL, "ls -lTtr "+parsedUrl.Path)
-	if strings.Contains(string(output), "No such file or directory") {
-		return result, nil
+
+	canListWithTimeStyle, err := s.canListWithTimeStyle(URL)
+	if err != nil {
+		return nil, err
 	}
 
+	var lsCommand = "ls -ltr"
+	if canListWithTimeStyle {
+		lsCommand += " --time-style=full-iso"
+	} else {
+		lsCommand +="T"
+	}
+
+	output, err := s.runCommand(URL, lsCommand + " "+parsedUrl.Path)
+	stdout := normalizeFileInfoOutput(string(output))
+	if strings.Contains(stdout, "No such file or directory") {
+		return result, nil
+	}
 	var fileNameFilter = ""
-	if err == nil && output == "" {
-		parent, fileName := path.Split(parsedUrl.Path)
+
+
+	if err == nil && stdout == "" {
+		parent, fileName := path.Split(urlPath )
 		fileNameFilter = fileName
-		output, err = s.runCommand(URL, "ls -lTtr "+parent+" | grep "+fileName)
+		output, err = s.runCommand(URL, lsCommand + " "+parent+" | grep "+fileName)
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	for _, line := range strings.Split(string(output), "\n") {
-		fileInfo := extractFileInfo(line)
+	stdout = normalizeFileInfoOutput(string(output))
+	for _, line := range strings.Split(stdout, "\n") {
+		fileInfo := ExtractFileInfo(line, canListWithTimeStyle)
+		if fileInfo == nil {
+			continue
+		}
 		if fileInfo.name == "" {
 			continue
 		}
@@ -99,10 +155,19 @@ func (s *service) List(URL string) ([]storage.Object, error) {
 	return result, nil
 }
 
-func extractFileInfo(line string) *object {
+
+
+//file info with iso -rw-r--r-- 1 awitas awitas 2002 2017-11-04 22:29:33.363458941 +0000 aerospikeciads_aerospike.conf
+//file info without iso // -rw-r--r--  1 awitas  1742120565   414 Jun  8 14:14:08 2017 id_rsa.pub
+
+func ExtractFileInfo(line string, isoTimeStyle bool) *object {
 	fragmentCount := 0
 	fileInfo := &object{}
+	if strings.TrimSpace(line) == "" {
+		return nil
+	}
 	for i := range line {
+
 
 		aChar := string(line[i])
 		if aChar == " " || aChar == "\t" {
@@ -114,6 +179,29 @@ func extractFileInfo(line string) *object {
 			}
 			continue
 		}
+
+		if isoTimeStyle {
+			switch fragmentCount {
+			case fileIsoInfoPermission:
+				fileInfo.permission += aChar
+			case fileIsoInfoOwner:
+				fileInfo.owner += aChar
+			case fileIsoInfoGroup:
+				fileInfo.group += aChar
+			case fileIsoInfoSize:
+				fileInfo.size += aChar
+			case fileIsoDate:
+				fileInfo.date += aChar
+			case fileIsoTime:
+				fileInfo.time += aChar
+			case fileIsoTimezone:
+				fileInfo.timezone += aChar
+			case fileIsoInfoName:
+				fileInfo.name += aChar
+			}
+			continue
+		}
+
 		switch fragmentCount {
 
 		case fileInfoPermission:
@@ -227,10 +315,15 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 
 
 	err = client.Upload(parsedUrl.Path, content)
+	if err != nil {
+		return  fmt.Errorf("Failed to upload: %v %v", URL,  err)
+	}
+
 	object, err := s.StorageObject(URL)
 	if err != nil {
-		return  err
+		return  fmt.Errorf("Failed to get upload object  %v for verification: %v", URL, err)
 	}
+
 	if int(object.Size()) != len(content) {
 		err = client.Upload(parsedUrl.Path, content)
 		object, err = s.StorageObject(URL)
