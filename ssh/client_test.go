@@ -8,6 +8,7 @@ import (
 	"path"
 	"github.com/viant/toolbox"
 	"io/ioutil"
+	"github.com/viant/toolbox/cred"
 )
 
 func TestNewClient(t *testing.T) {
@@ -52,7 +53,11 @@ func TestClient_Upload(t *testing.T) {
 
 func TestClient_UploadLargeFile(t *testing.T) {
 
-	client, err := ssh.NewClient("127.0.0.1", 22, nil)
+
+	var config, err = cred.NewConfig(path.Join(os.Getenv("HOME"), "secret/scp.json"))
+	assert.Nil(t, err)
+	client, err := ssh.NewClient("127.0.0.1", 22, config)
+	assert.Nil(t, err)
 	if err == nil {
 
 		tempdir := os.TempDir()
