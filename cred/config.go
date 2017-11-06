@@ -120,9 +120,9 @@ func (c *Config) ClientConfig() (*ssh.ClientConfig, error) {
 
 
 	if c.Password != "" {
-
 		result.Auth = append(result.Auth, ssh.Password(c.Password))
-	} else if c.PrivateKeyPath != "" {
+	}
+	if c.PrivateKeyPath != "" {
 		privateKeyBytes, err := ioutil.ReadFile(c.PrivateKeyPath)
 		if err != nil {
 			return nil, err
