@@ -9,11 +9,11 @@ import (
 	"github.com/viant/toolbox/storage"
 	"io"
 	"io/ioutil"
-	"net/url"
 	"strings"
 
 	"path"
 	"github.com/viant/toolbox/cred"
+	"net/url"
 )
 
 const defaultSSHPort = 22
@@ -50,35 +50,18 @@ const (
 
 type service struct {
 	config *cred.Config
-}
-
-func (s *service) runCommand(URL string, command string) (string, error) {
-	parsedUrl, err := url.Parse(URL)
-	if err != nil {
-		return "", err
-	}
-	port := toolbox.AsInt(parsedUrl.Port())
-	if port == 0 {
-		port = 22
-	}
-	client, err := ssh.NewClient(parsedUrl.Hostname(), toolbox.AsInt(port), s.config)
-	if err != nil {
-		return "", err
-	}
-	defer client.Close()
-	session, err := client.NewSession()
-	if err != nil {
-		return "", err
-	}
-	defer session.Close()
-	output, _ := session.CombinedOutput(command)
-	return toolbox.AsString(output), err
 
 }
 
+func (s *service) runCommand(session *ssh.MultiCommandSession, URL string, command string) (string, error) {
+	output, _ := session.Run(command, 0, "$ ", "usage")
+	fmt.Printf("Command: %v %v", command, output)
+	return toolbox.AsString(output), nil
+}
 
-func (s *service) canListWithTimeStyle(URL string) (bool, error) {
-	output, err := s.runCommand(URL, "ls -ltr --time-style=full-iso")
+
+func (s *service) canListWithTimeStyle(session *ssh.MultiCommandSession, URL string) (bool, error) {
+	output, err := s.runCommand(session, URL, "ls -ltr --time-style=full-iso")
 	if err != nil {
 		return false, err
 	}
@@ -96,17 +79,37 @@ func normalizeFileInfoOutput(lines string) string {
 	return strings.Join(result, "\n")
 }
 
+
+func  (s *service) getClient(parsedURL *url.URL) (*ssh.Client, error) {
+	port := toolbox.AsInt(parsedURL.Port())
+	if port == 0 {
+		port = 22
+	}
+	return ssh.NewClient(parsedURL.Hostname(), toolbox.AsInt(port), s.config)
+}
+
 //List returns a list of object for supplied URL
 func (s *service) List(URL string) ([]storage.Object, error) {
 	parsedUrl, err := url.Parse(URL)
 	if err != nil {
 		return nil, err
 	}
+	client, err := s.getClient(parsedUrl)
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
+	session, err := client.OpenMultiCommandSession(&ssh.SessionConfig{})
+	if err != nil {
+		return nil, err
+	}
+	defer session.Close()
+
 
 	var urlPath = strings.Replace(parsedUrl.Path, "//", "/", len(parsedUrl.Path))
 	var result = make([]storage.Object, 0)
 
-	canListWithTimeStyle, err := s.canListWithTimeStyle(URL)
+	canListWithTimeStyle, err := s.canListWithTimeStyle(session, URL)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +121,7 @@ func (s *service) List(URL string) ([]storage.Object, error) {
 		lsCommand +="T"
 	}
 
-	output, err := s.runCommand(URL, lsCommand + " "+parsedUrl.Path)
+	output, err := s.runCommand(session, URL, lsCommand + " "+parsedUrl.Path)
 	stdout := normalizeFileInfoOutput(string(output))
 	if strings.Contains(stdout, "No such file or directory") {
 		return result, nil
@@ -129,7 +132,7 @@ func (s *service) List(URL string) ([]storage.Object, error) {
 	if err == nil && stdout == "" {
 		parent, fileName := path.Split(urlPath )
 		fileNameFilter = fileName
-		output, err = s.runCommand(URL, lsCommand + " "+parent+" | grep "+fileName)
+		output, err = s.runCommand(session, URL, lsCommand + " "+parent+" | grep "+fileName)
 	}
 	if err != nil {
 		return nil, err
@@ -230,7 +233,19 @@ func (s *service) Exists(URL string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	output, err := s.runCommand(URL, "ls -lTtr "+parsedUrl.Path)
+
+	client, err := s.getClient(parsedUrl)
+	if err != nil {
+		return false, err
+	}
+	defer client.Close()
+	session, err := client.OpenMultiCommandSession(&ssh.SessionConfig{})
+	if err != nil {
+		return false, err
+	}
+	defer session.Close()
+
+	output, err := s.runCommand(session, URL, "ls -ltr "+parsedUrl.Path)
 	if strings.Contains(string(output), "No such file or directory") {
 		return false, nil
 	}
