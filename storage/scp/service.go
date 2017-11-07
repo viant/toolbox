@@ -14,6 +14,7 @@ import (
 	"path"
 	"github.com/viant/toolbox/cred"
 	"net/url"
+	"time"
 )
 
 const defaultSSHPort = 22
@@ -252,6 +253,16 @@ func (s *service) StorageObject(URL string) (storage.Object, error) {
 	}
 	if len(objects) == 0 {
 		return nil, fmt.Errorf("Not found %v", URL)
+	}
+	if len(objects) > 1 || (len(objects)  == 1  && objects[0].URL() != URL) {
+		var now = time.Now()
+		fileInfo := &object{
+			permission:"drwrwrw",
+			modificationTime:&now,
+		}
+		_, fileInfo.name = toolbox.URLSplit(URL)
+		fileInfo.url = URL
+		return fileInfo, nil
 	}
 	return objects[0], nil
 }
