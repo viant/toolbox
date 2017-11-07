@@ -59,13 +59,10 @@ func (s *service) runCommand(session *ssh.MultiCommandSession, URL string, comma
 }
 
 
-func (s *service) canListWithTimeStyle(session *ssh.MultiCommandSession, URL string) (bool, error) {
-	output, err := s.runCommand(session, URL, "ls -ltr --time-style=full-iso")
-	if err != nil {
-		return false, err
-	}
-	return ! strings.Contains(string(output), "usage"), nil
+func (s *service) canListWithTimeStyle(session *ssh.MultiCommandSession, URL string) (bool) {
+	return session.KernelName != "darwin"
 }
+
 
 func normalizeFileInfoOutput(lines string) string {
 	var result = make([]string, 0)
@@ -108,11 +105,7 @@ func (s *service) List(URL string) ([]storage.Object, error) {
 	var urlPath = strings.Replace(parsedUrl.Path, "//", "/", len(parsedUrl.Path))
 	var result = make([]storage.Object, 0)
 
-	canListWithTimeStyle, err := s.canListWithTimeStyle(session, URL)
-	if err != nil {
-		return nil, err
-	}
-
+	canListWithTimeStyle := s.canListWithTimeStyle(session, URL)
 	var lsCommand = "ls -ltr"
 	if canListWithTimeStyle {
 		lsCommand += " --time-style=full-iso"
@@ -258,7 +251,7 @@ func (s *service) StorageObject(URL string) (storage.Object, error) {
 		return nil, err
 	}
 	if len(objects) == 0 {
-		return nil, fmt.Errorf("No found %v", URL)
+		return nil, fmt.Errorf("Not found %v", URL)
 	}
 	return objects[0], nil
 }

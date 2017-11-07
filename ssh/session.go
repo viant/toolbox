@@ -23,6 +23,7 @@ type MultiCommandSession struct {
 	stdError    chan string
 	stdInput    io.WriteCloser
 	ShellPrompt string
+	KernelName  string
 	running     int32
 }
 
@@ -161,8 +162,8 @@ outer:
 
 func (s *MultiCommandSession) drainStdout() {
 	//read any outstanding output
-	for ;; {
-		out,  _:= s.readResponse(1, "")
+	for ; ; {
+		out, _ := s.readResponse(1, "")
 		if len(out) == 0 {
 			return
 		}
@@ -229,5 +230,7 @@ func newMultiCommandSession(client *ssh.Client, config *SessionConfig) (result *
 	if result.closeIfError(err) {
 		return nil, err
 	}
+	result.KernelName, err = result.Run("uname", 5000, "Linux", "Darwin")
+	result.KernelName = strings.TrimSpace(strings.ToLower(result.KernelName))
 	return result, err
 }
