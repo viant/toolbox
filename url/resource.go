@@ -141,6 +141,16 @@ func (r *Resource) Decode(target interface{}, decoderFactory toolbox.DecoderFact
 	return decoderFactory.Create(bytes.NewReader(content)).Decode(target)
 }
 
+
+//Rename renames URI name of this resource
+func (r *Resource) Rename(name string) (err error) {
+	var _, currentName = toolbox.URLSplit(r.URL)
+	r.URL = strings.Replace(r.URL, currentName, name, 1)
+	r.ParsedURL, err = url.Parse(r.URL)
+	return err
+}
+
+
 //JSONDecode decodes json resource into target
 func (r *Resource) JSONDecode(target interface{}) error {
 	return r.Decode(target, toolbox.NewJSONDecoderFactory())
