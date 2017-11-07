@@ -104,7 +104,6 @@ func TestTestYamlDecoder(t *testing.T) {
 		"c": []int{1, 3, 6},
 	}
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR, 0644)
-	fmt.Printf("%v\n", filename)
 	if assert.Nil(t, err) {
 		err = toolbox.NewYamlEncoderFactory().Create(file).Encode(aMap)
 		assert.Nil(t, err)
