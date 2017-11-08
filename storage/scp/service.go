@@ -18,6 +18,7 @@ import (
 )
 
 const defaultSSHPort = 22
+const verificationSizeThreshold = 10 * 1024 * 1024
 
 const (
 	fileInfoPermission = iota
@@ -68,6 +69,7 @@ func (s *service) canListWithTimeStyle(session *ssh.MultiCommandSession, URL str
 func normalizeFileInfoOutput(lines string) string {
 	var result = make([]string, 0)
 	for _, line := range strings.Split(lines, "\n") {
+		line = strings.Replace(line, "\r", "", 1)
 		if strings.HasPrefix(strings.ToLower(line), "total") {
 			continue
 		}
@@ -292,16 +294,19 @@ func (s *service) Download(object storage.Object) (io.Reader, error) {
 		return nil, err
 	}
 
-	//download verification (as sometimes scp failed) with one retry
-	if int(object.Size()) != len(content) {
-		content, err = client.Download(parsedUrl.Path)
-		if err != nil {
-			return nil, err
-		}
+	if  verificationSizeThreshold < len(content) {
+		//download verification (as sometimes scp failed) with one retry
 		if int(object.Size()) != len(content) {
-			return nil, fmt.Errorf("Faled to download from %v,  object size was: %v, but scp download was %v", object.URL(), object.Size(), len(content))
+			content, err = client.Download(parsedUrl.Path)
+			if err != nil {
+				return nil, err
+			}
+			if int(object.Size()) != len(content) {
+				return nil, fmt.Errorf("Faled to download from %v,  object size was: %v, but scp download was %v", object.URL(), object.Size(), len(content))
+			}
 		}
 	}
+
 	return bytes.NewReader(content), nil
 }
 
@@ -334,21 +339,25 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 		return  fmt.Errorf("Failed to upload: %v %v", URL,  err)
 	}
 
-	object, err := s.StorageObject(URL)
-	if err != nil {
-		return  fmt.Errorf("Failed to get upload object  %v for verification: %v", URL, err)
-	}
 
-	if int(object.Size()) != len(content) {
-		err = client.Upload(parsedUrl.Path, content)
-		object, err = s.StorageObject(URL)
+
+	if  verificationSizeThreshold < len(content) {
+		object, err := s.StorageObject(URL)
 		if err != nil {
-			return  err
+			return  fmt.Errorf("Failed to get upload object  %v for verification: %v", URL, err)
 		}
 		if int(object.Size()) != len(content) {
-			return fmt.Errorf("Failed to upload to %v, actual size was:%v,  but uploaded size was  ", URL, len(content), int(object.Size()))
+			err = client.Upload(parsedUrl.Path, content)
+			object, err = s.StorageObject(URL)
+			if err != nil {
+				return  err
+			}
+			if int(object.Size()) != len(content) {
+				return fmt.Errorf("Failed to upload to %v, actual size was:%v,  but uploaded size was  ", URL, len(content), int(object.Size()))
+			}
 		}
 	}
+
 	return err
 }
 
