@@ -184,6 +184,12 @@ func (r *Resource) Cachable() bool {
 
 func normalizeURL(URL string) string {
 	if strings.Contains(URL, "://") {
+		var protoPosition = strings.Index(URL ,"://")
+		if protoPosition != -1 {
+			var urlSuffix=string(URL[protoPosition+3:])
+			urlSuffix = strings.Replace(urlSuffix, "//", "/", len(urlSuffix))
+			URL = string(URL[:protoPosition+3]) + urlSuffix
+		}
 		return URL
 	}
 	if !strings.HasPrefix(URL, "/") {
