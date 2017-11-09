@@ -125,7 +125,7 @@ func (s *httpStorageService) List(URL string) ([]Object, error) {
 					objectURL = strings.Replace(objectURL, "/blob/", "/", 1)
 					objectURL = strings.Replace(objectURL, "github.com", "raw.githubusercontent.com", 1)
 				}
-				storageObject := newHttpFileObject(objectURL, linkType, nil, &now, 0)
+				storageObject := newHttpFileObject(objectURL, linkType, nil, now, 1)
 				result = append(result, storageObject)
 			}
 
@@ -139,7 +139,7 @@ func (s *httpStorageService) List(URL string) ([]Object, error) {
 					linkType = StorageObjectFolderType
 				}
 				objectURL := toolbox.URLPathJoin(URL, link.URL)
-				storageObject := newHttpFileObject(objectURL, linkType, nil, &now, 0)
+				storageObject := newHttpFileObject(objectURL, linkType, nil, now, 1)
 				result = append(result, storageObject)
 			}
 		}
@@ -148,7 +148,7 @@ func (s *httpStorageService) List(URL string) ([]Object, error) {
 	if strings.Contains(string(body), ">..<") {
 		return result, err
 	}
-	storageObject := newHttpFileObject(URL, StorageObjectContentType, nil, &now, response.ContentLength)
+	storageObject := newHttpFileObject(URL, StorageObjectContentType, nil, now, response.ContentLength)
 	result = append(result, storageObject)
 	return result, err
 }
@@ -195,6 +195,7 @@ func (s *httpStorageService) Download(object Object) (io.Reader, error) {
 	return bytes.NewReader(content), err
 }
 
+
 //Upload uploads provided reader content for supplied url.
 func (s *httpStorageService) Upload(URL string, reader io.Reader) error {
 	return errors.New("unsupported")
@@ -227,8 +228,18 @@ func (o *httpStorageObject) Unwrap(target interface{}) error {
 	return fmt.Errorf("unsuported target %T", target)
 }
 
-func newHttpFileObject(url string, objectType int, source interface{}, lastModified *time.Time, size int64) Object {
-	abstract := NewAbstractStorageObject(url, source, objectType, lastModified, size)
+
+
+
+func newHttpFileObject(url string, objectType int, source interface{}, lastModified time.Time, size int64) Object {
+	var isDir = objectType == StorageObjectFolderType
+	var _, name = toolbox.URLSplit(url)
+	var fileMode , _ = NewFileMode("-r--r--r--")
+	if isDir {
+		fileMode , _ = NewFileMode("dr--r--r--")
+	}
+	fileInfo := NewFileInfo(name, size, fileMode, lastModified, isDir)
+	abstract := NewAbstractStorageObject(url, source, fileInfo)
 	result := &httpStorageObject{
 		AbstractObject: abstract,
 	}

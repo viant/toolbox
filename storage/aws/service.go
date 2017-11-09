@@ -14,7 +14,10 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
+	"time"
 )
+
+var defaultTime = time.Time{}
 
 type service struct {
 	config *Config
@@ -40,8 +43,11 @@ func listFolders(client *s3.S3, url *url.URL, result *[]storage.Object) error {
 		return err
 	}
 	for _, prefix := range prefixes {
-		path := "s3://" + url.Host + "/" + *prefix.Prefix
-		var object = newObject(path, storage.StorageObjectFolderType, prefix, nil, 0)
+		pathURL := "s3://" + url.Host + "/" + *prefix.Prefix
+		var _, name = toolbox.URLSplit(pathURL)
+		var fileMode, _ = storage.NewFileMode("drw-rw-rw-")
+		var fileInfo = storage.NewFileInfo(name, 102, fileMode, defaultTime, fileMode.IsDir())
+		var object = newStorageObject(pathURL, prefix, fileInfo)
 		*result = append(*result, object)
 	}
 	return nil
@@ -71,10 +77,11 @@ func listContent(client *s3.S3, parsedURL *url.URL, result *[]storage.Object) er
 		return err
 	}
 	for _, content := range contents {
-		path := "s3://" + parsedURL.Host + "/" + *content.Key
-
-		var object = newObject(path, storage.StorageObjectContentType, content, content.LastModified, *content.Size)
-
+		objectURL := "s3://" + parsedURL.Host + "/" + *content.Key
+		var _, name = toolbox.URLSplit(objectURL)
+		var fileMode, _ = storage.NewFileMode("-rw-rw-rw-")
+		var fileInfo = storage.NewFileInfo(name, *content.Size, fileMode, *content.LastModified, fileMode.IsDir())
+		var object = newStorageObject(objectURL, content, fileInfo)
 		*result = append(*result, object)
 	}
 	return nil
@@ -93,11 +100,11 @@ func (s *service) List(URL string) ([]storage.Object, error) {
 	var result = make([]storage.Object, 0)
 	u, err := url.Parse(URL)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to parse : %v",err)
+		return nil, fmt.Errorf("Failed to parse : %v", err)
 	}
 	config, err := s.getAwsConfig()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get aws config: %v",err)
+		return nil, fmt.Errorf("Failed to get aws config: %v", err)
 	}
 	client := s3.New(session.New(), config)
 	err = listFolders(client, u, &result)
@@ -105,7 +112,7 @@ func (s *service) List(URL string) ([]storage.Object, error) {
 		err = listContent(client, u, &result)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get list content: %v",err)
+		return nil, fmt.Errorf("Failed to get list content: %v", err)
 	}
 	return result, nil
 }
@@ -124,7 +131,7 @@ func (s *service) StorageObject(URL string) (storage.Object, error) {
 		return nil, err
 	}
 	if len(objects) == 0 {
-		return nil, fmt.Errorf("No found %v", URL)
+		return nil, fmt.Errorf("Not found %v", URL)
 	}
 	return objects[0], nil
 }
@@ -132,11 +139,11 @@ func (s *service) StorageObject(URL string) (storage.Object, error) {
 func (s *service) Download(object storage.Object) (io.Reader, error) {
 	u, err := url.Parse(object.URL())
 	if err != nil {
-		return nil, fmt.Errorf("Failed to parse : %v",err)
+		return nil, fmt.Errorf("Failed to parse : %v", err)
 	}
 	config, err := s.getAwsConfig()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get aws config: %v",err)
+		return nil, fmt.Errorf("Failed to get aws config: %v", err)
 	}
 	downloader := s3manager.NewDownloader(session.New(config))
 	target := &s3.Object{}
@@ -148,7 +155,7 @@ func (s *service) Download(object storage.Object) (io.Reader, error) {
 			Key:    aws.String(*target.Key),
 		})
 	if err != nil {
-		return nil, fmt.Errorf("Failed to download: %v",err)
+		return nil, fmt.Errorf("Failed to download: %v", err)
 	}
 	return bytes.NewReader(writer.Buffer), nil
 

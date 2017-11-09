@@ -153,9 +153,12 @@ func copy(sourceService Service, sourceURL string, destinationService Service, d
 	objects, err := sourceService.List(sourceListURL)
 	var objectRelativePath string
 	for _, object := range objects {
+
+
 		if object.URL() == sourceURL && object.IsFolder() {
 			continue
 		}
+
 		if len(object.URL()) > len(sourceURL) {
 			objectRelativePath = object.URL()[len(sourceURL):]
 		}
@@ -183,6 +186,7 @@ func copy(sourceService Service, sourceURL string, destinationService Service, d
 				_, file := path.Split(object.URL())
 				destinationObjectURL = toolbox.URLPathJoin(destinationObjectURL, file)
 			}
+
 			err = copyHandler(object, reader, destinationService, destinationObjectURL)
 			if err != nil {
 				return nil

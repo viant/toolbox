@@ -4,7 +4,7 @@ import (
 	"cloud.google.com/go/storage"
 	"fmt"
 	tstorage "github.com/viant/toolbox/storage"
-	"time"
+	"os"
 )
 
 type object struct {
@@ -24,8 +24,8 @@ func (o *object) Unwrap(target interface{}) error {
 }
 
 //newObject creates a new gc storage object
-func newStorageObject(url string, objectType int, source interface{}, lastModified *time.Time, size int64) tstorage.Object {
-	abstract := tstorage.NewAbstractStorageObject(url, source, objectType, lastModified, size)
+func newStorageObject(url string, source interface{}, fileInfo os.FileInfo) tstorage.Object {
+	abstract := tstorage.NewAbstractStorageObject(url, source, fileInfo)
 	result := &object{
 		AbstractObject: abstract,
 	}

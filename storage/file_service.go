@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"time"
 	"bytes"
 )
 
@@ -40,9 +39,8 @@ func (s *fileStorageService) List(URL string) ([]Object, error) {
 	stat, err := file.Stat()
 	if err == nil {
 		if ! stat.IsDir() {
-			modTime := stat.ModTime()
 			return []Object{
-				newFileObject(URL, StorageObjectContentType, stat, &modTime, stat.Size()),
+				newFileObject(URL, stat),
 			}, nil
 		}
 	}
@@ -53,13 +51,8 @@ func (s *fileStorageService) List(URL string) ([]Object, error) {
 	}
 	var result = make([]Object, 0)
 	for _, fileInfo := range files {
-		fileUrl := URL + "/" + fileInfo.Name()
-		objectType := StorageObjectContentType
-		if fileInfo.IsDir() {
-			objectType = StorageObjectFolderType
-		}
-		modTime := fileInfo.ModTime()
-		result = append(result, newFileObject(fileUrl, objectType, fileInfo, &modTime, fileInfo.Size()))
+		fileURL := URL + "/" + fileInfo.Name()
+		result = append(result, newFileObject(fileURL,fileInfo))
 	}
 	return result, nil
 }
@@ -87,17 +80,7 @@ func (s *fileStorageService) StorageObject(URL string) (Object, error) {
 	if err != nil {
 		return nil, err
 	}
-	objectType := 0
-	switch mode := fileInfo.Mode(); {
-
-	case mode.IsDir():
-		// do directory stuff
-		objectType = StorageObjectFolderType
-	case mode.IsRegular():
-		objectType = StorageObjectContentType
-	}
-	modTime := fileInfo.ModTime()
-	return newFileObject(URL, objectType, &fileInfo, &modTime, fileInfo.Size()), nil
+	return newFileObject(URL, fileInfo), nil
 }
 
 //Download returns reader for downloaded storage object
@@ -124,6 +107,7 @@ func (s *fileStorageService) Upload(URL string, reader io.Reader) error {
 	}
 
 	parentDir, _ := path.Split(parsedUrl.Path)
+
 	err = toolbox.CreateDirIfNotExist(parentDir)
 	if err != nil {
 		return err
@@ -153,10 +137,8 @@ type fileStorageObject struct {
 }
 
 func (o *fileStorageObject) Unwrap(target interface{}) error {
-	if fileInfo, casted := target.(**os.FileInfo); casted {
-
-
-		source, ok := o.Source.(*os.FileInfo)
+	if fileInfo, casted := target.(*os.FileInfo); casted {
+		source, ok := o.Source.(os.FileInfo)
 		if !ok {
 			return fmt.Errorf("Failed to cast %T into %T", o.Source, target)
 		}
@@ -167,8 +149,16 @@ func (o *fileStorageObject) Unwrap(target interface{}) error {
 	return fmt.Errorf("unsuported target %T", target)
 }
 
-func newFileObject(url string, objectType int, source interface{}, lastModified *time.Time, size int64) Object {
-	abstract := NewAbstractStorageObject(url, source, objectType, lastModified, size)
+func (o *fileStorageObject) FileInfo() os.FileInfo {
+	if source, ok := o.Source.(os.FileInfo); ok {
+		return source
+	}
+	return nil
+}
+
+
+func newFileObject(url string, fileInfo os.FileInfo) Object {
+	abstract := NewAbstractStorageObject(url, fileInfo , fileInfo)
 	result := &fileStorageObject{
 		AbstractObject: abstract,
 	}

@@ -77,7 +77,7 @@ func TestCopy(t *testing.T) {
 	sourceURL := path.Join(baseUrl, "source/")
 	targetURL := path.Join(baseUrl, "target/")
 
-	err := storage.Copy(service, sourceURL, service, targetURL, nil)
+	err := storage.Copy(service, sourceURL, service, targetURL, nil, nil)
 	assert.Nil(t, err)
 
 	expectedFiles := []string{
