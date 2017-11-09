@@ -12,7 +12,7 @@ import (
 )
 
 func TestNewClient(t *testing.T) {
-	client, err := ssh.NewClient("127.0.0.1", 22, nil)
+	client, err := ssh.NewService("127.0.0.1", 22, nil)
 	if err == nil {
 		assert.NotNil(t, client)
 
@@ -34,7 +34,7 @@ func TestNewClient(t *testing.T) {
 }
 
 func TestClient_Upload(t *testing.T) {
-	client, err := ssh.NewClient("127.0.0.1", 22, nil)
+	client, err := ssh.NewService("127.0.0.1", 22, nil)
 	if err == nil {
 		assert.NotNil(t, client)
 		err = client.Upload("/tmp/a/abcd.bin", []byte{0x1, 0x6, 0x10})
@@ -56,7 +56,7 @@ func TestClient_UploadLargeFile(t *testing.T) {
 
 	var config, err = cred.NewConfig(path.Join(os.Getenv("HOME"), "secret/scp.json"))
 	assert.Nil(t, err)
-	client, err := ssh.NewClient("127.0.0.1", 22, config)
+	client, err := ssh.NewService("127.0.0.1", 22, config)
 	assert.Nil(t, err)
 	if err == nil {
 

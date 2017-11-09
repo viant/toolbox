@@ -15,19 +15,59 @@ const defaultShell = "/bin/bash"
 
 const defautTimeoutMs = 5000
 
+
 //MultiCommandSession represents a multi command session
+type MultiCommandSession interface {
+
+	Run(command string, timeoutMs int, terminators ...string) (string, error);
+
+	ShellPrompt() string
+
+	KernelName()  string
+
+	Close()
+
+}
+
+//multiCommandSession represents a multi command session
 //a new command are send vi stdin
-type MultiCommandSession struct {
+type multiCommandSession struct {
 	session     *ssh.Session
 	stdOutput   chan string
 	stdError    chan string
 	stdInput    io.WriteCloser
-	ShellPrompt string
-	KernelName  string
+	shellPrompt string
+	kernelName  string
 	running     int32
 }
 
-func (s *MultiCommandSession) closeIfError(err error) bool {
+func (s *multiCommandSession) Run(command string, timeoutMs int, terminators ...string) (string, error) {
+	s.drainStdout()
+	_, err := s.stdInput.Write([]byte(command + "\n"))
+	if err != nil {
+		return "", fmt.Errorf("Failed to execute command: %v, err: %v", command, err)
+	}
+	return s.readResponse(timeoutMs, terminators...)
+}
+
+
+func (s *multiCommandSession) ShellPrompt() string {
+	return s.shellPrompt
+}
+
+func (s *multiCommandSession) KernelName()  string {
+	return s.kernelName
+}
+
+//Close closes the session with its resources
+func (s *multiCommandSession) Close() {
+	atomic.StoreInt32(&s.running, 0)
+	s.stdInput.Close()
+	s.session.Close()
+
+}
+
+func (s *multiCommandSession) closeIfError(err error) bool {
 	if err != nil {
 		s.Close()
 		return true
@@ -35,7 +75,7 @@ func (s *MultiCommandSession) closeIfError(err error) bool {
 	return false
 }
 
-func (s *MultiCommandSession) init(shell string) (string, error) {
+func (s *multiCommandSession) init(shell string) (string, error) {
 	reader, err := s.session.StdoutPipe()
 	if err != nil {
 		return "", err
@@ -57,7 +97,7 @@ func (s *MultiCommandSession) init(shell string) (string, error) {
 	return s.readResponse(defautTimeoutMs)
 }
 
-func (s *MultiCommandSession) drain(reader io.Reader, out chan string) {
+func (s *multiCommandSession) drain(reader io.Reader, out chan string) {
 	var written int64 = 0
 	buf := make([]byte, 128*1024)
 	for {
@@ -107,21 +147,14 @@ func hasTerminator(source string, terminators ...string) bool {
 	return false
 }
 
-//Close closes the session with its resources
-func (s *MultiCommandSession) Close() {
-	atomic.StoreInt32(&s.running, 0)
-	s.stdInput.Close()
-	s.session.Close()
 
-}
-
-func (s *MultiCommandSession) readResponse(timeoutMs int, terminators ...string) (out string, err error) {
+func (s *multiCommandSession) readResponse(timeoutMs int, terminators ...string) (out string, err error) {
 	if timeoutMs == 0 {
 		timeoutMs = defautTimeoutMs
 	}
 	if len(terminators) == 0 {
-		if s.ShellPrompt == "" {
-			terminators = []string{s.ShellPrompt + "$"}
+		if s.shellPrompt == "" {
+			terminators = []string{s.shellPrompt + "$"}
 		} else {
 			terminators = []string{"$ $"}
 		}
@@ -152,7 +185,7 @@ outer:
 		err = errors.New(errOut)
 	}
 	if len(out) > 0 {
-		index := strings.LastIndex(out, "\r\n"+s.ShellPrompt)
+		index := strings.LastIndex(out, "\r\n"+s.shellPrompt)
 		if index > 0 {
 			out = string(out[:index])
 		}
@@ -160,27 +193,18 @@ outer:
 	return out, err
 }
 
-func (s *MultiCommandSession) drainStdout() {
+func (s *multiCommandSession) drainStdout() {
 	//read any outstanding output
 	for ; ; {
 		out, _ := s.readResponse(1, "")
 		if len(out) == 0 {
 			return
 		}
-
 	}
 }
 
-func (s *MultiCommandSession) Run(command string, timeoutMs int, terminators ...string) (string, error) {
-	s.drainStdout()
-	_, err := s.stdInput.Write([]byte(command + "\n"))
-	if err != nil {
-		return "", fmt.Errorf("Failed to execute command: %v, err: %v", command, err)
-	}
-	return s.readResponse(timeoutMs, terminators...)
-}
 
-func newMultiCommandSession(client *ssh.Client, config *SessionConfig) (result *MultiCommandSession, err error) {
+func newMultiCommandSession(client *ssh.Client, config *SessionConfig) (MultiCommandSession, error) {
 	if config == nil {
 		config = &SessionConfig{}
 	}
@@ -215,7 +239,7 @@ func newMultiCommandSession(client *ssh.Client, config *SessionConfig) (result *
 	if err != nil {
 		return nil, err
 	}
-	result = &MultiCommandSession{
+	result := &multiCommandSession{
 		session:   session,
 		stdOutput: make(chan string),
 		stdError:  make(chan string),
@@ -226,12 +250,13 @@ func newMultiCommandSession(client *ssh.Client, config *SessionConfig) (result *
 	if result.closeIfError(err) {
 		return nil, err
 	}
-	result.ShellPrompt, err = result.Run("", 1000)
+	result.shellPrompt, err = result.Run("", 1000)
 	if result.closeIfError(err) {
 		return nil, err
 	}
-	result.KernelName, err = result.Run("uname -s", 10000, "Linux", "Darwin")
 	result.drainStdout()
-	result.KernelName = strings.TrimSpace(strings.ToLower(result.KernelName))
+	result.kernelName, err = result.Run("uname -s", 20000, "Linux", "Darwin", "$", "#")
+	result.drainStdout()
+	result.kernelName = strings.TrimSpace(strings.ToLower(result.kernelName))
 	return result, err
 }

@@ -10,11 +10,12 @@ import (
 	"io"
 	"io/ioutil"
 	"net/url"
-
 	"cloud.google.com/go/storage"
 	tstorage "github.com/viant/toolbox/storage"
 	"google.golang.org/api/option"
+	"github.com/viant/toolbox"
 )
+
 
 type service struct {
 	options []option.ClientOption
@@ -47,12 +48,15 @@ func (s *service) List(URL string) ([]tstorage.Object, error) {
 	responseIterator := client.Bucket(parsedUrl.Host).Objects(ctx, query)
 	var result = make([]tstorage.Object, 0)
 	for obj, err := responseIterator.Next(); err == nil; obj, err = responseIterator.Next() {
-		path := "gs://" + parsedUrl.Host + "/" + obj.Prefix + obj.Name
-		storageType := tstorage.StorageObjectContentType
+		objectURL := "gs://" + parsedUrl.Host + "/" + obj.Prefix + obj.Name
+		var fileMode, _ = tstorage.NewFileMode("-rw-rw-rw-")
 		if obj.Prefix != "" {
-			storageType = tstorage.StorageObjectFolderType
+			fileMode, _ = tstorage.NewFileMode("drw-rw-rw-")
 		}
-		result = append(result, newStorageObject(path, storageType, obj, &obj.Updated, obj.Size))
+		var _, name = toolbox.URLSplit(objectURL)
+		var fileInfo = tstorage.NewFileInfo(name, obj.Size, fileMode, obj.Updated, fileMode.IsDir())
+		var object = newStorageObject(objectURL, obj, fileInfo)
+		result = append(result, object)
 	}
 	return result, err
 }
@@ -71,7 +75,7 @@ func (s *service) StorageObject(URL string) (tstorage.Object, error) {
 		return nil, err
 	}
 	if len(objects) == 0 {
-		return nil, fmt.Errorf("No found %v", URL)
+		return nil, fmt.Errorf("Not found %v", URL)
 	}
 	return objects[0], nil
 }

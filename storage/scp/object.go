@@ -1,91 +1,16 @@
 package scp
 
 import (
-	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
-	"strings"
-	"time"
+	"os"
 )
 
 type object struct {
 	*storage.AbstractObject
 	source           interface{}
-	url              string
-	name             string
-	owner            string
-	group            string
-	size             string
-	modificationTime *time.Time
-	date 			 string
-	time 			 string
-	timezone		 string
-	day              string
-	month            string
-	year             string
-	hour             string
-	isDirectory      bool
 	permission       string
 }
 
-//URL return storage URL
-func (i *object) URL() string {
-	if strings.Contains(i.url, i.name) {
-		return i.url
-	}
-	return toolbox.URLPathJoin(i.url, i.name)
-}
-
-//Type returns storage type  StorageObjectFolderType or StorageObjectContentType
-func (i *object) Type() int {
-	if strings.Contains(i.permission, "d") {
-		return storage.StorageObjectFolderType
-	}
-	return storage.StorageObjectContentType
-}
-
-//IsFolder returns true if object is a folder
-func (i *object) IsFolder() bool {
-	return i.Type() == storage.StorageObjectFolderType
-}
-
-//IsContent returns true if object is a file
-func (i *object) IsContent() bool {
-	return i.Type() == storage.StorageObjectContentType
-}
-
-//LastModified returns last modification time
-func (i *object) LastModified() *time.Time {
-	if i.modificationTime != nil {
-		return i.modificationTime
-	}
-	var dateTime, layout string
-	if i.date != "" {
-		timeLen := len(i.time)
-		if timeLen > 12 {
-			i.time = string(i.time[:12])
-		}
-		dateTime = i.date + " " + i.time + " " + i.timezone
-		layout = toolbox.DateFormatToLayout("yyyy-MM-dd HH:mm:ss.SSS ZZ")
-
-	} else {
-
-		dateTime = i.year + " " + i.month + " " + i.day + " " + i.hour
-		layout = toolbox.DateFormatToLayout("yyyy MMM ddd HH:mm:s")
-	}
-
-	result, err := time.Parse(layout, dateTime)
-	if err != nil {
-		return nil
-	}
-	i.modificationTime = &result
-	return i.modificationTime
-
-}
-
-//Size returns content size
-func (i *object) Size() int64 {
-	return int64(toolbox.AsInt(i.size))
-}
 
 //Wrap wraps source storage object
 func (i *object) Wrap(source interface{}) {
@@ -101,8 +26,8 @@ func (i *object) Unwrap(target interface{}) error {
 }
 
 //newObject creates a new gc storage object
-func newStorageObject(url string, objectType int, source interface{}, lastModified *time.Time, size int64) storage.Object {
-	abstract := storage.NewAbstractStorageObject(url, source, objectType, lastModified, size)
+func newStorageObject(URL string, source interface{}, fileInfo os.FileInfo) storage.Object {
+	abstract := storage.NewAbstractStorageObject(URL, source, fileInfo)
 	result := &object{
 		AbstractObject: abstract,
 	}

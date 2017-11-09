@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/viant/toolbox/storage"
-	"time"
+	"os"
 )
 
 type object struct {
@@ -26,12 +26,13 @@ func (o *object) Unwrap(target interface{}) error {
 		}
 		*commonPrefix = source
 	}
+
 	return fmt.Errorf("unsuported target %T", target)
 }
 
-//newObject creates a new aws storage object
-func newObject(url string, objectType int, source interface{}, lastModified *time.Time, size int64) storage.Object {
-	abstract := storage.NewAbstractStorageObject(url, source, objectType, lastModified, size)
+//newStorageObject creates a new aws storage object
+func newStorageObject(url string, source interface{}, fileInfo os.FileInfo) storage.Object {
+	abstract := storage.NewAbstractStorageObject(url, source, fileInfo)
 	result := &object{
 		AbstractObject: abstract,
 	}

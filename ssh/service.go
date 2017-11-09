@@ -10,8 +10,6 @@ import (
 	"time"
 	"github.com/viant/toolbox/cred"
 	"net"
-	"sync"
-	"log"
 )
 
 const (
@@ -19,29 +17,69 @@ const (
 )
 
 var bufferSize = 64 * 1024
-var scpUploadSleep = 100 * time.Millisecond
+var scpUploadSleep = 50 * time.Millisecond
 var commandResponseDelaySleep = 200 * time.Millisecond
 
 var endTransferSequence = []byte("\x00")
 
-//Client represnt SSH client
-type Client struct {
-	*ssh.Client
-	Forwarding []*Forwarding
+
+
+//Service represents ssh service
+type Service interface {
+
+	//Service returns a service wrapper
+	Client() *ssh.Client
+
+	//OpenMultiCommandSession opens multi command session
+	OpenMultiCommandSession(config *SessionConfig) (MultiCommandSession, error)
+
+	//Run runs supplied command
+	Run(command string) error
+
+	//Upload uploads provided content to specified destination
+	Upload(destination string, content []byte) error
+
+	//Download downloads content from specified source.
+	Download(source string) ([]byte, error)
+
+	//OpenTunnel opens a tunnel between local to remote for network traffic.
+	OpenTunnel(localAddress, remoteAddress string) (error)
+
+	NewSession() (*ssh.Session, error)
+
+	Close() error
+	
+}
+
+//service represnt SSH service
+type service struct {
+	client *ssh.Client
+	Forwarding []*Tunnel
+}
+
+//Service returns undelying ssh Service
+func (c *service) Client() *ssh.Client {
+	return c.client
+}
+
+//Service returns undelying ssh Service
+func (c *service) NewSession() (*ssh.Session, error) {
+	return c.client.NewSession()
 }
 
 //MultiCommandSession create a new MultiCommandSession
-func (c *Client) OpenMultiCommandSession(config *SessionConfig) (*MultiCommandSession, error) {
-	return newMultiCommandSession(c.Client, config)
+func (c *service) OpenMultiCommandSession(config *SessionConfig) (MultiCommandSession, error) {
+	return newMultiCommandSession(c.client, config)
 }
 
-func (c *Client) Run(comand string) error {
-	session, err := c.NewSession()
+
+func (c *service) Run(command string) error {
+	session, err := c.client.NewSession()
 	if err != nil {
 		panic("Failed to create session: " + err.Error())
 	}
 	defer session.Close()
-	return session.Run(comand)
+	return session.Run(command)
 }
 
 //listenForMessage this function read data from reader to filer textual output to result channel.
@@ -69,13 +107,13 @@ func listenForMessage(reader io.Reader, result chan string, done *int32) {
 }
 
 //Upload uploads passed in content into remote destination
-func (c *Client) Upload(destination string, content []byte) error {
+func (c *service) Upload(destination string, content []byte) error {
 	dir, file := path.Split(destination)
 
 	if len(dir) > 0 {
 		c.Run("mkdir -p " + dir)
 	}
-	session, err := c.NewSession()
+	session, err := c.client.NewSession()
 	if err != nil {
 		return fmt.Errorf("Failed to create session %v", err)
 	}
@@ -146,8 +184,8 @@ func (c *Client) Upload(destination string, content []byte) error {
 }
 
 //Download download passed source file from remote host.
-func (c *Client) Download(source string) ([]byte, error) {
-	session, err := c.Client.NewSession()
+func (c *service) Download(source string) ([]byte, error) {
+	session, err := c.client.NewSession()
 	if err != nil {
 		return nil, err
 	}
@@ -156,27 +194,27 @@ func (c *Client) Download(source string) ([]byte, error) {
 }
 
 
-
-func (c *Client) Close() error {
+//Close closes service
+func (c *service) Close() error {
 	if len(c.Forwarding) > 0 {
 		for _, forwarding := range c.Forwarding {
 			_ = forwarding.Close()
 		}
 	}
 
-	return c.Client.Close()
+	return c.client.Close()
 }
 
 
-//Forward forwards localAddress to remoteAddress on SSH connection
-func (c *Client) Forward(localAddress, remoteAddress string) (error) {
+//OpenTunnel tunnels data between localAddress and remoteAddress on ssh connection
+func (c *service) OpenTunnel(localAddress, remoteAddress string) (error) {
 	local, err := net.Listen("tcp", localAddress)
 	if err != nil {
 		return fmt.Errorf("Failed to listen on local: %v %v", localAddress, err)
 	}
-	var forwarding = NewForwarding(c.Client, remoteAddress, local)
+	var forwarding = NewForwarding(c.client, remoteAddress, local)
 	if len(c.Forwarding) == 0 {
-		c.Forwarding = make([]*Forwarding ,0)
+		c.Forwarding = make([]*Tunnel,0)
 	}
 	c.Forwarding = append(c.Forwarding, forwarding)
 	go forwarding.Handle()
@@ -184,90 +222,9 @@ func (c *Client) Forward(localAddress, remoteAddress string) (error) {
 }
 
 
-//Forwarding represents a SSH forwarding link
-type Forwarding struct {
-	RemoteAddress string
-	client *ssh.Client
-	Local net.Listener
-	Connections []net.Conn
-	mutex *sync.Mutex
-	closed int32
-}
 
-
-
-
-
-func (f *Forwarding) tunnelTraffic(localClient, remote  net.Conn) {
-	defer localClient.Close()
-	defer remote.Close()
-	completionChannel := make(chan bool)
-	go func() {
-		_, err := io.Copy(localClient, remote)
-		if err != nil {
-			log.Printf("Failed to copy remote to local: %v", err)
-		}
-		completionChannel <- true
-	}()
-
-
-	go func() {
-		_, err := io.Copy(remote, localClient)
-		if err != nil {
-			log.Printf("Failed to copy local to remote: %v", err)
-		}
-		completionChannel <- true
-	}()
-	<-completionChannel
-}
-
-
-//Handle wait for local client and forwards traffic
-func (f *Forwarding) Handle() error {
-	for {
-		if atomic.LoadInt32(&f.closed) == 1 {
-			return nil
-		}
-		localClient, err := f.Local.Accept()
-		if err != nil {
-			return err
-		}
-		remote, err := f.client.Dial("tcp", f.RemoteAddress)
-		if err != nil {
-			return fmt.Errorf("Failed to connect to remote: %v %v", f.RemoteAddress, err)
-		}
-		f.Connections = append(f.Connections, remote)
-		f.Connections = append(f.Connections, localClient)
-		go f.tunnelTraffic(localClient, remote)
-	}
-	return nil
-}
-
-
-
-//Close closes forwarding link
-func (f *Forwarding) Close() error {
-	atomic.StoreInt32(&f.closed, 1)
-	_ =f.Local.Close()
-	for _, remote := range f.Connections {
-		_ = remote.Close()
-	}
-	return nil
-}
-
-//NewForwarding creates a new ssh forwarding link
-func NewForwarding(client *ssh.Client, remoteAddress string, local net.Listener) *Forwarding {
-		return &Forwarding{
-			client:client,
-			RemoteAddress:remoteAddress,
-			Connections:make([]net.Conn, 0),
-			Local:local,
-			mutex:&sync.Mutex{},
-		}
-}
-
-//NewClient create a new client, it takes host port and authentication config
-func NewClient(host string, port int, authConfig *cred.Config) (*Client, error) {
+//NewService create a new ssh service, it takes host port and authentication config
+func NewService(host string, port int, authConfig *cred.Config) (Service, error) {
 	if authConfig == nil {
 		authConfig = &cred.Config{}
 	}
@@ -280,7 +237,7 @@ func NewClient(host string, port int, authConfig *cred.Config) (*Client, error) 
 	if err != nil {
 		return nil, fmt.Errorf("Failed to dial %v: %s", hostWithPort, err)
 	}
-	return &Client{
-		Client: client,
+	return &service{
+		client: client,
 	}, nil
 }
