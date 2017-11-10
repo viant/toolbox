@@ -166,6 +166,11 @@ func (s *service) Register(schema string, service tstorage.Service) error {
 	return errors.New("unsupported")
 }
 
+func (s *service) Close() error {
+	return nil
+}
+
+
 //Delete removes passed in storage object
 func (s *service) Delete(object tstorage.Object) error {
 	client, ctx, err := s.NewClient()

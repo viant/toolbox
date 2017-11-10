@@ -9,24 +9,20 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+	"github.com/lunixbochs/vtclean"
+	"github.com/viant/toolbox"
 )
 
 const defaultShell = "/bin/bash"
 
-const defautTimeoutMs = 5000
-
+const defaultTimeoutMs = 5000
 
 //MultiCommandSession represents a multi command session
 type MultiCommandSession interface {
-
 	Run(command string, timeoutMs int, terminators ...string) (string, error);
-
 	ShellPrompt() string
-
-	KernelName()  string
-
+	System() string
 	Close()
-
 }
 
 //multiCommandSession represents a multi command session
@@ -37,7 +33,7 @@ type multiCommandSession struct {
 	stdError    chan string
 	stdInput    io.WriteCloser
 	shellPrompt string
-	kernelName  string
+	system      string
 	running     int32
 }
 
@@ -50,13 +46,14 @@ func (s *multiCommandSession) Run(command string, timeoutMs int, terminators ...
 	return s.readResponse(timeoutMs, terminators...)
 }
 
-
+//ShellPrompt returns a shell prompt
 func (s *multiCommandSession) ShellPrompt() string {
 	return s.shellPrompt
 }
 
-func (s *multiCommandSession) KernelName()  string {
-	return s.kernelName
+//System returns a system name
+func (s *multiCommandSession) System() string {
+	return s.system
 }
 
 //Close closes the session with its resources
@@ -94,7 +91,7 @@ func (s *multiCommandSession) init(shell string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return s.readResponse(defautTimeoutMs)
+	return s.readResponse(defaultTimeoutMs)
 }
 
 func (s *multiCommandSession) drain(reader io.Reader, out chan string) {
@@ -130,7 +127,11 @@ func (s *multiCommandSession) drain(reader io.Reader, out chan string) {
 	}
 }
 
-func hasTerminator(source string, terminators ...string) bool {
+func (s *multiCommandSession) hasTerminator(source string, terminators ...string) bool {
+	source = vtclean.Clean(source, false)
+	if strings.HasSuffix(source, s.shellPrompt) {
+		return true
+	}
 	for _, candidate := range terminators {
 		candidateLen := len(candidate)
 		if candidateLen == 0 {
@@ -138,26 +139,23 @@ func hasTerminator(source string, terminators ...string) bool {
 		}
 		if candidate[0:1] == "^" && strings.HasPrefix(source, candidate[1:]) {
 			return true
-		} else if candidate[candidateLen-1:] == "$" && strings.HasSuffix(source, candidate[:candidateLen-1]) {
+		}
+		if candidate[candidateLen-1:] == "$" && strings.HasSuffix(source, candidate[:candidateLen-1]) {
 			return true
-		} else if strings.Contains(source, candidate) {
+		}
+		if strings.Contains(source, candidate) {
 			return true
 		}
 	}
 	return false
 }
 
-
 func (s *multiCommandSession) readResponse(timeoutMs int, terminators ...string) (out string, err error) {
 	if timeoutMs == 0 {
-		timeoutMs = defautTimeoutMs
+		timeoutMs = defaultTimeoutMs
 	}
 	if len(terminators) == 0 {
-		if s.shellPrompt == "" {
-			terminators = []string{s.shellPrompt + "$"}
-		} else {
-			terminators = []string{"$ $"}
-		}
+		terminators = []string{"$ $"}
 	}
 	var done int32
 	defer atomic.StoreInt32(&done, 1)
@@ -168,12 +166,12 @@ outer:
 
 		case o := <-s.stdOutput:
 			out += o
-			if hasTerminator(out, terminators...) && len(s.stdOutput) == 0 {
+			if s.hasTerminator(out, terminators...) && len(s.stdOutput) == 0 {
 				break outer
 			}
 		case e := <-s.stdError:
 			errOut += e
-			if hasTerminator(errOut, terminators...) && len(s.stdOutput) == 0 {
+			if s.hasTerminator(errOut, terminators...) && len(s.stdOutput) == 0 {
 				break outer
 			}
 
@@ -184,11 +182,18 @@ outer:
 	if errOut != "" {
 		err = errors.New(errOut)
 	}
+
 	if len(out) > 0 {
-		index := strings.LastIndex(out, "\r\n"+s.shellPrompt)
-		if index > 0 {
-			out = string(out[:index])
+		var lines = strings.Split(out, "\n")
+		var escapedLines = make([]string, 0)
+		for _, line := range lines {
+			line = strings.Replace(line, "\r", "", 1)
+			if line == s.shellPrompt {
+				continue
+			}
+			escapedLines = append(escapedLines, line)
 		}
+		out = strings.Join(escapedLines, "\n")
 	}
 	return out, err
 }
@@ -196,13 +201,12 @@ outer:
 func (s *multiCommandSession) drainStdout() {
 	//read any outstanding output
 	for ; ; {
-		out, _ := s.readResponse(1, "")
+		out, _ := s.readResponse(10, "")
 		if len(out) == 0 {
 			return
 		}
 	}
 }
-
 
 func newMultiCommandSession(client *ssh.Client, config *SessionConfig) (MultiCommandSession, error) {
 	if config == nil {
@@ -224,7 +228,6 @@ func newMultiCommandSession(client *ssh.Client, config *SessionConfig) (MultiCom
 			return nil, err
 		}
 	}
-
 	modes := ssh.TerminalModes{
 		ssh.ECHO:          0,     // disable echoing
 		ssh.TTY_OP_ISPEED: 14400, // input speed = 14.4kbaud
@@ -250,13 +253,13 @@ func newMultiCommandSession(client *ssh.Client, config *SessionConfig) (MultiCom
 	if result.closeIfError(err) {
 		return nil, err
 	}
-	result.shellPrompt, err = result.Run("", 1000)
+
+	var ts = toolbox.AsString(time.Now().UnixNano())
+	result.shellPrompt, err = result.Run("PS1=\"\\h:\\u"+ts+"\\$\"", 1000)
 	if result.closeIfError(err) {
 		return nil, err
 	}
-	result.drainStdout()
-	result.kernelName, err = result.Run("uname -s", 20000, "Linux", "Darwin", "$", "#")
-	result.drainStdout()
-	result.kernelName = strings.TrimSpace(strings.ToLower(result.kernelName))
+	result.system, err = result.Run("uname -s", 10000)
+	result.system = strings.ToLower(result.system)
 	return result, err
 }

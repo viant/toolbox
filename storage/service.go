@@ -2,10 +2,8 @@ package storage
 
 import (
 	"fmt"
-	"github.com/viant/toolbox"
 	"io"
 	"net/url"
-	"path"
 )
 
 //Service represents abstract way to accessing local or remote storage
@@ -30,10 +28,11 @@ type Service interface {
 
 	//Register register schema with provided service
 	Register(schema string, service Service) error
+
+	//Closes storage service
+	Close() error
 }
 
-type CopyHandler func(sourceObject Object, source io.Reader, destinationService Service, destinationURL string) error
-type ModificationHandler func(reader io.Reader) (io.Reader, error)
 
 type storageService struct {
 	registry map[string]Service
@@ -106,6 +105,18 @@ func (s *storageService) Delete(object Object) error {
 	return service.Delete(object)
 }
 
+//Close closes resources
+func (s *storageService) Close() error {
+	for _, service := range s.registry {
+		err := service.Close()
+		if err != nil {
+			return  err
+		}
+	}
+	return nil
+}
+
+
 //Register register storage schema
 func (s *storageService) Register(schema string, service Service) error {
 	s.registry[schema] = service
@@ -143,82 +154,4 @@ func NewServiceForURL(URL, credentialFile string) (Service, error) {
 		return nil, fmt.Errorf("Unsupported scheme %v", URL)
 	}
 	return service, nil
-}
-
-func copy(sourceService Service, sourceURL string, destinationService Service, destinationURL string, modifyContentHandler ModificationHandler, subPath string, copyHandler CopyHandler) error {
-	sourceListURL := sourceURL
-	if subPath != "" {
-		sourceListURL = toolbox.URLPathJoin(sourceURL, subPath)
-	}
-	objects, err := sourceService.List(sourceListURL)
-	var objectRelativePath string
-	for _, object := range objects {
-
-
-		if object.URL() == sourceURL && object.IsFolder() {
-			continue
-		}
-
-		if len(object.URL()) > len(sourceURL) {
-			objectRelativePath = object.URL()[len(sourceURL):]
-		}
-		var destinationObjectURL = destinationURL
-		if objectRelativePath != "" {
-			destinationObjectURL = toolbox.URLPathJoin(destinationURL, objectRelativePath)
-		}
-		var reader io.Reader
-		if object.IsContent() {
-			reader, err = sourceService.Download(object)
-			if err != nil {
-				err = fmt.Errorf("Unable download, %v -> %v, %v", object.URL(), destinationObjectURL, err)
-				return err
-			}
-
-			if modifyContentHandler != nil {
-				reader, err = modifyContentHandler(reader)
-				if err != nil {
-					err = fmt.Errorf("Unable modify content, %v %v %v", object.URL(), destinationObjectURL, err)
-					return err
-				}
-			}
-			destinationObject, err := destinationService.StorageObject(destinationObjectURL)
-			if (subPath == "" && destinationObject != nil && destinationObject.IsFolder()) {
-				_, file := path.Split(object.URL())
-				destinationObjectURL = toolbox.URLPathJoin(destinationObjectURL, file)
-			}
-
-			err = copyHandler(object, reader, destinationService, destinationObjectURL)
-			if err != nil {
-				return nil
-			}
-
-		} else {
-			err = copy(sourceService, sourceURL, destinationService, destinationURL, modifyContentHandler, objectRelativePath, copyHandler)
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func copySourceToDestination(sourceObject Object, reader io.Reader, destinationService Service, destinationURL string) error {
-	err := destinationService.Upload(destinationURL, reader)
-	if err != nil {
-		err = fmt.Errorf("Unable upload, %v %v %v", sourceObject.URL(), destinationURL, err)
-
-	}
-	return err
-}
-
-//Copy downloads objects from source URL to upload them to destination URL.
-func Copy(sourceService Service, sourceURL string, destinationService Service, destinationURL string, modifyContentHandler ModificationHandler, copyHandler CopyHandler) (err error) {
-	if copyHandler == nil {
-		copyHandler = copySourceToDestination
-	}
-	err = copy(sourceService, sourceURL, destinationService, destinationURL, modifyContentHandler, "", copyHandler)
-	if err != nil {
-		err = fmt.Errorf("Failed to copy %v -> %v: %v", sourceURL, destinationURL, err)
-	}
-	return err
 }

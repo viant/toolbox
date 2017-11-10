@@ -13,6 +13,8 @@ import (
 	"github.com/viant/toolbox/cred"
 	"net/url"
 	"github.com/lunixbochs/vtclean"
+	"path"
+	"sync"
 )
 
 const defaultSSHPort = 22
@@ -22,45 +24,67 @@ const verificationSizeThreshold = 1024 * 1024
 var NoSuchFileOrDirectoryError = errors.New("No Such File Or Directory")
 
 type service struct {
-	config *cred.Config
+	config   *cred.Config
+	services map[string]ssh.Service
+	multiSessions map[string]ssh.MultiCommandSession
+	mutex    *sync.Mutex
 }
 
 func (s *service) runCommand(session ssh.MultiCommandSession, URL string, command string) (string, error) {
-	output, _ := session.Run(command, 0, "$ ", "usage", "No such file or directory")
-	return toolbox.AsString(output), nil
+	output, _ := session.Run(command, 1000)
+	var stdout = s.stdout(output)
+	return stdout, nil
 }
 
-func (s *service) canListWithTimeStyle(session ssh.MultiCommandSession, URL string) (bool) {
-	return session.KernelName() != "darwin"
+func (s *service) stdout(output string) string {
+	return vtclean.Clean(string(output), false)
 }
 
-func (s *service) getClient(parsedURL *url.URL) (ssh.Service, error) {
+
+
+func (s *service) getMultiSession(parsedURL *url.URL) ssh.MultiCommandSession {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	return s.multiSessions[parsedURL.Host]
+}
+
+func (s *service) getService(parsedURL *url.URL) (ssh.Service, error) {
 	port := toolbox.AsInt(parsedURL.Port())
 	if port == 0 {
 		port = 22
 	}
-	return ssh.NewService(parsedURL.Hostname(), toolbox.AsInt(port), s.config)
+	key := parsedURL.Host
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	if service, ok := s.services[key]; ok {
+		return service, nil
+	}
+	service, err := ssh.NewService(parsedURL.Hostname(), toolbox.AsInt(port), s.config)
+	if err != nil {
+		return nil, err
+	}
+	s.services[key] = service
+	s.multiSessions[key], err = service.OpenMultiCommandSession(nil)
+	if err != nil {
+		return nil, err
+	}
+	return service, nil
 }
 
 //List returns a list of object for supplied URL
 func (s *service) List(URL string) ([]storage.Object, error) {
-	parsedUrl, err := url.Parse(URL)
+	parsedURL, err := url.Parse(URL)
 	if err != nil {
 		return nil, err
 	}
-	client, err := s.getClient(parsedUrl)
+	_, err = s.getService(parsedURL)
 	if err != nil {
 		return nil, err
 	}
-	defer client.Close()
-	session, err := client.OpenMultiCommandSession(&ssh.SessionConfig{})
-	if err != nil {
-		return nil, err
-	}
-	defer session.Close()
-	canListWithTimeStyle := s.canListWithTimeStyle(session, URL)
+	commandSession := s.getMultiSession(parsedURL)
+	canListWithTimeStyle := commandSession.System() != "darwin"
 	var parser = &Parser{IsoTimeStyle: canListWithTimeStyle}
-	var urlPath = strings.Replace(parsedUrl.Path, "//", "/", len(parsedUrl.Path))
+	var URLPath = parsedURL.Path
 	var result = make([]storage.Object, 0)
 	var lsCommand = "ls -dltr"
 	if canListWithTimeStyle {
@@ -68,19 +92,19 @@ func (s *service) List(URL string) ([]storage.Object, error) {
 	} else {
 		lsCommand += "T"
 	}
-	output, err := s.runCommand(session, URL, lsCommand+" "+urlPath)
+	output, _ := s.runCommand(commandSession, URL, lsCommand+" "+URLPath)
 	var stdout = vtclean.Clean(string(output), false)
 	if strings.Contains(stdout, "No such file or directory") {
 		return result, NoSuchFileOrDirectoryError
 	}
-	objects, err := parser.Parse(URL, stdout, false)
+	objects, err := parser.Parse(parsedURL, stdout, false)
 	if err != nil {
 		return nil, err
 	}
 	if len(objects) == 1 && objects[0].FileInfo().IsDir() {
-		output, err = s.runCommand(session, URL, lsCommand+" "+urlPath+"/*")
+		output, _ = s.runCommand(commandSession, URL, lsCommand+" "+path.Join(URLPath, "*"))
 		stdout = vtclean.Clean(string(output), false)
-		directoryObjects, err := parser.Parse(URL, stdout, true)
+		directoryObjects, err := parser.Parse(parsedURL, stdout, true)
 		if err != nil {
 			return nil, err
 		}
@@ -91,26 +115,18 @@ func (s *service) List(URL string) ([]storage.Object, error) {
 	return objects, nil
 }
 
-
-
 func (s *service) Exists(URL string) (bool, error) {
-	parsedUrl, err := url.Parse(URL)
+	parsedURL, err := url.Parse(URL)
 	if err != nil {
 		return false, err
 	}
 
-	client, err := s.getClient(parsedUrl)
+	_, err = s.getService(parsedURL)
 	if err != nil {
 		return false, err
 	}
-	defer client.Close()
-	session, err := client.OpenMultiCommandSession(&ssh.SessionConfig{})
-	if err != nil {
-		return false, err
-	}
-	defer session.Close()
-
-	output, err := s.runCommand(session, URL, "ls -dltr "+parsedUrl.Path)
+	commandSession := s.getMultiSession(parsedURL)
+	output, _ := s.runCommand(commandSession, URL, "ls -dltr "+parsedURL.Path)
 	if strings.Contains(string(output), "No such file or directory") {
 		return false, nil
 	}
@@ -129,7 +145,6 @@ func (s *service) StorageObject(URL string) (storage.Object, error) {
 	return objects[0], nil
 }
 
-
 //Download returns reader for downloaded storage object
 func (s *service) Download(object storage.Object) (io.Reader, error) {
 	if object == nil {
@@ -144,30 +159,12 @@ func (s *service) Download(object storage.Object) (io.Reader, error) {
 	if port == 0 {
 		port = defaultSSHPort
 	}
-	client, err := ssh.NewService(parsedUrl.Hostname(), toolbox.AsInt(port), s.config)
+
+	service, err := s.getService(parsedUrl)
+	content, err := service.Download(parsedUrl.Path)
 	if err != nil {
 		return nil, err
 	}
-	defer client.Close()
-
-	content, err := client.Download(parsedUrl.Path)
-	if err != nil {
-		return nil, err
-	}
-
-	if verificationSizeThreshold < len(content) {
-		//download verification (as sometimes scp failed) with one retry
-		if int(object.FileInfo().Size()) != len(content) {
-			content, err = client.Download(parsedUrl.Path)
-			if err != nil {
-				return nil, err
-			}
-			if int(object.FileInfo().Size()) != len(content) {
-				return nil, fmt.Errorf("Faled to download from %v,  object size was: %v, but scp download was %v", object.URL(), object.FileInfo().Size(), len(content))
-			}
-		}
-	}
-
 	return bytes.NewReader(content), nil
 }
 
@@ -182,18 +179,18 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 	if port == 0 {
 		port = defaultSSHPort
 	}
-	client, err := ssh.NewService(parsedUrl.Hostname(), toolbox.AsInt(port), s.config)
+	service, err := ssh.NewService(parsedUrl.Hostname(), toolbox.AsInt(port), s.config)
 	if err != nil {
 		return err
 	}
-	defer client.Close()
 
+	//defer service.Close()
 	content, err := ioutil.ReadAll(reader)
 	if err != nil {
 		return fmt.Errorf("Failed to upload - unable read: %v", err)
 	}
 
-	err = client.Upload(parsedUrl.Path, content)
+	err = service.Upload(parsedUrl.Path, content)
 	if err != nil {
 		return fmt.Errorf("Failed to upload: %v %v", URL, err)
 	}
@@ -204,7 +201,7 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 			return fmt.Errorf("Failed to get upload object  %v for verification: %v", URL, err)
 		}
 		if int(object.FileInfo().Size()) != len(content) {
-			err = client.Upload(parsedUrl.Path, content)
+			err = service.Upload(parsedUrl.Path, content)
 			object, err = s.StorageObject(URL)
 			if err != nil {
 				return err
@@ -222,6 +219,16 @@ func (s *service) Register(schema string, service storage.Service) error {
 	return errors.New("unsupported")
 }
 
+func (s *service) Close() error {
+	for _, service := range s.services {
+		service.Close()
+	}
+	for _, session := range s.multiSessions {
+		session.Close()
+	}
+	return nil
+}
+
 //Delete removes passed in storage object
 func (s *service) Delete(object storage.Object) error {
 	parsedUrl, err := url.Parse(object.URL())
@@ -233,12 +240,13 @@ func (s *service) Delete(object storage.Object) error {
 	if port == 0 {
 		port = defaultSSHPort
 	}
-	client, err := ssh.NewService(parsedUrl.Hostname(), toolbox.AsInt(port), s.config)
+	service, err := ssh.NewService(parsedUrl.Hostname(), toolbox.AsInt(port), s.config)
 	if err != nil {
 		return err
 	}
-	defer client.Close()
-	session, err := client.NewSession()
+
+	//defer service.Close()
+	session, err := service.NewSession()
 	if err != nil {
 		return err
 	}
@@ -254,6 +262,9 @@ func (s *service) Delete(object storage.Object) error {
 //NewService create a new gc storage service
 func NewService(config *cred.Config) *service {
 	return &service{
-		config: config,
+		services: make(map[string]ssh.Service),
+		config:   config,
+		multiSessions: make(map[string]ssh.MultiCommandSession),
+		mutex:    &sync.Mutex{},
 	}
 }

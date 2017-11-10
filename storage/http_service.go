@@ -214,6 +214,11 @@ func (s *httpStorageService) Delete(object Object) error {
 	return os.Remove(fileName)
 }
 
+func (s *httpStorageService) Close() error {
+	return nil
+}
+
+
 func NewHttpStorageService(credential *cred.Config) Service {
 	return &httpStorageService{
 		Credential: credential,
