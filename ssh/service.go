@@ -181,9 +181,7 @@ func (c *service) Download(source string) ([]byte, error) {
 		return nil, err
 	}
 	defer session.Close()
-	var data []byte
-	data, err = session.CombinedOutput(fmt.Sprintf("cat %s", source))
-	return data, err
+	return session.Output(fmt.Sprintf("cat %s", source))
 }
 
 //Close closes service
