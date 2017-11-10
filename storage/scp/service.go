@@ -165,6 +165,24 @@ func (s *service) Download(object storage.Object) (io.Reader, error) {
 	if err != nil {
 		return nil, err
 	}
+
+
+
+	if  verificationSizeThreshold < len(content) {
+		//download verification (as sometimes scp failed) with one retry
+		if int(object.FileInfo().Size()) != len(content) {
+			content, err = service.Download(parsedUrl.Path)
+			if err != nil {
+				return nil, err
+			}
+			if int(object.FileInfo().Size()) != len(content) {
+				return nil, fmt.Errorf("Faled to download from %v,  object size was: %v, but scp download was %v", object.URL(), object.FileInfo().Size(), len(content))
+			}
+		}
+	}
+
+
+
 	return bytes.NewReader(content), nil
 }
 
