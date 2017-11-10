@@ -8,6 +8,7 @@ import (
 	"github.com/viant/toolbox"
 	"fmt"
 	"time"
+	"net/url"
 )
 
 const (
@@ -41,21 +42,24 @@ type Parser struct {
 }
 
 
-func (p *Parser) Parse(URL, stdout string, isURLDir bool) ([]storage.Object, error) {
+func (p *Parser) Parse(parsedURL *url.URL, stdout string, isURLDir bool) ([]storage.Object, error) {
 	var err error
 	var result = make([]storage.Object, 0)
 	if strings.Contains(stdout, "No such file or directory") {
 		return result, nil
 	}
 	for _, line := range strings.Split(stdout, "\n") {
+		if line == "" {
+			continue
+		}
 		line := strings.Replace(vtclean.Clean(line,false), "\r", "",1)
 		var object storage.Object
 
 
 		if p.IsoTimeStyle {
-			object, err = p.extractObjectFromIsoBasedTimeCommand(URL, line, isURLDir)
+			object, err = p.extractObjectFromIsoBasedTimeCommand(parsedURL, line, isURLDir)
 		} else {
-			object, err = p.extractObjectFromNonIsoBaseTimeCommand(URL, line, isURLDir)
+			object, err = p.extractObjectFromNonIsoBaseTimeCommand(parsedURL, line, isURLDir)
 		}
 		if err != nil {
 			return nil, err
@@ -75,23 +79,33 @@ func (p *Parser) HasNextTokenInout(nextTokenPosition int, line string) bool {
 	return ! unicode.IsSpace(nextToken)
 }
 
-func (p *Parser) newObject(URL, name, permission, line, size string, modificationTime time.Time, isURLDirectory bool) (storage.Object, error) {
+func (p *Parser) newObject(parsedURL *url.URL , name, permission, line, size string, modificationTime time.Time, isURLDirectory bool) (storage.Object, error) {
+	var URLPath = parsedURL.Path
+	var URL = parsedURL.String()
+	var pathPosition = strings.Index(URL , parsedURL.Host) + len(parsedURL.Host)
+	var URLPrefix = URL[:pathPosition]
+
 	fileMode, err := storage.NewFileMode(permission)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to parse line for lineinfo: %v, unable to file attributes: %v", line, err)
 	}
-	fileInfo := storage.NewFileInfo(name, int64(toolbox.AsInt(size)), fileMode, modificationTime, fileMode.IsDir())
 	if isURLDirectory {
-		URL = toolbox.URLPathJoin(URL, fileInfo.Name())
+		name = strings.Replace(name, URLPath, "", 1)
+		URLPath = toolbox.URLPathJoin(URLPath, name)
+	} else {
+		URLPath = name
 	}
-	object := newStorageObject(URL, fileInfo, fileInfo)
+
+	var objectURL = URLPrefix + URLPath
+	fileInfo := storage.NewFileInfo(name, int64(toolbox.AsInt(size)), fileMode, modificationTime, fileMode.IsDir())
+	object := newStorageObject(objectURL, fileInfo, fileInfo)
 	return object, nil
 }
 
 
 //extractObjectFromNonIsoBaseTimeCommand extract file storage object from line,
 // it expects a file info without iso i.e  -rw-r--r--  1 awitas  1742120565   414 Jun  8 14:14:08 2017 id_rsa.pub
-func (p *Parser) extractObjectFromNonIsoBaseTimeCommand(URL, line string, isURLDirectory bool) (storage.Object, error) {
+func (p *Parser) extractObjectFromNonIsoBaseTimeCommand(parsedURL *url.URL, line string, isURLDirectory bool) (storage.Object, error) {
 	tokenIndex := 0
 	if strings.TrimSpace(line) == "" {
 		return nil, nil
@@ -137,13 +151,15 @@ func (p *Parser) extractObjectFromNonIsoBaseTimeCommand(URL, line string, isURLD
 	if err != nil {
 		return nil, fmt.Errorf("Failed to parse line for lineinfo: %v, unable to extract time: %v", line, err)
 	}
-	return p.newObject(URL, name, permission, line, size, modificationTime, isURLDirectory)
+
+
+	return p.newObject(parsedURL, name, permission, line, size, modificationTime, isURLDirectory)
 }
 
 
 //extractObjectFromNonIsoBaseTimeCommand extract file storage object from line,
 // it expects a file info with iso i.e. -rw-r--r-- 1 awitas awitas 2002 2017-11-04 22:29:33.363458941 +0000 aerospikeciads_aerospike.conf
-func (p *Parser) extractObjectFromIsoBasedTimeCommand(URL, line string, isURLDirectory bool) (storage.Object, error) {
+func (p *Parser) extractObjectFromIsoBasedTimeCommand(parsedURL *url.URL, line string, isURLDirectory bool) (storage.Object, error) {
 	tokeIndex := 0
 	if strings.TrimSpace(line) == "" {
 		return nil, nil
@@ -188,5 +204,5 @@ func (p *Parser) extractObjectFromIsoBasedTimeCommand(URL, line string, isURLDir
 	if err != nil {
 		return nil, fmt.Errorf("Failed to parse line for lineinfo: %v, unable to extract time: %v", line, err)
 	}
-	return p.newObject(URL, name, permission, line, size, modificationTime, isURLDirectory)
+	return p.newObject(parsedURL, name, permission, line, size, modificationTime, isURLDirectory)
 }
