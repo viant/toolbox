@@ -206,6 +206,10 @@ func (s *service) Register(schema string, service storage.Service) error {
 	return fmt.Errorf("Unsupported")
 }
 
+func (s *service) Close() error {
+	return nil
+}
+
 //NewService creates a new aws storage service
 func NewService(config *Config) storage.Service {
 	return &service{config: config}

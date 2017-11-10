@@ -18,15 +18,12 @@ const (
 
 var bufferSize = 64 * 1024
 var scpUploadSleep = 50 * time.Millisecond
-var commandResponseDelaySleep = 200 * time.Millisecond
+var commandResponseDelaySleep = 300 * time.Millisecond
 
 var endTransferSequence = []byte("\x00")
 
-
-
 //Service represents ssh service
 type Service interface {
-
 	//Service returns a service wrapper
 	Client() *ssh.Client
 
@@ -48,12 +45,11 @@ type Service interface {
 	NewSession() (*ssh.Session, error)
 
 	Close() error
-	
 }
 
 //service represnt SSH service
 type service struct {
-	client *ssh.Client
+	client     *ssh.Client
 	Forwarding []*Tunnel
 }
 
@@ -71,7 +67,6 @@ func (c *service) NewSession() (*ssh.Session, error) {
 func (c *service) OpenMultiCommandSession(config *SessionConfig) (MultiCommandSession, error) {
 	return newMultiCommandSession(c.client, config)
 }
-
 
 func (c *service) Run(command string) error {
 	session, err := c.client.NewSession()
@@ -107,9 +102,8 @@ func listenForMessage(reader io.Reader, result chan string, done *int32) {
 }
 
 //Upload uploads passed in content into remote destination
-func (c *service) Upload(destination string, content []byte) error {
+func (c *service) Upload(destination string, content []byte) (err error) {
 	dir, file := path.Split(destination)
-
 	if len(dir) > 0 {
 		c.Run("mkdir -p " + dir)
 	}
@@ -118,7 +112,6 @@ func (c *service) Upload(destination string, content []byte) error {
 		return fmt.Errorf("Failed to create session %v", err)
 	}
 	defer session.Close()
-
 	writer, err := session.StdinPipe()
 	if err != nil {
 		return fmt.Errorf("Failed to acquire stdin %v", err)
@@ -132,30 +125,28 @@ func (c *service) Upload(destination string, content []byte) error {
 	output, err := session.StdoutPipe()
 	var messages = make(chan string, 1)
 	go listenForMessage(output, messages, &done)
-
 	cmd := "scp -qtr " + dir
 	err = session.Start(cmd)
 	if err != nil {
-		return fmt.Errorf("Failed to start command%v %v",cmd, err)
+		return fmt.Errorf("Failed to start command%v %v", cmd, err)
 	}
 	createFileCommand := fmt.Sprintf("%v %d %s\n", createFileSequence, len(content), file)
 	_, err = writer.Write([]byte(createFileCommand))
 	if err != nil {
-		return fmt.Errorf("Failed to write create file sequence: %v %v",content, err)
+		return fmt.Errorf("Failed to write create file sequence: %v %v", content, err)
 	}
 	var message string
 	select {
-	case message = <-messages:
-	case <-time.After(commandResponseDelaySleep):
+		case message = <-messages:
+		case <-time.After(commandResponseDelaySleep):
 	}
 	if message != "" {
 		return errors.New(message)
 	}
-
-	var interationCount = (len(content) / bufferSize) + 1
+	var payloadFragmentCount = (len(content) / bufferSize) + 1
 	//This is terrible hack, but  it looks like writer.Write at once or using io.Copy causes some data being lost in the final file,
 	//so slowing down writes addresses this issue
-	for i := 0; i < interationCount; i++ {
+	for i := 0; i < payloadFragmentCount; i++ {
 		maxLength := (i + 1) * bufferSize
 		if maxLength >= len(content) {
 			maxLength = len(content)
@@ -169,7 +160,7 @@ func (c *service) Upload(destination string, content []byte) error {
 			}
 			return fmt.Errorf("Failed to write content %v %v %v", err, len(content), i)
 		}
-		if i+2 > interationCount {
+		if payloadFragmentCount > 1 &&  i+2 > payloadFragmentCount {
 			time.Sleep(scpUploadSleep)
 		}
 	}
@@ -190,9 +181,10 @@ func (c *service) Download(source string) ([]byte, error) {
 		return nil, err
 	}
 	defer session.Close()
-	return session.Output(fmt.Sprintf("cat %s", source))
+	var data []byte
+	data, err = session.CombinedOutput(fmt.Sprintf("cat %s", source))
+	return data, err
 }
-
 
 //Close closes service
 func (c *service) Close() error {
@@ -201,10 +193,8 @@ func (c *service) Close() error {
 			_ = forwarding.Close()
 		}
 	}
-
 	return c.client.Close()
 }
-
 
 //OpenTunnel tunnels data between localAddress and remoteAddress on ssh connection
 func (c *service) OpenTunnel(localAddress, remoteAddress string) (error) {
@@ -214,14 +204,12 @@ func (c *service) OpenTunnel(localAddress, remoteAddress string) (error) {
 	}
 	var forwarding = NewForwarding(c.client, remoteAddress, local)
 	if len(c.Forwarding) == 0 {
-		c.Forwarding = make([]*Tunnel,0)
+		c.Forwarding = make([]*Tunnel, 0)
 	}
 	c.Forwarding = append(c.Forwarding, forwarding)
 	go forwarding.Handle()
 	return nil
 }
-
-
 
 //NewService create a new ssh service, it takes host port and authentication config
 func NewService(host string, port int, authConfig *cred.Config) (Service, error) {

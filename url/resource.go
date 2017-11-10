@@ -43,6 +43,7 @@ func (r *Resource) Clone() *Resource {
 
 var defaultSchemePorts = map[string]int{
 	"ssh":   22,
+	"scp":   22,
 	"http":  80,
 	"https": 443,
 }
@@ -141,7 +142,6 @@ func (r *Resource) Decode(target interface{}, decoderFactory toolbox.DecoderFact
 	return decoderFactory.Create(bytes.NewReader(content)).Decode(target)
 }
 
-
 //Rename renames URI name of this resource
 func (r *Resource) Rename(name string) (err error) {
 	var _, currentName = toolbox.URLSplit(r.URL)
@@ -149,7 +149,6 @@ func (r *Resource) Rename(name string) (err error) {
 	r.ParsedURL, err = url.Parse(r.URL)
 	return err
 }
-
 
 //JSONDecode decodes json resource into target
 func (r *Resource) JSONDecode(target interface{}) error {
@@ -184,9 +183,9 @@ func (r *Resource) Cachable() bool {
 
 func normalizeURL(URL string) string {
 	if strings.Contains(URL, "://") {
-		var protoPosition = strings.Index(URL ,"://")
+		var protoPosition = strings.Index(URL, "://")
 		if protoPosition != -1 {
-			var urlSuffix=string(URL[protoPosition+3:])
+			var urlSuffix = string(URL[protoPosition+3:])
 			urlSuffix = strings.Replace(urlSuffix, "//", "/", len(urlSuffix))
 			URL = string(URL[:protoPosition+3]) + urlSuffix
 		}
