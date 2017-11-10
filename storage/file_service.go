@@ -50,6 +50,7 @@ func (s *fileStorageService) List(URL string) ([]Object, error) {
 		return nil, err
 	}
 	var result = make([]Object, 0)
+	result = append(result, newFileObject(URL, stat))
 	for _, fileInfo := range files {
 		fileURL := URL + "/" + fileInfo.Name()
 		result = append(result, newFileObject(fileURL,fileInfo))
@@ -67,6 +68,10 @@ func (s *fileStorageService) Exists(URL string) (bool, error) {
 		return false, fmt.Errorf("Invalid schema, expected file but had: %v", parsedUrl.Scheme)
 	}
 	return toolbox.FileExists(parsedUrl.Path), nil
+}
+
+func (s *fileStorageService) Close() error {
+	return nil
 }
 
 //Object returns a Object for supplied url
