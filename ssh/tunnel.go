@@ -35,10 +35,10 @@ func (f *Tunnel) tunnelTraffic(local, remote  net.Conn) {
 
 
 	go func() {
-		_, err := io.Copy(remote, local)
-		if err != nil {
-			log.Printf("Failed to copy local to remote: %v", err)
-		}
+		_, _ = io.Copy(remote, local)
+		//if err != nil {
+		//	log.Printf("Failed to copy local to remote: %v", err)
+		//}
 		completionChannel <- true
 	}()
 	<-completionChannel
