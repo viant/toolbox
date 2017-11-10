@@ -43,7 +43,9 @@ func (s *multiCommandSession) Run(command string, timeoutMs int, terminators ...
 	if err != nil {
 		return "", fmt.Errorf("Failed to execute command: %v, err: %v", command, err)
 	}
-	return s.readResponse(timeoutMs, terminators...)
+	var output string
+	output, _, err = s.readResponse(timeoutMs, terminators...)
+	return output, err
 }
 
 //ShellPrompt returns a shell prompt
@@ -91,7 +93,9 @@ func (s *multiCommandSession) init(shell string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return s.readResponse(defaultTimeoutMs)
+	var output string
+	output, _, err = s.readResponse(defaultTimeoutMs)
+	return output, err
 }
 
 func (s *multiCommandSession) drain(reader io.Reader, out chan string) {
@@ -150,16 +154,14 @@ func (s *multiCommandSession) hasTerminator(source string, terminators ...string
 	return false
 }
 
-func (s *multiCommandSession) readResponse(timeoutMs int, terminators ...string) (out string, err error) {
+func (s *multiCommandSession) readResponse(timeoutMs int, terminators ...string) (out string, has bool, err error) {
 	if timeoutMs == 0 {
 		timeoutMs = defaultTimeoutMs
-	}
-	if len(terminators) == 0 {
-		terminators = []string{"$ $"}
 	}
 	var done int32
 	defer atomic.StoreInt32(&done, 1)
 	var errOut string
+	var hasOutput bool
 outer:
 	for {
 		select {
@@ -184,6 +186,7 @@ outer:
 	}
 
 	if len(out) > 0 {
+		hasOutput = true
 		var lines = strings.Split(out, "\n")
 		var escapedLines = make([]string, 0)
 		for _, line := range lines {
@@ -195,14 +198,14 @@ outer:
 		}
 		out = strings.Join(escapedLines, "\n")
 	}
-	return out, err
+	return out, hasOutput, err
 }
 
 func (s *multiCommandSession) drainStdout() {
 	//read any outstanding output
 	for ; ; {
-		out, _ := s.readResponse(10, "")
-		if len(out) == 0 {
+		_, has, _ := s.readResponse(10, "")
+		if ! has {
 			return
 		}
 	}
