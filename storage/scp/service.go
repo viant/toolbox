@@ -31,10 +31,13 @@ type service struct {
 }
 
 func (s *service) runCommand(session ssh.MultiCommandSession, URL string, command string) (string, error) {
-	output, _ := session.Run(command, 1000)
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	output, _ := session.Run(command, 5000)
 	var stdout = s.stdout(output)
 	return stdout, nil
 }
+
 
 func (s *service) stdout(output string) string {
 	return vtclean.Clean(string(output), false)
