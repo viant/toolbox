@@ -196,7 +196,7 @@ outer:
 			}
 			escapedLines = append(escapedLines, line)
 		}
-		out = strings.Join(escapedLines, "\n")
+		out = strings.Join(escapedLines, "\r\n")
 	}
 	return out, hasOutput, err
 }
