@@ -141,6 +141,11 @@ type fileStorageObject struct {
 	*AbstractObject
 }
 
+
+func NewFileStorage() Service {
+	return &fileStorageService{}
+}
+
 func (o *fileStorageObject) Unwrap(target interface{}) error {
 	if fileInfo, casted := target.(*os.FileInfo); casted {
 		source, ok := o.Source.(os.FileInfo)

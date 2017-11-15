@@ -24,6 +24,7 @@ const verificationSizeThreshold = 1024 * 1024
 var NoSuchFileOrDirectoryError = errors.New("No Such File Or Directory")
 
 type service struct {
+	fileService storage.Service
 	config   *cred.Config
 	services map[string]ssh.Service
 	multiSessions map[string]ssh.MultiCommandSession
@@ -80,6 +81,10 @@ func (s *service) List(URL string) ([]storage.Object, error) {
 	if err != nil {
 		return nil, err
 	}
+	if parsedURL.Host == "127.0.0.1" || parsedURL.Host == "127.0.0.1:22" {
+		var fileURL = toolbox.FileSchema + parsedURL.Path
+		return s.fileService.List(fileURL)
+	}
 	_, err = s.getService(parsedURL)
 	if err != nil {
 		return nil, err
@@ -124,6 +129,10 @@ func (s *service) Exists(URL string) (bool, error) {
 		return false, err
 	}
 
+	if parsedURL.Host == "127.0.0.1" || parsedURL.Host == "127.0.0.1:22" {
+		var fileURL = toolbox.FileSchema + parsedURL.Path
+		return s.fileService.Exists(fileURL)
+	}
 	_, err = s.getService(parsedURL)
 	if err != nil {
 		return false, err
@@ -153,18 +162,25 @@ func (s *service) Download(object storage.Object) (io.Reader, error) {
 	if object == nil {
 		return nil, fmt.Errorf("Object was nil")
 	}
-	parsedUrl, err := url.Parse(object.URL())
+	parsedURL, err := url.Parse(object.URL())
 	if err != nil {
 		return nil, err
 	}
-
-	port := toolbox.AsInt(parsedUrl.Port())
+	if parsedURL.Host == "127.0.0.1" || parsedURL.Host == "127.0.0.1:22" {
+		var fileURL = toolbox.FileSchema + parsedURL.Path
+		storageObject, err := s.fileService.StorageObject(fileURL)
+		if err != nil {
+			return nil, err
+		}
+		return s.fileService.Download(storageObject)
+	}
+	port := toolbox.AsInt(parsedURL.Port())
 	if port == 0 {
 		port = defaultSSHPort
 	}
 
-	service, err := s.getService(parsedUrl)
-	content, err := service.Download(parsedUrl.Path)
+	service, err := s.getService(parsedURL)
+	content, err := service.Download(parsedURL.Path)
 	if err != nil {
 		return nil, err
 	}
@@ -173,16 +189,20 @@ func (s *service) Download(object storage.Object) (io.Reader, error) {
 
 //Upload uploads provided reader content for supplied URL.
 func (s *service) Upload(URL string, reader io.Reader) error {
-	parsedUrl, err := url.Parse(URL)
+	parsedURL, err := url.Parse(URL)
 	if err != nil {
 		return err
 	}
+	if parsedURL.Host == "127.0.0.1" || parsedURL.Host == "127.0.0.1:22" {
+		var fileURL = toolbox.FileSchema + parsedURL.Path
+		return s.fileService.Upload(fileURL, reader)
+	}
 
-	port := toolbox.AsInt(parsedUrl.Port())
+	port := toolbox.AsInt(parsedURL.Port())
 	if port == 0 {
 		port = defaultSSHPort
 	}
-	service, err := ssh.NewService(parsedUrl.Hostname(), toolbox.AsInt(port), s.config)
+	service, err := ssh.NewService(parsedURL.Hostname(), toolbox.AsInt(port), s.config)
 	if err != nil {
 		return err
 	}
@@ -193,7 +213,7 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 		return fmt.Errorf("Failed to upload - unable read: %v", err)
 	}
 
-	err = service.Upload(parsedUrl.Path, content)
+	err = service.Upload(parsedURL.Path, content)
 	if err != nil {
 		return fmt.Errorf("Failed to upload: %v %v", URL, err)
 	}
@@ -204,7 +224,7 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 			return fmt.Errorf("Failed to get upload object  %v for verification: %v", URL, err)
 		}
 		if int(object.FileInfo().Size()) != len(content) {
-			err = service.Upload(parsedUrl.Path, content)
+			err = service.Upload(parsedURL.Path, content)
 			object, err = s.StorageObject(URL)
 			if err != nil {
 				return err
@@ -234,16 +254,24 @@ func (s *service) Close() error {
 
 //Delete removes passed in storage object
 func (s *service) Delete(object storage.Object) error {
-	parsedUrl, err := url.Parse(object.URL())
+	parsedURL, err := url.Parse(object.URL())
 	if err != nil {
 		return err
 	}
-
-	port := toolbox.AsInt(parsedUrl.Port())
+	if parsedURL.Host == "127.0.0.1" || parsedURL.Host == "127.0.0.1:22" {
+		var fileURL = toolbox.FileSchema + parsedURL.Path
+		storageObject, err := s.fileService.StorageObject(fileURL)
+		if err != nil {
+			return  err
+		}
+		return s.fileService.Delete(storageObject)
+	}
+	
+	port := toolbox.AsInt(parsedURL.Port())
 	if port == 0 {
 		port = defaultSSHPort
 	}
-	service, err := ssh.NewService(parsedUrl.Hostname(), toolbox.AsInt(port), s.config)
+	service, err := ssh.NewService(parsedURL.Hostname(), toolbox.AsInt(port), s.config)
 	if err != nil {
 		return err
 	}
@@ -255,10 +283,10 @@ func (s *service) Delete(object storage.Object) error {
 	}
 	defer session.Close()
 
-	if parsedUrl.Path == "/" {
-		return fmt.Errorf("Invalid removal path: %v", parsedUrl.Path)
+	if parsedURL.Path == "/" {
+		return fmt.Errorf("Invalid removal path: %v", parsedURL.Path)
 	}
-	_, err = session.Output("rm -rf " + parsedUrl.Path)
+	_, err = session.Output("rm -rf " + parsedURL.Path)
 	return err
 }
 
@@ -269,5 +297,6 @@ func NewService(config *cred.Config) *service {
 		config:   config,
 		multiSessions: make(map[string]ssh.MultiCommandSession),
 		mutex:    &sync.Mutex{},
+		fileService:storage.NewFileStorage(),
 	}
 }
