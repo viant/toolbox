@@ -128,11 +128,6 @@ func (c *Config) ClientConfig() (*ssh.ClientConfig, error) {
 			return nil, err
 		}
 
-		if len(c.clientConfig.Ciphers) == 0 {
-			c.clientConfig.Ciphers = make([]string, 0)
-		}
-		c.clientConfig.Ciphers=append(c.clientConfig.Ciphers, "aes128-cbc")
-
 		key, err := ssh.ParsePrivateKey(privateKeyBytes)
 		if err != nil {
 			return nil, err
@@ -141,6 +136,12 @@ func (c *Config) ClientConfig() (*ssh.ClientConfig, error) {
 
 	}
 	c.clientConfig = result
+	if len(c.clientConfig.Ciphers) == 0 {
+		c.clientConfig.Ciphers = make([]string, 0)
+	}
+	c.clientConfig.Ciphers=append(c.clientConfig.Ciphers, "aes128-cbc")
+
+
 	return result, nil
 }
 
