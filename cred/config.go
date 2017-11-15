@@ -139,9 +139,9 @@ func (c *Config) ClientConfig() (*ssh.ClientConfig, error) {
 	if len(c.clientConfig.Ciphers) == 0 {
 		c.clientConfig.Ciphers = make([]string, 0)
 	}
-	c.clientConfig.Ciphers=append(c.clientConfig.Ciphers, "aes128-cbc")
-
-
+	c.clientConfig.Ciphers=append(c.clientConfig.Ciphers, "aes128-cbc", "aes128-ctr", "aes192-ctr", "aes256-ctr",
+		"aes128-gcm@openssh.com",
+		"arcfour256", "arcfour128")
 	return result, nil
 }
 
