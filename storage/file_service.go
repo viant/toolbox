@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"bytes"
+	"strings"
 )
 
 var fileMode os.FileMode = 0644
@@ -51,8 +52,14 @@ func (s *fileStorageService) List(URL string) ([]Object, error) {
 	}
 	var result = make([]Object, 0)
 	result = append(result, newFileObject(URL, stat))
+
+	var parsedURL, _ = url.Parse(URL)
 	for _, fileInfo := range files {
-		fileURL := URL + "/" + fileInfo.Name()
+		var fileName = fileInfo.Name()
+		if parsedURL != nil {
+			fileName = strings.Replace(fileName, parsedURL.Path, "", 1)
+		}
+		fileURL := toolbox.URLPathJoin(URL , fileName)
 		result = append(result, newFileObject(fileURL,fileInfo))
 	}
 	return result, nil
@@ -92,8 +99,9 @@ func (s *fileStorageService) StorageObject(URL string) (Object, error) {
 func (s *fileStorageService) Download(object Object) (io.Reader, error) {
 	reader, _, err := toolbox.OpenReaderFromURL(object.URL())
 	if err != nil {
-		defer reader.Close()
+		return nil, err
 	}
+	defer reader.Close()
 	data, err :=  ioutil.ReadAll(reader)
 	if err != nil {
 		return nil, err
