@@ -45,7 +45,6 @@ func (s *fileStorageService) List(URL string) ([]Object, error) {
 			}, nil
 		}
 	}
-
 	files, err := file.Readdir(0)
 	if err != nil {
 		return nil, err
