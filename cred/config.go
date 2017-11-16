@@ -136,9 +136,6 @@ func (c *Config) ClientConfig() (*ssh.ClientConfig, error) {
 
 	}
 	c.clientConfig = result
-	if len(c.clientConfig.Ciphers) == 0 {
-		c.clientConfig.Ciphers = make([]string, 0)
-	}
 	return result, nil
 }
 
