@@ -5,10 +5,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
+	_ "github.com/viant/toolbox/storage/scp"
 	"io/ioutil"
 	"os"
 	"path"
 	"testing"
+	"strings"
+	"os/exec"
 )
 
 func TestStorageService_List(t *testing.T) {
@@ -26,7 +29,7 @@ func TestStorageService_List(t *testing.T) {
 	objects, err := service.List(baseUrl)
 	assert.Nil(t, err)
 
-	assert.Equal(t, 5, len(objects))
+	assert.True(t, len(objects) >= 5)
 	var objectByUrl = make(map[string]storage.Object)
 	for _, object := range objects {
 		objectByUrl[object.URL()] = object
@@ -62,6 +65,24 @@ func TestStorageService_List(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, "abc", string(content))
 	}
+
+}
+
+
+func TestUpload(t *testing.T) {
+
+	var path =  "/tmp/local/test.txt"
+	toolbox.RemoveFileIfExist(path)
+	exec.Command("rmdir /tmp/local").CombinedOutput()
+	var destination = "scp://localhost:22/" + path
+
+
+	service, err :=  storage.NewServiceForURL(destination, "")
+	assert.Nil(t, err)
+
+	err = service.Upload(destination, strings.NewReader("abc"))
+	assert.Nil(t, err)
+
 
 }
 
