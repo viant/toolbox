@@ -12,6 +12,20 @@ import (
 type CopyHandler func(sourceObject Object, source io.Reader, destinationService Service, destinationURL string) error
 type ModificationHandler func(reader io.Reader) (io.Reader, error)
 
+
+func urlPath(URL string) string {
+	var result = URL
+	schemaPosition:= strings.Index(URL, "://")
+	if schemaPosition != -1 {
+		result = string(URL[schemaPosition+3:])
+	}
+	pathRoot := strings.Index(result, "/")
+	if pathRoot > 0 {
+		result= string(result[pathRoot:])
+	}
+	return result
+}
+
 func copy(sourceService Service, sourceURL string, destinationService Service, destinationURL string, modifyContentHandler ModificationHandler, subPath string, copyHandler CopyHandler) error {
 	sourceListURL := sourceURL
 	if subPath != "" {
@@ -19,23 +33,25 @@ func copy(sourceService Service, sourceURL string, destinationService Service, d
 	}
 	objects, err := sourceService.List(sourceListURL)
 	var objectRelativePath string
+	sourceURLPath := urlPath(sourceURL)
 	for _, object := range objects {
+		var objectURLPath = urlPath(object.URL())
 		if object.IsFolder() {
-			if object.URL() == sourceURL {
+
+			if sourceURLPath == objectURLPath {
 				continue
 			}
-			if subPath != "" && object.URL() == toolbox.URLPathJoin(sourceURL, subPath) {
+			if subPath != "" && objectURLPath== toolbox.URLPathJoin(sourceURLPath, subPath) {
 				continue
 			}
 		}
-		if len(object.URL()) > len(sourceURL) {
-			objectRelativePath = object.URL()[len(sourceURL):]
+		if len(objectURLPath) > len(sourceURLPath) {
+			objectRelativePath = objectURLPath[len(sourceURLPath):]
 		}
 		var destinationObjectURL = destinationURL
 		if objectRelativePath != "" {
 			destinationObjectURL = toolbox.URLPathJoin(destinationURL, objectRelativePath)
 		}
-
 		var reader io.Reader
 		if object.IsContent() {
 			reader, err = sourceService.Download(object)
@@ -43,7 +59,6 @@ func copy(sourceService Service, sourceURL string, destinationService Service, d
 				err = fmt.Errorf("Unable download, %v -> %v, %v", object.URL(), destinationObjectURL, err)
 				return err
 			}
-
 			if modifyContentHandler != nil {
 				reader, err = modifyContentHandler(reader)
 				if err != nil {
@@ -51,10 +66,23 @@ func copy(sourceService Service, sourceURL string, destinationService Service, d
 					return err
 				}
 			}
-			destinationObject, err := destinationService.StorageObject(destinationObjectURL)
-			if (subPath == "" && destinationObject != nil && destinationObject.IsFolder()) {
-				_, file := path.Split(object.URL())
-				destinationObjectURL = toolbox.URLPathJoin(destinationObjectURL, file)
+
+			if subPath == "" {
+				_, sourceName := path.Split(object.URL())
+				_, destinationName := path.Split(destinationURL)
+				if strings.HasSuffix(destinationObjectURL, "/") {
+					destinationObjectURL = toolbox.URLPathJoin(destinationObjectURL, sourceName)
+				} else {
+					destinationObject, _ := destinationService.StorageObject(destinationObjectURL)
+					if (destinationObject != nil && destinationObject.IsFolder()) {
+						destinationObjectURL = toolbox.URLPathJoin(destinationObjectURL, sourceName)
+					} else if destinationName != sourceName   {
+						if ! strings.Contains(destinationName, ".") {
+							destinationObjectURL = toolbox.URLPathJoin(destinationObjectURL, sourceName)
+						}
+
+					}
+				}
 			}
 
 			err = copyHandler(object, reader, destinationService, destinationObjectURL)
