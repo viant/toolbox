@@ -30,6 +30,7 @@ func main() {
 		os.Mkdir(secretPath, 0744)
 	}
 	username, password := credentials()
+	fmt.Println("")
 	config := &cred.Config{
 		Username:username,
 		Password:password,
