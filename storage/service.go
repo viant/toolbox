@@ -129,8 +129,10 @@ func NewService() Service {
 		registry: make(map[string]Service),
 	}
 	result.Register("file", &fileStorageService{})
+	result.Register("mem", NewMemoryService())
 	return result
 }
+
 
 //NewServiceForURL creates a new storage service for provided URL scheme and optional credential file
 func NewServiceForURL(URL, credentialFile string) (Service, error) {
