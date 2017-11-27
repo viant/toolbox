@@ -146,6 +146,31 @@ func (c *ReplayCommands) Load() error {
 	return nil
 }
 
+
+//Shell returns command shell
+func (c *ReplayCommands) Shell() string {
+	for _, candidate := range c.Commands {
+		if strings.HasPrefix(candidate.Stdin, "PS1=") && len(candidate.Stdout) > 0 {
+			return candidate.Stdout[0]
+		}
+	}
+	return "";
+}
+
+
+//System returns system name
+func (c *ReplayCommands) System() string {
+	for _, candidate := range c.Commands {
+		if strings.HasPrefix(candidate.Stdin, "uname -s") && len(candidate.Stdout) > 0 {
+			return strings.ToLower(candidate.Stdout[0])
+		}
+	}
+	return "";
+}
+
+
+
+
 //NewReplayCommands create a new replay commands or error if provided basedir does not exists and can not be created
 func NewReplayCommands(basedir string) (*ReplayCommands, error) {
 	if ! toolbox.FileExists(basedir) {
