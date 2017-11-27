@@ -69,8 +69,6 @@ func TestNewFileSetInfoInfo(t *testing.T) {
 	assert.False(t, userInfo.HasReceiver("Abc"))
 
 	assert.Equal(t, 3, len(userInfo.Receivers()))
-	fmt.Printf("!%v!\n", userInfo.Receivers()[0].Name)
-
 	assert.True(t, userInfo.HasReceiver("Test"))
 	assert.True(t, userInfo.HasReceiver("Test2"))
 
