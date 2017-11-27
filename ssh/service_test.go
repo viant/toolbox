@@ -8,55 +8,59 @@ import (
 	"path"
 	"github.com/viant/toolbox"
 	"io/ioutil"
-	"github.com/viant/toolbox/cred"
 )
 
-func TestNewClient(t *testing.T) {
-	client, err := ssh.NewService("127.0.0.1", 22, nil)
-	if err == nil {
-		assert.NotNil(t, client)
 
-		session, err := client.OpenMultiCommandSession(nil)
+func TestNewClient(t *testing.T) {
+	commands, err := ssh.NewReplayCommands("/tmp/ls")
+	assert.Nil(t, err)
+
+	defer commands.Store()
+	service, err := ssh.NewService("127.0.0.1", 22, nil)
+	assert.NotNil(t, service)
+	commands.Enable(service)
+
+	if err == nil {
+		assert.NotNil(t, service)
+		session, err := service.OpenMultiCommandSession(nil)
 		assert.Nil(t, err)
 		defer session.Close()
 
 		assert.NotNil(t, session)
-
 		var out string
 		out, err = session.Run("ls /etc/hosts", 2000)
 		assert.Equal(t, "/etc/hosts", out)
 
 	} else {
-
-		assert.Nil(t, client)
+		assert.Nil(t, service)
 	}
 
 }
 
+
+
+
+
 func TestClient_Upload(t *testing.T) {
-	client, err := ssh.NewService("127.0.0.1", 22, nil)
+	service, err := ssh.NewService("127.0.0.1", 22, nil)
 	if err == nil {
-		assert.NotNil(t, client)
-		err = client.Upload("/tmp/a/abcd.bin", []byte{0x1, 0x6, 0x10})
+		assert.NotNil(t, service)
+		err = service.Upload("/tmp/a/abcd.bin", []byte{0x1, 0x6, 0x10})
 		assert.Nil(t, err)
 
-		content, err := client.Download("/tmp/a/abcd.bin")
+		content, err := service.Download("/tmp/a/abcd.bin")
 		assert.Nil(t, err)
 		assert.Equal(t, []byte{0x1, 0x6, 0x10}, (content))
 
 	} else {
-		assert.Nil(t, client)
+		assert.Nil(t, service)
 	}
 }
 
 
 
 func TestClient_UploadLargeFile(t *testing.T) {
-
-
-	var config, err = cred.NewConfig(path.Join(os.Getenv("HOME"), "secret/scp.json"))
-	assert.Nil(t, err)
-	client, err := ssh.NewService("127.0.0.1", 22, config)
+	service, err := ssh.NewService("127.0.0.1", 22, nil)
 	assert.Nil(t, err)
 	if err == nil {
 
@@ -75,7 +79,7 @@ func TestClient_UploadLargeFile(t *testing.T) {
 		//file.Close()
 
 
-		err := client.Upload(filename, payload)
+		err := service.Upload(filename, payload)
 		assert.Nil(t, err)
 
 		data, err := ioutil.ReadFile(filename)

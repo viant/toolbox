@@ -49,8 +49,10 @@ type Service interface {
 
 //service represnt SSH service
 type service struct {
-	client     *ssh.Client
-	Forwarding []*Tunnel
+	client         *ssh.Client
+	forwarding     []*Tunnel
+	replayCommands *ReplayCommands
+	recordSession  bool
 }
 
 //Service returns undelying ssh Service
@@ -65,7 +67,7 @@ func (c *service) NewSession() (*ssh.Session, error) {
 
 //MultiCommandSession create a new MultiCommandSession
 func (c *service) OpenMultiCommandSession(config *SessionConfig) (MultiCommandSession, error) {
-	return newMultiCommandSession(c.client, config)
+	return newMultiCommandSession(c.client, config, c.replayCommands, c.recordSession)
 }
 
 func (c *service) Run(command string) error {
@@ -186,8 +188,8 @@ func (c *service) Download(source string) ([]byte, error) {
 
 //Close closes service
 func (c *service) Close() error {
-	if len(c.Forwarding) > 0 {
-		for _, forwarding := range c.Forwarding {
+	if len(c.forwarding) > 0 {
+		for _, forwarding := range c.forwarding {
 			_ = forwarding.Close()
 		}
 	}
@@ -201,10 +203,10 @@ func (c *service) OpenTunnel(localAddress, remoteAddress string) (error) {
 		return fmt.Errorf("Failed to listen on local: %v %v", localAddress, err)
 	}
 	var forwarding = NewForwarding(c.client, remoteAddress, local)
-	if len(c.Forwarding) == 0 {
-		c.Forwarding = make([]*Tunnel, 0)
+	if len(c.forwarding) == 0 {
+		c.forwarding = make([]*Tunnel, 0)
 	}
-	c.Forwarding = append(c.Forwarding, forwarding)
+	c.forwarding = append(c.forwarding, forwarding)
 	go forwarding.Handle()
 	return nil
 }

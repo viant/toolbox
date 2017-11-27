@@ -25,26 +25,33 @@ type MultiCommandSession interface {
 	Close()
 }
 
+
 //multiCommandSession represents a multi command session
 //a new command are send vi stdin
 type multiCommandSession struct {
-	session     *ssh.Session
-	stdOutput   chan string
-	stdError    chan string
-	stdInput    io.WriteCloser
-	shellPrompt string
-	system      string
-	running     int32
+	replayCommands *ReplayCommands
+	recordSession  bool
+	session        *ssh.Session
+	stdOutput      chan string
+	stdError       chan string
+	stdInput       io.WriteCloser
+	shellPrompt    string
+	system         string
+	running        int32
 }
 
 func (s *multiCommandSession) Run(command string, timeoutMs int, terminators ...string) (string, error) {
 	s.drainStdout()
-	_, err := s.stdInput.Write([]byte(command + "\n"))
+	var stdin = command + "\n"
+	_, err := s.stdInput.Write([]byte(stdin))
 	if err != nil {
 		return "", fmt.Errorf("Failed to execute command: %v, err: %v", command, err)
 	}
 	var output string
 	output, _, err = s.readResponse(timeoutMs, terminators...)
+	if s.recordSession {
+		s.replayCommands.Register(stdin, output)
+	}
 	return output, err
 }
 
@@ -211,7 +218,7 @@ func (s *multiCommandSession) drainStdout() {
 	}
 }
 
-func newMultiCommandSession(client *ssh.Client, config *SessionConfig) (MultiCommandSession, error) {
+func newMultiCommandSession(client *ssh.Client, config *SessionConfig, replayCommands *ReplayCommands, recordSession  bool) (MultiCommandSession, error) {
 	if config == nil {
 		config = &SessionConfig{}
 	}
@@ -251,6 +258,8 @@ func newMultiCommandSession(client *ssh.Client, config *SessionConfig) (MultiCom
 		stdError:  make(chan string),
 		stdInput:  writer,
 		running:   1,
+		recordSession:recordSession,
+		replayCommands:replayCommands,
 	}
 	_, err = result.init(config.Shell)
 	if result.closeIfError(err) {
