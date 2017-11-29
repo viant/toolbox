@@ -66,14 +66,24 @@ func CanConvertToFloat(value interface{}) bool {
 
 //AsFloat converts an input to float.
 func AsFloat(value interface{}) float64 {
-	if floatValue, ok := value.(float64); ok {
-		return floatValue
-	}
-	valueAsString := AsString(value)
-	if result, err := strconv.ParseFloat(valueAsString, 64); err == nil {
+	if result, err := ToFloat(value); err == nil {
 		return result
 	}
 	return 0
+}
+
+//ToFloat converts an input to float or error
+func ToFloat(value interface{}) (float64, error) {
+	switch actualValue := value.(type) {
+	case float64:
+		return actualValue, nil
+	case float32:
+		return float64(actualValue), nil
+	case *float64:
+		return *actualValue, nil
+	}
+	valueAsString := AsString(value)
+	return strconv.ParseFloat(valueAsString, 64);
 }
 
 //AsBoolean converts an input to bool.
@@ -100,19 +110,36 @@ func CanConvertToInt(value interface{}) bool {
 	return false
 }
 
+var intBitSize = reflect.TypeOf(int64(0)).Bits()
+
 //AsInt converts an input to int.
 func AsInt(value interface{}) int {
-	if intValue, ok := value.(int); ok {
-		return intValue
-	}
-	if floatValue, ok := value.(float64); ok {
-		return int(floatValue)
-	}
-	valueAsString := AsString(value)
-	if result, err := strconv.ParseInt(valueAsString, 10, 64); err == nil {
-		return int(result)
+	var result, err = ToInt(value)
+	if err == nil {
+		return result
 	}
 	return 0
+}
+
+//ToInt converts input value to int or error
+func ToInt(value interface{}) (int, error) {
+	if intValue, ok := value.(int); ok {
+		return intValue, nil
+	}
+	if floatValue, ok := value.(float64); ok {
+		return int(floatValue), nil
+	}
+	valueAsString := AsString(value)
+
+	if strings.Contains(valueAsString, ".") {
+		floatValue, err := strconv.ParseFloat(valueAsString, intBitSize)
+		if err != nil {
+			return 0, err
+		}
+		return int(floatValue), nil
+	}
+	result, err := strconv.ParseInt(valueAsString, 10, 64);
+	return int(result), err
 }
 
 //AsTime converts an input to time, it takes time input,  dateLaout as parameters.
@@ -525,69 +552,50 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 
 	case *int, *int8, *int16, *int32, *int64:
 		directValue := reflect.Indirect(reflect.ValueOf(targetValuePointer))
-		sourceValue := reflect.ValueOf(source)
-		if sourceValue.Kind() == reflect.Ptr {
-			sourceValue = sourceValue.Elem()
-		}
-		stringValue := AsString(sourceValue.Interface())
-		value, err := strconv.ParseInt(stringValue, 10, directValue.Type().Bits())
+		var intValue, err = ToInt(DereferenceValue(source))
 		if err != nil {
 			return err
 		}
-		directValue.SetInt(value)
+		directValue.SetInt(int64(intValue))
 		return nil
 
 	case **int, **int8, **int16, **int32, **int64:
 		directType := reflect.TypeOf(targetValuePointer).Elem().Elem()
-		sourceValue := reflect.ValueOf(source)
-		if sourceValue.Kind() == reflect.Ptr {
-			sourceValue = sourceValue.Elem()
-		}
-		stringValue := AsString(sourceValue.Interface())
-
-		value, err := strconv.ParseInt(stringValue, 10, directType.Bits())
+		var intValue, err = ToInt(DereferenceValue(source))
 		if err != nil {
 			return err
 		}
 		switch directType.Kind() {
 		case reflect.Int8:
-			alignValue := int8(value)
+			alignValue := int8(intValue)
 			reflect.ValueOf(targetValuePointer).Elem().Set(reflect.ValueOf(&alignValue))
 		case reflect.Int16:
-			alignValue := int16(value)
+			alignValue := int16(intValue)
 			reflect.ValueOf(targetValuePointer).Elem().Set(reflect.ValueOf(&alignValue))
 		case reflect.Int32:
-			alignValue := int32(value)
+			alignValue := int32(intValue)
+			reflect.ValueOf(targetValuePointer).Elem().Set(reflect.ValueOf(&alignValue))
+		case reflect.Int64:
+			alignValue := int64(intValue)
 			reflect.ValueOf(targetValuePointer).Elem().Set(reflect.ValueOf(&alignValue))
 		default:
-			reflect.ValueOf(targetValuePointer).Elem().Set(reflect.ValueOf(&value))
+			reflect.ValueOf(targetValuePointer).Elem().Set(reflect.ValueOf(&intValue))
 		}
 		return nil
 	case *uint, *uint8, *uint16, *uint32, *uint64:
 		directValue := reflect.Indirect(reflect.ValueOf(targetValuePointer))
-		sourceValue := reflect.ValueOf(source)
-		if sourceValue.Kind() == reflect.Ptr {
-			sourceValue = sourceValue.Elem()
-		}
-		stringValue := AsString(sourceValue.Interface())
-		value, err := strconv.ParseUint(stringValue, 10, directValue.Type().Bits())
+		value, err := ToInt(DereferenceValue(source))
 		if err != nil {
 			return err
 		}
-		directValue.SetUint(value)
+		directValue.SetUint(uint64(value))
 		return nil
 	case **uint, **uint8, **uint16, **uint32, **uint64:
 		directType := reflect.TypeOf(targetValuePointer).Elem().Elem()
-		sourceValue := reflect.ValueOf(source)
-		if sourceValue.Kind() == reflect.Ptr {
-			sourceValue = sourceValue.Elem()
-		}
-		stringValue := AsString(sourceValue.Interface())
-		value, err := strconv.ParseUint(stringValue, 10, directType.Bits())
+		value, err := ToInt(DereferenceValue(source))
 		if err != nil {
 			return err
 		}
-
 		switch directType.Kind() {
 		case reflect.Uint8:
 			alignValue := uint8(value)
@@ -598,18 +606,17 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		case reflect.Uint32:
 			alignValue := uint32(value)
 			reflect.ValueOf(targetValuePointer).Elem().Set(reflect.ValueOf(&alignValue))
+		case reflect.Uint64:
+			alignValue := uint64(value)
+			reflect.ValueOf(targetValuePointer).Elem().Set(reflect.ValueOf(&alignValue))
 		default:
 			reflect.ValueOf(targetValuePointer).Elem().Set(reflect.ValueOf(&value))
 		}
 		return nil
+
 	case *float32, *float64:
 		directValue := reflect.Indirect(reflect.ValueOf(targetValuePointer))
-		sourceValue := reflect.ValueOf(source)
-		if sourceValue.Kind() == reflect.Ptr {
-			sourceValue = sourceValue.Elem()
-		}
-		stringValue := AsString(sourceValue.Interface())
-		value, err := strconv.ParseFloat(stringValue, directValue.Type().Bits())
+		value, err := ToFloat(DereferenceValue(source))
 		if err != nil {
 			return err
 		}
@@ -617,12 +624,8 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		return nil
 	case **float32, **float64:
 		directType := reflect.TypeOf(targetValuePointer).Elem().Elem()
-		sourceValue := reflect.ValueOf(source)
-		if sourceValue.Kind() == reflect.Ptr {
-			sourceValue = sourceValue.Elem()
-		}
-		stringValue := AsString(sourceValue.Interface())
-		value, err := strconv.ParseFloat(stringValue, directType.Bits())
+
+		value, err := ToFloat(DereferenceValue(source))
 		if err != nil {
 			return err
 		}
@@ -786,10 +789,10 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 
 func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sourceValue reflect.Value) error {
 	targetMap := AsMap(target)
-	if targetMap == nil  {
+	if targetMap == nil {
 		return fmt.Errorf("target %T is not a map", target)
 	}
-	if source == nil  || ! sourceValue.IsValid(){
+	if source == nil || ! sourceValue.IsValid() {
 		return nil
 	}
 
@@ -877,8 +880,13 @@ func DereferenceValue(value interface{}) interface{} {
 	if value == nil {
 		return nil
 	}
-	reflectValue := reflect.ValueOf(value)
-
+	var reflectValue reflect.Value
+	switch actualValue := value.(type) {
+	case reflect.Value:
+		reflectValue = actualValue
+	default:
+		reflectValue = reflect.ValueOf(value)
+	}
 	for {
 		if !reflectValue.IsValid() {
 			break
