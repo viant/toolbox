@@ -583,7 +583,6 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 			sourceValue = sourceValue.Elem()
 		}
 		stringValue := AsString(sourceValue.Interface())
-
 		value, err := strconv.ParseUint(stringValue, 10, directType.Bits())
 		if err != nil {
 			return err
@@ -597,7 +596,7 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 			alignValue := uint16(value)
 			reflect.ValueOf(targetValuePointer).Elem().Set(reflect.ValueOf(&alignValue))
 		case reflect.Uint32:
-			alignValue := int32(value)
+			alignValue := uint32(value)
 			reflect.ValueOf(targetValuePointer).Elem().Set(reflect.ValueOf(&alignValue))
 		default:
 			reflect.ValueOf(targetValuePointer).Elem().Set(reflect.ValueOf(&value))
