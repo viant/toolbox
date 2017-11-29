@@ -3,11 +3,10 @@ package toolbox_test
 import (
 	"reflect"
 	"testing"
-
 	"time"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
+
 )
 
 func TestConverter(t *testing.T) {
@@ -560,5 +559,12 @@ func TestUnwrapValue(t *testing.T) {
 		value := toolbox.UnwrapValue(&fieldValue)
 		assert.Equal(t, "a", value)
 	}
+
+}
+
+
+func TestConverter_AsInt(t *testing.T) {
+	intValue := toolbox.AsInt("5.638679022673832e+18")
+	assert.True(t, intValue  > 0)
 
 }
