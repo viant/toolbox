@@ -3,8 +3,6 @@ package toolbox_test
 import (
 	"strings"
 	"testing"
-
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
 	"os"
