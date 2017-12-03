@@ -83,7 +83,7 @@ func (sr ServiceRouting) extractParameterFromBody(parameterName string, targetTy
 	if !strings.Contains(parameterName, ":") {
 		err := decoder.Decode(targetValuePointer.Interface())
 		if err != nil {
-			return nil, fmt.Errorf("Unable to extract %Tv due to %v", targetValuePointer.Interface(), err)
+			return nil, fmt.Errorf("unable to extract %Tv due to %v", targetValuePointer.Interface(), err)
 		}
 	} else {
 		var valueMap = make(map[string]interface{})
@@ -91,7 +91,7 @@ func (sr ServiceRouting) extractParameterFromBody(parameterName string, targetTy
 		valueMap[pair[1]] = targetValuePointer.Interface()
 		err := decoder.Decode(&valueMap)
 		if err != nil {
-			return nil, fmt.Errorf("Unable to extract %T due to %v", targetValuePointer.Interface(), err)
+			return nil, fmt.Errorf("unable to extract %T due to %v", targetValuePointer.Interface(), err)
 		}
 	}
 	return targetValuePointer.Interface(), nil
@@ -132,7 +132,7 @@ func (sr ServiceRouting) extractParameters(request *http.Request, response http.
 			if _, found := result[parameter]; !found {
 				value, err := sr.extractParameterFromBody(parameter, functionSignature[i], request)
 				if err != nil {
-					return nil, fmt.Errorf("Failed to extract parameters for %v %v due to %v", sr.HTTPMethod, sr.URI, err)
+					return nil, fmt.Errorf("failed to extract parameters for %v %v due to %v", sr.HTTPMethod, sr.URI, err)
 				}
 				result[parameter] = value
 				break
@@ -150,7 +150,6 @@ type ServiceRouter struct {
 func (r *ServiceRouter) match(request *http.Request) []*ServiceRouting {
 	var result = make([]*ServiceRouting, 0)
 	for _, candidate := range r.serviceRouting {
-
 		if candidate.HTTPMethod == request.Method {
 			_, matched := ExtractURIParameters(candidate.URI, request.RequestURI)
 			if matched {
@@ -176,7 +175,7 @@ func (r *ServiceRouter) Route(response http.ResponseWriter, request *http.Reques
 		for _, routing := range r.serviceRouting {
 			uriTemplates = append(uriTemplates, routing.URI)
 		}
-		return fmt.Errorf("Failed to route request - unable to match %v with one of %v", request.RequestURI, strings.Join(uriTemplates, ","))
+		return fmt.Errorf("failed to route request - unable to match %v with one of %v", request.RequestURI, strings.Join(uriTemplates, ","))
 	}
 	var finalError error
 
@@ -206,14 +205,14 @@ func (r *ServiceRouter) Route(response http.ResponseWriter, request *http.Reques
 		if len(result) > 0 {
 			err = WriteServiceRoutingResponse(response, request, serviceRouting, result[0])
 			if err != nil {
-				return fmt.Errorf("Failed to write response response %v, due to %v", result[0], err)
+				return fmt.Errorf("failed to write response response %v, due to %v", result[0], err)
 			}
 			return nil
 		}
 		response.Header().Set("Content-Type", textPlainContentType)
 	}
 	if finalError != nil {
-		return fmt.Errorf("Failed to route request - %v", finalError)
+		return fmt.Errorf("failed to route request - %v", finalError)
 	}
 	return nil
 }
@@ -227,12 +226,12 @@ func WriteServiceRoutingResponse(response http.ResponseWriter, request *http.Req
 	response.Header().Set("Content-Type", responseContentType)
 	err := encoder.Encode(result)
 	if err != nil {
-		return fmt.Errorf("Failed to encode response %v, due to %v", response, err)
+		return fmt.Errorf("failed to encode response %v, due to %v", response, err)
 	}
 	return nil
 
 	if err != nil {
-		return fmt.Errorf("Failed to write response response %v, due to %v", result, err)
+		return fmt.Errorf("failed to write response response %v, due to %v", result, err)
 	}
 	return nil
 }
@@ -245,7 +244,7 @@ func (r *ServiceRouter) WriteResponse(encoderFactory EncoderFactory, response in
 	responseWriter.Header().Set("Content-Type", responseContentType)
 	err := encoder.Encode(response)
 	if err != nil {
-		return fmt.Errorf("Failed to encode response %v, due to %v", response, err)
+		return fmt.Errorf("failed to encode response %v, due to %v", response, err)
 	}
 	return nil
 }
@@ -358,7 +357,7 @@ func (c *ToolboxHTTPClient) Request(method, url string, request, response interf
 		buffer = new(bytes.Buffer)
 		err := encoderFactory.Create(buffer).Encode(&request)
 		if err != nil {
-			return fmt.Errorf("Failed to encode request: %v due to ", err)
+			return fmt.Errorf("failed to encode request: %v due to ", err)
 		}
 	}
 	var serverResponse *http.Response
@@ -383,20 +382,20 @@ func (c *ToolboxHTTPClient) Request(method, url string, request, response interf
 		defer serverResponse.Body.Close()
 	}
 	if err != nil && serverResponse != nil {
-		return fmt.Errorf("Failed to get response %v %v", err, serverResponse.Header.Get("error"))
+		return fmt.Errorf("failed to get response %v %v", err, serverResponse.Header.Get("error"))
 	}
 
 	if response != nil {
 		if serverResponse == nil || serverResponse.Body == nil {
-			return fmt.Errorf("Failed to receive response %v", err)
+			return fmt.Errorf("failed to receive response %v", err)
 		}
 		body, err := ioutil.ReadAll(serverResponse.Body)
 		if err != nil {
-			return fmt.Errorf("Failed to read response %v", err)
+			return fmt.Errorf("failed to read response %v", err)
 		}
 		err = decoderFactory.Create(strings.NewReader(string(body))).Decode(response)
 		if err != nil {
-			return fmt.Errorf("Failed to decode response to %T: body: %v: %v, %v", response, string(body), err, serverResponse.Header.Get("error"))
+			return fmt.Errorf("failed to decode response to %T: body: %v: %v, %v", response, string(body), err, serverResponse.Header.Get("error"))
 		}
 	}
 	return nil
