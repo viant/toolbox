@@ -21,9 +21,7 @@ type Resource struct {
 	ParsedURL     *url.URL //parsed URL resource
 	Cache         string   //Cache path for the resource, if specified resource will be cached in the specified path
 	CacheExpiryMs int      //CacheExpiryMs expiry time in ms
-
 	Name    string //name of a resource
-	Version string //version of resource
 	Type    string //resource type
 }
 
@@ -31,7 +29,6 @@ type Resource struct {
 func (r *Resource) Clone() *Resource {
 	return &Resource{
 		Name:          r.Name,
-		Version:       r.Version,
 		URL:           r.URL,
 		Type:          r.Type,
 		Credential:    r.Credential,
