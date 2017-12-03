@@ -403,7 +403,7 @@ func (s *Map) Expand(source interface{}) interface{} {
 		if udf != nil {
 			transformed, err := udf(sourceValue, *s)
 			if err != nil {
-				log.Printf("Failed to run udf:  %v%v\n", value, err)
+				log.Printf("Failed to run udf: %v, %v\n", value, err)
 				return source
 			}
 			if suffix != "" {
