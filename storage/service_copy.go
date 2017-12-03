@@ -87,7 +87,7 @@ func copy(sourceService Service, sourceURL string, destinationService Service, d
 
 			err = copyHandler(object, reader, destinationService, destinationObjectURL)
 			if err != nil {
-				return nil
+				return err
 			}
 
 		} else {
