@@ -41,6 +41,21 @@ func TestNew_CredentialURL(t *testing.T) {
 
 }
 
+func TestNew_DirectoryPath(t *testing.T) {
+	{
+		var resource = url.NewResource("https://raw.githubusercontent.com:80/viant/toolbox/master/LICENSE.txt")
+		assert.EqualValues(t, "/viant/toolbox/master", resource.DirectoryPath())
+	}
+	{
+		var resource = url.NewResource("https://raw.githubusercontent.com:80/viant/toolbox/master/avc")
+		assert.EqualValues(t, "/viant/toolbox/master/avc", resource.DirectoryPath())
+	}
+	{
+		var resource = url.NewResource("hter")
+		assert.EqualValues(t, "", resource.DirectoryPath())
+	}
+}
+
 func TestResource_YamlDecode(t *testing.T) {
 	var filename = path.Join(os.Getenv("TMPDIR"), "resource.yaml")
 	toolbox.RemoveFileIfExist(filename)

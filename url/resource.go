@@ -72,6 +72,22 @@ func (r *Resource) CredentialURL(username, password string) string {
 	return result
 }
 
+//Path returns url's path  directory, assumption is that directory does not have extension, if path ends with '/' it is being stripped.
+func (r *Resource) DirectoryPath() string {
+	if r.ParsedURL == nil {
+		return ""
+	}
+	var result = r.ParsedURL.Path
+
+	parent, name := path.Split(result)
+	if path.Ext(name) != "" {
+		result = parent
+	}
+	if strings.HasSuffix(result, "/") {
+		result = string(result[:len(result)-1])
+	}
+	return result
+}
 
 
 //Port returns url's port
