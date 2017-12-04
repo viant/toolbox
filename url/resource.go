@@ -54,6 +54,26 @@ func (r *Resource) Host() string {
 	return result
 }
 
+//CredentialURL returns url's with provided credential
+func (r *Resource) CredentialURL(username, password string) string {
+	var urlCredential = ""
+	if username != "" {
+		urlCredential = username
+		if password != "" {
+			urlCredential += ":" + password
+		}
+		urlCredential+="@"
+	}
+	result := r.ParsedURL.Scheme + "://" + urlCredential + r.ParsedURL.Hostname() + ":" + r.Port() + r.ParsedURL.Path
+	if r.ParsedURL.RawQuery != "" {
+		result += "?" + r.ParsedURL.RawQuery
+	}
+
+	return result
+}
+
+
+
 //Port returns url's port
 func (r *Resource) Port() string {
 	port := r.ParsedURL.Port()

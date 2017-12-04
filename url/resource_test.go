@@ -25,7 +25,21 @@ func TestNewResource(t *testing.T) {
 	assert.Equal(t, "https://raw.githubusercontent.com/viant/toolbox/master/LICENSE.txt", resource.URL)
 }
 
+func TestNew_CredentialURL(t *testing.T) {
 
+	{
+		var resource= url.NewResource("https://raw.githubusercontent.com:80/viant/toolbox/master/LICENSE.txt?check=1&p=2")
+		var URL= resource.CredentialURL("smith", "123")
+		assert.EqualValues(t, "https://smith:123@raw.githubusercontent.com:80/viant/toolbox/master/LICENSE.txt?check=1&p=2", URL)
+	}
+
+	{
+		var resource= url.NewResource("https://raw.githubusercontent.com:80/viant/toolbox/master/LICENSE.txt")
+		var URL= resource.CredentialURL("smith", "")
+		assert.EqualValues(t, "https://smith@raw.githubusercontent.com:80/viant/toolbox/master/LICENSE.txt", URL)
+	}
+
+}
 
 func TestResource_YamlDecode(t *testing.T) {
 	var filename = path.Join(os.Getenv("TMPDIR"), "resource.yaml")
