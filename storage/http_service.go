@@ -174,7 +174,7 @@ func (s *httpStorageService) StorageObject(URL string) (Object, error) {
 		return nil, err
 	}
 	if len(objects) == 0 {
-		return nil, fmt.Errorf("Resource not found: %v", URL)
+		return nil, fmt.Errorf("resource  not found: %v", URL)
 	}
 
 	return objects[0], nil
