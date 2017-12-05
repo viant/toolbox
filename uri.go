@@ -76,7 +76,11 @@ func ExtractURIParameters(templateURI, requestURI string) (map[string]string, bo
 	return uriParameters, matched
 }
 
+
 func URLPathJoin(baseURL, path string) string {
+	if path == "" {
+		return baseURL
+	}
 	if strings.HasSuffix(baseURL, "/") {
 		return baseURL + path
 	}
