@@ -112,7 +112,7 @@ func copy(sourceService Service, sourceURL string, destinationService Service, d
 func copySourceToDestination(sourceObject Object, reader io.Reader, destinationService Service, destinationURL string) error {
 	err := destinationService.Upload(destinationURL, reader)
 	if err != nil {
-		err = fmt.Errorf("Unable upload, %v %v %v", sourceObject.URL(), destinationURL, err)
+		err = fmt.Errorf("unable upload, %v %v %v", sourceObject.URL(), destinationURL, err)
 	}
 	return err
 }
