@@ -1,16 +1,18 @@
 package storage
 
 import (
-	"os"
-	"io/ioutil"
-	"strings"
-	"io"
 	"bytes"
+	"errors"
+	"io"
+	"io/ioutil"
+	"net/url"
+	"os"
+	"strings"
 	"sync"
 	"time"
-	"net/url"
-	"errors"
 )
+
+const MemoryProviderScheme = "mem"
 
 var noSuchFileOrDirectoryError = errors.New("No such file or directory")
 var folderMode, _ = NewFileMode("drwxrwxrwx")
@@ -72,7 +74,7 @@ func (s *memoryStorageService) getFolder(pathFragments []string) (*MemoryFolder,
 	var ok bool
 	for i := 1; i+1 < len(pathFragments); i++ {
 		pathFragment := pathFragments[i]
-		node, ok = node.folders[pathFragment];
+		node, ok = node.folders[pathFragment]
 		if !ok {
 			return nil, noSuchFileOrDirectoryError
 		}
@@ -227,4 +229,12 @@ func NewMemoryService() Service {
 	return &memoryStorageService{
 		root: MemoryRoot,
 	}
+}
+
+func init() {
+	NewStorageProvider().Registry[MemoryProviderScheme] = memServiceProvider
+}
+
+func memServiceProvider(credentialFile string) (Service, error) {
+	return NewMemoryService(), nil
 }

@@ -1,20 +1,20 @@
 package storage
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/cred"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"os"
 	"path"
-	"net/http"
-	"strings"
 	"path/filepath"
+	"strings"
 	"time"
-	"bytes"
-	"github.com/viant/toolbox/cred"
 )
 
 //httpStorageService represents basic http storage service (only limited listing and full download are supported)
@@ -22,9 +22,8 @@ type httpStorageService struct {
 	Credential *cred.Config
 }
 
-
 func newHttpClient() (*http.Client, error) {
-	return toolbox.NewHttpClient(&toolbox.HttpOptions{Key:"MaxIdleConns", Value:0})
+	return toolbox.NewHttpClient(&toolbox.HttpOptions{Key: "MaxIdleConns", Value: 0})
 }
 
 func (s *httpStorageService) addCredentialToURLIfNeeded(URL string) string {
@@ -109,7 +108,7 @@ func (s *httpStorageService) List(URL string) ([]Object, error) {
 		if isGitUrl {
 
 			for _, link := range links {
-				if ! ((strings.Contains(link.URL, "/blob/") || strings.Contains(link.URL, "/tree/")) && strings.HasSuffix(link.URL, link.Value)) {
+				if !((strings.Contains(link.URL, "/blob/") || strings.Contains(link.URL, "/tree/")) && strings.HasSuffix(link.URL, link.Value)) {
 					continue
 				}
 
@@ -166,7 +165,6 @@ func (s *httpStorageService) Exists(URL string) (bool, error) {
 	return response.StatusCode == 200, nil
 }
 
-
 //Object returns a Object for supplied url
 func (s *httpStorageService) StorageObject(URL string) (Object, error) {
 	objects, err := s.List(URL)
@@ -195,7 +193,6 @@ func (s *httpStorageService) Download(object Object) (io.Reader, error) {
 	return bytes.NewReader(content), err
 }
 
-
 //Upload uploads provided reader content for supplied url.
 func (s *httpStorageService) Upload(URL string, reader io.Reader) error {
 	return errors.New("unsupported")
@@ -218,7 +215,6 @@ func (s *httpStorageService) Close() error {
 	return nil
 }
 
-
 func NewHttpStorageService(credential *cred.Config) Service {
 	return &httpStorageService{
 		Credential: credential,
@@ -233,15 +229,12 @@ func (o *httpStorageObject) Unwrap(target interface{}) error {
 	return fmt.Errorf("unsuported target %T", target)
 }
 
-
-
-
 func newHttpFileObject(url string, objectType int, source interface{}, lastModified time.Time, size int64) Object {
 	var isDir = objectType == StorageObjectFolderType
 	var _, name = toolbox.URLSplit(url)
-	var fileMode , _ = NewFileMode("-r--r--r--")
+	var fileMode, _ = NewFileMode("-r--r--r--")
 	if isDir {
-		fileMode , _ = NewFileMode("dr--r--r--")
+		fileMode, _ = NewFileMode("dr--r--r--")
 	}
 	fileInfo := NewFileInfo(name, size, fileMode, lastModified, isDir)
 	abstract := NewAbstractStorageObject(url, source, fileInfo)
@@ -256,12 +249,12 @@ const HttpProviderScheme = "http"
 const HttpsProviderScheme = "https"
 
 func init() {
-	NewStorageProvider().Registry[HttpsProviderScheme] = serviceProvider
-	NewStorageProvider().Registry[HttpProviderScheme] = serviceProvider
+	NewStorageProvider().Registry[HttpsProviderScheme] = httpServiceProvider
+	NewStorageProvider().Registry[HttpProviderScheme] = httpServiceProvider
 
 }
 
-func serviceProvider(credentialFile string) (Service, error) {
+func httpServiceProvider(credentialFile string) (Service, error) {
 
 	if credentialFile == "" {
 		return NewHttpStorageService(nil), nil
@@ -271,7 +264,7 @@ func serviceProvider(credentialFile string) (Service, error) {
 		dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 		credentialFile = path.Join(dir, credentialFile)
 	}
-	config, err :=cred.NewConfig(credentialFile)
+	config, err := cred.NewConfig(credentialFile)
 	if err != nil {
 		return nil, err
 	}
