@@ -323,34 +323,34 @@ func GetSliceValue(slice interface{}, index int) interface{} {
 //ProcessMap iterates over any map, it calls handler with every key, value pair unless handler returns false.
 func ProcessMap(sourceMap interface{}, handler func(key, value interface{}) bool) {
 	switch aMap := sourceMap.(type) {
-		case map[string]string:
-			for key, value:= range aMap {
-				if !handler(key, value) {
-					break
-				}
+	case map[string]string:
+		for key, value := range aMap {
+			if !handler(key, value) {
+				break
 			}
+		}
 		return
-		case map[string]interface{}:
-			for key, value:= range aMap {
-				if !handler(key, value) {
-					break
-				}
+	case map[string]interface{}:
+		for key, value := range aMap {
+			if !handler(key, value) {
+				break
 			}
-			return
-		case map[string]bool:
-			for key, value:= range aMap {
-				if !handler(key, value) {
-					break
-				}
+		}
+		return
+	case map[string]bool:
+		for key, value := range aMap {
+			if !handler(key, value) {
+				break
 			}
-			return
-		case map[string]int:
-			for key, value:= range aMap {
-				if !handler(key, value) {
-					break
-				}
+		}
+		return
+	case map[string]int:
+		for key, value := range aMap {
+			if !handler(key, value) {
+				break
 			}
-			return
+		}
+		return
 	}
 	mapValue := DiscoverValueByKind(reflect.ValueOf(sourceMap), reflect.Map)
 	for _, key := range mapValue.MapKeys() {

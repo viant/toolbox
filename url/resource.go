@@ -21,8 +21,8 @@ type Resource struct {
 	ParsedURL     *url.URL //parsed URL resource
 	Cache         string   //Cache path for the resource, if specified resource will be cached in the specified path
 	CacheExpiryMs int      //CacheExpiryMs expiry time in ms
-	Name    string //name of a resource
-	Type    string //resource type
+	Name          string   //name of a resource
+	Type          string   //resource type
 }
 
 //Clone creates a clone of the resource
@@ -62,7 +62,7 @@ func (r *Resource) CredentialURL(username, password string) string {
 		if password != "" {
 			urlCredential += ":" + password
 		}
-		urlCredential+="@"
+		urlCredential += "@"
 	}
 	result := r.ParsedURL.Scheme + "://" + urlCredential + r.ParsedURL.Hostname() + ":" + r.Port() + r.ParsedURL.Path
 	if r.ParsedURL.RawQuery != "" {
@@ -89,7 +89,6 @@ func (r *Resource) DirectoryPath() string {
 	return result
 }
 
-
 //Port returns url's port
 func (r *Resource) Port() string {
 	port := r.ParsedURL.Port()
@@ -111,7 +110,7 @@ func (r *Resource) LoadCredential(errorIfEmpty bool) (string, string, error) {
 	}
 	credential, err := cred.NewConfig(r.Credential)
 	if err != nil {
-		return "", "", fmt.Errorf("Failed to load credential: %v %v", r.Credential, err)
+		return "", "", fmt.Errorf("failed to load credential: %v %v", r.Credential, err)
 	}
 	return credential.Username, credential.Password, nil
 }

@@ -8,10 +8,10 @@ import (
 	_ "github.com/viant/toolbox/storage/scp"
 	"io/ioutil"
 	"os"
-	"path"
-	"testing"
-	"strings"
 	"os/exec"
+	"path"
+	"strings"
+	"testing"
 )
 
 func TestStorageService_List(t *testing.T) {
@@ -68,21 +68,17 @@ func TestStorageService_List(t *testing.T) {
 
 }
 
-
 func TestUpload(t *testing.T) {
 
-	var path =  "/tmp/local/test.txt"
+	var path = "/tmp/local/test.txt"
 	toolbox.RemoveFileIfExist(path)
 	exec.Command("rmdir /tmp/local").CombinedOutput()
 	var destination = "scp://localhost:22/" + path
 
-
-	service, err :=  storage.NewServiceForURL(destination, "")
+	service, err := storage.NewServiceForURL(destination, "")
 	assert.Nil(t, err)
 
 	err = service.Upload(destination, strings.NewReader("abc"))
 	assert.Nil(t, err)
 
-
 }
-

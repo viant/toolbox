@@ -1,17 +1,16 @@
 package cred_test
 
 import (
-	"testing"
-	"os"
-	"path"
-	"io/ioutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox/cred"
+	"io/ioutil"
+	"os"
+	"path"
+	"testing"
 )
 
-
 func TestConfig_Load(t *testing.T) {
-	var tempDir= os.TempDir()
+	var tempDir = os.TempDir()
 	var testFile = path.Join(tempDir, "credTest1.json")
 	_ = os.Remove(testFile)
 	var data = "{\"Username\":\"adrian\", \"Password\":\"abc\"}"
@@ -27,7 +26,6 @@ func TestConfig_Load(t *testing.T) {
 		config.Save(testFile)
 	}
 
-
 	{
 		config, err := cred.NewConfig(testFile)
 		assert.Nil(t, err)
@@ -38,8 +36,4 @@ func TestConfig_Load(t *testing.T) {
 
 	_ = os.Remove(testFile)
 
-
-
 }
-
-

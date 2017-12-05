@@ -1,9 +1,9 @@
 package ssh
 
 import (
-	"golang.org/x/crypto/ssh"
-	"fmt"
 	"errors"
+	"fmt"
+	"golang.org/x/crypto/ssh"
 )
 
 //Service represents ssh service
@@ -43,14 +43,14 @@ func (s *replayService) Upload(destination string, content []byte) error {
 
 //Download downloads content from specified source.
 func (s *replayService) Download(source string) ([]byte, error) {
-	if _, has := s.storage[source];! has {
+	if _, has := s.storage[source]; !has {
 		return nil, fmt.Errorf("No such file or directory")
 	}
 	return s.storage[source], nil
 }
 
 //OpenTunnel opens a tunnel between local to remote for network traffic.
-func (s *replayService) OpenTunnel(localAddress, remoteAddress string) (error) {
+func (s *replayService) OpenTunnel(localAddress, remoteAddress string) error {
 	return nil
 }
 
@@ -64,14 +64,12 @@ func (s *replayService) Close() error {
 
 func NewReplayService(shellPrompt, system string, commands *ReplayCommands, storage map[string][]byte) Service {
 	if len(storage) == 0 {
-		storage  = make(map[string][]byte)
+		storage = make(map[string][]byte)
 	}
 	return &replayService{
-		storage: storage,
-		shellPrompt:shellPrompt,
-		system:system,
-		commands:commands,
+		storage:     storage,
+		shellPrompt: shellPrompt,
+		system:      system,
+		commands:    commands,
 	}
 }
-
-

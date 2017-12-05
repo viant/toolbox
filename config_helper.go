@@ -13,12 +13,12 @@ func LoadConfigFromUrl(url string, config interface{}) error {
 	}
 	reader, _, err := OpenReaderFromURL(url)
 	if err != nil {
-		return fmt.Errorf("Failed to load %v from url %v %v", configType, url, err)
+		return fmt.Errorf("failed to load %v from url %v %v", configType, url, err)
 	}
 	defer reader.Close()
 	err = NewJSONDecoderFactory().Create(reader).Decode(config)
 	if err != nil {
-		return fmt.Errorf("Failed to decode Config from url %v %v", url, err)
+		return fmt.Errorf("failed to decode Config from url %v %v", url, err)
 	}
 	return nil
 }

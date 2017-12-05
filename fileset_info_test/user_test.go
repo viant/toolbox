@@ -13,14 +13,14 @@ type Address struct {
 //User represents a test struct
 type User struct { //my comments
 	///abc comment
-	ID          *int //  comment1 type
-	Name        string
-	DateOfBirth time.Time `foo="bar"`
-	Address     Address
-	AddressPointer     *Address
-	Ints        []int
-	M           map[string][]string
-	C           chan *bool
+	ID             *int //  comment1 type
+	Name           string
+	DateOfBirth    time.Time `foo="bar"`
+	Address        Address
+	AddressPointer *Address
+	Ints           []int
+	M              map[string][]string
+	C              chan *bool
 }
 
 //Test represents a test method

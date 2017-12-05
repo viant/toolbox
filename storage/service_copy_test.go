@@ -1,17 +1,16 @@
 package storage_test
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
-	"path"
-	"os"
-	"testing"
 	"github.com/viant/toolbox/storage"
-	_ 	"github.com/viant/toolbox/storage/scp"
+	_ "github.com/viant/toolbox/storage/scp"
+	"os"
 	"os/exec"
-	"fmt"
+	"path"
+	"testing"
 )
-
 
 func TestCopy(t *testing.T) {
 	service := storage.NewService()
@@ -40,14 +39,10 @@ func TestCopy(t *testing.T) {
 		}
 	}
 
-
-	{//copy file to dir
+	{ //copy file to dir
 
 		sourceURL := toolbox.URLPathJoin(baseUrl, "source/dir/file.json")
 		targetURL := toolbox.URLPathJoin(baseUrl, "target/dir3/")
-
-
-
 
 		err := storage.Copy(service, sourceURL, service, targetURL, nil, nil)
 		assert.Nil(t, err)
@@ -60,7 +55,7 @@ func TestCopy(t *testing.T) {
 			os.Remove(file)
 		}
 	}
-	{//copy file to file
+	{ //copy file to file
 
 		sourceURL := path.Join(baseUrl, "source/dir/file.json")
 		targetURL := path.Join(baseUrl, "target/dir4/file.json")
@@ -78,8 +73,6 @@ func TestCopy(t *testing.T) {
 	}
 }
 
-
-
 func TestScpCopy(t *testing.T) {
 	var credential = path.Join(os.Getenv("HOME"), "secret/scp.json")
 	if !toolbox.FileExists(credential) {
@@ -89,7 +82,7 @@ func TestScpCopy(t *testing.T) {
 	parent, _ := path.Split(fileName)
 
 	var destinationPath = fmt.Sprintf("%vtest/target", parent)
-	_ , err := exec.Command("rm", "-rf", destinationPath).CombinedOutput()
+	_, err := exec.Command("rm", "-rf", destinationPath).CombinedOutput()
 	assert.Nil(t, err)
 
 	baseUrl := "scp://127.0.0.1" + parent
@@ -110,9 +103,8 @@ func TestScpCopy(t *testing.T) {
 
 		for _, file := range expectedFiles {
 			assert.True(t, toolbox.FileExists(file))
-		//	os.Remove(file)
+			//	os.Remove(file)
 		}
 	}
 	service.Close()
 }
-

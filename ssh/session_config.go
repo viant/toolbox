@@ -1,7 +1,5 @@
 package ssh
 
-
-
 //SessionConfig represents a new session config
 type SessionConfig struct {
 	EnvVariables map[string]string

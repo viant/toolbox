@@ -7,10 +7,9 @@ import (
 
 type object struct {
 	*storage.AbstractObject
-	source           interface{}
-	permission       string
+	source     interface{}
+	permission string
 }
-
 
 //Wrap wraps source storage object
 func (i *object) Wrap(source interface{}) {

@@ -41,7 +41,7 @@ func (r valueProviderRegistryImpl) Get(name string) ValueProvider {
 	if result, ok := r.registry[name]; ok {
 		return result
 	}
-	panic(fmt.Sprintf("Failed to lookup name: %v", name))
+	panic(fmt.Sprintf("failed to lookup name: %v", name))
 }
 
 func (r valueProviderRegistryImpl) Names() []string {
@@ -64,7 +64,7 @@ func (p envValueProvider) Get(context Context, arguments ...interface{}) (interf
 	if found {
 		return value, nil
 	}
-	return nil, fmt.Errorf("Failed to lookup %v in env", key)
+	return nil, fmt.Errorf("failed to lookup %v in env", key)
 }
 
 //NewEnvValueProvider returns a provider that returns a value of env variables.
@@ -78,16 +78,16 @@ type castedValueProvider struct{}
 func (p castedValueProvider) Get(context Context, arguments ...interface{}) (interface{}, error) {
 	key := arguments[0].(string)
 	if len(arguments) < 2 {
-		return nil, fmt.Errorf("Failed to cast to %v due to invalud number of arguments, Wanted 2 but had:%v", key, len(arguments))
+		return nil, fmt.Errorf("failed to cast to %v due to invalid number of arguments, Wanted 2 but had:%v", key, len(arguments))
 	}
 	switch key {
 	case "time":
 		if len(arguments) != 3 {
-			return nil, fmt.Errorf("Failed to cast to time due to invalud number of arguments expected 2, but had %v", len(arguments)-1)
+			return nil, fmt.Errorf("failed to cast to time due to invalid number of arguments expected 2, but had %v", len(arguments)-1)
 		}
 		castedTime, err := ParseTime(AsString(arguments[1]), AsString(arguments[2]))
 		if err != nil {
-			return nil, fmt.Errorf("Failed to cast to time %v due to %v", AsString(arguments[1]), err)
+			return nil, fmt.Errorf("failed to cast to time %v due to %v", AsString(arguments[1]), err)
 		}
 		return castedTime, nil
 	case "int":
@@ -100,7 +100,7 @@ func (p castedValueProvider) Get(context Context, arguments ...interface{}) (int
 		return AsString(arguments[1]), nil
 
 	}
-	return nil, fmt.Errorf("Failed to cast to %v - unsupported type", key)
+	return nil, fmt.Errorf("failed to cast to %v - unsupported type", key)
 }
 
 //NewCastedValueProvider return a provider that return casted value type
@@ -231,7 +231,7 @@ func (d *MapDictionary) Get(name string) (interface{}, error) {
 	if result, found := (*d)[name]; found {
 		return result, nil
 	}
-	return nil, fmt.Errorf("Failed to lookup: %v", name)
+	return nil, fmt.Errorf("failed to lookup: %v", name)
 }
 
 func (d *MapDictionary) Exists(name string) bool {
@@ -245,7 +245,7 @@ type dictionaryProvider struct {
 
 func (p dictionaryProvider) Get(context Context, arguments ...interface{}) (interface{}, error) {
 	if len(arguments) == 0 {
-		return nil, fmt.Errorf("ExpectedLogRecords at least one argument but had 0")
+		return nil, fmt.Errorf("Expected at least one argument but had 0")
 	}
 	var key = AsString(arguments[0])
 	var dictionary Dictionary

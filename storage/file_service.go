@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/toolbox"
@@ -9,7 +10,6 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"bytes"
 	"strings"
 )
 
@@ -23,7 +23,7 @@ func openFileFromUrl(URL string) (*os.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	if parsedUrl.Scheme != "file"  {
+	if parsedUrl.Scheme != "file" {
 		return nil, fmt.Errorf("Invalid schema, expected file but had: %v", parsedUrl.Scheme)
 	}
 	return os.Open(parsedUrl.Path)
@@ -39,7 +39,7 @@ func (s *fileStorageService) List(URL string) ([]Object, error) {
 
 	stat, err := file.Stat()
 	if err == nil {
-		if ! stat.IsDir() {
+		if !stat.IsDir() {
 			return []Object{
 				newFileObject(URL, stat),
 			}, nil
@@ -58,8 +58,8 @@ func (s *fileStorageService) List(URL string) ([]Object, error) {
 		if parsedURL != nil {
 			fileName = strings.Replace(fileName, parsedURL.Path, "", 1)
 		}
-		fileURL := toolbox.URLPathJoin(URL , fileName)
-		result = append(result, newFileObject(fileURL,fileInfo))
+		fileURL := toolbox.URLPathJoin(URL, fileName)
+		result = append(result, newFileObject(fileURL, fileInfo))
 	}
 	return result, nil
 }
@@ -101,7 +101,7 @@ func (s *fileStorageService) Download(object Object) (io.Reader, error) {
 		return nil, err
 	}
 	defer reader.Close()
-	data, err :=  ioutil.ReadAll(reader)
+	data, err := ioutil.ReadAll(reader)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +148,6 @@ type fileStorageObject struct {
 	*AbstractObject
 }
 
-
 func NewFileStorage() Service {
 	return &fileStorageService{}
 }
@@ -157,7 +156,7 @@ func (o *fileStorageObject) Unwrap(target interface{}) error {
 	if fileInfo, casted := target.(*os.FileInfo); casted {
 		source, ok := o.Source.(os.FileInfo)
 		if !ok {
-			return fmt.Errorf("Failed to cast %T into %T", o.Source, target)
+			return fmt.Errorf("failed to cast %T into %T", o.Source, target)
 		}
 		*fileInfo = source
 		return nil
@@ -173,9 +172,8 @@ func (o *fileStorageObject) FileInfo() os.FileInfo {
 	return nil
 }
 
-
 func newFileObject(url string, fileInfo os.FileInfo) Object {
-	abstract := NewAbstractStorageObject(url, fileInfo , fileInfo)
+	abstract := NewAbstractStorageObject(url, fileInfo, fileInfo)
 	result := &fileStorageObject{
 		AbstractObject: abstract,
 	}

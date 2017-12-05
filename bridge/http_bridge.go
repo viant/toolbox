@@ -2,6 +2,10 @@ package bridge
 
 import (
 	"bytes"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"github.com/viant/toolbox"
 	"io"
 	"io/ioutil"
 	"log"
@@ -9,16 +13,12 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
+	"path"
 	"sync"
 	"time"
-	"github.com/viant/toolbox"
-	"fmt"
-	"path"
-	"os"
-	"encoding/json"
-	"encoding/base64"
-	"unicode/utf8"
 	"unicode"
+	"unicode/utf8"
 )
 
 //HttpBridgeConfig represent http bridge config
@@ -239,16 +239,16 @@ func AsListeningTripHandler(handler http.Handler) *ListeningTripHandler {
 }
 
 type HttpRequest struct {
-	Method string `json:",omitempty"`
-	URL    string `json:",omitempty"`
+	Method string      `json:",omitempty"`
+	URL    string      `json:",omitempty"`
 	Header http.Header `json:",omitempty"`
-	Body   string `json:",omitempty"`
+	Body   string      `json:",omitempty"`
 }
 
 type HttpResponse struct {
 	Code   int
 	Header http.Header `json:",omitempty"`
-	Body   string `json:",omitempty"`
+	Body   string      `json:",omitempty"`
 }
 
 func ReaderAsText(reader io.Reader) string {
@@ -283,7 +283,7 @@ func isBinary(input []byte) bool {
 	return false
 }
 
-func writeData(filename string, source interface{}, printStrOut bool) error  {
+func writeData(filename string, source interface{}, printStrOut bool) error {
 	if toolbox.FileExists(filename) {
 		os.Remove(filename)
 	}
@@ -325,10 +325,10 @@ func HttpFileRecorder(directory string, printStdOut bool) func(request *http.Req
 		}
 
 		httpRequest := &HttpRequest{
-		Method: request.Method,
-		URL:    request.URL.String(),
-		Header: request.Header,
-		Body:   body,
+			Method: request.Method,
+			URL:    request.URL.String(),
+			Header: request.Header,
+			Body:   body,
 		}
 
 		err = writeData(path.Join(directory, fmt.Sprintf("%T-%v.json", *httpRequest, tripCounter)), httpRequest, printStdOut)
@@ -339,9 +339,9 @@ func HttpFileRecorder(directory string, printStdOut bool) func(request *http.Req
 		body = ReaderAsText(response.Body)
 		request.Body = nil
 		httpResponse := &HttpResponse{
-		Code:   response.StatusCode,
-		Header: response.Header,
-		Body:   body,
+			Code:   response.StatusCode,
+			Header: response.Header,
+			Body:   body,
 		}
 
 		err = writeData(path.Join(directory, fmt.Sprintf("%T-%v.json", *httpResponse, tripCounter)), httpResponse, printStdOut)

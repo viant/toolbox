@@ -64,11 +64,11 @@ type unMarshalerDecoder struct {
 func (d *unMarshalerDecoder) Decode(v interface{}) error {
 	bytes, err := ioutil.ReadAll(d.reader)
 	if err != nil {
-		return fmt.Errorf("Failed to decode %v", err)
+		return fmt.Errorf("failed to decode %v", err)
 	}
 	result, casted := v.(UnMarshaler)
 	if !casted {
-		return fmt.Errorf("Failed to decode - unable cast %T to %s", v, (*UnMarshaler)(nil))
+		return fmt.Errorf("failed to decode - unable cast %T to %s", v, (*UnMarshaler)(nil))
 	}
 	return result.Unmarshal(bytes)
 }
@@ -205,7 +205,7 @@ type yamlDecoder struct {
 func (d *yamlDecoder) Decode(target interface{}) error {
 	var data, err = ioutil.ReadAll(d.Reader)
 	if err != nil {
-		return fmt.Errorf("Failed to read data: %T %v", d.Reader, err)
+		return fmt.Errorf("failed to read data: %T %v", d.Reader, err)
 	}
 	return yaml.Unmarshal(data, target)
 }

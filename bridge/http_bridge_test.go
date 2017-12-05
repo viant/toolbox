@@ -3,15 +3,15 @@ package bridge_test
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/toolbox/bridge"
 	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
-	"github.com/viant/toolbox/bridge"
-	"strings"
 )
 
 func startTargetProxyTestEndpoint(port string, responses map[string]string) error {
@@ -24,7 +24,7 @@ func startTargetProxyTestEndpoint(port string, responses map[string]string) erro
 
 		if strings.ToUpper(request.Method) == "POST" {
 			response.WriteHeader(http.StatusOK)
-			data, err  := ioutil.ReadAll(request.Body)
+			data, err := ioutil.ReadAll(request.Body)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -130,7 +130,7 @@ func TestNewHttpBridgeWithListeningHandler(t *testing.T) {
 		route := &bridge.HttpBridgeProxyRoute{
 			Pattern:   fmt.Sprintf("/test%v", i+1),
 			TargetURL: targetURL,
-			Listener:listener,
+			Listener:  listener,
 		}
 		routes = append(routes, route)
 	}
@@ -138,9 +138,6 @@ func TestNewHttpBridgeWithListeningHandler(t *testing.T) {
 	assert.Nil(t, err)
 
 	time.Sleep(1 * time.Second)
-
-
-
 
 	//Test direct responses
 	for i := 0; i < 2; i++ {
@@ -162,7 +159,7 @@ func TestNewHttpBridgeWithListeningHandler(t *testing.T) {
 	}
 
 	{
-		i := 0;
+		i := 0
 		response, err := http.Post(fmt.Sprintf("http://127.0.0.1:9085/test%v", i+1), "text/json", strings.NewReader("{\"a\":1}"))
 		assert.Nil(t, err)
 		content, err := ioutil.ReadAll(response.Body)
@@ -186,6 +183,5 @@ func TestNewHttpBridgeWithListeningHandler(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, "{\"a\":1}", string(content))
 	}
-
 
 }

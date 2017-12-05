@@ -52,7 +52,7 @@ func (t *Tokenizer) Next(candidate int) *Token {
 		}
 
 	} else {
-		panic(fmt.Sprintf("Failed to lookup matcher for %v", candidate))
+		panic(fmt.Sprintf("failed to lookup matcher for %v", candidate))
 	}
 	return &Token{t.InvalidToken, ""}
 }

@@ -83,7 +83,7 @@ func ToFloat(value interface{}) (float64, error) {
 		return *actualValue, nil
 	}
 	valueAsString := AsString(value)
-	return strconv.ParseFloat(valueAsString, 64);
+	return strconv.ParseFloat(valueAsString, 64)
 }
 
 //AsBoolean converts an input to bool.
@@ -124,7 +124,7 @@ func AsInt(value interface{}) int {
 //ToInt converts input value to int or error
 func ToInt(value interface{}) (int, error) {
 
-	switch actual:=value.(type) {
+	switch actual := value.(type) {
 	case int:
 		return actual, nil
 	case int8:
@@ -182,7 +182,7 @@ func ToInt(value interface{}) (int, error) {
 		}
 		return int(floatValue), nil
 	}
-	result, err := strconv.ParseInt(valueAsString, 10, 64);
+	result, err := strconv.ParseInt(valueAsString, 10, 64)
 	return int(result), err
 }
 
@@ -322,14 +322,14 @@ func (c *Converter) assignConvertedMap(target, input interface{}, targetIndirect
 		targetMapValuePointer := reflect.New(mapValueType)
 		err = c.AssignConverted(targetMapValuePointer.Interface(), value)
 		if err != nil {
-			err = fmt.Errorf("Failed to assigned converted map value %v to %v due to %v", input, target, err)
+			err = fmt.Errorf("failed to assigned converted map value %v to %v due to %v", input, target, err)
 			return false
 		}
 
 		targetMapKeyPointer := reflect.New(mapKeyType)
 		err = c.AssignConverted(targetMapKeyPointer.Interface(), key)
 		if err != nil {
-			err = fmt.Errorf("Failed to assigned converted map key %v to %v due to %v", input, target, err)
+			err = fmt.Errorf("failed to assigned converted map key %v to %v due to %v", input, target, err)
 			return false
 		}
 		var elementKey = targetMapKeyPointer.Elem()
@@ -377,7 +377,7 @@ func (c *Converter) assignConvertedSlice(target, source interface{}, targetIndir
 		}
 		err = c.AssignConverted(targetComponentPointer.Interface(), item)
 		if err != nil {
-			err = fmt.Errorf("Failed to convert slice item from %T to %T, values: from %v to %v, due to %v", item, targetComponentPointer.Interface(), item, targetComponentPointer.Interface(), err)
+			err = fmt.Errorf("failed to convert slice item from %T to %T, values: from %v to %v, due to %v", item, targetComponentPointer.Interface(), item, targetComponentPointer.Interface(), err)
 			return false
 		}
 
@@ -409,7 +409,7 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 				c.DataLayout = GetTimeLayout(mapping)
 				err := c.AssignConverted(field.Addr().Interface(), value)
 				if err != nil {
-					return fmt.Errorf("Failed to convert %v to %v due to %v", value, field, err)
+					return fmt.Errorf("failed to convert %v to %v due to %v", value, field, err)
 				}
 				c.DataLayout = previousLayout
 
@@ -417,7 +417,7 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 
 				err := c.AssignConverted(field.Addr().Interface(), value)
 				if err != nil {
-					return fmt.Errorf("Failed to convert %v to %v due to %v", value, field, err)
+					return fmt.Errorf("failed to convert %v to %v due to %v", value, field, err)
 				}
 			}
 		}
@@ -836,7 +836,7 @@ func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sou
 	if targetMap == nil {
 		return fmt.Errorf("target %T is not a map", target)
 	}
-	if source == nil || ! sourceValue.IsValid() {
+	if source == nil || !sourceValue.IsValid() {
 		return nil
 	}
 

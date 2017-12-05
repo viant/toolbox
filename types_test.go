@@ -23,7 +23,7 @@ func TestAssertKind(t *testing.T) {
 
 	defer func() {
 		if err := recover(); err != nil {
-			expected := "Failed to check: User - expected kind: ptr but found struct (toolbox_test.User2)"
+			expected := "failed to check: User - expected kind: ptr but found struct (toolbox_test.User2)"
 			actual := fmt.Sprintf("%v", err)
 			assert.Equal(t, actual, expected, "Assert Kind")
 		}
@@ -90,13 +90,10 @@ func TestIsValueOfKind(t *testing.T) {
 
 }
 
-
-
 func TestIsFunc(t *testing.T) {
-	var f = func(){}
+	var f = func() {}
 	assert.True(t, toolbox.IsFunc(&f))
 	assert.True(t, toolbox.IsFunc(f))
 	assert.False(t, toolbox.IsFunc(""))
-
 
 }

@@ -13,7 +13,6 @@ func (s *Collection) Push(value interface{}) {
 	(*s) = append(*s, value)
 }
 
-
 //PadWithMap creates missing elements with a map
 func (s *Collection) PadWithMap(size int) {
 	for i := len(*s); i < size; i++ {
@@ -88,8 +87,6 @@ func (s *Collection) RangeInt(handler func(item interface{}, index int) (bool, e
 	}
 	return nil
 }
-
-
 
 //String returns a string representation of this collection
 func (s *Collection) String() string {

@@ -50,7 +50,7 @@ type marshalerEncoder struct {
 func (e *marshalerEncoder) Encode(v interface{}) error {
 	result, casted := v.(Marshaler)
 	if !casted {
-		return fmt.Errorf("Failed to decode - unable cast %T to %s", v, (*Marshaler)(nil))
+		return fmt.Errorf("failed to decode - unable cast %T to %s", v, (*Marshaler)(nil))
 	}
 	bytes, err := result.Marshal()
 	if err != nil {
@@ -61,7 +61,7 @@ func (e *marshalerEncoder) Encode(v interface{}) error {
 	for i := 0; i < bytesLen; i++ {
 		bytesWritten, err := e.writer.Write(bytes[totalByteWritten:])
 		if err != nil {
-			return fmt.Errorf("Failed to write data %v", err)
+			return fmt.Errorf("failed to write data %v", err)
 		}
 		totalByteWritten = totalByteWritten + bytesWritten
 		if totalByteWritten == bytesLen {
@@ -69,7 +69,7 @@ func (e *marshalerEncoder) Encode(v interface{}) error {
 		}
 	}
 	if totalByteWritten != bytesLen {
-		return fmt.Errorf("Failed to write all data, written %v, expected: %v", totalByteWritten, bytesLen)
+		return fmt.Errorf("failed to write all data, written %v, expected: %v", totalByteWritten, bytesLen)
 	}
 	return nil
 }

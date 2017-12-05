@@ -1,25 +1,24 @@
 package url_test
 
 import (
-	"testing"
-	"github.com/stretchr/testify/assert"
-	"github.com/viant/toolbox/url"
-	"github.com/viant/toolbox"
-	"os"
 	"fmt"
+	"github.com/stretchr/testify/assert"
+	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/url"
+	"os"
 	"path"
+	"testing"
 )
 
 func TestNewResource(t *testing.T) {
 
 	{
-		var resource= url.NewResource("https://raw.githubusercontent.com/viant/toolbox/master/LICENSE.txt")
+		var resource = url.NewResource("https://raw.githubusercontent.com/viant/toolbox/master/LICENSE.txt")
 		assert.EqualValues(t, resource.ParsedURL.String(), "https://raw.githubusercontent.com/viant/toolbox/master/LICENSE.txt")
 		data, err := resource.Download()
 		assert.Nil(t, err)
 		assert.NotNil(t, data)
 	}
-
 
 	var resource = url.NewResource("https://raw.githubusercontent.com/viant//toolbox//master/LICENSE.txt")
 	assert.Equal(t, "https://raw.githubusercontent.com/viant/toolbox/master/LICENSE.txt", resource.URL)
@@ -28,14 +27,14 @@ func TestNewResource(t *testing.T) {
 func TestNew_CredentialURL(t *testing.T) {
 
 	{
-		var resource= url.NewResource("https://raw.githubusercontent.com:80/viant/toolbox/master/LICENSE.txt?check=1&p=2")
-		var URL= resource.CredentialURL("smith", "123")
+		var resource = url.NewResource("https://raw.githubusercontent.com:80/viant/toolbox/master/LICENSE.txt?check=1&p=2")
+		var URL = resource.CredentialURL("smith", "123")
 		assert.EqualValues(t, "https://smith:123@raw.githubusercontent.com:80/viant/toolbox/master/LICENSE.txt?check=1&p=2", URL)
 	}
 
 	{
-		var resource= url.NewResource("https://raw.githubusercontent.com:80/viant/toolbox/master/LICENSE.txt")
-		var URL= resource.CredentialURL("smith", "")
+		var resource = url.NewResource("https://raw.githubusercontent.com:80/viant/toolbox/master/LICENSE.txt")
+		var URL = resource.CredentialURL("smith", "")
 		assert.EqualValues(t, "https://smith@raw.githubusercontent.com:80/viant/toolbox/master/LICENSE.txt", URL)
 	}
 
@@ -68,7 +67,7 @@ func TestResource_YamlDecode(t *testing.T) {
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR, 0644)
 	fmt.Printf("%v\n", filename)
 	if assert.Nil(t, err) {
-		err =toolbox.NewYamlEncoderFactory().Create(file).Encode(aMap)
+		err = toolbox.NewYamlEncoderFactory().Create(file).Encode(aMap)
 		assert.Nil(t, err)
 	}
 
@@ -84,8 +83,6 @@ func TestResource_YamlDecode(t *testing.T) {
 
 }
 
-
-
 func TestResource_JsonDecode(t *testing.T) {
 	var filename = path.Join(os.Getenv("TMPDIR"), "resource.json")
 	toolbox.RemoveFileIfExist(filename)
@@ -97,7 +94,7 @@ func TestResource_JsonDecode(t *testing.T) {
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR, 0644)
 	fmt.Printf("%v\n", filename)
 	if assert.Nil(t, err) {
-		err =toolbox.NewJSONEncoderFactory().Create(file).Encode(aMap)
+		err = toolbox.NewJSONEncoderFactory().Create(file).Encode(aMap)
 		assert.Nil(t, err)
 	}
 
@@ -129,7 +126,7 @@ func TestResource_LoadCredential(t *testing.T) {
 			err = toolbox.NewJSONEncoderFactory().Create(file).Encode(aMap)
 			assert.Nil(t, err)
 		}
-		var resource= url.NewResource("https://raw.githubusercontent.com/viant/toolbox/master/LICENSE.txt", filename)
+		var resource = url.NewResource("https://raw.githubusercontent.com/viant/toolbox/master/LICENSE.txt", filename)
 
 		username, password, err := resource.LoadCredential(false)
 		assert.Nil(t, err)
@@ -137,21 +134,20 @@ func TestResource_LoadCredential(t *testing.T) {
 		assert.Equal(t, password, "haslo")
 	}
 
-	{//error case
+	{ //error case
 
-		var resource= url.NewResource("https://raw.githubusercontent.com/viant/toolbox/master/LICENSE.txt")
+		var resource = url.NewResource("https://raw.githubusercontent.com/viant/toolbox/master/LICENSE.txt")
 		_, _, err := resource.LoadCredential(true)
 		assert.NotNil(t, err)
 
 	}
 
-	{//error case
+	{ //error case
 
-		var resource= url.NewResource("https://raw.githubusercontent.com/viant/toolbox/master/LICENSE.txt", "bogus 343")
+		var resource = url.NewResource("https://raw.githubusercontent.com/viant/toolbox/master/LICENSE.txt", "bogus 343")
 		_, _, err := resource.LoadCredential(true)
 		assert.NotNil(t, err)
 
 	}
-
 
 }

@@ -17,7 +17,6 @@ func TestService_List(t *testing.T) {
 	//assert.Nil(t, err)
 	//assert.Equal(t, 1, len(objects));
 
-
 	//_, err := service.Download(objects[0])
 	//assert.Nil(t, err)
 

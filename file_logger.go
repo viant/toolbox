@@ -134,7 +134,7 @@ func manageWritesInBatchLoopFlush(s *LogStream, messageCount int, messages strin
 		if s.isFrequencyFlushNeeded() {
 			err := s.write(messages)
 			if err != nil {
-				fmt.Printf("Failed to write to log due to %v", err)
+				fmt.Printf("failed to write to log due to %v", err)
 			}
 			return true
 		}
@@ -158,7 +158,7 @@ type FileLogger struct {
 func (l *FileLogger) getConfig(messageType string) (*FileLoggerConfig, error) {
 	config, found := l.config[messageType]
 	if !found {
-		return nil, errors.New("Failed to lookup config for " + messageType)
+		return nil, errors.New("failed to lookup config for " + messageType)
 	}
 	return config, nil
 }

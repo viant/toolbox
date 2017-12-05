@@ -350,7 +350,7 @@ func NewToolboxHTTPClient(options ...*HttpOptions) (*ToolboxHTTPClient, error) {
 // Request sends http request using the existing client
 func (c *ToolboxHTTPClient) Request(method, url string, request, response interface{}, encoderFactory EncoderFactory, decoderFactory DecoderFactory) (err error) {
 	if _, found := httpMethods[strings.ToUpper(method)]; !found {
-		return errors.New("Unsupported method:" + method)
+		return errors.New("unsupported method:" + method)
 	}
 	var buffer *bytes.Buffer
 	if request != nil {

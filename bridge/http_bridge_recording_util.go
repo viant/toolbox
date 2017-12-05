@@ -1,11 +1,11 @@
 package bridge
 
 import (
-	"path"
+	"bytes"
 	"fmt"
 	"github.com/viant/toolbox"
 	"io/ioutil"
-	"bytes"
+	"path"
 )
 
 //RecordedHttpTrip represents a recorded http trip
@@ -13,7 +13,6 @@ type RecordedHttpTrip struct {
 	Request  *HttpRequest
 	Response *HttpResponse
 }
-
 
 //ReadRecordedHttpTrips scans provided directory for bridge.HttpRequest-%v.json and  bridge.HttpResponse-%v.json pairs
 func ReadRecordedHttpTrips(directory string) ([]*RecordedHttpTrip, error) {
@@ -38,16 +37,16 @@ func ReadRecordedHttpTrips(directory string) ([]*RecordedHttpTrip, error) {
 		return nil, fmt.Errorf("Request and Response count does not match req:%v, resp:%v ", len(requests), len(responses))
 	}
 
-	for i:=0;i<len(requests);i++ {
+	for i := 0; i < len(requests); i++ {
 		var ok bool
 		var trip = &RecordedHttpTrip{}
 		trip.Request, ok = requests[i].(*HttpRequest)
-		if ! ok {
-			return nil, fmt.Errorf("EXpected HttpRequest but had %T",  requests[i])
+		if !ok {
+			return nil, fmt.Errorf("EXpected HttpRequest but had %T", requests[i])
 		}
 		if i < len(responses) {
 			trip.Response, ok = responses[i].(*HttpResponse)
-			if ! ok {
+			if !ok {
 				return nil, fmt.Errorf("EXpected HttpRequest but had %T", responses[i])
 			}
 		}
@@ -61,7 +60,7 @@ func readAll(pathTemplate string, provider func() interface{}) ([]interface{}, e
 	var result = make([]interface{}, 0)
 	for i := 0; ; i++ {
 		filename := fmt.Sprintf(pathTemplate, i)
-		if ! toolbox.FileExists(filename) {
+		if !toolbox.FileExists(filename) {
 			break
 		}
 		data, err := ioutil.ReadFile(filename)
@@ -77,4 +76,3 @@ func readAll(pathTemplate string, provider func() interface{}) ([]interface{}, e
 	}
 	return result, nil
 }
-

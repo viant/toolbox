@@ -1,12 +1,12 @@
 package toolbox_test
 
 import (
-	"strings"
-	"testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
 	"os"
 	"path"
+	"strings"
+	"testing"
 )
 
 func TestDecoderFactory(t *testing.T) {

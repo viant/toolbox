@@ -84,15 +84,11 @@ func IsSlice(input interface{}) bool {
 	return candidateType.Kind() == reflect.Slice
 }
 
-
-
-
 //IsFunc returns true if input is a funct
 func IsFunc(input interface{}) bool {
 	candidateType := DereferenceType(reflect.TypeOf(input))
 	return candidateType.Kind() == reflect.Func
 }
-
 
 //IsZero returns true if input is a zeroable
 func IsZero(input interface{}) bool {
@@ -124,7 +120,7 @@ func AssertKind(input interface{}, kind reflect.Kind, name string) {
 //AssertTypeKind checks if dataType is of the passed in kind, if not it panic with message including name
 func AssertTypeKind(dataType reflect.Type, kind reflect.Kind, name string) {
 	if dataType.Kind() != kind {
-		panic(fmt.Sprintf("Failed to check: %v - expected kind: %v but found %v (%v)", name, kind.String(), dataType.Kind(), dataType.String()))
+		panic(fmt.Sprintf("failed to check: %v - expected kind: %v but found %v (%v)", name, kind.String(), dataType.Kind(), dataType.String()))
 	}
 }
 
@@ -141,7 +137,7 @@ func DiscoverValueByKind(input interface{}, expected reflect.Kind) reflect.Value
 	} else if value.Kind() == reflect.Interface {
 		return DiscoverValueByKind(value.Elem(), expected)
 	}
-	panic(fmt.Sprintf("Failed to discover value by kind expected: %v, actual:%v   on %v:", expected.String(), value.Type(), value))
+	panic(fmt.Sprintf("failed to discover value by kind expected: %v, actual:%v   on %v:", expected.String(), value.Type(), value))
 }
 
 //IsValueOfKind returns true if passed in input is of supplied kind.
@@ -171,7 +167,7 @@ func DiscoverTypeByKind(input interface{}, expected reflect.Kind) reflect.Type {
 	} else if value.Kind() == reflect.Ptr || value.Kind() == reflect.Slice {
 		return DiscoverTypeByKind(value.Elem(), expected)
 	}
-	panic(fmt.Sprintf("Failed to discover type by kind %v, on %v:", expected.String(), value))
+	panic(fmt.Sprintf("failed to discover type by kind %v, on %v:", expected.String(), value))
 }
 
 //DiscoverComponentType returns type unwrapped from pointer, slice or map

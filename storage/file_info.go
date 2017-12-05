@@ -1,10 +1,10 @@
 package storage
 
 import (
-	"os"
-	"time"
 	"fmt"
+	"os"
 	"strings"
+	"time"
 )
 
 type fileInfo struct {
@@ -47,7 +47,6 @@ func NewFileInfo(name string, size int64, mode os.FileMode, modificationTime tim
 	}
 }
 
-
 func NewFileMode(fileAttributes string) (os.FileMode, error) {
 	var result os.FileMode
 	if len(fileAttributes) != 10 {
@@ -57,7 +56,7 @@ func NewFileMode(fileAttributes string) (os.FileMode, error) {
 	const fileType = "dalTLDpSugct"
 	var fileModePosition = strings.Index(fileType, string(fileAttributes[0]))
 	if fileModePosition != -1 {
-		result = 1<<uint(32-1-fileModePosition)
+		result = 1 << uint(32-1-fileModePosition)
 	}
 
 	const filePermission = "rwxrwxrwx"
@@ -69,4 +68,3 @@ func NewFileMode(fileAttributes string) (os.FileMode, error) {
 	return result, nil
 
 }
-

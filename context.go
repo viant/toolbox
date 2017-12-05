@@ -55,7 +55,7 @@ func (c *contextImpl) getKey(targetType interface{}) string {
 func (c *contextImpl) GetRequired(targetType interface{}) (interface{}, error) {
 	if !c.Contains(targetType) {
 		key := c.getKey(targetType)
-		return nil, fmt.Errorf("Failed to lookup key:" + key)
+		return nil, fmt.Errorf("failed to lookup key:" + key)
 	}
 	return c.GetOptional(targetType), nil
 }
@@ -80,7 +80,7 @@ func (c *contextImpl) GetInto(targetType, target interface{}) bool {
 func (c *contextImpl) Put(targetType interface{}, value interface{}) error {
 	if c.Contains(targetType) {
 		key := c.getKey(targetType)
-		return fmt.Errorf("Failed to put key - already exist: " + key)
+		return fmt.Errorf("failed to put key - already exist: " + key)
 	}
 	return c.Replace(targetType, value)
 }

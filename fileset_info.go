@@ -323,7 +323,7 @@ func NewFileSetInfo(baseDir string) (*FileSetInfo, error) {
 	fileSet := token.NewFileSet()
 	pkgs, err := parser.ParseDir(fileSet, baseDir, nil, parser.ParseComments)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to parse path %v: %v", baseDir, err)
+		return nil, fmt.Errorf("failed to parse path %v: %v", baseDir, err)
 	}
 
 	var result = &FileSetInfo{
