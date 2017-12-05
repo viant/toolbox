@@ -15,14 +15,14 @@ func (o *object) Unwrap(target interface{}) error {
 	if commonPrefix, casted := target.(**s3.CommonPrefix); casted {
 		source, ok := o.Source.(*s3.CommonPrefix)
 		if !ok {
-			return fmt.Errorf("Failed to case %T into %T", o.Source, target)
+			return fmt.Errorf("failed to case %T into %T", o.Source, target)
 		}
 		*commonPrefix = source
 	}
 	if commonPrefix, casted := target.(**s3.Object); casted {
 		source, ok := o.Source.(*s3.Object)
 		if !ok {
-			return fmt.Errorf("Failed to case %T into %T", o.Source, target)
+			return fmt.Errorf("failed to case %T into %T", o.Source, target)
 		}
 		*commonPrefix = source
 	}

@@ -1,9 +1,9 @@
 package cred_test
 
 import (
-	"testing"
-	"github.com/viant/toolbox/cred"
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/toolbox/cred"
+	"testing"
 )
 
 func TestNewBlowfishCipher(t *testing.T) {
@@ -24,7 +24,6 @@ func TestNewBlowfishCipher(t *testing.T) {
 			assert.Equal(t, secret, string(decrypted))
 		}
 
-
 		{
 			var secret = "123!abc"
 			encrypted := cipher.Encrypt([]byte(secret))
@@ -40,5 +39,3 @@ func TestNewBlowfishCipher(t *testing.T) {
 		}
 	}
 }
-
-

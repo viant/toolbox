@@ -21,7 +21,7 @@ func TestMacroExpansion(t *testing.T) {
 
 		actual, err := evaluator.Expand(nil, "<ds:abc[]>")
 		if err != nil {
-			t.Errorf("Failed expand macro %v", err.Error())
+			t.Errorf("failed expand macro %v", err.Error())
 		}
 		assert.Equal(t, "Called with %v %v!", actual)
 	}
@@ -31,7 +31,7 @@ func TestMacroExpansion(t *testing.T) {
 
 		actual, err := evaluator.Expand(nil, "< <ds:abc[]>> <ds:xyz[]>")
 		if err != nil {
-			t.Errorf("Failed expand macro %v", err.Error())
+			t.Errorf("failed expand macro %v", err.Error())
 		}
 		assert.Equal(t, "< Called with %v %v!> XXXX", actual)
 	}
@@ -40,7 +40,7 @@ func TestMacroExpansion(t *testing.T) {
 		//simple macro test
 		actual, err := evaluator.Expand(nil, "<ds:abc>")
 		if err != nil {
-			t.Errorf("Failed expand macro %v", err.Error())
+			t.Errorf("failed expand macro %v", err.Error())
 		}
 		assert.Equal(t, "Called with %v %v!", actual)
 	}
@@ -50,7 +50,7 @@ func TestMacroExpansion(t *testing.T) {
 
 		actual, err := evaluator.Expand(nil, "<ds:abc [1, true]>")
 		if err != nil {
-			t.Errorf("Failed expand macro %v", err.Error())
+			t.Errorf("failed expand macro %v", err.Error())
 		}
 		assert.Equal(t, "Called with 1 true!", actual)
 	}
@@ -59,7 +59,7 @@ func TestMacroExpansion(t *testing.T) {
 
 		actual, err := evaluator.Expand(nil, "<ds:abc [1, true]> <ds:abc [2, false]>")
 		if err != nil {
-			t.Errorf("Failed expand macro %v", err.Error())
+			t.Errorf("failed expand macro %v", err.Error())
 		}
 		assert.Equal(t, "Called with 1 true! Called with 2 false!", actual)
 	}
@@ -69,7 +69,7 @@ func TestMacroExpansion(t *testing.T) {
 
 		actual, err := evaluator.Expand(nil, "<ds:abc [1, \"<ds:abc [10,11]>\"]>")
 		if err != nil {
-			t.Errorf("Failed expand macro %v", err.Error())
+			t.Errorf("failed expand macro %v", err.Error())
 		}
 		assert.Equal(t, "Called with 1 Called with 10 11!!", actual)
 	}

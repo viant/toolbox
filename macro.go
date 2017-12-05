@@ -32,7 +32,7 @@ func (e *MacroEvaluator) expandArguments(context Context, arguments *[]interface
 				if e.HasMacro(argumentAsText) {
 					expanded, err := e.Expand(context, argumentAsText)
 					if err != nil {
-						return fmt.Errorf("Failed to expand argument: " + argumentAsText + " due to:\n\t" + err.Error())
+						return fmt.Errorf("failed to expand argument: " + argumentAsText + " due to:\n\t" + err.Error())
 					}
 					(*arguments)[i] = expanded
 				}
@@ -48,7 +48,7 @@ func (e *MacroEvaluator) decodeArguments(context Context, decodedArguments strin
 		decoder := json.NewDecoder(strings.NewReader(decodedArguments))
 		err := decoder.Decode(&arguments)
 		if err != nil && err != io.EOF {
-			return nil, fmt.Errorf("Failed to process macro arguments: " + decodedArguments + " due to:\n\t" + err.Error())
+			return nil, fmt.Errorf("failed to process macro arguments: " + decodedArguments + " due to:\n\t" + err.Error())
 		}
 		err = e.expandArguments(context, &arguments)
 		if err != nil {
@@ -113,11 +113,11 @@ func (e *MacroEvaluator) Expand(context Context, input string) (interface{}, err
 
 	valueProviderRegistry := e.ValueProviderRegistry
 	if !valueProviderRegistry.Contains(macroName) {
-		return nil, fmt.Errorf("Failed to lookup macro: '%v' while processing: %v", macroName, input)
+		return nil, fmt.Errorf("failed to lookup macro: '%v' while processing: %v", macroName, input)
 	}
 	arguments, err := e.decodeArguments(context, macroArguments, macro)
 	if err != nil {
-		return nil, fmt.Errorf("Failed expand macro: %v due to %v", macro, err.Error())
+		return nil, fmt.Errorf("failed expand macro: %v due to %v", macro, err.Error())
 	}
 
 	valueProvider := valueProviderRegistry.Get(macroName)

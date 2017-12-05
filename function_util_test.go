@@ -8,7 +8,6 @@ import (
 	"github.com/viant/toolbox"
 )
 
-
 func TestCallFunction(t *testing.T) {
 
 	{
@@ -56,7 +55,6 @@ func TestCallFunction(t *testing.T) {
 		assert.NotNil(t, err)
 	}
 }
-
 
 func Test_GetFunction(t *testing.T) {
 	var astruct = &AStruct{"ABC"}

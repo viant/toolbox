@@ -3,13 +3,13 @@ package ssh
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/viant/toolbox/cred"
 	"golang.org/x/crypto/ssh"
 	"io"
+	"net"
 	"path"
 	"sync/atomic"
 	"time"
-	"github.com/viant/toolbox/cred"
-	"net"
 )
 
 const (
@@ -40,7 +40,7 @@ type Service interface {
 	Download(source string) ([]byte, error)
 
 	//OpenTunnel opens a tunnel between local to remote for network traffic.
-	OpenTunnel(localAddress, remoteAddress string) (error)
+	OpenTunnel(localAddress, remoteAddress string) error
 
 	NewSession() (*ssh.Session, error)
 
@@ -73,7 +73,7 @@ func (c *service) OpenMultiCommandSession(config *SessionConfig) (MultiCommandSe
 func (c *service) Run(command string) error {
 	session, err := c.client.NewSession()
 	if err != nil {
-		panic("Failed to create session: " + err.Error())
+		panic("failed to create session: " + err.Error())
 	}
 	defer session.Close()
 	return session.Run(command)
@@ -111,12 +111,12 @@ func (c *service) Upload(destination string, content []byte) (err error) {
 	}
 	session, err := c.client.NewSession()
 	if err != nil {
-		return fmt.Errorf("Failed to create session %v", err)
+		return fmt.Errorf("failed to create session %v", err)
 	}
 	defer session.Close()
 	writer, err := session.StdinPipe()
 	if err != nil {
-		return fmt.Errorf("Failed to acquire stdin %v", err)
+		return fmt.Errorf("failed to acquire stdin %v", err)
 	}
 	defer writer.Close()
 
@@ -130,17 +130,17 @@ func (c *service) Upload(destination string, content []byte) (err error) {
 	cmd := "scp -qtr " + dir
 	err = session.Start(cmd)
 	if err != nil {
-		return fmt.Errorf("Failed to start command%v %v", cmd, err)
+		return fmt.Errorf("failed to start command%v %v", cmd, err)
 	}
 	createFileCommand := fmt.Sprintf("%v %d %s\n", createFileSequence, len(content), file)
 	_, err = writer.Write([]byte(createFileCommand))
 	if err != nil {
-		return fmt.Errorf("Failed to write create file sequence: %v %v", content, err)
+		return fmt.Errorf("failed to write create file sequence: %v %v", content, err)
 	}
 	var message string
 	select {
-		case message = <-messages:
-		case <-time.After(commandResponseDelaySleep):
+	case message = <-messages:
+	case <-time.After(commandResponseDelaySleep):
 	}
 	if message != "" {
 		return errors.New(message)
@@ -153,16 +153,16 @@ func (c *service) Upload(destination string, content []byte) (err error) {
 		if maxLength >= len(content) {
 			maxLength = len(content)
 		}
-		buffer := content[i*bufferSize: maxLength]
+		buffer := content[i*bufferSize : maxLength]
 		_, err = writer.Write(buffer)
 
 		if err != nil {
 			if err.Error() == io.EOF.Error() {
 				break
 			}
-			return fmt.Errorf("Failed to write content %v %v %v", err, len(content), i)
+			return fmt.Errorf("failed to write content %v %v %v", err, len(content), i)
 		}
-		if payloadFragmentCount > 1 &&  i+2 > payloadFragmentCount {
+		if payloadFragmentCount > 1 && i+2 > payloadFragmentCount {
 			time.Sleep(scpUploadSleep)
 		}
 	}
@@ -170,7 +170,7 @@ func (c *service) Upload(destination string, content []byte) (err error) {
 	if err == nil {
 		_, err = writer.Write(endTransferSequence)
 		if err != nil {
-			return fmt.Errorf("Failed to write end transfer seq: %v", err)
+			return fmt.Errorf("failed to write end transfer seq: %v", err)
 		}
 	}
 	return err
@@ -197,10 +197,10 @@ func (c *service) Close() error {
 }
 
 //OpenTunnel tunnels data between localAddress and remoteAddress on ssh connection
-func (c *service) OpenTunnel(localAddress, remoteAddress string) (error) {
+func (c *service) OpenTunnel(localAddress, remoteAddress string) error {
 	local, err := net.Listen("tcp", localAddress)
 	if err != nil {
-		return fmt.Errorf("Failed to listen on local: %v %v", localAddress, err)
+		return fmt.Errorf("failed to listen on local: %v %v", localAddress, err)
 	}
 	var forwarding = NewForwarding(c.client, remoteAddress, local)
 	if len(c.forwarding) == 0 {
@@ -223,7 +223,7 @@ func NewService(host string, port int, authConfig *cred.Config) (Service, error)
 	hostWithPort := fmt.Sprintf("%s:%d", host, port)
 	client, err := ssh.Dial("tcp", hostWithPort, clientConfig)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to dial %v: %s", hostWithPort, err)
+		return nil, fmt.Errorf("failed to dial %v: %s", hostWithPort, err)
 	}
 	return &service{
 		client: client,

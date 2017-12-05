@@ -1,12 +1,12 @@
 package ssh
 
 import (
-	"github.com/viant/toolbox"
-	"sort"
 	"fmt"
-	"path"
+	"github.com/viant/toolbox"
 	"io/ioutil"
 	"os"
+	"path"
+	"sort"
 	"strings"
 )
 
@@ -15,7 +15,7 @@ type ReplayCommand struct {
 	Stdin  string
 	Index  int
 	Stdout []string
-	Error string
+	Error  string
 }
 
 //replayCommands represnets command grouped by stdin
@@ -27,56 +27,54 @@ type ReplayCommands struct {
 
 //Register register stdin and corresponding stdout conversation
 func (c *ReplayCommands) Register(stdin, stdout string) {
-	if _, has := c.Commands [stdin]; !has {
-		c.Commands [stdin] = &ReplayCommand{
+	if _, has := c.Commands[stdin]; !has {
+		c.Commands[stdin] = &ReplayCommand{
 			Stdin:  stdin,
 			Stdout: make([]string, 0),
 		}
 		c.Keys = append(c.Keys, stdin)
 	}
-	c.Commands [stdin].Stdout = append(c.Commands [stdin].Stdout, stdout)
+	c.Commands[stdin].Stdout = append(c.Commands[stdin].Stdout, stdout)
 }
 
 //return stdout pointed by index and increases index or empty string if exhausted
 func (c *ReplayCommands) Next(stdin string) string {
-	var stdout = c.Commands [stdin].Stdout
-	var index = c.Commands [stdin].Index
+	var stdout = c.Commands[stdin].Stdout
+	var index = c.Commands[stdin].Index
 	if index < len(stdout) {
-		c.Commands [stdin].Index++
+		c.Commands[stdin].Index++
 		return stdout[index]
 	}
 	return ""
 }
 
-
 func (c *ReplayCommands) Enable(source interface{}) (err error) {
-	switch value :=source.(type) {
-		case *service:
-			value.replayCommands=c
-			value.recordSession=true
-		case *multiCommandSession:
-			value.replayCommands=c
-			value.recordSession=true
+	switch value := source.(type) {
+	case *service:
+		value.replayCommands = c
+		value.recordSession = true
+	case *multiCommandSession:
+		value.replayCommands = c
+		value.recordSession = true
 	default:
-		err = fmt.Errorf("Unsupported type: %T", source)
+		err = fmt.Errorf("unsupported type: %T", source)
 	}
 	return err
 }
 
 func (c *ReplayCommands) Disable(source interface{}) (err error) {
-	switch value :=source.(type) {
+	switch value := source.(type) {
 	case *service:
-		value.replayCommands=nil
-		value.recordSession=false
+		value.replayCommands = nil
+		value.recordSession = false
 	case *multiCommandSession:
-		value.replayCommands=nil
-		value.recordSession=false
+		value.replayCommands = nil
+		value.recordSession = false
 	default:
-		err = fmt.Errorf("Unsupported type: %T", source)
+		err = fmt.Errorf("unsupported type: %T", source)
 	}
 	return err
 }
-
 
 //Store stores replay command in the base directory
 func (c *ReplayCommands) Store() error {
@@ -102,7 +100,6 @@ func (c *ReplayCommands) Store() error {
 	}
 	return nil
 }
-
 
 //Load loads replay command from base directory
 func (c *ReplayCommands) Load() error {
@@ -146,7 +143,6 @@ func (c *ReplayCommands) Load() error {
 	return nil
 }
 
-
 //Shell returns command shell
 func (c *ReplayCommands) Shell() string {
 	for _, candidate := range c.Commands {
@@ -154,9 +150,8 @@ func (c *ReplayCommands) Shell() string {
 			return candidate.Stdout[0]
 		}
 	}
-	return "";
+	return ""
 }
-
 
 //System returns system name
 func (c *ReplayCommands) System() string {
@@ -165,15 +160,12 @@ func (c *ReplayCommands) System() string {
 			return strings.ToLower(candidate.Stdout[0])
 		}
 	}
-	return "";
+	return ""
 }
-
-
-
 
 //NewReplayCommands create a new replay commands or error if provided basedir does not exists and can not be created
 func NewReplayCommands(basedir string) (*ReplayCommands, error) {
-	if ! toolbox.FileExists(basedir) {
+	if !toolbox.FileExists(basedir) {
 		err := os.MkdirAll(basedir, 0744)
 		if err != nil {
 			return nil, err
@@ -181,9 +173,7 @@ func NewReplayCommands(basedir string) (*ReplayCommands, error) {
 	}
 	return &ReplayCommands{
 		Commands: make(map[string]*ReplayCommand),
-		Keys:     make([]string,0),
-		BaseDir:basedir,
+		Keys:     make([]string, 0),
+		BaseDir:  basedir,
 	}, nil
 }
-
-

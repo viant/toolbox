@@ -2,20 +2,19 @@ package gs
 
 import (
 	"bytes"
+	"cloud.google.com/go/storage"
 	"context"
 	"crypto/md5"
 	"errors"
 	"fmt"
+	"github.com/viant/toolbox"
+	tstorage "github.com/viant/toolbox/storage"
+	"google.golang.org/api/option"
 	"hash/crc32"
 	"io"
 	"io/ioutil"
 	"net/url"
-	"cloud.google.com/go/storage"
-	tstorage "github.com/viant/toolbox/storage"
-	"google.golang.org/api/option"
-	"github.com/viant/toolbox"
 )
-
 
 type service struct {
 	options []option.ClientOption
@@ -169,7 +168,6 @@ func (s *service) Register(schema string, service tstorage.Service) error {
 func (s *service) Close() error {
 	return nil
 }
-
 
 //Delete removes passed in storage object
 func (s *service) Delete(object tstorage.Object) error {

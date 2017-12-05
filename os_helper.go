@@ -44,7 +44,7 @@ func CreateDirIfNotExist(dirs ...string) error {
 		if !FileExists(dir) {
 			err := os.Mkdir(dir, dirMode)
 			if err != nil {
-				return fmt.Errorf("Failed to create dir %v %v", dir, err)
+				return fmt.Errorf("failed to create dir %v %v", dir, err)
 			}
 		}
 	}

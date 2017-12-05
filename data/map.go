@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	disableUDFKey                  = "__$__disableUDF"
-	expectVariableStart            = iota
+	disableUDFKey       = "__$__disableUDF"
+	expectVariableStart = iota
 	expectVariableName
 	expectElementPosition
 	expectVariableNameEnclosureEnd
@@ -87,14 +87,10 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 		}
 	}
 
-
-
 	state := *s
 	if string(expr[0:1]) == "{" {
-		expr = expr[1: len(expr)-1]
+		expr = expr[1 : len(expr)-1]
 	}
-
-
 
 	if strings.Contains(expr, ".") {
 		fragments := strings.Split(expr, ".")
@@ -103,10 +99,10 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 
 			arrayIndexPosition := strings.Index(fragment, "[")
 			if arrayIndexPosition != -1 {
-				arrayEndPosition := strings.Index(fragment, "]");
-				arrayIndex :=  toolbox.AsInt(string(fragment[arrayIndexPosition+1:arrayEndPosition]))
+				arrayEndPosition := strings.Index(fragment, "]")
+				arrayIndex := toolbox.AsInt(string(fragment[arrayIndexPosition+1 : arrayEndPosition]))
 				index = &arrayIndex
-				fragment =  string(fragment[:arrayIndexPosition])
+				fragment = string(fragment[:arrayIndexPosition])
 			}
 
 			isLast := i+1 == len(fragments)
@@ -125,14 +121,14 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 			}
 
 			if index != nil {
-				if ! toolbox.IsSlice(candidate) {
+				if !toolbox.IsSlice(candidate) {
 					return nil, false
 				}
 				var aSlice = toolbox.AsSlice(candidate)
 				if *index >= len(aSlice) {
 					return nil, false
 				}
-				candidate = aSlice [*index]
+				candidate = aSlice[*index]
 			}
 
 			if toolbox.IsMap(candidate) {
@@ -176,9 +172,6 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 	return nil, false
 }
 
-
-
-
 /*
 Set value sets value in the map for the supplied expression.
 The expression uses dot (.) to denote nested data structure. For instance the following expression key1.subKey1.attr1
@@ -207,7 +200,7 @@ func (s *Map) SetValue(expr string, value interface{}) {
 		expr = string(expr[2:])
 	}
 	if string(expr[0:1]) == "{" {
-		expr = expr[1: len(expr)-1]
+		expr = expr[1 : len(expr)-1]
 	}
 	if strings.Contains(expr, ".") {
 		fragments := strings.Split(expr, ".")
@@ -386,24 +379,23 @@ func (s *Map) Expand(source interface{}) interface{} {
 	case string:
 		var has bool
 		udf, value, suffix := s.getUdfIfDefined(value)
-		var sourceValue interface{}  = value
+		var sourceValue interface{} = value
 		if strings.HasPrefix(value, "$") {
 			sourceValue, has = s.GetValue(string(value[1:]))
-			if ! has && udf != nil {//variable is not present in the context, thus delay udf execution
+			if !has && udf != nil { //variable is not present in the context, thus delay udf execution
 				return source
 			}
 			//you do not want to double evaluate case if there is UDF, just get value for it
-			if ! has || udf == nil {
+			if !has || udf == nil {
 				sourceValue = s.expandExpressions(value)
 				has = true
 			}
 		}
 
-
 		if udf != nil {
 			transformed, err := udf(sourceValue, *s)
 			if err != nil {
-				log.Printf("Failed to run udf: %v, %v\n", value, err)
+				log.Printf("failed to run udf: %v, %v\n", value, err)
 				return source
 			}
 			if suffix != "" {
@@ -479,14 +471,14 @@ func (s *Map) expandExpressions(text string) interface{} {
 	var result = ""
 	var expectIndexEnd = false
 	for i, rune := range text {
-		aChar := string(text[i: i+1])
+		aChar := string(text[i : i+1])
 		var isLast = i+1 == len(text)
 		switch parsingState {
 		case expectVariableStart:
 			if aChar == "$" {
 				variableName += aChar
 				if i+1 < len(text) {
-					nextChar := string(text[i+1: i+2])
+					nextChar := string(text[i+1 : i+2])
 					if nextChar == "{" {
 						parsingState = expectVariableNameEnclosureEnd
 						continue
@@ -513,10 +505,10 @@ func (s *Map) expandExpressions(text string) interface{} {
 
 		case expectVariableName:
 
-			if unicode.IsLetter(rune) || unicode.IsDigit(rune) || aChar == "[" || (expectIndexEnd &&  aChar == "]") || aChar == "." || aChar == "_" || aChar == "+" || aChar == "<" || aChar == "-" {
-				if  aChar == "[" {
+			if unicode.IsLetter(rune) || unicode.IsDigit(rune) || aChar == "[" || (expectIndexEnd && aChar == "]") || aChar == "." || aChar == "_" || aChar == "+" || aChar == "<" || aChar == "-" {
+				if aChar == "[" {
 					expectIndexEnd = true
-				} else if  aChar == "]" {
+				} else if aChar == "]" {
 					expectIndexEnd = false
 				}
 				variableName += aChar
@@ -563,7 +555,7 @@ func (s *Map) getUdfIfDefined(expression string) (func(interface{}, Map) (interf
 			panic(errorMessage)
 		}
 
-		value := string(expression[startArgumentPosition+1: endArgumentPosition])
+		value := string(expression[startArgumentPosition+1 : endArgumentPosition])
 		remaining := ""
 		if !strings.HasSuffix(expression, ")") {
 			remaining = expression[endArgumentPosition+1:]

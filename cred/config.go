@@ -1,15 +1,15 @@
 package cred
 
 import (
-	"os"
-	"encoding/json"
 	"bytes"
 	"encoding/base64"
-	"strings"
-	"io/ioutil"
+	"encoding/json"
 	"golang.org/x/crypto/ssh"
-	"path"
 	"gopkg.in/yaml.v2"
+	"io/ioutil"
+	"os"
+	"path"
+	"strings"
 )
 
 var sshKeyFileCandidates = []string{"/.ssh/id_rsa", "/.ssh/id_dsa"}
@@ -30,12 +30,12 @@ func (c *Config) Load(filename string) error {
 		return err
 	}
 	ext := path.Ext(filename)
-	if strings.Contains(ext,"yaml")  || strings.Contains(ext,"yml")  {
+	if strings.Contains(ext, "yaml") || strings.Contains(ext, "yml") {
 		var data, err = ioutil.ReadAll(reader)
 		if err != nil {
 			return err
 		}
-		err =yaml.Unmarshal(data, c)
+		err = yaml.Unmarshal(data, c)
 		if err != nil {
 			return err
 		}
@@ -117,7 +117,6 @@ func (c *Config) ClientConfig() (*ssh.ClientConfig, error) {
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Auth:            make([]ssh.AuthMethod, 0),
 	}
-
 
 	if c.Password != "" {
 		result.Auth = append(result.Auth, ssh.Password(c.Password))

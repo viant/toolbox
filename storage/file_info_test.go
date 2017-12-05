@@ -1,10 +1,10 @@
 package storage_test
 
 import (
-	"testing"
+	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox/storage"
 	"os"
-	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func Test_NewFileMode(t *testing.T) {

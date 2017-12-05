@@ -33,7 +33,6 @@ type Service interface {
 	Close() error
 }
 
-
 type storageService struct {
 	registry map[string]Service
 }
@@ -48,7 +47,7 @@ func (s *storageService) getServiceForSchema(URL string) (Service, error) {
 		return result, nil
 	}
 
-	return nil, fmt.Errorf("Failed to lookup url schema %v in %v", parsedUrl.Scheme, URL)
+	return nil, fmt.Errorf("failed to lookup url schema %v in %v", parsedUrl.Scheme, URL)
 }
 
 //List lists all object for passed in URL
@@ -110,12 +109,11 @@ func (s *storageService) Close() error {
 	for _, service := range s.registry {
 		err := service.Close()
 		if err != nil {
-			return  err
+			return err
 		}
 	}
 	return nil
 }
-
 
 //Register register storage schema
 func (s *storageService) Register(schema string, service Service) error {
@@ -133,7 +131,6 @@ func NewService() Service {
 	return result
 }
 
-
 //NewServiceForURL creates a new storage service for provided URL scheme and optional credential file
 func NewServiceForURL(URL, credentialFile string) (Service, error) {
 	parsedURL, err := url.Parse(URL)
@@ -146,14 +143,14 @@ func NewServiceForURL(URL, credentialFile string) (Service, error) {
 	if provider != nil {
 		serviceForScheme, err := provider(credentialFile)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to get storage for url %v: %v", URL, err)
+			return nil, fmt.Errorf("failed to get storage for url %v: %v", URL, err)
 		}
 		err = service.Register(parsedURL.Scheme, serviceForScheme)
 		if err != nil {
 			return nil, err
 		}
 	} else if parsedURL.Scheme != "file" {
-		return nil, fmt.Errorf("Unsupported scheme %v", URL)
+		return nil, fmt.Errorf("unsupported scheme %v", URL)
 	}
 	return service, nil
 }

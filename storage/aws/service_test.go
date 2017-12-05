@@ -1,10 +1,8 @@
 package aws_test
 
-import 	"testing"
-
+import "testing"
 
 func TestService_List(t *testing.T) {
-
 
 	//fmt.Print("Has service\n")
 	//config := &aws.Config{

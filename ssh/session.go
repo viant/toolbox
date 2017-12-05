@@ -3,14 +3,14 @@ package ssh
 import (
 	"bytes"
 	"fmt"
+	"github.com/lunixbochs/vtclean"
 	"github.com/pkg/errors"
+	"github.com/viant/toolbox"
 	"golang.org/x/crypto/ssh"
 	"io"
 	"strings"
 	"sync/atomic"
 	"time"
-	"github.com/lunixbochs/vtclean"
-	"github.com/viant/toolbox"
 )
 
 const defaultShell = "/bin/bash"
@@ -19,12 +19,11 @@ const defaultTimeoutMs = 5000
 
 //MultiCommandSession represents a multi command session
 type MultiCommandSession interface {
-	Run(command string, timeoutMs int, terminators ...string) (string, error);
+	Run(command string, timeoutMs int, terminators ...string) (string, error)
 	ShellPrompt() string
 	System() string
 	Close()
 }
-
 
 //multiCommandSession represents a multi command session
 //a new command are send vi stdin
@@ -45,7 +44,7 @@ func (s *multiCommandSession) Run(command string, timeoutMs int, terminators ...
 	var stdin = command + "\n"
 	_, err := s.stdInput.Write([]byte(stdin))
 	if err != nil {
-		return "", fmt.Errorf("Failed to execute command: %v, err: %v", command, err)
+		return "", fmt.Errorf("failed to execute command: %v, err: %v", command, err)
 	}
 	var output string
 	output, _, err = s.readResponse(timeoutMs, terminators...)
@@ -210,15 +209,15 @@ outer:
 
 func (s *multiCommandSession) drainStdout() {
 	//read any outstanding output
-	for ; ; {
+	for {
 		_, has, _ := s.readResponse(10, "")
-		if ! has {
+		if !has {
 			return
 		}
 	}
 }
 
-func newMultiCommandSession(client *ssh.Client, config *SessionConfig, replayCommands *ReplayCommands, recordSession  bool) (MultiCommandSession, error) {
+func newMultiCommandSession(client *ssh.Client, config *SessionConfig, replayCommands *ReplayCommands, recordSession bool) (MultiCommandSession, error) {
 	if config == nil {
 		config = &SessionConfig{}
 	}
@@ -253,13 +252,13 @@ func newMultiCommandSession(client *ssh.Client, config *SessionConfig, replayCom
 		return nil, err
 	}
 	result := &multiCommandSession{
-		session:   session,
-		stdOutput: make(chan string),
-		stdError:  make(chan string),
-		stdInput:  writer,
-		running:   1,
-		recordSession:recordSession,
-		replayCommands:replayCommands,
+		session:        session,
+		stdOutput:      make(chan string),
+		stdError:       make(chan string),
+		stdInput:       writer,
+		running:        1,
+		recordSession:  recordSession,
+		replayCommands: replayCommands,
 	}
 	_, err = result.init(config.Shell)
 	if result.closeIfError(err) {

@@ -1,6 +1,5 @@
 package cred
 
-
 type Encryptor interface {
 	Encrypt(src []byte) []byte
 }
@@ -12,5 +11,4 @@ type Decryptor interface {
 type Cipher interface {
 	Encryptor
 	Decryptor
-
 }

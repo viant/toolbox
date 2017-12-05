@@ -4,16 +4,16 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/lunixbochs/vtclean"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/ssh"
 	"github.com/viant/toolbox/storage"
 	"io"
 	"io/ioutil"
-	"strings"
-	"github.com/viant/toolbox/cred"
 	"net/url"
-	"github.com/lunixbochs/vtclean"
 	"path"
+	"strings"
 	"sync"
 )
 
@@ -24,11 +24,11 @@ const verificationSizeThreshold = 1024 * 1024
 var NoSuchFileOrDirectoryError = errors.New("No Such File Or Directory")
 
 type service struct {
-	fileService storage.Service
-	config   *cred.Config
-	services map[string]ssh.Service
+	fileService   storage.Service
+	config        *cred.Config
+	services      map[string]ssh.Service
 	multiSessions map[string]ssh.MultiCommandSession
-	mutex    *sync.Mutex
+	mutex         *sync.Mutex
 }
 
 func (s *service) runCommand(session ssh.MultiCommandSession, URL string, command string) (string, error) {
@@ -39,12 +39,9 @@ func (s *service) runCommand(session ssh.MultiCommandSession, URL string, comman
 	return stdout, nil
 }
 
-
 func (s *service) stdout(output string) string {
 	return vtclean.Clean(string(output), false)
 }
-
-
 
 func (s *service) getMultiSession(parsedURL *url.URL) ssh.MultiCommandSession {
 	s.mutex.Lock()
@@ -210,18 +207,18 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 	//defer service.Close()
 	content, err := ioutil.ReadAll(reader)
 	if err != nil {
-		return fmt.Errorf("Failed to upload - unable read: %v", err)
+		return fmt.Errorf("failed to upload - unable read: %v", err)
 	}
 
 	err = service.Upload(parsedURL.Path, content)
 	if err != nil {
-		return fmt.Errorf("Failed to upload: %v %v", URL, err)
+		return fmt.Errorf("failed to upload: %v %v", URL, err)
 	}
 
 	if verificationSizeThreshold < len(content) {
 		object, err := s.StorageObject(URL)
 		if err != nil {
-			return fmt.Errorf("Failed to get upload object  %v for verification: %v", URL, err)
+			return fmt.Errorf("failed to get upload object  %v for verification: %v", URL, err)
 		}
 		if int(object.FileInfo().Size()) != len(content) {
 			err = service.Upload(parsedURL.Path, content)
@@ -230,7 +227,7 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 				return err
 			}
 			if int(object.FileInfo().Size()) != len(content) {
-				return fmt.Errorf("Failed to upload to %v, actual size was:%v,  but uploaded size was %v", URL, len(content), int(object.FileInfo().Size()))
+				return fmt.Errorf("failed to upload to %v, actual size was:%v,  but uploaded size was %v", URL, len(content), int(object.FileInfo().Size()))
 			}
 		}
 	}
@@ -262,11 +259,11 @@ func (s *service) Delete(object storage.Object) error {
 		var fileURL = toolbox.FileSchema + parsedURL.Path
 		storageObject, err := s.fileService.StorageObject(fileURL)
 		if err != nil {
-			return  err
+			return err
 		}
 		return s.fileService.Delete(storageObject)
 	}
-	
+
 	port := toolbox.AsInt(parsedURL.Port())
 	if port == 0 {
 		port = defaultSSHPort
@@ -293,10 +290,10 @@ func (s *service) Delete(object storage.Object) error {
 //NewService create a new gc storage service
 func NewService(config *cred.Config) *service {
 	return &service{
-		services: make(map[string]ssh.Service),
-		config:   config,
+		services:      make(map[string]ssh.Service),
+		config:        config,
 		multiSessions: make(map[string]ssh.MultiCommandSession),
-		mutex:    &sync.Mutex{},
-		fileService:storage.NewFileStorage(),
+		mutex:         &sync.Mutex{},
+		fileService:   storage.NewFileStorage(),
 	}
 }

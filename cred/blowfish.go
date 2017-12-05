@@ -1,8 +1,8 @@
 package cred
 
 import (
-	"golang.org/x/crypto/blowfish"
 	"crypto/cipher"
+	"golang.org/x/crypto/blowfish"
 )
 
 func blowfishChecksizeAndPad(padded []byte) []byte {
@@ -20,8 +20,8 @@ type blowfishCipher struct {
 	cipher *blowfish.Cipher
 }
 
-func (b *blowfishCipher) Encrypt(source []byte) []byte{
-	paddedSource :=blowfishChecksizeAndPad(source)
+func (b *blowfishCipher) Encrypt(source []byte) []byte {
+	paddedSource := blowfishChecksizeAndPad(source)
 	ciphertext := make([]byte, blowfish.BlockSize+len(paddedSource))
 	eiv := ciphertext[:blowfish.BlockSize]
 	encodedBlackEncryptor := cipher.NewCBCEncrypter(b.cipher, eiv)
@@ -29,9 +29,7 @@ func (b *blowfishCipher) Encrypt(source []byte) []byte{
 	return ciphertext
 }
 
-
-
-func (b *blowfishCipher) Decrypt(encrypted []byte) []byte{
+func (b *blowfishCipher) Decrypt(encrypted []byte) []byte {
 	div := encrypted[:blowfish.BlockSize]
 	decrypted := encrypted[blowfish.BlockSize:]
 	if len(decrypted)%blowfish.BlockSize != 0 {
@@ -40,7 +38,7 @@ func (b *blowfishCipher) Decrypt(encrypted []byte) []byte{
 	dcbc := cipher.NewCBCDecrypter(b.cipher, div)
 	dcbc.CryptBlocks(decrypted, decrypted)
 	var result = make([]byte, 0)
-	for _, b:= range decrypted {
+	for _, b := range decrypted {
 		if b == 0x0 {
 			break
 		}
@@ -58,5 +56,3 @@ func NewBlowfishCipher(key []byte) (Cipher, error) {
 		cipher: passwordCipher,
 	}, nil
 }
-
-

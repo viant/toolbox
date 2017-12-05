@@ -6,8 +6,8 @@ import (
 
 const (
 	undefined                int = iota
-	StorageObjectFolderType   //folder type
-	StorageObjectContentType  //file type
+	StorageObjectFolderType      //folder type
+	StorageObjectContentType     //file type
 )
 
 //Object represents a storage object

@@ -15,7 +15,7 @@ func (o *object) Unwrap(target interface{}) error {
 	if fileInfo, casted := target.(**storage.ObjectAttrs); casted {
 		source, ok := o.Source.(*storage.ObjectAttrs)
 		if !ok {
-			return fmt.Errorf("Failed to case %T into %T", o.Source, target)
+			return fmt.Errorf("failed to case %T into %T", o.Source, target)
 		}
 		*fileInfo = source
 		return nil

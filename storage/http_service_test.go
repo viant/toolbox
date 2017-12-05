@@ -25,11 +25,6 @@ func TestNewHttpStorageService(t *testing.T) {
 		assert.True(t, len(content) > 0)
 
 	}
-	{
-		service, err := storage.NewServiceForURL("http://mirror.metrocast.net/apache/tomcat/tomcat-7/v7.0.81/bin/apache-tomcat-7.0.81.tar.gz", credentialFile)
-		object, err := service.StorageObject("http://mirror.metrocast.net/apache/tomcat/tomcat-7/v7.0.81/bin/apache-tomcat-7.0.81.tar.gz")
-		assert.Nil(t, err)
-		assert.NotNil(t, object)
-	}
+
 
 }

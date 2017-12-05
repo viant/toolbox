@@ -12,18 +12,18 @@ func TestMap_GetValue(t *testing.T) {
 
 	{
 		metaMap := make(map[string]int)
-		metaMap["USER"] =7
+		metaMap["USER"] = 7
 		aMap.Put("meta", metaMap)
 
 		value, ok := aMap.GetValue("meta.USER")
 		assert.True(t, ok)
-		if ! assert.Equal(t, 7, value) {
+		if !assert.Equal(t, 7, value) {
 			return
 		}
 		aMap.SetValue("meta.USER", toolbox.AsInt(value)+1)
 		value, ok = aMap.GetValue("meta.USER")
 		assert.True(t, ok)
-		if ! assert.Equal(t, 8, value) {
+		if !assert.Equal(t, 8, value) {
 			return
 		}
 
@@ -95,12 +95,12 @@ func TestMap_GetValue(t *testing.T) {
 
 		var aCollection = NewCollection()
 		aCollection.Push(map[string]interface{}{
-			"k1":1,
-			"K2":2,
+			"k1": 1,
+			"K2": 2,
 		})
 		aCollection.Push(map[string]interface{}{
-			"k2":3,
-			"K3":4,
+			"k2": 3,
+			"K3": 4,
 		})
 		aMap.Put("c", aCollection)
 		value, has := aMap.GetValue("c[0].k1")
@@ -112,7 +112,6 @@ func TestMap_GetValue(t *testing.T) {
 		assert.Equal(t, 3, value)
 
 	}
-
 
 }
 
@@ -156,8 +155,6 @@ func TestMap_SetValue(t *testing.T) {
 
 }
 
-
-
 func Test_Expand(t *testing.T) {
 
 	state := NewMap()
@@ -185,4 +182,3 @@ func Test_ExpandFun(t *testing.T) {
 	assert.Equal(t, "a $vv-ee /usr/local/app_etlyv1 app $abc -Dmvn.test.skip", text)
 
 }
-

@@ -1,27 +1,26 @@
 package storage
 
 import (
-	"io"
+	"archive/zip"
 	"fmt"
 	"github.com/viant/toolbox"
+	"io"
 	"path"
 	"strings"
-	"archive/zip"
 )
 
 type CopyHandler func(sourceObject Object, source io.Reader, destinationService Service, destinationURL string) error
 type ModificationHandler func(reader io.Reader) (io.Reader, error)
 
-
 func urlPath(URL string) string {
 	var result = URL
-	schemaPosition:= strings.Index(URL, "://")
+	schemaPosition := strings.Index(URL, "://")
 	if schemaPosition != -1 {
 		result = string(URL[schemaPosition+3:])
 	}
 	pathRoot := strings.Index(result, "/")
 	if pathRoot > 0 {
-		result= string(result[pathRoot:])
+		result = string(result[pathRoot:])
 	}
 	return result
 }
@@ -41,7 +40,7 @@ func copy(sourceService Service, sourceURL string, destinationService Service, d
 			if sourceURLPath == objectURLPath {
 				continue
 			}
-			if subPath != "" && objectURLPath== toolbox.URLPathJoin(sourceURLPath, subPath) {
+			if subPath != "" && objectURLPath == toolbox.URLPathJoin(sourceURLPath, subPath) {
 				continue
 			}
 		}
@@ -74,10 +73,10 @@ func copy(sourceService Service, sourceURL string, destinationService Service, d
 					destinationObjectURL = toolbox.URLPathJoin(destinationObjectURL, sourceName)
 				} else {
 					destinationObject, _ := destinationService.StorageObject(destinationObjectURL)
-					if (destinationObject != nil && destinationObject.IsFolder()) {
+					if destinationObject != nil && destinationObject.IsFolder() {
 						destinationObjectURL = toolbox.URLPathJoin(destinationObjectURL, sourceName)
-					} else if destinationName != sourceName   {
-						if ! strings.Contains(destinationName, ".") {
+					} else if destinationName != sourceName {
+						if !strings.Contains(destinationName, ".") {
 							destinationObjectURL = toolbox.URLPathJoin(destinationObjectURL, sourceName)
 						}
 
@@ -122,7 +121,7 @@ func addPathIfNeeded(directories map[string]bool, path string, archive zip.Write
 func getArchiveCopyHandler(archive zip.Writer, parentURL string) CopyHandler {
 	var directories = make(map[string]bool)
 	return func(sourceObject Object, reader io.Reader, destinationService Service, destinationURL string) error {
-		var _, relativePath = toolbox.URLSplit(destinationURL);
+		var _, relativePath = toolbox.URLSplit(destinationURL)
 		if destinationURL != parentURL {
 			relativePath = strings.Replace(destinationURL, parentURL, "", 1)
 			var parent, _ = path.Split(relativePath)
@@ -150,7 +149,7 @@ func Copy(sourceService Service, sourceURL string, destinationService Service, d
 	}
 	err = copy(sourceService, sourceURL, destinationService, destinationURL, modifyContentHandler, "", copyHandler)
 	if err != nil {
-		err = fmt.Errorf("Failed to copy %v -> %v: %v", sourceURL, destinationURL, err)
+		err = fmt.Errorf("failed to copy %v -> %v: %v", sourceURL, destinationURL, err)
 	}
 	return err
 }

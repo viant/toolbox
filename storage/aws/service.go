@@ -100,11 +100,11 @@ func (s *service) List(URL string) ([]storage.Object, error) {
 	var result = make([]storage.Object, 0)
 	u, err := url.Parse(URL)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to parse : %v", err)
+		return nil, fmt.Errorf("failed to parse : %v", err)
 	}
 	config, err := s.getAwsConfig()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get aws config: %v", err)
+		return nil, fmt.Errorf("failed to get aws config: %v", err)
 	}
 	client := s3.New(session.New(), config)
 	err = listFolders(client, u, &result)
@@ -112,7 +112,7 @@ func (s *service) List(URL string) ([]storage.Object, error) {
 		err = listContent(client, u, &result)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get list content: %v", err)
+		return nil, fmt.Errorf("failed to get list content: %v", err)
 	}
 	return result, nil
 }
@@ -139,11 +139,11 @@ func (s *service) StorageObject(URL string) (storage.Object, error) {
 func (s *service) Download(object storage.Object) (io.Reader, error) {
 	u, err := url.Parse(object.URL())
 	if err != nil {
-		return nil, fmt.Errorf("Failed to parse : %v", err)
+		return nil, fmt.Errorf("failed to parse : %v", err)
 	}
 	config, err := s.getAwsConfig()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get aws config: %v", err)
+		return nil, fmt.Errorf("failed to get aws config: %v", err)
 	}
 	downloader := s3manager.NewDownloader(session.New(config))
 	target := &s3.Object{}
@@ -155,7 +155,7 @@ func (s *service) Download(object storage.Object) (io.Reader, error) {
 			Key:    aws.String(*target.Key),
 		})
 	if err != nil {
-		return nil, fmt.Errorf("Failed to download: %v", err)
+		return nil, fmt.Errorf("failed to download: %v", err)
 	}
 	return bytes.NewReader(writer.Buffer), nil
 
@@ -177,7 +177,7 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 		Key:    aws.String(parsedURL.Path),
 	})
 	if err != nil {
-		return fmt.Errorf("Failed to upload %v", err)
+		return fmt.Errorf("failed to upload %v", err)
 	}
 	return nil
 }

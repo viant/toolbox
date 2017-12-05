@@ -2,14 +2,13 @@ package ssh_test
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/ssh"
-	"testing"
+	"io/ioutil"
 	"os"
 	"path"
-	"github.com/viant/toolbox"
-	"io/ioutil"
+	"testing"
 )
-
 
 func TestNewClient(t *testing.T) {
 	commands, err := ssh.NewReplayCommands("/tmp/ls")
@@ -37,10 +36,6 @@ func TestNewClient(t *testing.T) {
 
 }
 
-
-
-
-
 func TestClient_Upload(t *testing.T) {
 	service, err := ssh.NewService("127.0.0.1", 22, nil)
 	if err == nil {
@@ -57,8 +52,6 @@ func TestClient_Upload(t *testing.T) {
 	}
 }
 
-
-
 func TestClient_UploadLargeFile(t *testing.T) {
 	service, err := ssh.NewService("127.0.0.1", 22, nil)
 	assert.Nil(t, err)
@@ -71,13 +64,12 @@ func TestClient_UploadLargeFile(t *testing.T) {
 		//file, err := os.OpenFile(filename, os.O_RDWR | os.O_CREATE, 0644)
 		//assert.Nil(t, err)
 
-		var payload = make([]byte, 1024*1024 *16)
-		for i := 0;i<len(payload);i+=32 {
-			payload[i] = byte(i%256)
+		var payload = make([]byte, 1024*1024*16)
+		for i := 0; i < len(payload); i += 32 {
+			payload[i] = byte(i % 256)
 		}
 		//file.Write(payload)
 		//file.Close()
-
 
 		err := service.Upload(filename, payload)
 		assert.Nil(t, err)
@@ -88,7 +80,5 @@ func TestClient_UploadLargeFile(t *testing.T) {
 			assert.EqualValues(t, data, payload)
 		}
 	}
-
-
 
 }

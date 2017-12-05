@@ -5,14 +5,12 @@ import (
 	"reflect"
 )
 
-
-
 //GetFunction returns function for provided owner and name, or error
 func GetFunction(owner interface{}, name string) (interface{}, error) {
 	var ownerType = reflect.TypeOf(owner)
 	var method, has = ownerType.MethodByName(name)
-	if ! has   {
-		return nil, fmt.Errorf("Failed to lookup %T.%v\n", owner, name)
+	if !has {
+		return nil, fmt.Errorf("failed to lookup %T.%v\n", owner, name)
 	}
 	return reflect.ValueOf(owner).MethodByName(method.Name).Interface(), nil
 }
@@ -59,7 +57,7 @@ func AsCompatibleFunctionParameters(function interface{}, parameters []interface
 			newValuePointer := reflect.New(funcSignature[i])
 			err := converter.AssignConverted(newValuePointer.Interface(), parameterValue)
 			if err != nil {
-				return nil, fmt.Errorf("Failed to assign convert %v to %v due to %v", parameterValue, newValuePointer.Interface(), err)
+				return nil, fmt.Errorf("failed to assign convert %v to %v due to %v", parameterValue, newValuePointer.Interface(), err)
 			}
 			reflectValue = newValuePointer.Elem()
 		}
@@ -74,8 +72,6 @@ func AsCompatibleFunctionParameters(function interface{}, parameters []interface
 	}
 	return functionParameters, nil
 }
-
-
 
 //BuildFunctionParameters builds function parameters provided in the parameterValues.
 // Parameters value will be converted if needed to expected by the function signature type. It returns function parameters , or error

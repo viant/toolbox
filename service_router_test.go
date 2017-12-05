@@ -95,7 +95,7 @@ func TestServiceRouter(t *testing.T) {
 
 		err := toolbox.RouteToService("get", "http://127.0.0.1:8082/v1/reverse/1,7,3", nil, &result)
 		if err != nil {
-			t.Errorf("Failed to send get request  %v", err)
+			t.Errorf("failed to send get request  %v", err)
 		}
 		assert.EqualValues(t, []int{3, 7, 1}, result)
 
@@ -105,7 +105,7 @@ func TestServiceRouter(t *testing.T) {
 
 		err := toolbox.RouteToService("post", "http://127.0.0.1:8082/v1/reverse/", []int{1, 7, 3}, &result)
 		if err != nil {
-			t.Errorf("Failed to send get request  %v", err)
+			t.Errorf("failed to send get request  %v", err)
 		}
 		assert.EqualValues(t, []int{3, 7, 1}, result)
 	}
@@ -113,7 +113,7 @@ func TestServiceRouter(t *testing.T) {
 
 		err := toolbox.RouteToService("delete", "http://127.0.0.1:8082/v1/delete/", []int{1, 7, 3}, &result)
 		if err != nil {
-			t.Errorf("Failed to send delete request  %v", err)
+			t.Errorf("failed to send delete request  %v", err)
 		}
 		assert.EqualValues(t, []int{3, 7, 1}, result)
 	}
@@ -121,7 +121,7 @@ func TestServiceRouter(t *testing.T) {
 
 		err := toolbox.RouteToService("delete", "http://127.0.0.1:8082/v1/delete/1,7,3", nil, &result)
 		if err != nil {
-			t.Errorf("Failed to send delete request  %v", err)
+			t.Errorf("failed to send delete request  %v", err)
 		}
 		assert.EqualValues(t, []int{3, 7, 1}, result)
 	}
@@ -130,7 +130,7 @@ func TestServiceRouter(t *testing.T) {
 
 		err := toolbox.RouteToService("get", "http://127.0.0.1:8082/v1/reverse2/1,7,3", nil, &result)
 		if err != nil {
-			t.Errorf("Failed to send delete request  %v", err)
+			t.Errorf("failed to send delete request  %v", err)
 		}
 		assert.EqualValues(t, []int{3, 7, 1}, result)
 	}

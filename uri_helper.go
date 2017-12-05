@@ -54,7 +54,7 @@ func OpenReaderFromURL(rawURL string) (io.ReadCloser, string, error) {
 	case "file":
 		file, err := os.Open(url.Path)
 		if err != nil {
-			return nil, "", fmt.Errorf("Failed to open file: %v due to %v", rawURL, err.Error())
+			return nil, "", fmt.Errorf("failed to open file: %v due to %v", rawURL, err.Error())
 		}
 		return file, ExtractMimeType(url.Path), nil
 	}
@@ -82,7 +82,7 @@ func OpenURL(fileURL string, flag int, permissions os.FileMode) (*os.File, error
 	}
 	file, err := os.OpenFile(filePath, flag, permissions)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create file: %v due to %v", fileURL, err.Error())
+		return nil, fmt.Errorf("failed to create file: %v due to %v", fileURL, err.Error())
 	}
 	return file, nil
 }

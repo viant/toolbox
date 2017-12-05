@@ -1,12 +1,11 @@
 package toolbox_test
 
 import (
+	"github.com/stretchr/testify/assert"
+	"github.com/viant/toolbox"
 	"reflect"
 	"testing"
 	"time"
-	"github.com/stretchr/testify/assert"
-	"github.com/viant/toolbox"
-
 )
 
 func TestConverter(t *testing.T) {
@@ -235,7 +234,7 @@ func TestConverter(t *testing.T) {
 		var testData = []interface{}{int(102), int64(102), float64(102), float32(102), "102"}
 		for _, item := range testData {
 			err := converter.AssignConverted(&value, item)
-			if assert.Nil(t, err){
+			if assert.Nil(t, err) {
 				if assert.NotNil(t, value) {
 					assert.Equal(t, float64(102), *value)
 				}
@@ -562,9 +561,8 @@ func TestUnwrapValue(t *testing.T) {
 
 }
 
-
 func TestConverter_AsInt(t *testing.T) {
 	intValue := toolbox.AsInt("5.638679022673832e+18")
-	assert.True(t, intValue  > 0)
+	assert.True(t, intValue > 0)
 
 }
