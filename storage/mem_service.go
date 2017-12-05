@@ -18,7 +18,7 @@ var noSuchFileOrDirectoryError = errors.New("No such file or directory")
 var folderMode, _ = NewFileMode("drwxrwxrwx")
 
 //MemoryRoot represents memory root storage
-var MemoryRoot = newMemoryFolder("/", NewFileInfo("/", 102, folderMode, time.Now(), true))
+var MemoryRoot = newMemoryFolder("mem:///", NewFileInfo("/", 102, folderMode, time.Now(), true))
 
 //Service represents memory storage service intended for testing
 type memoryStorageService struct {
@@ -105,6 +105,8 @@ func (s *memoryStorageService) List(URL string) ([]Object, error) {
 		return s.root.Objects(), nil
 	}
 
+
+
 	var pathFragments = strings.Split(path, "/")
 	node, err := s.getFolder(pathFragments)
 	if err != nil {
@@ -181,8 +183,8 @@ func (s *memoryStorageService) Upload(URL string, reader io.Reader) error {
 		pathFragment := pathFragments[i]
 		if subFolder, ok := node.folders[pathFragment]; ok {
 			node = subFolder
-		} else {
-			var folderURL = strings.Join(pathFragments[:i], "/")
+		} else  {
+			var folderURL =  MemoryProviderScheme + "://" + strings.Join(pathFragments[:i+1], "/")
 			var folderInfo = NewFileInfo(pathFragment, 102, folderMode, time.Now(), true)
 			newFolder := newMemoryFolder(folderURL, folderInfo)
 			node.mutext.Lock()
@@ -191,6 +193,8 @@ func (s *memoryStorageService) Upload(URL string, reader io.Reader) error {
 			node = newFolder
 		}
 	}
+
+
 	var pathLeaf = pathFragments[len(pathFragments)-1]
 	fileInfo := NewFileInfo(pathLeaf, int64(len(content)), fileMode, time.Now(), false)
 	var memoryFile = &MemoryFile{name: URL, content: content, fileInfo: fileInfo}

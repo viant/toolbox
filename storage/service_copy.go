@@ -22,8 +22,14 @@ func urlPath(URL string) string {
 	if pathRoot > 0 {
 		result = string(result[pathRoot:])
 	}
+	if strings.HasSuffix(result, "/") {
+		result = string(result[:len(result)-1])
+	}
+
 	return result
 }
+
+
 
 func copy(sourceService Service, sourceURL string, destinationService Service, destinationURL string, modifyContentHandler ModificationHandler, subPath string, copyHandler CopyHandler) error {
 	sourceListURL := sourceURL
@@ -44,9 +50,15 @@ func copy(sourceService Service, sourceURL string, destinationService Service, d
 				continue
 			}
 		}
+
+
 		if len(objectURLPath) > len(sourceURLPath) {
 			objectRelativePath = objectURLPath[len(sourceURLPath):]
+			if strings.HasPrefix(objectRelativePath, "/") {
+				objectRelativePath = string(objectRelativePath[1:])
+			}
 		}
+
 		var destinationObjectURL = destinationURL
 		if objectRelativePath != "" {
 			destinationObjectURL = toolbox.URLPathJoin(destinationURL, objectRelativePath)
@@ -65,8 +77,7 @@ func copy(sourceService Service, sourceURL string, destinationService Service, d
 					return err
 				}
 			}
-
-			if subPath == "" {
+		if subPath == "" {
 				_, sourceName := path.Split(object.URL())
 				_, destinationName := path.Split(destinationURL)
 				if strings.HasSuffix(destinationObjectURL, "/") {
@@ -77,20 +88,18 @@ func copy(sourceService Service, sourceURL string, destinationService Service, d
 						destinationObjectURL = toolbox.URLPathJoin(destinationObjectURL, sourceName)
 					} else if destinationName != sourceName {
 						if !strings.Contains(destinationName, ".") {
-							destinationObjectURL = toolbox.URLPathJoin(destinationObjectURL, sourceName)
+							destinationObjectURL = toolbox.URLPathJoin(destinationURL, sourceName)
 						}
 
 					}
 				}
 			}
-
 			err = copyHandler(object, reader, destinationService, destinationObjectURL)
 			if err != nil {
 				return err
 			}
 
 		} else {
-
 			err = copy(sourceService, sourceURL, destinationService, destinationURL, modifyContentHandler, objectRelativePath, copyHandler)
 			if err != nil {
 				return err
