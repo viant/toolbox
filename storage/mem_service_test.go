@@ -1,11 +1,11 @@
 package storage_test
 
 import (
-	"testing"
-	"github.com/viant/toolbox/storage"
-	"strings"
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/toolbox/storage"
 	"io/ioutil"
+	"strings"
+	"testing"
 )
 
 func Test_NewMemoryService(t *testing.T) {
@@ -40,7 +40,8 @@ func Test_NewMemoryService(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 3, len(objects))
 
-	for k, _ := range files {
+	assert.True(t, objects[0].IsFolder())
+	for k := range files {
 		object, err := service.StorageObject(k)
 		if assert.Nil(t, err) {
 			err = service.Delete(object)

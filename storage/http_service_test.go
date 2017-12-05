@@ -1,12 +1,11 @@
 package storage_test
 
 import (
-	"testing"
-	"github.com/viant/toolbox/storage"
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/toolbox/storage"
 	"io/ioutil"
+	"testing"
 )
-
 
 func TestNewHttpStorageService(t *testing.T) {
 	credentialFile := ""
@@ -32,7 +31,5 @@ func TestNewHttpStorageService(t *testing.T) {
 		assert.Nil(t, err)
 		assert.NotNil(t, object)
 	}
-
-
 
 }
