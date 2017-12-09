@@ -353,11 +353,17 @@ func (c *ToolboxHTTPClient) Request(method, url string, request, response interf
 		return errors.New("unsupported method:" + method)
 	}
 	var buffer *bytes.Buffer
+
+
 	if request != nil {
 		buffer = new(bytes.Buffer)
-		err := encoderFactory.Create(buffer).Encode(&request)
-		if err != nil {
-			return fmt.Errorf("failed to encode request: %v due to ", err)
+		if IsString(request) {
+			buffer.Write([]byte(AsString(request)))
+		} else {
+			err := encoderFactory.Create(buffer).Encode(&request)
+			if err != nil {
+				return fmt.Errorf("failed to encode request: %v due to ", err)
+			}
 		}
 	}
 	var serverResponse *http.Response
@@ -386,17 +392,33 @@ func (c *ToolboxHTTPClient) Request(method, url string, request, response interf
 	}
 
 	if response != nil {
-		if serverResponse == nil || serverResponse.Body == nil {
+		statusSettable, canSetStatus := response.(StatusCodeSettable)
+		if canSetStatus {
+			statusSettable.SetStatusCode(serverResponse.StatusCode)
+		}
+		if serverResponse == nil  {
 			return fmt.Errorf("failed to receive response %v", err)
 		}
+		var errorPrefix = fmt.Sprintf("failed to process response: %v, ", serverResponse.StatusCode)
 		body, err := ioutil.ReadAll(serverResponse.Body)
 		if err != nil {
-			return fmt.Errorf("failed to read response %v", err)
+			return fmt.Errorf("%v unable read body %v",errorPrefix, err)
 		}
+		if len(body) == 0 {
+			return fmt.Errorf("%v response body was empty", errorPrefix)
+		}
+
 		err = decoderFactory.Create(strings.NewReader(string(body))).Decode(response)
 		if err != nil {
-			return fmt.Errorf("failed to decode response to %T: body: %v: %v, %v", response, string(body), err, serverResponse.Header.Get("error"))
+			return fmt.Errorf("%v. unable decode response as %T: body: %v: %v", errorPrefix, response, string(body), err)
+		}
+		if canSetStatus {
+			statusSettable.SetStatusCode(serverResponse.StatusCode)
 		}
 	}
 	return nil
+}
+
+type StatusCodeSettable interface {
+	SetStatusCode(code int)
 }
