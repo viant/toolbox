@@ -111,6 +111,7 @@ func NewProxyHandler(proxyConfig *HttpBridgeProxyConfig, route *HttpBridgeProxyR
 		TLSHandshakeTimeout: time.Duration(proxyConfig.TLSHandshakeTimeoutMs) * time.Millisecond,
 		MaxIdleConnsPerHost: proxyConfig.MaxIdleConnections,
 	}
+
 	director := func(request *http.Request) {
 		request.URL.Scheme = route.TargetURL.Scheme
 		request.URL.Host = route.TargetURL.Host
@@ -318,12 +319,16 @@ func HttpFileRecorder(directory string, printStdOut bool) func(request *http.Req
 
 	return func(request *http.Request, response *http.Response) {
 
+
+
+
 		var body string
 
 		if request.Body != nil {
 			body = ReaderAsText(request.Body)
 		}
 
+		fmt.Printf("length: %v %v\n", response.ContentLength, len(body))
 		httpRequest := &HttpRequest{
 			Method: request.Method,
 			URL:    request.URL.String(),
