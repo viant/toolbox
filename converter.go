@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"errors"
+	"math"
 )
 
 //DefaultDateLayout is set to 2006-01-02 15:04:05.000
@@ -186,21 +188,50 @@ func ToInt(value interface{}) (int, error) {
 	return int(result), err
 }
 
+
+
+func ToTime(value interface{}, dateLayout string) (*time.Time, error) {
+	if value == nil{
+		return nil, errors.New("values was empty")
+	}
+	switch actual := value.(type) {
+	case time.Time:
+		return &actual, nil
+	case *time.Time:
+		return actual, nil
+	default:
+		floatValue, err := ToFloat(value)
+		if err == nil {
+			var timeValue time.Time
+			var timestamp = int64(floatValue)
+			if timestamp > math.MaxUint32 {
+				var timestampInMs =  timestamp / 1000000
+				if timestampInMs > math.MaxUint32 {
+					timeValue = time.Unix(0, timestamp)
+				} else {
+					timeValue = time.Unix(0, timestamp* 1000000)
+				}
+			}  else {
+				timeValue = time.Unix(timestamp, 0)
+			}
+			return &timeValue, nil
+		}
+		timeValue, err := ParseTime(AsString(value), dateLayout)
+		if err != nil {
+			return nil, err
+		}
+		return &timeValue, nil
+	}
+	return nil, fmt.Errorf("unsupported type: %T", value)
+}
+
 //AsTime converts an input to time, it takes time input,  dateLaout as parameters.
 func AsTime(value interface{}, dateLayout string) *time.Time {
-	if timeValue, ok := value.(time.Time); ok {
-		return &timeValue
-	}
-	if CanConvertToFloat(value) {
-		unixTime := int(AsFloat(value))
-		timeValue := time.Unix(int64(unixTime), 0)
-		return &timeValue
-	}
-	timeValue, err := ParseTime(AsString(value), dateLayout)
+	result, err := ToTime(value, dateLayout)
 	if err != nil {
 		return nil
 	}
-	return &timeValue
+	return result
 }
 
 //DiscoverValueAndKind discovers input kind, it applies checks of the following types:  int, float, bool, string
@@ -844,6 +875,10 @@ func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sou
 
 	for i := 0; i < sourceValue.NumField(); i++ {
 		field := sourceValue.Field(i)
+
+		if ! field.CanInterface() {
+			continue
+		}
 		var value interface{}
 		fieldKind := DereferenceType(field.Type()).Kind()
 		fieldType := sourceType.Field(i)

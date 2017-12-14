@@ -275,8 +275,9 @@ func TestConverter(t *testing.T) {
 		date := "2016-02-22 12:32:01 UTC"
 		{
 			err := converter.AssignConverted(&value, date)
-			assert.Nil(t, err)
-			assert.Equal(t, 1456144321, int(value.Unix()))
+			if assert.Nil(t, err) {
+				assert.Equal(t, 1456144321, int(value.Unix()))
+			}
 		}
 		{
 			err := converter.AssignConverted(&value, &date)
@@ -288,6 +289,21 @@ func TestConverter(t *testing.T) {
 			assert.Nil(t, err)
 			assert.Equal(t, 1456144321, int(value.Unix()))
 		}
+
+		{
+			var unixNano ="1513271472347277824"
+			err := converter.AssignConverted(&value, unixNano)
+			assert.Nil(t, err)
+			assert.Equal(t, 1513271472, int(value.Unix()))
+		}
+
+		{
+			var unixNano ="1456144321001"
+			err := converter.AssignConverted(&value, unixNano)
+			assert.Nil(t, err)
+			assert.Equal(t, 1456144321, int(value.Unix()))
+		}
+
 		{
 			unix := "1456144321.0"
 			err := converter.AssignConverted(&value, unix)
