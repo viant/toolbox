@@ -742,6 +742,10 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		case string:
 			timeValue := AsTime(sourceValue, c.DataLayout)
 			if timeValue == nil {
+
+				if len(sourceValue) > len(c.DataLayout) {
+					sourceValue = string(sourceValue[:len(c.DataLayout)])
+				}
 				_, err := time.Parse(c.DataLayout, sourceValue)
 				return err
 			}
