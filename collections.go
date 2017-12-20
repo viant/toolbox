@@ -413,6 +413,15 @@ func MapKeysToSlice(sourceMap interface{}, targetSlicePointer interface{}) {
 
 //MapKeysToStringSlice creates a string slice from sourceMap keys, keys do not need to be of a string type.
 func MapKeysToStringSlice(sourceMap interface{}) []string {
+	if stringKeyMap, ok := sourceMap.(map[string]interface{}); ok {
+		var keys = make([]string, 0)
+		for k, _ := range stringKeyMap {
+			keys = append(keys, k)
+		}
+		return keys
+	}
+
+
 	var keys = make([]string, 0)
 	ProcessMap(&sourceMap, func(key interface{}, value interface{}) bool {
 		keys = append(keys, AsString(key))

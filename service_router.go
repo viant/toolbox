@@ -83,7 +83,7 @@ func (sr ServiceRouting) extractParameterFromBody(parameterName string, targetTy
 	if !strings.Contains(parameterName, ":") {
 		err := decoder.Decode(targetValuePointer.Interface())
 		if err != nil {
-			return nil, fmt.Errorf("unable to extract %Tv due to %v", targetValuePointer.Interface(), err)
+			return nil, fmt.Errorf("unable to extract %T due to %v", targetValuePointer.Interface(), err)
 		}
 	} else {
 		var valueMap = make(map[string]interface{})
