@@ -18,7 +18,7 @@ type Service interface {
 	StorageObject(URL string) (Object, error)
 
 	//Download returns reader for downloaded storage object
-	Download(object Object) (io.Reader, error)
+	Download(object Object) (io.ReadCloser, error)
 
 	//Upload uploads provided reader content for supplied storage object.
 	Upload(URL string, reader io.Reader) error
@@ -78,7 +78,7 @@ func (s *storageService) StorageObject(URL string) (Object, error) {
 }
 
 //Download downloads content for passed in object
-func (s *storageService) Download(object Object) (io.Reader, error) {
+func (s *storageService) Download(object Object) (io.ReadCloser, error) {
 	service, err := s.getServiceForSchema(object.URL())
 	if err != nil {
 		return nil, err
