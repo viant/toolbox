@@ -46,6 +46,7 @@ func TestService_Delete(t *testing.T) {
 
 	reader, err := service.Download(object)
 	if assert.Nil(t, err) {
+		defer reader.Close()
 		content, err := ioutil.ReadAll(reader)
 		assert.Nil(t, err)
 		assert.Equal(t, "this is test", string(content))

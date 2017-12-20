@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/toolbox"
@@ -179,19 +178,15 @@ func (s *httpStorageService) StorageObject(URL string) (Object, error) {
 }
 
 //Download returns reader for downloaded storage object
-func (s *httpStorageService) Download(object Object) (io.Reader, error) {
+func (s *httpStorageService) Download(object Object) (io.ReadCloser, error) {
 	client, err := newHttpClient()
 	if err != nil {
 		return nil, err
 	}
 	response, err := client.Get(s.addCredentialToURLIfNeeded(object.URL()))
-	content, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return nil, err
-	}
-	defer response.Body.Close()
-	return bytes.NewReader(content), err
+	return response.Body, err
 }
+
 
 //Upload uploads provided reader content for supplied url.
 func (s *httpStorageService) Upload(URL string, reader io.Reader) error {

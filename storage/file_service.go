@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/toolbox"
@@ -95,18 +94,11 @@ func (s *fileStorageService) StorageObject(URL string) (Object, error) {
 }
 
 //Download returns reader for downloaded storage object
-func (s *fileStorageService) Download(object Object) (io.Reader, error) {
-	reader, _, err := toolbox.OpenReaderFromURL(object.URL())
-	if err != nil {
-		return nil, err
-	}
-	defer reader.Close()
-	data, err := ioutil.ReadAll(reader)
-	if err != nil {
-		return nil, err
-	}
-	return bytes.NewReader(data), err
+func (s *fileStorageService) Download(object Object) (io.ReadCloser, error) {
+	reader, _, err :=  toolbox.OpenReaderFromURL(object.URL())
+	return reader, err
 }
+
 
 //Upload uploads provided reader content for supplied url.
 func (s *fileStorageService) Upload(URL string, reader io.Reader) error {
