@@ -47,7 +47,6 @@ func AsCompatibleFunctionParameters(function interface{}, parameters []interface
 	var functionParameters = make([]interface{}, 0)
 	for i, parameterValue := range parameters {
 
-
 		if parameterValue == nil {
 			return nil, fmt.Errorf("parameter[%v] was empty", i)
 		}
@@ -61,8 +60,6 @@ func AsCompatibleFunctionParameters(function interface{}, parameters []interface
 				reflectValue = reflect.ValueOf(parameterValue)
 			}
 		}
-
-
 
 		if reflectValue.Type() != funcSignature[i] {
 			newValuePointer := reflect.New(funcSignature[i])
