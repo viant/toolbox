@@ -2,11 +2,11 @@ package toolbox
 
 import (
 	"reflect"
+	"time"
 )
 
 //Iterator represents generic iterator.
 type Iterator interface {
-
 	//HasNext returns true if iterator has next element.
 	HasNext() bool
 
@@ -64,6 +64,28 @@ func (i *interfaceSliceIterator) HasNext() bool {
 func (i *interfaceSliceIterator) Next(itemPointer interface{}) error {
 	value := i.sliceValue[i.index]
 	i.index++
+
+	switch actual := itemPointer.(type) {
+	case *interface{}:
+		*actual = value
+		return nil
+	case *string:
+		*actual = AsString(value)
+		return nil
+	case *int:
+		*actual = AsInt(value)
+		return nil
+	case *int64:
+		*actual = int64(AsInt(value))
+		return nil
+	case *time.Time:
+		var timestamp = AsTime(value, DefaultDateLayout)
+		if timestamp != nil {
+			*actual = *timestamp
+		}
+		return nil
+
+	}
 	itemPointerValue := reflect.ValueOf(itemPointer)
 	if value != nil {
 		itemPointerValue.Elem().Set(reflect.ValueOf(value))
