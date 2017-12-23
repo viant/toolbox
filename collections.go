@@ -377,8 +377,6 @@ func AsMap(sourceMap interface{}) map[string]interface{} {
 	case *map[string]interface{}:
 		return *candidate
 	case map[interface{}]interface{}:
-
-		fmt.Printf("MAP: %v %T\n", sourceMap, sourceMap)
 		result = make(map[string]interface{})
 		for k, v := range candidate {
 			result[AsString(k)] = v
