@@ -1,13 +1,13 @@
 package toolbox
 
 import (
-	"errors"
 	"fmt"
-	"math"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
+	"errors"
+	"math"
 )
 
 //DefaultDateLayout is set to 2006-01-02 15:04:05.000
@@ -216,12 +216,12 @@ func unitToTime(timestamp int64) *time.Time {
 	return &timeValue
 }
 
-
 func textToTime(value, dateLayout string) (*time.Time, error) {
 	floatValue, err := ToFloat(value)
 	if err == nil {
 		return unitToTime(int64(floatValue)), nil
 	}
+
 	if len(value) > len(dateLayout) {
 		value = string(value[:len(dateLayout)])
 	}
@@ -255,7 +255,6 @@ func ToTime(value interface{}, dateLayout string) (*time.Time, error) {
 	}
 	return nil, fmt.Errorf("unsupported type: %T", value)
 }
-
 
 //AsTime converts an input to time, it takes time input,  dateLaout as parameters.
 func AsTime(value interface{}, dateLayout string) *time.Time {
@@ -512,13 +511,12 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 				c.DataLayout = previousLayout
 
 			} else {
+
 				err := c.AssignConverted(field.Addr().Interface(), value)
 				if err != nil {
 					return fmt.Errorf("failed to convert %v to %v due to %v", value, field, err)
 				}
 			}
-		} else {
-			fmt.Printf("not found %v\n", key)
 		}
 	}
 
@@ -884,10 +882,10 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		return nil
 	}
 
-	targetDereferenceType := DereferenceType(target)
+	targetDereferecedType := DereferenceType(target)
 
 	for _, candidate := range numericTypes {
-		if candidate.Kind() == targetDereferenceType.Kind() {
+		if candidate.Kind() == targetDereferecedType.Kind() {
 			var pointerCount = CountPointers(target)
 			var compatibleTarget = reflect.New(candidate)
 			for i := 0; i < pointerCount-1; i++ {
@@ -916,7 +914,7 @@ func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sou
 	for i := 0; i < sourceValue.NumField(); i++ {
 		field := sourceValue.Field(i)
 
-		if !field.CanInterface() {
+		if ! field.CanInterface() {
 			continue
 		}
 		var value interface{}
