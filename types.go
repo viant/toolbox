@@ -58,6 +58,8 @@ func IsTime(input interface{}) bool {
 	switch input.(type) {
 	case time.Time:
 		return true
+	case *time.Time:
+		return true
 	}
 	return false
 }

@@ -10,6 +10,8 @@ import (
 	"os"
 	"path"
 	"strings"
+	"encoding/pem"
+	"fmt"
 )
 
 var sshKeyFileCandidates = []string{"/.ssh/id_rsa", "/.ssh/id_dsa"}
@@ -106,6 +108,18 @@ func (c *Config) applyDefaultIfNeeded() {
 	}
 }
 
+func IsKeyEncrypted(keyPath string) bool {
+	privateKeyBytes, err := ioutil.ReadFile(keyPath)
+	if err != nil {
+		return false
+	}
+	block, _ := pem.Decode(privateKeyBytes)
+	if block == nil {
+		return false
+	}
+	return strings.Contains(block.Headers["Proc-Type"], "ENCRYPTED")
+}
+
 //ClientConfig returns a new instance of sshClientConfig
 func (c *Config) ClientConfig() (*ssh.ClientConfig, error) {
 	if c.clientConfig != nil {
@@ -122,11 +136,15 @@ func (c *Config) ClientConfig() (*ssh.ClientConfig, error) {
 		result.Auth = append(result.Auth, ssh.Password(c.Password))
 	}
 	if c.PrivateKeyPath != "" {
+
+		if IsKeyEncrypted(c.PrivateKeyPath) {
+			return nil, fmt.Errorf("key: %v, has been encrypeed with password", c.PrivateKeyPath)
+		}
+
 		privateKeyBytes, err := ioutil.ReadFile(c.PrivateKeyPath)
 		if err != nil {
 			return nil, err
 		}
-
 		key, err := ssh.ParsePrivateKey(privateKeyBytes)
 		if err != nil {
 			return nil, err
