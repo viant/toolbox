@@ -79,11 +79,16 @@ func (sr ServiceRouting) extractParameterFromBody(parameterName string, targetTy
 	targetValuePointer := reflect.New(targetType)
 	contentType := getContentTypeOrJSONContentType(request.Header.Get("Content-Type"))
 	decoderFactory := sr.getDecoderFactory(contentType)
-	decoder := decoderFactory.Create(request.Body)
+
+	body, err :=ioutil.ReadAll(request.Body)
+	if err != nil {
+		return nil, err
+	}
+	decoder := decoderFactory.Create(bytes.NewReader(body))
 	if !strings.Contains(parameterName, ":") {
 		err := decoder.Decode(targetValuePointer.Interface())
 		if err != nil {
-			return nil, fmt.Errorf("unable to extract %T due to %v", targetValuePointer.Interface(), err)
+			return nil, fmt.Errorf("unable to extract %T due to: %v, body: %s", targetValuePointer.Interface(), err, body)
 		}
 	} else {
 		var valueMap = make(map[string]interface{})
