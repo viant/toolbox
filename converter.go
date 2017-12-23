@@ -188,10 +188,8 @@ func ToInt(value interface{}) (int, error) {
 	return int(result), err
 }
 
-
-
 func ToTime(value interface{}, dateLayout string) (*time.Time, error) {
-	if value == nil{
+	if value == nil {
 		return nil, errors.New("values was empty")
 	}
 	switch actual := value.(type) {
@@ -205,13 +203,13 @@ func ToTime(value interface{}, dateLayout string) (*time.Time, error) {
 			var timeValue time.Time
 			var timestamp = int64(floatValue)
 			if timestamp > math.MaxUint32 {
-				var timestampInMs =  timestamp / 1000000
+				var timestampInMs = timestamp / 1000000
 				if timestampInMs > math.MaxUint32 {
 					timeValue = time.Unix(0, timestamp)
 				} else {
-					timeValue = time.Unix(0, timestamp* 1000000)
+					timeValue = time.Unix(0, timestamp*1000000)
 				}
-			}  else {
+			} else {
 				timeValue = time.Unix(timestamp, 0)
 			}
 			return &timeValue, nil
@@ -428,12 +426,47 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 	newStructPointer := reflect.New(targetIndirectValue.Type())
 	newStruct := newStructPointer.Elem()
 	fieldsMapping := NewFieldSettingByKey(newStructPointer.Interface(), c.MappedKeyTag)
+
+
+	var defaultValueMap  = make(map[string]interface{})
+
+
+	var anonymousValueMap map[string]reflect.Value
+	var anonymousFields map[string]reflect.Value
+
+
+	for _, value := range fieldsMapping {
+		if defaultValue, ok := value["default"]; ok {
+			var fieldName = value["fieldName"]
+			defaultValueMap[fieldName] = defaultValue
+		}
+		if index, ok := value["fieldIndex"]; ok {
+			if len(anonymousValueMap) == 0 {
+				anonymousValueMap = make(map[string]reflect.Value)
+				anonymousFields = make(map[string]reflect.Value)
+			}
+			field := newStruct.Field(AsInt(index))
+			fieldStruct := reflect.New(field.Type().Elem())
+			anonymousValueMap[index] = fieldStruct
+			anonymousFields[index] = field
+		}
+	}
+
 	for key, value := range inputMap {
+		aStruct := newStruct
 		mapping, found := fieldsMapping[strings.ToLower(key)]
 		if found {
-
-			fieldName := mapping["fieldName"]
-			field := newStruct.FieldByName(fieldName)
+			var field reflect.Value
+			fieldName := mapping["fieldName"];
+			if fieldIndex, ok := mapping["fieldIndex"]; ok {
+				var structPointer = anonymousValueMap[fieldIndex]
+				anonymousFields[fieldIndex].Set(structPointer)
+				aStruct = structPointer.Elem()
+			}
+			field = aStruct.FieldByName(fieldName)
+			if _, has := defaultValueMap[fieldName]; has {
+				delete(defaultValueMap, fieldName)
+			}
 
 			if HasTimeLayout(mapping) {
 				previousLayout := c.DataLayout
@@ -445,14 +478,25 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 				c.DataLayout = previousLayout
 
 			} else {
-
 				err := c.AssignConverted(field.Addr().Interface(), value)
 				if err != nil {
 					return fmt.Errorf("failed to convert %v to %v due to %v", value, field, err)
 				}
 			}
+		} else {
+			fmt.Printf("not found %v\n", key)
 		}
 	}
+
+	for fieldName, value := range defaultValueMap {
+		field := newStruct.FieldByName(fieldName)
+		err := c.AssignConverted(field.Addr().Interface(), value)
+		if err != nil {
+			return fmt.Errorf("failed to assign default value %v to %v due to %v", value, field, err)
+		}
+	}
+
+	//			field.Set(fieldStruct)
 
 	if targetIndirectPointerType.Kind() == reflect.Slice {
 		targetIndirectValue.Set(newStructPointer)
@@ -848,10 +892,10 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		return nil
 	}
 
-	targetDereferecedType := DereferenceType(target)
+	targetDereferenceType := DereferenceType(target)
 
 	for _, candidate := range numericTypes {
-		if candidate.Kind() == targetDereferecedType.Kind() {
+		if candidate.Kind() == targetDereferenceType.Kind() {
 			var pointerCount = CountPointers(target)
 			var compatibleTarget = reflect.New(candidate)
 			for i := 0; i < pointerCount-1; i++ {
