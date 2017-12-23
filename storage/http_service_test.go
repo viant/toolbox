@@ -19,7 +19,10 @@ func TestNewHttpStorageService(t *testing.T) {
 		assert.True(t, len(objects) > 0)
 
 		reader, err := service.Download(objects[0])
-		assert.Nil(t, err)
+
+		if assert.Nil(t, err) {
+			defer reader.Close()
+		}
 		content, err := ioutil.ReadAll(reader)
 		assert.Nil(t, err)
 		assert.True(t, len(content) > 0)

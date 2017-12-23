@@ -140,6 +140,7 @@ func (r *Resource) Download() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer reader.Close()
 	content, err := ioutil.ReadAll(reader)
 	if err != nil {
 		return nil, err

@@ -10,7 +10,7 @@ import (
 )
 
 type CopyHandler func(sourceObject Object, source io.Reader, destinationService Service, destinationURL string) error
-type ModificationHandler func(reader io.Reader) (io.Reader, error)
+type ModificationHandler func(reader io.ReadCloser) (io.ReadCloser, error)
 
 func urlPath(URL string) string {
 	var result = URL
@@ -31,7 +31,7 @@ func urlPath(URL string) string {
 
 
 
-func copy(sourceService Service, sourceURL string, destinationService Service, destinationURL string, modifyContentHandler ModificationHandler, subPath string, copyHandler CopyHandler) error {
+func copyData(sourceService Service, sourceURL string, destinationService Service, destinationURL string, modifyContentHandler ModificationHandler, subPath string, copyHandler CopyHandler) error {
 	sourceListURL := sourceURL
 	if subPath != "" {
 		sourceListURL = toolbox.URLPathJoin(sourceURL, subPath)
@@ -50,34 +50,31 @@ func copy(sourceService Service, sourceURL string, destinationService Service, d
 				continue
 			}
 		}
-
-
 		if len(objectURLPath) > len(sourceURLPath) {
 			objectRelativePath = objectURLPath[len(sourceURLPath):]
 			if strings.HasPrefix(objectRelativePath, "/") {
 				objectRelativePath = string(objectRelativePath[1:])
 			}
 		}
-
 		var destinationObjectURL = destinationURL
 		if objectRelativePath != "" {
 			destinationObjectURL = toolbox.URLPathJoin(destinationURL, objectRelativePath)
 		}
-		var reader io.Reader
 		if object.IsContent() {
-			reader, err = sourceService.Download(object)
+			reader, err := sourceService.Download(object)
 			if err != nil {
-				err = fmt.Errorf("Unable download, %v -> %v, %v", object.URL(), destinationObjectURL, err)
+				err = fmt.Errorf("unable download, %v -> %v, %v", object.URL(), destinationObjectURL, err)
 				return err
 			}
+			defer reader.Close()
 			if modifyContentHandler != nil {
 				reader, err = modifyContentHandler(reader)
 				if err != nil {
-					err = fmt.Errorf("Unable modify content, %v %v %v", object.URL(), destinationObjectURL, err)
+					err = fmt.Errorf("unable modify content, %v %v %v", object.URL(), destinationObjectURL, err)
 					return err
 				}
 			}
-		if subPath == "" {
+			if subPath == "" {
 				_, sourceName := path.Split(object.URL())
 				_, destinationName := path.Split(destinationURL)
 				if strings.HasSuffix(destinationObjectURL, "/") {
@@ -100,7 +97,7 @@ func copy(sourceService Service, sourceURL string, destinationService Service, d
 			}
 
 		} else {
-			err = copy(sourceService, sourceURL, destinationService, destinationURL, modifyContentHandler, objectRelativePath, copyHandler)
+			err = copyData(sourceService, sourceURL, destinationService, destinationURL, modifyContentHandler, objectRelativePath, copyHandler)
 			if err != nil {
 				return err
 			}
@@ -156,7 +153,7 @@ func Copy(sourceService Service, sourceURL string, destinationService Service, d
 	if copyHandler == nil {
 		copyHandler = copySourceToDestination
 	}
-	err = copy(sourceService, sourceURL, destinationService, destinationURL, modifyContentHandler, "", copyHandler)
+	err = copyData(sourceService, sourceURL, destinationService, destinationURL, modifyContentHandler, "", copyHandler)
 	if err != nil {
 		err = fmt.Errorf("failed to copy %v -> %v: %v", sourceURL, destinationURL, err)
 	}

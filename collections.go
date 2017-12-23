@@ -351,6 +351,13 @@ func ProcessMap(sourceMap interface{}, handler func(key, value interface{}) bool
 			}
 		}
 		return
+	case map[interface{}]interface{}:
+		for key, value := range aMap {
+			if !handler(key, value) {
+				break
+			}
+		}
+		return
 	}
 	mapValue := DiscoverValueByKind(reflect.ValueOf(sourceMap), reflect.Map)
 	for _, key := range mapValue.MapKeys() {
@@ -363,19 +370,26 @@ func ProcessMap(sourceMap interface{}, handler func(key, value interface{}) bool
 
 //AsMap converts underlying map as map[string]interface{}
 func AsMap(sourceMap interface{}) map[string]interface{} {
-	result, ok := sourceMap.(map[string]interface{})
-	if ok {
-		return result
-	} else {
-		sourceMapValue := reflect.ValueOf(sourceMap)
-		mapType := reflect.TypeOf(result)
-		if sourceMapValue.Type().AssignableTo(mapType) {
-			result, _ = sourceMapValue.Convert(mapType).Interface().(map[string]interface{})
-			return result
+	var result map[string]interface{}
+	switch candidate := sourceMap.(type) {
+	case map[string]interface{}:
+		return candidate
+	case *map[string]interface{}:
+		return *candidate
+	case map[interface{}]interface{}:
+
+		fmt.Printf("MAP: %v %T\n", sourceMap, sourceMap)
+		result = make(map[string]interface{})
+		for k, v := range candidate {
+			result[AsString(k)] = v
 		}
+		return result
 	}
-	if resultPointer, ok := sourceMap.(*map[string]interface{}); ok {
-		return *resultPointer
+	sourceMapValue := reflect.ValueOf(sourceMap)
+	mapType := reflect.TypeOf(result)
+	if sourceMapValue.Type().AssignableTo(mapType) {
+		result, _ = sourceMapValue.Convert(mapType).Interface().(map[string]interface{})
+		return result
 	}
 	result = make(map[string]interface{})
 	CopyMapEntries(sourceMap, result)
@@ -413,6 +427,14 @@ func MapKeysToSlice(sourceMap interface{}, targetSlicePointer interface{}) {
 
 //MapKeysToStringSlice creates a string slice from sourceMap keys, keys do not need to be of a string type.
 func MapKeysToStringSlice(sourceMap interface{}) []string {
+	if stringKeyMap, ok := sourceMap.(map[string]interface{}); ok {
+		var keys = make([]string, 0)
+		for k := range stringKeyMap {
+			keys = append(keys, k)
+		}
+		return keys
+	}
+
 	var keys = make([]string, 0)
 	ProcessMap(&sourceMap, func(key interface{}, value interface{}) bool {
 		keys = append(keys, AsString(key))
