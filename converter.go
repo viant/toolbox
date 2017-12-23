@@ -1,6 +1,7 @@
 package toolbox
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"reflect"
@@ -215,12 +216,12 @@ func unitToTime(timestamp int64) *time.Time {
 	return &timeValue
 }
 
+
 func textToTime(value, dateLayout string) (*time.Time, error) {
 	floatValue, err := ToFloat(value)
 	if err == nil {
 		return unitToTime(int64(floatValue)), nil
 	}
-
 	if len(value) > len(dateLayout) {
 		value = string(value[:len(dateLayout)])
 	}
@@ -254,6 +255,7 @@ func ToTime(value interface{}, dateLayout string) (*time.Time, error) {
 	}
 	return nil, fmt.Errorf("unsupported type: %T", value)
 }
+
 
 //AsTime converts an input to time, it takes time input,  dateLaout as parameters.
 func AsTime(value interface{}, dateLayout string) *time.Time {
