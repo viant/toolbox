@@ -2,18 +2,19 @@ package gs
 
 import (
 	"bytes"
-	"cloud.google.com/go/storage"
 	"context"
 	"crypto/md5"
 	"errors"
 	"fmt"
-	"github.com/viant/toolbox"
-	tstorage "github.com/viant/toolbox/storage"
-	"google.golang.org/api/option"
 	"hash/crc32"
 	"io"
 	"io/ioutil"
 	"net/url"
+
+	"cloud.google.com/go/storage"
+	"github.com/viant/toolbox"
+	tstorage "github.com/viant/toolbox/storage"
+	"google.golang.org/api/option"
 )
 
 type service struct {
@@ -23,6 +24,10 @@ type service struct {
 func (s *service) NewClient() (*storage.Client, context.Context, error) {
 	ctx := context.Background()
 	client, err := storage.NewClient(ctx, s.options...)
+	if err != nil {
+		err = fmt.Errorf("failed to create google storage client:%v", err)
+	}
+
 	return client, ctx, err
 }
 
@@ -111,7 +116,7 @@ func (s *service) Download(object tstorage.Object) (io.Reader, error) {
 func (s *service) Upload(URL string, reader io.Reader) error {
 	parsedUrl, err := url.Parse(URL)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to parse URL for uploading: %v, %v", URL, err)
 	}
 	client, ctx, err := s.NewClient()
 	if err != nil {
@@ -134,7 +139,7 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 	}
 	content, err := ioutil.ReadAll(reader)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read all during upload:%v", err)
 	}
 	contentReader := bytes.NewBuffer(content)
 
@@ -153,10 +158,10 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 	}
 
 	if _, err = io.Copy(writer, contentReader); err != nil {
-		return err
+		return fmt.Errorf("failed to copy to writer during upload:%v", err)
 	}
 	if err = writer.Close(); err != nil {
-		return err
+		return fmt.Errorf("failed to close writer during upload:%v", err)
 	}
 	return err
 }
