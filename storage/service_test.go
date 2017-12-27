@@ -42,10 +42,12 @@ func TestStorageService_List(t *testing.T) {
 
 	{
 		reader, err := service.Download(objectByUrl[baseUrl+"/file2.txt"])
-		assert.Nil(t, err)
-		content, err := ioutil.ReadAll(reader)
-		assert.Nil(t, err)
-		assert.Equal(t, "line1\nline2", string(content))
+		if assert.Nil(t, err) {
+			defer reader.Close()
+			content, err := ioutil.ReadAll(reader)
+			assert.Nil(t, err)
+			assert.Equal(t, "line1\nline2", string(content))
+		}
 	}
 
 	var newFileUrl = baseUrl + "/file3.txt"
@@ -60,10 +62,12 @@ func TestStorageService_List(t *testing.T) {
 		object, err := service.StorageObject(newFileUrl)
 		assert.Nil(t, err)
 		reader, err := service.Download(object)
-		assert.Nil(t, err)
-		content, err := ioutil.ReadAll(reader)
-		assert.Nil(t, err)
-		assert.Equal(t, "abc", string(content))
+		if assert.Nil(t, err) {
+			defer reader.Close()
+			content, err := ioutil.ReadAll(reader)
+			assert.Nil(t, err)
+			assert.Equal(t, "abc", string(content))
+		}
 	}
 
 }

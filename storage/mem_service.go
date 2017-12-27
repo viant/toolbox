@@ -104,9 +104,6 @@ func (s *memoryStorageService) List(URL string) ([]Object, error) {
 	if path == "/" {
 		return s.root.Objects(), nil
 	}
-
-
-
 	var pathFragments = strings.Split(path, "/")
 	node, err := s.getFolder(pathFragments)
 	if err != nil {
@@ -150,7 +147,7 @@ func (s *memoryStorageService) StorageObject(URL string) (Object, error) {
 }
 
 //Download returns reader for downloaded storage object
-func (s *memoryStorageService) Download(object Object) (io.Reader, error) {
+func (s *memoryStorageService) Download(object Object) (io.ReadCloser, error) {
 	var urlPath, err = s.getPath(object.URL())
 	if err != nil {
 		return nil, err
@@ -162,7 +159,7 @@ func (s *memoryStorageService) Download(object Object) (io.Reader, error) {
 	}
 	var pathLeaf = pathFragments[len(pathFragments)-1]
 	if memoryFile, ok := node.files[pathLeaf]; ok {
-		return bytes.NewReader(memoryFile.content), nil
+		return ioutil.NopCloser(bytes.NewReader(memoryFile.content)), nil
 	}
 	return nil, noSuchFileOrDirectoryError
 }

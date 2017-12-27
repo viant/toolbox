@@ -29,6 +29,7 @@ func Test_NewMemoryService(t *testing.T) {
 		if assert.Nil(t, err) {
 			reader, err := service.Download(object)
 			if assert.Nil(t, err) {
+				defer reader.Close()
 				content, err := ioutil.ReadAll(reader)
 				assert.Nil(t, err)
 				assert.Equal(t, v, string(content))
@@ -97,6 +98,7 @@ func TestMemCopy(t *testing.T) {
 		if assert.Nil(t, err) {
 			reader, err := service.Download(object)
 			if assert.Nil(t, err) {
+				defer reader.Close()
 				content, err := ioutil.ReadAll(reader)
 				assert.Nil(t, err)
 				assert.Equal(t, v, string(content))
@@ -121,6 +123,7 @@ func TestMemCopy(t *testing.T) {
 		if assert.Nil(t, err) {
 			reader, err := service.Download(object)
 			if assert.Nil(t, err, k) {
+				defer reader.Close()
 				content, err := ioutil.ReadAll(reader)
 				assert.Nil(t, err)
 				assert.Equal(t, v, string(content))

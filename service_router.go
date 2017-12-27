@@ -79,11 +79,16 @@ func (sr ServiceRouting) extractParameterFromBody(parameterName string, targetTy
 	targetValuePointer := reflect.New(targetType)
 	contentType := getContentTypeOrJSONContentType(request.Header.Get("Content-Type"))
 	decoderFactory := sr.getDecoderFactory(contentType)
-	decoder := decoderFactory.Create(request.Body)
+
+	body, err :=ioutil.ReadAll(request.Body)
+	if err != nil {
+		return nil, err
+	}
+	decoder := decoderFactory.Create(bytes.NewReader(body))
 	if !strings.Contains(parameterName, ":") {
 		err := decoder.Decode(targetValuePointer.Interface())
 		if err != nil {
-			return nil, fmt.Errorf("unable to extract %Tv due to %v", targetValuePointer.Interface(), err)
+			return nil, fmt.Errorf("unable to extract %T due to: %v, body: %s", targetValuePointer.Interface(), err, body)
 		}
 	} else {
 		var valueMap = make(map[string]interface{})
@@ -354,7 +359,6 @@ func (c *ToolboxHTTPClient) Request(method, url string, request, response interf
 	}
 	var buffer *bytes.Buffer
 
-
 	if request != nil {
 		buffer = new(bytes.Buffer)
 		if IsString(request) {
@@ -396,13 +400,13 @@ func (c *ToolboxHTTPClient) Request(method, url string, request, response interf
 		if canSetStatus {
 			statusSettable.SetStatusCode(serverResponse.StatusCode)
 		}
-		if serverResponse == nil  {
+		if serverResponse == nil {
 			return fmt.Errorf("failed to receive response %v", err)
 		}
 		var errorPrefix = fmt.Sprintf("failed to process response: %v, ", serverResponse.StatusCode)
 		body, err := ioutil.ReadAll(serverResponse.Body)
 		if err != nil {
-			return fmt.Errorf("%v unable read body %v",errorPrefix, err)
+			return fmt.Errorf("%v unable read body %v", errorPrefix, err)
 		}
 		if len(body) == 0 {
 			return fmt.Errorf("%v response body was empty", errorPrefix)

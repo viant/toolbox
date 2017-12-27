@@ -34,10 +34,9 @@ func main() {
 		Username: username,
 		Password: password,
 	}
-
-	var privateKeyPAth = path.Join(os.Getenv("HOME"), ".ssh/id_rsa")
-	if toolbox.FileExists(privateKeyPAth) {
-		config.PrivateKeyPath = privateKeyPAth
+	var privateKeyPath = path.Join(os.Getenv("HOME"), ".ssh/id_rsa")
+	if toolbox.FileExists(privateKeyPath) && ! cred.IsKeyEncrypted(privateKeyPath) {
+		config.PrivateKeyPath = privateKeyPath
 	}
 	var secretFile = path.Join(secretPath, fmt.Sprintf("%v.json", os.Args[1]))
 	err := config.Save(secretFile)
