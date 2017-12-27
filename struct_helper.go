@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-var columnMapping = []string{"column", "dateLayout", "dateFormat", "autoincrement", "primaryKey", "sequence", "valueMap"}
+var columnMapping = []string{"column", "dateLayout", "dateFormat", "autoincrement", "primaryKey", "sequence", "valueMap", "default", "anonymous"}
 
 //ProcessStruct reads passed in struct fields and values to pass it to provided handler
 func ProcessStruct(aStruct interface{}, handler func(field reflect.StructField, value interface{})) {
@@ -28,9 +28,22 @@ func ProcessStruct(aStruct interface{}, handler func(field reflect.StructField, 
 func BuildTagMapping(structTemplatePointer interface{}, mappedKeyTag string, resultExclusionTag string, inheritKeyFromField bool, convertKeyToLowerCase bool, tags []string) map[string](map[string]string) {
 	reflectStructType := DiscoverTypeByKind(structTemplatePointer, reflect.Struct)
 	var result = make(map[string]map[string]string)
+	var anonymousMapping = make(map[string]map[string]string)
+
 	for i := 0; i < reflectStructType.NumField(); i++ {
 		var field reflect.StructField
 		field = reflectStructType.Field(i)
+		if field.Anonymous {
+			var anonymousType = DereferenceType(field.Type)
+			if anonymousType.Kind() == reflect.Struct {
+				anonymousMapping = BuildTagMapping(reflect.New(anonymousType).Interface(), mappedKeyTag, resultExclusionTag, inheritKeyFromField, convertKeyToLowerCase, tags)
+				for k, _ := range anonymousMapping {
+					anonymousMapping[k]["anonymous"] = "true"
+					anonymousMapping[k]["fieldIndex"] = AsString(i)
+				}
+			}
+			continue
+		}
 		isTransient := strings.EqualFold(field.Tag.Get(resultExclusionTag), "true")
 		if isTransient {
 			continue
@@ -59,6 +72,13 @@ func BuildTagMapping(structTemplatePointer interface{}, mappedKeyTag string, res
 			}
 		}
 		result[key]["fieldName"] = field.Name
+	}
+
+
+	for k, v := range anonymousMapping {
+		if _, has := result[k]; ! has {
+			result[k] = v
+		}
 	}
 	return result
 }

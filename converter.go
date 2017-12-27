@@ -79,12 +79,25 @@ func ToFloat(value interface{}) (float64, error) {
 	switch actualValue := value.(type) {
 	case float64:
 		return actualValue, nil
+	case int:
+		return float64(actualValue), nil
+	case uint:
+		return float64(actualValue), nil
+	case int64:
+		return float64(actualValue), nil
+	case uint64:
+		return float64(actualValue), nil
+	case int32:
+		return float64(actualValue), nil
+	case uint32:
+		return float64(actualValue), nil
+
 	case float32:
 		return float64(actualValue), nil
 	case *float64:
 		return *actualValue, nil
 	}
-	valueAsString := AsString(value)
+	valueAsString := AsString(DereferenceValue(value))
 	return strconv.ParseFloat(valueAsString, 64)
 }
 
@@ -188,10 +201,39 @@ func ToInt(value interface{}) (int, error) {
 	return int(result), err
 }
 
+func unitToTime(timestamp int64) *time.Time {
+	var timeValue time.Time
+	if timestamp > math.MaxUint32 {
+		var timestampInMs = timestamp / 1000000
+		if timestampInMs > math.MaxUint32 {
+			timeValue = time.Unix(0, timestamp)
+		} else {
+			timeValue = time.Unix(0, timestamp*1000000)
+		}
+	} else {
+		timeValue = time.Unix(timestamp, 0)
+	}
+	return &timeValue
+}
 
+func textToTime(value, dateLayout string) (*time.Time, error) {
+	floatValue, err := ToFloat(value)
+	if err == nil {
+		return unitToTime(int64(floatValue)), nil
+	}
+
+	if len(value) > len(dateLayout) {
+		value = string(value[:len(dateLayout)])
+	}
+	timeValue, err := ParseTime(value, dateLayout)
+	if err != nil {
+		return nil, err
+	}
+	return &timeValue, nil
+}
 
 func ToTime(value interface{}, dateLayout string) (*time.Time, error) {
-	if value == nil{
+	if value == nil {
 		return nil, errors.New("values was empty")
 	}
 	switch actual := value.(type) {
@@ -199,28 +241,17 @@ func ToTime(value interface{}, dateLayout string) (*time.Time, error) {
 		return &actual, nil
 	case *time.Time:
 		return actual, nil
+	case float32, float64, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+		var floatValue, _ = ToFloat(value)
+		return unitToTime(int64(floatValue)), nil
+	case *float32, *float64, *int, *int8, *int16, *int32, *int64, *uint, *uint8, *uint16, *uint32, *uint64:
+		actual = DereferenceValue(actual)
+		return ToTime(actual, dateLayout)
+	case string:
+		return textToTime(actual, dateLayout)
 	default:
-		floatValue, err := ToFloat(value)
-		if err == nil {
-			var timeValue time.Time
-			var timestamp = int64(floatValue)
-			if timestamp > math.MaxUint32 {
-				var timestampInMs =  timestamp / 1000000
-				if timestampInMs > math.MaxUint32 {
-					timeValue = time.Unix(0, timestamp)
-				} else {
-					timeValue = time.Unix(0, timestamp* 1000000)
-				}
-			}  else {
-				timeValue = time.Unix(timestamp, 0)
-			}
-			return &timeValue, nil
-		}
-		timeValue, err := ParseTime(AsString(value), dateLayout)
-		if err != nil {
-			return nil, err
-		}
-		return &timeValue, nil
+		textValue := AsString(DereferenceValue(actual))
+		return textToTime(textValue, dateLayout)
 	}
 	return nil, fmt.Errorf("unsupported type: %T", value)
 }
@@ -428,12 +459,47 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 	newStructPointer := reflect.New(targetIndirectValue.Type())
 	newStruct := newStructPointer.Elem()
 	fieldsMapping := NewFieldSettingByKey(newStructPointer.Interface(), c.MappedKeyTag)
+
+
+	var defaultValueMap  = make(map[string]interface{})
+
+
+	var anonymousValueMap map[string]reflect.Value
+	var anonymousFields map[string]reflect.Value
+
+
+	for _, value := range fieldsMapping {
+		if defaultValue, ok := value["default"]; ok {
+			var fieldName = value["fieldName"]
+			defaultValueMap[fieldName] = defaultValue
+		}
+		if index, ok := value["fieldIndex"]; ok {
+			if len(anonymousValueMap) == 0 {
+				anonymousValueMap = make(map[string]reflect.Value)
+				anonymousFields = make(map[string]reflect.Value)
+			}
+			field := newStruct.Field(AsInt(index))
+			fieldStruct := reflect.New(field.Type().Elem())
+			anonymousValueMap[index] = fieldStruct
+			anonymousFields[index] = field
+		}
+	}
+
 	for key, value := range inputMap {
+		aStruct := newStruct
 		mapping, found := fieldsMapping[strings.ToLower(key)]
 		if found {
-
-			fieldName := mapping["fieldName"]
-			field := newStruct.FieldByName(fieldName)
+			var field reflect.Value
+			fieldName := mapping["fieldName"];
+			if fieldIndex, ok := mapping["fieldIndex"]; ok {
+				var structPointer = anonymousValueMap[fieldIndex]
+				anonymousFields[fieldIndex].Set(structPointer)
+				aStruct = structPointer.Elem()
+			}
+			field = aStruct.FieldByName(fieldName)
+			if _, has := defaultValueMap[fieldName]; has {
+				delete(defaultValueMap, fieldName)
+			}
 
 			if HasTimeLayout(mapping) {
 				previousLayout := c.DataLayout
@@ -453,6 +519,16 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 			}
 		}
 	}
+
+	for fieldName, value := range defaultValueMap {
+		field := newStruct.FieldByName(fieldName)
+		err := c.AssignConverted(field.Addr().Interface(), value)
+		if err != nil {
+			return fmt.Errorf("failed to assign default value %v to %v due to %v", value, field, err)
+		}
+	}
+
+	//			field.Set(fieldStruct)
 
 	if targetIndirectPointerType.Kind() == reflect.Slice {
 		targetIndirectValue.Set(newStructPointer)
@@ -712,57 +788,19 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		}
 		return nil
 	case *time.Time:
-		switch sourceValue := source.(type) {
-		case string:
-			timeValue := AsTime(sourceValue, c.DataLayout)
-			if timeValue == nil {
-				_, err := time.Parse(c.DataLayout, sourceValue)
-				return err
-			}
-			*targetValuePointer = *timeValue
-			return nil
-		case *string:
-			timeValue := AsTime(sourceValue, c.DataLayout)
-			if timeValue == nil {
-				_, err := time.Parse(c.DataLayout, *sourceValue)
-				return err
-			}
-			*targetValuePointer = *timeValue
-			return nil
-		case int, int64, uint, uint64, float32, float64, *int, *int64, *uint, *uint64, *float32, *float64:
-			intValue := int(AsFloat(sourceValue))
-			timeValue := time.Unix(int64(intValue), 0)
-			*targetValuePointer = timeValue
-			return nil
-
+		timeValue, err := ToTime(source, c.DataLayout)
+		if err != nil {
+			return err
 		}
-
+		*targetValuePointer = *timeValue
+		return nil
 	case **time.Time:
-		switch sourceValue := source.(type) {
-		case string:
-			timeValue := AsTime(sourceValue, c.DataLayout)
-			if timeValue == nil {
-				_, err := time.Parse(c.DataLayout, sourceValue)
-				return err
-			}
-			*targetValuePointer = timeValue
-			return nil
-		case *string:
-			timeValue := AsTime(sourceValue, c.DataLayout)
-			if timeValue == nil {
-				_, err := time.Parse(c.DataLayout, *sourceValue)
-				return err
-			}
-			*targetValuePointer = timeValue
-			return nil
-		case int, int64, uint, uint64, float32, float64, *int, *int64, *uint, *uint64, *float32, *float64:
-			intValue := int(AsFloat(sourceValue))
-			timeValue := time.Unix(int64(intValue), 0)
-			*targetValuePointer = &timeValue
-			return nil
-
+		timeValue, err := ToTime(source, c.DataLayout)
+		if err != nil {
+			return err
 		}
-
+		*targetValuePointer = timeValue
+		return nil
 	case *interface{}:
 
 		(*targetValuePointer) = source

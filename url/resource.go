@@ -16,13 +16,14 @@ import (
 
 //Resource represents a URL based resource, with enriched meta info
 type Resource struct {
-	URL           string   //URL of resource
-	Credential    string   //name of file or alias to the file defined via credential service
-	ParsedURL     *url.URL //parsed URL resource
-	Cache         string   //Cache path for the resource, if specified resource will be cached in the specified path
-	CacheExpiryMs int      //CacheExpiryMs expiry time in ms
-	Name          string   //name of a resource
-	Type          string   //resource type
+	URL             string   //URL of resource
+	Credential      string   //name of file or alias to the file defined via credential service
+	ParsedURL       *url.URL //parsed URL resource
+	Cache           string   //Cache path for the resource, if specified resource will be cached in the specified path
+	CacheExpiryMs   int      //CacheExpiryMs expiry time in ms
+	Name            string   //name of a resource
+	Type            string   //resource type
+	modificationTag int64
 }
 
 //Clone creates a clone of the resource
@@ -140,6 +141,7 @@ func (r *Resource) Download() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer reader.Close()
 	content, err := ioutil.ReadAll(reader)
 	if err != nil {
 		return nil, err
@@ -211,6 +213,58 @@ func (r *Resource) readFromCache() []byte {
 //Cachable returns true if resource is cachable
 func (r *Resource) Cachable() bool {
 	return r.Cache != ""
+}
+
+func computeResourceModificationTag(resource *Resource) (int64, error) {
+	service, err := storage.NewServiceForURL(resource.URL, resource.Credential)
+	if err != nil {
+		return 0, err
+	}
+	object, err := service.StorageObject(resource.URL)
+	if err != nil {
+		return 0, err
+	}
+	var fileInfo = object.FileInfo()
+
+	if object.IsContent() {
+		return fileInfo.Size() + fileInfo.ModTime().UnixNano(), nil
+	}
+	var result int64 = 0
+	objects, err := service.List(resource.URL)
+	if err != nil {
+		return 0, err
+	}
+	for _, object := range objects {
+		objectResource := NewResource(object.URL())
+		if objectResource.ParsedURL.Path == resource.ParsedURL.Path {
+			continue
+		}
+
+		modificationTag, err := computeResourceModificationTag(NewResource(object.URL(), resource.Credential))
+		if err != nil {
+			return 0, err
+		}
+		result += modificationTag
+
+	}
+	return result, nil
+}
+
+func (r *Resource) HasChanged() (changed bool, err error) {
+	if r.modificationTag == 0 {
+		r.modificationTag, err = computeResourceModificationTag(r)
+		return false, err
+	}
+	var recentModificationTag int64
+	recentModificationTag, err = computeResourceModificationTag(r)
+	if err != nil {
+		return false, err
+	}
+	if recentModificationTag != r.modificationTag {
+		changed = true
+		r.modificationTag = recentModificationTag
+	}
+	return changed, err
 }
 
 func normalizeURL(URL string) string {

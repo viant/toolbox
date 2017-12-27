@@ -85,7 +85,7 @@ func (s *service) StorageObject(URL string) (tstorage.Object, error) {
 }
 
 //Download returns reader for downloaded storage object
-func (s *service) Download(object tstorage.Object) (io.Reader, error) {
+func (s *service) Download(object tstorage.Object) (io.ReadCloser, error) {
 	client, ctx, err := s.NewClient()
 	if err != nil {
 		return nil, err
@@ -97,20 +97,11 @@ func (s *service) Download(object tstorage.Object) (io.Reader, error) {
 	if err != nil {
 		return nil, err
 	}
-	reader, err := client.Bucket(objectInfo.Bucket).
+	return client.Bucket(objectInfo.Bucket).
 		Object(objectInfo.Name).
 		NewReader(ctx)
-
-	if err != nil {
-		return nil, err
-	}
-	defer reader.Close()
-	content, err := ioutil.ReadAll(reader)
-	if err != nil {
-		return nil, err
-	}
-	return bytes.NewReader(content), err
 }
+
 
 //Upload uploads provided reader content for supplied url.
 func (s *service) Upload(URL string, reader io.Reader) error {

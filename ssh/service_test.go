@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"testing"
+	"github.com/viant/toolbox/cred"
 )
 
 func TestNewClient(t *testing.T) {
@@ -52,7 +53,16 @@ func TestClient_Upload(t *testing.T) {
 	}
 }
 
+func TestClient_Key(t *testing.T) {
+	auth, err := cred.NewConfig("/Users/awitas/.secret/scp1.json")
+	assert.Nil(t, err)
+	service, err := ssh.NewService("127.0.0.1", 22, auth)
+	assert.Nil(t, err)
+	assert.NotNil(t, service)
+}
+
 func TestClient_UploadLargeFile(t *testing.T) {
+
 	service, err := ssh.NewService("127.0.0.1", 22, nil)
 	assert.Nil(t, err)
 	if err == nil {

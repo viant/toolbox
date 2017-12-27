@@ -155,7 +155,7 @@ func (s *service) StorageObject(URL string) (storage.Object, error) {
 }
 
 //Download returns reader for downloaded storage object
-func (s *service) Download(object storage.Object) (io.Reader, error) {
+func (s *service) Download(object storage.Object) (io.ReadCloser, error) {
 	if object == nil {
 		return nil, fmt.Errorf("Object was nil")
 	}
@@ -181,7 +181,7 @@ func (s *service) Download(object storage.Object) (io.Reader, error) {
 	if err != nil {
 		return nil, err
 	}
-	return bytes.NewReader(content), nil
+	return ioutil.NopCloser(bytes.NewReader(content)), nil
 }
 
 //Upload uploads provided reader content for supplied URL.

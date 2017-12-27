@@ -291,14 +291,14 @@ func TestConverter(t *testing.T) {
 		}
 
 		{
-			var unixNano ="1513271472347277824"
+			var unixNano = "1513271472347277824"
 			err := converter.AssignConverted(&value, unixNano)
 			assert.Nil(t, err)
 			assert.Equal(t, 1513271472, int(value.Unix()))
 		}
 
 		{
-			var unixNano ="1456144321001"
+			var unixNano = "1456144321001"
 			err := converter.AssignConverted(&value, unixNano)
 			assert.Nil(t, err)
 			assert.Equal(t, 1456144321, int(value.Unix()))
@@ -355,12 +355,14 @@ func TestConverter(t *testing.T) {
 			assert.Nil(t, err)
 			assert.Equal(t, 1456144321, int(value.Unix()))
 		}
+
 		{
 			unix := 1456144321.0
 			err := converter.AssignConverted(&value, unix)
 			assert.Nil(t, err)
 			assert.Equal(t, 1456144321, int(value.Unix()))
 		}
+
 		{
 			unix := 1456144321.0
 			err := converter.AssignConverted(&value, &unix)
@@ -372,6 +374,13 @@ func TestConverter(t *testing.T) {
 			date := "2016/02/22 12:32:01 UTC"
 			err := converter.AssignConverted(&value, date)
 			assert.NotNil(t, err, "invalid date format")
+		}
+
+		{
+			unix := 1668069210749
+			err := converter.AssignConverted(&value, &unix)
+			assert.Nil(t, err)
+			assert.Equal(t, 1668069210, int(value.Unix()))
 		}
 	}
 
@@ -438,6 +447,15 @@ func TestConverter(t *testing.T) {
 		assert.Equal(t, 3, len(target))
 	}
 
+}
+
+func Test_ToTime(t *testing.T) {
+	{
+		unix := 1668069210749
+		time, err := toolbox.ToTime(unix, "")
+		assert.Nil(t, err)
+		assert.Equal(t, 1668069210, int(time.Unix()))
+	}
 }
 
 func TestAsString(t *testing.T) {

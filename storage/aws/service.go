@@ -15,6 +15,7 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
 	"time"
+	"io/ioutil"
 )
 
 var defaultTime = time.Time{}
@@ -136,7 +137,7 @@ func (s *service) StorageObject(URL string) (storage.Object, error) {
 	return objects[0], nil
 }
 
-func (s *service) Download(object storage.Object) (io.Reader, error) {
+func (s *service) Download(object storage.Object) (io.ReadCloser, error) {
 	u, err := url.Parse(object.URL())
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse : %v", err)
@@ -157,7 +158,7 @@ func (s *service) Download(object storage.Object) (io.Reader, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to download: %v", err)
 	}
-	return bytes.NewReader(writer.Buffer), nil
+	return ioutil.NopCloser(bytes.NewReader(writer.Buffer)), nil
 
 }
 
