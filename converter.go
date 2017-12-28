@@ -363,7 +363,7 @@ func ParseTime(input, layout string) (time.Time, error) {
 
 //Converter represets data converter, it converts incompatibe data structure, like map and struct, string and time, *string to string, etc.
 type Converter struct {
-	DataLayout   string
+	DateLayout   string
 	MappedKeyTag string
 }
 
@@ -415,7 +415,11 @@ func (c *Converter) assignConvertedMap(target, input interface{}, targetIndirect
 	})
 
 	if targetIndirectPointerType.Kind() == reflect.Map {
-		targetIndirectValue.Set(mapPointer.Elem())
+		if targetIndirectValue.Type().AssignableTo(mapPointer.Type()) {
+			targetIndirectValue.Set(mapPointer)
+		} else {
+			targetIndirectValue.Set(mapPointer.Elem())
+		}
 	} else {
 		targetIndirectValue.Set(newMap)
 	}
@@ -502,13 +506,13 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 			}
 
 			if HasTimeLayout(mapping) {
-				previousLayout := c.DataLayout
-				c.DataLayout = GetTimeLayout(mapping)
+				previousLayout := c.DateLayout
+				c.DateLayout = GetTimeLayout(mapping)
 				err := c.AssignConverted(field.Addr().Interface(), value)
 				if err != nil {
 					return fmt.Errorf("failed to convert %v to %v due to %v", value, field, err)
 				}
-				c.DataLayout = previousLayout
+				c.DateLayout = previousLayout
 
 			} else {
 
@@ -788,14 +792,14 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		}
 		return nil
 	case *time.Time:
-		timeValue, err := ToTime(source, c.DataLayout)
+		timeValue, err := ToTime(source, c.DateLayout)
 		if err != nil {
 			return err
 		}
 		*targetValuePointer = *timeValue
 		return nil
 	case **time.Time:
-		timeValue, err := ToTime(source, c.DataLayout)
+		timeValue, err := ToTime(source, c.DateLayout)
 		if err != nil {
 			return err
 		}
@@ -961,9 +965,9 @@ func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sou
 	return nil
 }
 
-//NewColumnConverter create a new converter, that has abbility to convert map to struct using column mapping
-func NewColumnConverter(dataFormat string) *Converter {
-	return &Converter{dataFormat, "column"}
+//NewColumnConverter create a new converter, that has ability to convert map to struct using column mapping
+func NewColumnConverter(dateLayout string) *Converter {
+	return &Converter{dateLayout, "column"}
 }
 
 //DereferenceValues replaces pointer to its value within a generic  map or slice
