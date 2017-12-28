@@ -5,7 +5,7 @@ import (
 	"google.golang.org/api/option"
 )
 
-const ProviderScheme = "gc"
+const ProviderScheme = "gs"
 
 func init() {
 	storage.NewStorageProvider().Registry[ProviderScheme] = serviceProvider
