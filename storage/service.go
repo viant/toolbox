@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"strings"
+	"os"
 )
 
 //Service represents abstract way to accessing local or remote storage
@@ -137,10 +139,15 @@ func NewServiceForURL(URL, credentialFile string) (Service, error) {
 	if err != nil {
 		return nil, err
 	}
+
+
 	service := NewService()
 	provider := NewStorageProvider().Get(parsedURL.Scheme)
 
 	if provider != nil {
+		if len(credentialFile) > 0 {
+			credentialFile = strings.Replace(credentialFile,"${env.HOME}", os.Getenv("HOME"), 1)
+		}
 		serviceForScheme, err := provider(credentialFile)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get storage for url %v: %v", URL, err)
