@@ -78,15 +78,15 @@ func NewUnMarshalerDecoderFactory() DecoderFactory {
 	return &unMarshalerDecoderFactory{}
 }
 
-//DelimiteredRecord represents a delimitered record
-type DelimiteredRecord struct {
+//DelimitedRecord represents a delimited record
+type DelimitedRecord struct {
 	Columns   []string
 	Delimiter string
 	Record    map[string]interface{}
 }
 
 //IsEmpty returns true if all values are empty or null
-func (r *DelimiteredRecord) IsEmpty() bool {
+func (r *DelimitedRecord) IsEmpty() bool {
 	var result = true
 	for _, value := range r.Record {
 		if value == nil {
@@ -105,26 +105,26 @@ type delimiterDecoder struct {
 }
 
 func (d *delimiterDecoder) Decode(target interface{}) error {
-	delimiteredRecord, ok := target.(*DelimiteredRecord)
+	delimitedRecord, ok := target.(*DelimitedRecord)
 	if !ok {
-		return fmt.Errorf("Invalid target type, expected %T but had %T", &DelimiteredRecord{}, target)
+		return fmt.Errorf("Invalid target type, expected %T but had %T", &DelimitedRecord{}, target)
 	}
-	if delimiteredRecord.Record == nil {
-		delimiteredRecord.Record = make(map[string]interface{})
+	if delimitedRecord.Record == nil {
+		delimitedRecord.Record = make(map[string]interface{})
 	}
 
 	var isInDoubleQuote = false
 	var index = 0
 	var value = ""
-	var delimiter = delimiteredRecord.Delimiter
+	var delimiter = delimitedRecord.Delimiter
 	payload, err := ioutil.ReadAll(d.reader)
 	if err != nil {
 		return err
 	}
 	encoded := string(payload)
-	hasColumns := len(delimiteredRecord.Columns) > 0
+	hasColumns := len(delimitedRecord.Columns) > 0
 	if !hasColumns {
-		delimiteredRecord.Columns = make([]string, 0)
+		delimitedRecord.Columns = make([]string, 0)
 	}
 	for i := 0; i < len(encoded); i++ {
 		aChar := string(encoded[i : i+1])
@@ -155,10 +155,10 @@ func (d *delimiterDecoder) Decode(target interface{}) error {
 
 		if encoded[i:i+1] == delimiter && !isInDoubleQuote {
 			if !hasColumns {
-				delimiteredRecord.Columns = append(delimiteredRecord.Columns, strings.TrimSpace(value))
+				delimitedRecord.Columns = append(delimitedRecord.Columns, strings.TrimSpace(value))
 			} else {
-				var columnName = delimiteredRecord.Columns[index]
-				delimiteredRecord.Record[columnName] = value
+				var columnName = delimitedRecord.Columns[index]
+				delimitedRecord.Record[columnName] = value
 			}
 
 			value = ""
@@ -169,13 +169,13 @@ func (d *delimiterDecoder) Decode(target interface{}) error {
 	}
 	if len(value) > 0 {
 		if !hasColumns {
-			delimiteredRecord.Columns = append(delimiteredRecord.Columns, strings.TrimSpace(value))
+			delimitedRecord.Columns = append(delimitedRecord.Columns, strings.TrimSpace(value))
 		} else {
-			if index >= len(delimiteredRecord.Columns) {
-				return fmt.Errorf("Index %v out of bound: columns: %v, values:%v", index, delimiteredRecord.Columns, encoded)
+			if index >= len(delimitedRecord.Columns) {
+				return fmt.Errorf("index %v out of bound: columns: %v, values:%v", index, delimitedRecord.Columns, encoded)
 			}
-			var columnName = delimiteredRecord.Columns[index]
-			delimiteredRecord.Record[columnName] = value
+			var columnName = delimitedRecord.Columns[index]
+			delimitedRecord.Record[columnName] = value
 		}
 	}
 	return nil

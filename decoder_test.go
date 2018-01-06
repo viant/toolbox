@@ -56,7 +56,7 @@ type Foo101 struct {
 
 func TestDelimiterDecoderFactory(t *testing.T) {
 
-	record := &toolbox.DelimiteredRecord{
+	record := &toolbox.DelimitedRecord{
 		Delimiter: ",",
 	}
 	{
