@@ -80,7 +80,7 @@ func (sr ServiceRouting) extractParameterFromBody(parameterName string, targetTy
 	contentType := getContentTypeOrJSONContentType(request.Header.Get("Content-Type"))
 	decoderFactory := sr.getDecoderFactory(contentType)
 
-	body, err :=ioutil.ReadAll(request.Body)
+	body, err := ioutil.ReadAll(request.Body)
 	if err != nil {
 		return nil, err
 	}

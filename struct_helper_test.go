@@ -108,12 +108,11 @@ func TestBuildTagMapping(t *testing.T) {
 
 }
 
-
 func TestBuildEmbededStructTagMapping(t *testing.T) {
 
 	type Super struct {
-		Id          int       `autogenrated:"true"`
-		Name        string    `column:"name"`
+		Id   int    `autogenrated:"true"`
+		Name string `column:"name"`
 	}
 
 	type User struct {

@@ -5,7 +5,14 @@ import (
 	"strings"
 )
 
-var columnMapping = []string{"column", "dateLayout", "dateFormat", "autoincrement", "primaryKey", "sequence", "valueMap", "default", "anonymous"}
+const (
+	fieldNameKey  = "fieldName"
+	anonymousKey  = "anonymous"
+	fieldIndexKey = "fieldIndex"
+	defaultKey    = "default"
+)
+
+var columnMapping = []string{"column", "dateLayout", "dateFormat", "autoincrement", "primaryKey", "sequence", "valueMap", defaultKey, anonymousKey}
 
 //ProcessStruct reads passed in struct fields and values to pass it to provided handler
 func ProcessStruct(aStruct interface{}, handler func(field reflect.StructField, value interface{})) {
@@ -28,18 +35,20 @@ func ProcessStruct(aStruct interface{}, handler func(field reflect.StructField, 
 func BuildTagMapping(structTemplatePointer interface{}, mappedKeyTag string, resultExclusionTag string, inheritKeyFromField bool, convertKeyToLowerCase bool, tags []string) map[string](map[string]string) {
 	reflectStructType := DiscoverTypeByKind(structTemplatePointer, reflect.Struct)
 	var result = make(map[string]map[string]string)
-	var anonymousMapping = make(map[string]map[string]string)
+	var anonymousMappings = make(map[string]map[string]string)
 
 	for i := 0; i < reflectStructType.NumField(); i++ {
 		var field reflect.StructField
 		field = reflectStructType.Field(i)
 		if field.Anonymous {
 			var anonymousType = DereferenceType(field.Type)
+
 			if anonymousType.Kind() == reflect.Struct {
-				anonymousMapping = BuildTagMapping(reflect.New(anonymousType).Interface(), mappedKeyTag, resultExclusionTag, inheritKeyFromField, convertKeyToLowerCase, tags)
-				for k, _ := range anonymousMapping {
-					anonymousMapping[k]["anonymous"] = "true"
-					anonymousMapping[k]["fieldIndex"] = AsString(i)
+				anonymousMapping := BuildTagMapping(reflect.New(anonymousType).Interface(), mappedKeyTag, resultExclusionTag, inheritKeyFromField, convertKeyToLowerCase, tags)
+				for k, v := range anonymousMapping {
+					anonymousMappings[k] = v
+					anonymousMappings[k][anonymousKey] = "true"
+					anonymousMappings[k][fieldIndexKey] = AsString(i)
 				}
 			}
 			continue
@@ -50,7 +59,7 @@ func BuildTagMapping(structTemplatePointer interface{}, mappedKeyTag string, res
 		}
 
 		key := field.Tag.Get(mappedKeyTag)
-		if mappedKeyTag == "fieldName" {
+		if mappedKeyTag == fieldNameKey {
 			key = field.Name
 		}
 		if len(key) == 0 {
@@ -71,12 +80,11 @@ func BuildTagMapping(structTemplatePointer interface{}, mappedKeyTag string, res
 				result[key][tag] = tagValue
 			}
 		}
-		result[key]["fieldName"] = field.Name
+		result[key][fieldNameKey] = field.Name
 	}
 
-
-	for k, v := range anonymousMapping {
-		if _, has := result[k]; ! has {
+	for k, v := range anonymousMappings {
+		if _, has := result[k]; !has {
 			result[k] = v
 		}
 	}
