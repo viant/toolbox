@@ -1,13 +1,13 @@
 package toolbox
 
 import (
+	"errors"
 	"fmt"
+	"math"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
-	"errors"
-	"math"
 )
 
 //DefaultDateLayout is set to 2006-01-02 15:04:05.000
@@ -464,20 +464,17 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 	newStruct := newStructPointer.Elem()
 	fieldsMapping := NewFieldSettingByKey(newStructPointer.Interface(), c.MappedKeyTag)
 
-
-	var defaultValueMap  = make(map[string]interface{})
-
+	var defaultValueMap = make(map[string]interface{})
 
 	var anonymousValueMap map[string]reflect.Value
 	var anonymousFields map[string]reflect.Value
 
-
 	for _, value := range fieldsMapping {
-		if defaultValue, ok := value["default"]; ok {
-			var fieldName = value["fieldName"]
+		if defaultValue, ok := value[defaultKey]; ok {
+			var fieldName = value[fieldNameKey]
 			defaultValueMap[fieldName] = defaultValue
 		}
-		if index, ok := value["fieldIndex"]; ok {
+		if index, ok := value[fieldIndexKey]; ok {
 			if len(anonymousValueMap) == 0 {
 				anonymousValueMap = make(map[string]reflect.Value)
 				anonymousFields = make(map[string]reflect.Value)
@@ -488,14 +485,13 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 			anonymousFields[index] = field
 		}
 	}
-
 	for key, value := range inputMap {
 		aStruct := newStruct
 		mapping, found := fieldsMapping[strings.ToLower(key)]
 		if found {
 			var field reflect.Value
-			fieldName := mapping["fieldName"];
-			if fieldIndex, ok := mapping["fieldIndex"]; ok {
+			fieldName := mapping[fieldNameKey]
+			if fieldIndex, ok := mapping[fieldIndexKey]; ok {
 				var structPointer = anonymousValueMap[fieldIndex]
 				anonymousFields[fieldIndex].Set(structPointer)
 				aStruct = structPointer.Elem()
@@ -515,7 +511,6 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 				c.DateLayout = previousLayout
 
 			} else {
-
 				err := c.AssignConverted(field.Addr().Interface(), value)
 				if err != nil {
 					return fmt.Errorf("failed to convert %v to %v due to %v", value, field, err)
@@ -918,7 +913,7 @@ func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sou
 	for i := 0; i < sourceValue.NumField(); i++ {
 		field := sourceValue.Field(i)
 
-		if ! field.CanInterface() {
+		if !field.CanInterface() {
 			continue
 		}
 		var value interface{}

@@ -100,6 +100,16 @@ func NewHttpBridge(config *HttpBridgeConfig, factory HttpBridgeProxyHandlerFacto
 	}, nil
 }
 
+
+type handlerWrapper struct {
+	Handler http.Handler
+}
+
+func (h *handlerWrapper) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+	fmt.Printf("Request: %v %v\n", request.URL, request.Method)
+	h.Handler.ServeHTTP(writer, request)
+}
+
 //NewProxyHandler creates a new proxy handler
 func NewProxyHandler(proxyConfig *HttpBridgeProxyConfig, route *HttpBridgeProxyRoute) (http.Handler, error) {
 	roundTripper := &http.Transport{
@@ -112,9 +122,13 @@ func NewProxyHandler(proxyConfig *HttpBridgeProxyConfig, route *HttpBridgeProxyR
 		MaxIdleConnsPerHost: proxyConfig.MaxIdleConnections,
 	}
 
-	director := func(request *http.Request) {
-		request.URL.Scheme = route.TargetURL.Scheme
-		request.URL.Host = route.TargetURL.Host
+	var director func(*http.Request)
+
+	if route.TargetURL != nil {
+		director = func(request *http.Request) {
+			request.URL.Scheme = route.TargetURL.Scheme
+			request.URL.Host = route.TargetURL.Host
+		}
 	}
 	reverseProxy := &httputil.ReverseProxy{
 		Transport:      roundTripper,
@@ -122,7 +136,8 @@ func NewProxyHandler(proxyConfig *HttpBridgeProxyConfig, route *HttpBridgeProxyR
 		ModifyResponse: route.ResponseModifier,
 		Director:       director,
 	}
-	return reverseProxy, nil
+	var handler http.Handler = &handlerWrapper{reverseProxy}
+	return handler, nil
 }
 
 //HTTPTrip represents recorded round trip.
@@ -194,6 +209,9 @@ func (h ListeningTripHandler) drainBody(reader io.ReadCloser) (io.ReadCloser, io
 }
 
 func (h ListeningTripHandler) ServeHTTP(responseWriter http.ResponseWriter, request *http.Request) {
+
+	fmt.Printf("ListeningTripHandler %v %v\n", request.URL, request.Method)
+
 	var err error
 	var originalRequest = request.WithContext(request.Context())
 	if request.ContentLength > 0 {
@@ -312,6 +330,9 @@ func writeData(filename string, source interface{}, printStrOut bool) error {
 func HttpFileRecorder(directory string, printStdOut bool) func(request *http.Request, response *http.Response) {
 	tripCounter := 0
 
+
+
+
 	err := toolbox.CreateDirIfNotExist(directory)
 	if err != nil {
 		fmt.Printf("failed to create directory%v %v\n, ", err, directory)
@@ -319,7 +340,7 @@ func HttpFileRecorder(directory string, printStdOut bool) func(request *http.Req
 
 	return func(request *http.Request, response *http.Response) {
 
-
+		fmt.Printf("req :%v\n", request.URL)
 
 
 		var body string

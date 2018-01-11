@@ -23,6 +23,9 @@ type Config struct {
 	Password          string
 	EncryptedPassword string
 	PrivateKeyPath    string
+	Region            string
+	Key               string
+	Secret            string
 	clientConfig      *ssh.ClientConfig
 }
 
@@ -119,6 +122,8 @@ func IsKeyEncrypted(keyPath string) bool {
 	}
 	return strings.Contains(block.Headers["Proc-Type"], "ENCRYPTED")
 }
+
+
 
 //ClientConfig returns a new instance of sshClientConfig
 func (c *Config) ClientConfig() (*ssh.ClientConfig, error) {

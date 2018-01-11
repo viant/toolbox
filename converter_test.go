@@ -12,6 +12,35 @@ func TestConverter(t *testing.T) {
 	converter := toolbox.NewColumnConverter(toolbox.DateFormatToLayout("yyyy-MM-dd hh:mm:ss z"))
 
 	{
+
+		type A1 struct {
+			K1 int
+		}
+		type A2 struct {
+			K2 int
+		}
+
+		type C struct {
+			*A1
+			*A2
+			K3 int
+		}
+
+		aMap := map[string]interface{}{
+			"K1": 1,
+			"K2": 20,
+			"K3": 30,
+		}
+		c := C{}
+		err := converter.AssignConverted(&c, aMap)
+		assert.Nil(t, err)
+		assert.Equal(t, 1, c.K1)
+		assert.Equal(t, 20, c.K2)
+		assert.Equal(t, 30, c.K3)
+
+	}
+
+	{
 		target := make([]interface{}, 1)
 		err := converter.AssignConverted(&target[0], nil)
 		assert.Nil(t, err)
