@@ -78,3 +78,36 @@ func Test_JSONToMap(t *testing.T) {
 	}
 
 }
+
+func Test_AsJSONText(t *testing.T) {
+	{
+		var soure = map[string]interface{}{
+			"k": 1,
+		}
+		text, err := toolbox.AsJSONText(soure)
+		assert.Nil(t, err)
+		assert.EqualValues(t, "{\"k\":1}\n", text)
+	}
+	{
+		type source struct {
+			K int
+		}
+		text, err := toolbox.AsJSONText(&source{K: 1})
+		assert.Nil(t, err)
+		assert.EqualValues(t, "{\"K\":1}\n", text)
+	}
+
+	{
+
+		text, err := toolbox.AsJSONText([]int{1, 3})
+		assert.Nil(t, err)
+		assert.EqualValues(t, "[1,3]\n", text)
+	}
+
+	{
+
+		_, err := toolbox.AsJSONText(1)
+		assert.NotNil(t, err)
+	}
+
+}
