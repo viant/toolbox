@@ -55,3 +55,13 @@ func JSONToMap(source interface{}) (map[string]interface{}, error) {
 	err := jsonDecoderFactory{}.Create(reader).Decode(&result)
 	return result, err
 }
+
+//AsJSONText converts data structure int text JSON
+func AsJSONText(source interface{}) (string, error) {
+	if IsStruct(source) || IsMap(source) || IsSlice(source) {
+		buf := new(bytes.Buffer)
+		err := NewJSONEncoderFactory().Create(buf).Encode(source)
+		return buf.String(), err
+	}
+	return "", fmt.Errorf("unsupported type: %T", source)
+}
