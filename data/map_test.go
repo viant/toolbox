@@ -11,6 +11,17 @@ func TestMap_GetValue(t *testing.T) {
 	aMap := NewMap()
 
 	{
+		subCollection := NewCollection()
+		subCollection.Push("item1")
+		subCollection.Push("item2")
+		aMap.Put("cc", subCollection)
+
+		value, has := aMap.GetValue("cc[0]")
+		assert.True(t, has)
+		assert.Equal(t, "item1", value)
+	}
+
+	{
 		metaMap := make(map[string]int)
 		metaMap["USER"] = 7
 		aMap.Put("meta", metaMap)
@@ -111,6 +122,19 @@ func TestMap_GetValue(t *testing.T) {
 		assert.True(t, has)
 		assert.Equal(t, 3, value)
 
+	}
+
+	{
+		subMap := NewMap()
+		subCollection := NewCollection()
+		subCollection.Push("item1")
+		subCollection.Push("item2")
+		subMap.Put("c", subCollection)
+		aMap.Put("s", subMap)
+
+		value, has := aMap.GetValue("s.c[0]")
+		assert.True(t, has)
+		assert.Equal(t, "item1", value)
 	}
 
 }
