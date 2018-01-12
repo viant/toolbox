@@ -92,11 +92,10 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 		expr = expr[1 : len(expr)-1]
 	}
 
-	if strings.Contains(expr, ".") {
+	if strings.Contains(expr, ".") || strings.HasSuffix(expr, "]") {
 		fragments := strings.Split(expr, ".")
 		for i, fragment := range fragments {
 			var index *int
-
 			arrayIndexPosition := strings.Index(fragment, "[")
 			if arrayIndexPosition != -1 {
 				arrayEndPosition := strings.Index(fragment, "]")
@@ -106,6 +105,7 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 			}
 
 			isLast := i+1 == len(fragments)
+
 			hasKey := state.Has(fragment)
 			if !hasKey {
 				return nil, false
@@ -115,12 +115,9 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 			if !isLast && candidate == nil {
 				return nil, false
 			}
-			if isLast {
-				expr = fragment
-				continue
-			}
 
 			if index != nil {
+
 				if !toolbox.IsSlice(candidate) {
 					return nil, false
 				}
@@ -128,9 +125,20 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 				if *index >= len(aSlice) {
 					return nil, false
 				}
-				candidate = aSlice[*index]
+				if (*index) < len(aSlice) {
+					candidate = aSlice[*index]
+				} else {
+					candidate = nil
+				}
+				if isLast {
+					return candidate, true
+				}
 			}
 
+			if isLast {
+				expr = fragment
+				continue
+			}
 			if toolbox.IsMap(candidate) {
 				newState := toolbox.AsMap(candidate)
 				if newState != nil {
