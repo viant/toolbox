@@ -64,7 +64,7 @@ func TestGetTimeLayout(t *testing.T) {
 		settings := map[string]string{
 			toolbox.DateFormatKeyword: "yyyy-MM-dd HH:mm:ss z",
 		}
-		assert.Equal(t, "2006-1-02 15:04:05 MST", toolbox.GetTimeLayout(settings))
+		assert.Equal(t, "2006-01-02 15:04:05 MST", toolbox.GetTimeLayout(settings))
 		assert.True(t, toolbox.HasTimeLayout(settings))
 	}
 	{

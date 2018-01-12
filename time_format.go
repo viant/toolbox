@@ -14,9 +14,6 @@ var DateLayoutKeyword = "dateLayout"
 //DateFormatToLayout converts java date format https://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html#rfc822timezone into go date layout
 func DateFormatToLayout(dateFormat string) string {
 
-	dateFormat = strings.Replace(dateFormat, "a", "pm", 1)
-	dateFormat = strings.Replace(dateFormat, "aa", "PM", 1)
-
 	dateFormat = strings.Replace(dateFormat, "ddd", "_2", 1)
 	dateFormat = strings.Replace(dateFormat, "dd", "02", 1)
 	dateFormat = strings.Replace(dateFormat, "d", "2", 1)
@@ -52,6 +49,9 @@ func DateFormatToLayout(dateFormat string) string {
 
 	dateFormat = strings.Replace(dateFormat, "EEEE", "Monday", 1)
 	dateFormat = strings.Replace(dateFormat, "E", "Mon", 1)
+
+	dateFormat = strings.Replace(dateFormat, "a", "pm", 1)
+	dateFormat = strings.Replace(dateFormat, "aa", "PM", 1)
 
 	return dateFormat
 }

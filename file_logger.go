@@ -1,6 +1,7 @@
 package toolbox
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -64,10 +65,26 @@ type LogStream struct {
 }
 
 //Log logs message into stream
-func (s *LogStream) Log(message *LogMessage) {
-	textMessage := message.Message.(string)
+func (s *LogStream) Log(message *LogMessage) error {
+	if message == nil {
+		return errors.New("message was nil")
+	}
+	var textMessage = ""
+	var ok bool
+	if textMessage, ok = message.Message.(string); ok {
+	} else if IsStruct(message.Message) || IsMap(message.Message) || IsSlice(message.Message) {
+		var buf = new(bytes.Buffer)
+		err := NewJSONEncoderFactory().Create(buf).Encode(message.Message)
+		if err != nil {
+			return err
+		}
+		textMessage = strings.Trim(buf.String(), "\n\r")
+	} else {
+		return fmt.Errorf("unsupported type: %T", message.Message)
+	}
 	s.Messages <- textMessage
 	s.LastAddQueueTime = time.Now()
+	return nil
 }
 
 func (s *LogStream) write(message string) error {
@@ -220,8 +237,7 @@ func (l *FileLogger) Log(message *LogMessage) error {
 	if err != nil {
 		return err
 	}
-	logStream.Log(message)
-	return nil
+	return logStream.Log(message)
 }
 
 func (l *FileLogger) Notify(siginal os.Signal) {
