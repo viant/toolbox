@@ -16,8 +16,7 @@ func TestCopy(t *testing.T) {
 	service := storage.NewService()
 	assert.NotNil(t, service)
 
-	fileName, _, _ := toolbox.CallerInfo(2)
-	parent, _ := path.Split(fileName)
+	parent := toolbox.CallerDirectory(3)
 	baseUrl := "file://" + parent + "/test"
 
 	{
@@ -78,8 +77,7 @@ func TestScpCopy(t *testing.T) {
 	if !toolbox.FileExists(credential) {
 		return
 	}
-	fileName, _, _ := toolbox.CallerInfo(2)
-	parent, _ := path.Split(fileName)
+	parent := toolbox.CallerDirectory(3)
 
 	var destinationPath = fmt.Sprintf("%vtest/target", parent)
 	_, err := exec.Command("rm", "-rf", destinationPath).CombinedOutput()
