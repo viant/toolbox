@@ -31,7 +31,7 @@ func urlPath(URL string) string {
 
 
 
-func copyData(sourceService Service, sourceURL string, destinationService Service, destinationURL string, modifyContentHandler ModificationHandler, subPath string, copyHandler CopyHandler) error {
+func copyStorageContent(sourceService Service, sourceURL string, destinationService Service, destinationURL string, modifyContentHandler ModificationHandler, subPath string, copyHandler CopyHandler) error {
 	sourceListURL := sourceURL
 	if subPath != "" {
 		sourceListURL = toolbox.URLPathJoin(sourceURL, subPath)
@@ -97,7 +97,7 @@ func copyData(sourceService Service, sourceURL string, destinationService Servic
 			}
 
 		} else {
-			err = copyData(sourceService, sourceURL, destinationService, destinationURL, modifyContentHandler, objectRelativePath, copyHandler)
+			err = copyStorageContent(sourceService, sourceURL, destinationService, destinationURL, modifyContentHandler, objectRelativePath, copyHandler)
 			if err != nil {
 				return err
 			}
@@ -153,7 +153,7 @@ func Copy(sourceService Service, sourceURL string, destinationService Service, d
 	if copyHandler == nil {
 		copyHandler = copySourceToDestination
 	}
-	err = copyData(sourceService, sourceURL, destinationService, destinationURL, modifyContentHandler, "", copyHandler)
+	err = copyStorageContent(sourceService, sourceURL, destinationService, destinationURL, modifyContentHandler, "", copyHandler)
 	if err != nil {
 		err = fmt.Errorf("failed to copy %v -> %v: %v", sourceURL, destinationURL, err)
 	}
