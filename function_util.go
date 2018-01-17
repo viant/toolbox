@@ -3,14 +3,22 @@ package toolbox
 import (
 	"fmt"
 	"reflect"
+	"strings"
 )
 
 //GetFunction returns function for provided owner and name, or error
 func GetFunction(owner interface{}, name string) (interface{}, error) {
+	if owner == nil {
+		return nil, fmt.Errorf("failed to lookup %v on %T, owner was nil", name, owner)
+	}
 	var ownerType = reflect.TypeOf(owner)
 	var method, has = ownerType.MethodByName(name)
 	if !has {
-		return nil, fmt.Errorf("failed to lookup %T.%v\n", owner, name)
+		var available = make([]string, 0)
+		for i := 0; i < ownerType.NumMethod(); i++ {
+			available = append(available, ownerType.Method(i).Name)
+		}
+		return nil, fmt.Errorf("failed to lookup %T.%v, available:[%v]", owner, name, strings.Join(available, ","))
 	}
 	return reflect.ValueOf(owner).MethodByName(method.Name).Interface(), nil
 }
