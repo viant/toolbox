@@ -4,14 +4,16 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
+	"fmt"
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/oauth2/google"
+	"golang.org/x/oauth2/jwt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"path"
 	"strings"
-	"encoding/pem"
-	"fmt"
 )
 
 var sshKeyFileCandidates = []string{"/.ssh/id_rsa", "/.ssh/id_dsa"}
@@ -23,10 +25,20 @@ type Config struct {
 	Password          string
 	EncryptedPassword string
 	PrivateKeyPath    string
-	Region            string
-	Key               string
-	Secret            string
-	clientConfig      *ssh.ClientConfig
+
+	//amazon cloud credential
+	Key    string
+	Secret string
+	Region string
+
+	//google cloud credential
+	ClientEmail  string `json:"client_email"`
+	TokenURL     string `json:"token_uri"`
+	PrivateKey   string `json:"private_key"`
+	PrivateKeyID string `json:"private_key_id"`
+
+	sshClientConfig *ssh.ClientConfig
+	jwtClientConfig *jwt.Config
 }
 
 func (c *Config) Load(filename string) error {
@@ -80,8 +92,8 @@ func (c *Config) Save(filename string) error {
 	defer file.Close()
 	return json.NewEncoder(file).Encode(c)
 }
-func (c *Config) encryptPassword(password string) {
 
+func (c *Config) encryptPassword(password string) {
 	encrypted := PasswordCipher.Encrypt([]byte(password))
 	buf := new(bytes.Buffer)
 	encoder := base64.NewEncoder(base64.StdEncoding, buf)
@@ -111,6 +123,7 @@ func (c *Config) applyDefaultIfNeeded() {
 	}
 }
 
+//IsKeyEncrypted checks if supplied key content is encrypyed by password
 func IsKeyEncrypted(keyPath string) bool {
 	privateKeyBytes, err := ioutil.ReadFile(keyPath)
 	if err != nil {
@@ -123,12 +136,38 @@ func IsKeyEncrypted(keyPath string) bool {
 	return strings.Contains(block.Headers["Proc-Type"], "ENCRYPTED")
 }
 
+//SSHClientConfig returns a new instance of sshClientConfig
+func (c *Config) SSHClientConfig() (*ssh.ClientConfig, error) {
+	return c.ClientConfig()
+}
 
+//NewJWTConfig returns new JWT config for supplied scopes
+func (c *Config) NewJWTConfig(scopes ...string) (*jwt.Config, error) {
+	var result = &jwt.Config{
+		Email:        c.ClientEmail,
+		Subject:      c.ClientEmail,
+		PrivateKey:   []byte(c.PrivateKey),
+		PrivateKeyID: c.PrivateKeyID,
+		Scopes:       scopes,
+		TokenURL:     c.TokenURL,
+	}
+	if c.PrivateKeyPath != "" && c.PrivateKey == "" {
+		privateKey, err := ioutil.ReadFile(c.PrivateKeyPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open provide key: %v, %v", c.PrivateKeyPath, err)
+		}
+		result.PrivateKey = privateKey
+	}
+	if result.TokenURL == "" {
+		result.TokenURL = google.JWTTokenURL
+	}
+	return result, nil
+}
 
 //ClientConfig returns a new instance of sshClientConfig
 func (c *Config) ClientConfig() (*ssh.ClientConfig, error) {
-	if c.clientConfig != nil {
-		return c.clientConfig, nil
+	if c.sshClientConfig != nil {
+		return c.sshClientConfig, nil
 	}
 	c.applyDefaultIfNeeded()
 	result := &ssh.ClientConfig{
@@ -157,10 +196,11 @@ func (c *Config) ClientConfig() (*ssh.ClientConfig, error) {
 		result.Auth = append(result.Auth, ssh.PublicKeys(key))
 
 	}
-	c.clientConfig = result
+	c.sshClientConfig = result
 	return result, nil
 }
 
+//NewConfig create a new config for supplied file name
 func NewConfig(filename string) (*Config, error) {
 	var config = &Config{}
 	err := config.Load(filename)
@@ -171,6 +211,7 @@ func NewConfig(filename string) (*Config, error) {
 	return config, nil
 }
 
+//GetDefaultPasswordCipher return a default password cipher
 func GetDefaultPasswordCipher() Cipher {
 	var result, err = NewBlowfishCipher(DefaultKey)
 	if err != nil {
