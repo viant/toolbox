@@ -21,21 +21,21 @@ var DefaultKey = []byte{0x24, 0x66, 0xDD, 0x87, 0x8B, 0x96, 0x3C, 0x9D}
 var PasswordCipher = GetDefaultPasswordCipher()
 
 type Config struct {
-	Username          string
-	Password          string
-	EncryptedPassword string
-	PrivateKeyPath    string
+	Username          string `json:",omitempty"`
+	Password          string `json:",omitempty"`
+	EncryptedPassword string `json:",omitempty"`
+	PrivateKeyPath    string `json:",omitempty"`
 
 	//amazon cloud credential
-	Key    string
-	Secret string
-	Region string
+	Key    string `json:",omitempty"`
+	Secret string `json:",omitempty"`
+	Region string `json:",omitempty"`
 
 	//google cloud credential
-	ClientEmail  string `json:"client_email"`
-	TokenURL     string `json:"token_uri"`
-	PrivateKey   string `json:"private_key"`
-	PrivateKeyID string `json:"private_key_id"`
+	ClientEmail  string `json:"client_email,omitempty"`
+	TokenURL     string `json:"token_uri,omitempty"`
+	PrivateKey   string `json:"private_key,omitempty"`
+	PrivateKeyID string `json:"private_key_id,omitempty"`
 
 	sshClientConfig *ssh.ClientConfig
 	jwtClientConfig *jwt.Config
