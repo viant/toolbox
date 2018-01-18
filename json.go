@@ -20,8 +20,12 @@ func IsCompleteJSON(candidate string) bool {
 	if !(curlyStart == curlyEnd && squareStart == squareEnd) {
 		return false
 	}
-	var aMap = make(map[string]interface{})
-	err := jsonDecoderFactory{}.Create(strings.NewReader(candidate)).Decode(&aMap)
+	var err error
+	if strings.HasPrefix(candidate, "{") {
+		_, err = JSONToMap(candidate)
+	} else {
+		_, err = JSONToSlice(candidate)
+	}
 	return err == nil
 }
 
@@ -55,6 +59,27 @@ func JSONToMap(source interface{}) (map[string]interface{}, error) {
 	err := jsonDecoderFactory{}.Create(reader).Decode(&result)
 	return result, err
 }
+
+
+//JSONToSlice converts JSON source into slice
+func JSONToSlice(source interface{}) ([]interface{}, error) {
+	var reader io.Reader
+	switch value := source.(type) {
+	case io.Reader:
+		reader = value
+	case []byte:
+		reader = bytes.NewReader(value)
+	case string:
+		reader = strings.NewReader(value)
+	default:
+		return nil, fmt.Errorf("unsupported type: %T", source)
+	}
+	var result = make([]interface{}, 0)
+	err := jsonDecoderFactory{}.Create(reader).Decode(&result)
+	return result, err
+}
+
+
 
 //AsJSONText converts data structure int text JSON
 func AsJSONText(source interface{}) (string, error) {
