@@ -8,7 +8,7 @@ func IsASCIIText(candidate string) bool {
 		if r == '\n' || r == '\r' || r == '\t' {
 			continue
 		}
-		if r > unicode.MaxASCII || !unicode.IsPrint(r) {
+		if r > unicode.MaxASCII || !unicode.IsPrint(r) || r == '`' {
 			return false
 		}
 	}

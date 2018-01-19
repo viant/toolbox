@@ -19,7 +19,6 @@ func DateFormatToLayout(dateFormat string) string {
 	dateFormat = strings.Replace(dateFormat, "d", "2", 1)
 
 	dateFormat = strings.Replace(dateFormat, "HH", "15", 1)
-	dateFormat = strings.Replace(dateFormat, "H", "15", 1)
 
 	dateFormat = strings.Replace(dateFormat, "hh", "03", 1)
 	dateFormat = strings.Replace(dateFormat, "h", "3", 1)
@@ -36,22 +35,29 @@ func DateFormatToLayout(dateFormat string) string {
 
 	dateFormat = strings.Replace(dateFormat, "SSS", "000", 1)
 
+
+	dateFormat = strings.Replace(dateFormat, "a", "pm", 1)
+	dateFormat = strings.Replace(dateFormat, "aa", "PM", 1)
+
+
 	dateFormat = strings.Replace(dateFormat, "MMMM", "January", 1)
 	dateFormat = strings.Replace(dateFormat, "MMM", "Jan", 1)
 	dateFormat = strings.Replace(dateFormat, "MM", "01", 1)
 	dateFormat = strings.Replace(dateFormat, "M", "1", 1)
 
+
+
 	dateFormat = strings.Replace(dateFormat, "z", "MST", 1)
 	dateFormat = strings.Replace(dateFormat, "zzzz", "Z0700", 1)
 	dateFormat = strings.Replace(dateFormat, "zz:zz", "Z07:00", 1)
 	dateFormat = strings.Replace(dateFormat, "ZZ", "-0700", 1)
+
 	dateFormat = strings.Replace(dateFormat, "Z", "-07", 1)
+
 
 	dateFormat = strings.Replace(dateFormat, "EEEE", "Monday", 1)
 	dateFormat = strings.Replace(dateFormat, "E", "Mon", 1)
 
-	dateFormat = strings.Replace(dateFormat, "a", "pm", 1)
-	dateFormat = strings.Replace(dateFormat, "aa", "PM", 1)
 
 	return dateFormat
 }
