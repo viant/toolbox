@@ -369,9 +369,9 @@ func ProcessMap(sourceMap interface{}, handler func(key, value interface{}) bool
 }
 
 //AsMap converts underlying map as map[string]interface{}
-func AsMap(sourceMap interface{}) map[string]interface{} {
+func AsMap(source interface{}) map[string]interface{} {
 	var result map[string]interface{}
-	switch candidate := sourceMap.(type) {
+	switch candidate := source.(type) {
 	case map[string]interface{}:
 		return candidate
 	case *map[string]interface{}:
@@ -383,14 +383,20 @@ func AsMap(sourceMap interface{}) map[string]interface{} {
 		}
 		return result
 	}
-	sourceMapValue := reflect.ValueOf(sourceMap)
+	if IsStruct(source) {
+		var result = make(map[string]interface{})
+		converter:=NewColumnConverter(DefaultDateLayout)
+		converter.AssignConverted(&result, source)
+		return result
+	}
+	sourceMapValue := reflect.ValueOf(source)
 	mapType := reflect.TypeOf(result)
 	if sourceMapValue.Type().AssignableTo(mapType) {
 		result, _ = sourceMapValue.Convert(mapType).Interface().(map[string]interface{})
 		return result
 	}
 	result = make(map[string]interface{})
-	CopyMapEntries(sourceMap, result)
+	CopyMapEntries(source, result)
 	return result
 }
 

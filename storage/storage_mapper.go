@@ -86,7 +86,7 @@ func (t *templateWriter) WriteStorageContent(URL string, content []byte) error {
 		for _, b := range content {
 			byteArray = append(byteArray, fmt.Sprintf("%d", b))
 		}
-		contentReader = fmt.Sprintf("bytes.NewReader([]byte{%v}))", strings.Join(byteArray, ","))
+		contentReader = fmt.Sprintf("bytes.NewReader([]byte{%v})", strings.Join(byteArray, ","))
 	}
 	var payload = `	{
 		err := memStorage.Upload("%v", %v)
