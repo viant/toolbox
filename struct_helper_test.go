@@ -142,3 +142,29 @@ func TestBuildEmbededStructTagMapping(t *testing.T) {
 	}
 
 }
+
+type Type3 struct {
+	Name map[string]string
+}
+
+type Type2 struct {
+	F1 int
+	F3 *Type3
+}
+
+type Type1 struct {
+	F1 int
+	F2 *Type2
+	F3 []interface{}
+	F4 map[string]interface{}
+	F5 []*Type3
+}
+
+func Test_InitStruct(t *testing.T) {
+	var t1 = &Type1{}
+	toolbox.InitStruct(t1)
+	assert.NotNil(t, t1.F2)
+	assert.NotNil(t, t1.F3)
+	assert.NotNil(t, t1.F4)
+	assert.NotNil(t, t1.F5)
+}
