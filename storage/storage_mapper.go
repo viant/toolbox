@@ -50,6 +50,12 @@ func NewStorageMapperHandler(filename, pkg string) (CopyHandler, io.WriteCloser,
 	template := &templateWriter{writer}
 	template.Init(pkg)
 	return func(sourceObject Object, source io.Reader, destinationService Service, destinationURL string) error {
+
+		_, name := toolbox.URLSplit(destinationURL)
+		if strings.HasPrefix(name, ".") {
+			//skip hidden files
+			return nil
+		}
 		content, err := ioutil.ReadAll(source)
 		if err != nil {
 			return err
