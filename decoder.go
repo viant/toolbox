@@ -92,7 +92,7 @@ func (r *DelimitedRecord) IsEmpty() bool {
 		if value == nil {
 			continue
 		}
-		if AsString(value) == "" {
+		if AsString(value) == "" || AsString(value) == "<nil>" {
 			continue
 		}
 		return false
