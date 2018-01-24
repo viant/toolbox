@@ -19,8 +19,11 @@ func (s *replayMultiCommandSession) Run(command string, timeoutMs int, terminato
 	}
 
 	replay, ok := s.commands.Commands[command]
+
+
+
 	if !ok {
-		return commandNotFound, nil
+				return commandNotFound, nil
 	}
 	if replay.Error != "" {
 		return "", errors.New(replay.Error)

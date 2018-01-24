@@ -18,7 +18,7 @@ import (
 type Resource struct {
 	URL             string   //URL of resource
 	Credential      string   //name of file or alias to the file defined via credential service
-	ParsedURL       *url.URL //parsed URL resource
+	ParsedURL       *url.URL `json:"-"`//parsed URL resource
 	Cache           string   //Cache path for the resource, if specified resource will be cached in the specified path
 	CacheExpiryMs   int      //CacheExpiryMs expiry time in ms
 	Name            string   //name of a resource
