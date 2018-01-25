@@ -3,7 +3,6 @@ package toolbox
 import (
 	"reflect"
 	"strings"
-	"fmt"
 )
 
 const (
@@ -145,19 +144,32 @@ func createEmptySlice(source reflect.Value) {
 
 //InitStruct initialise any struct pointer to empty struct
 func InitStruct(source interface{}) {
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Printf("Recovered %v\n", r)
-		}
-	}()
+	if source == nil {
+		return
+	}
+	//defer func() {
+	//	if r := recover(); r != nil {
+	//		fmt.Printf("Recovered %v %T\n", r, source)
+	//	}
+	//}()
 	if ! IsStruct(source) {
 		return
 	}
+
 	sourceValue, ok := source.(reflect.Value)
 	if ! ok {
 		sourceValue = reflect.ValueOf(source)
 	}
+
+
+	if sourceValue.Type().Kind() == reflect.Ptr &&  ! sourceValue.Elem().IsValid() {
+		return
+	}
+
 	structValue := DiscoverValueByKind(sourceValue, reflect.Struct)
+	if structValue.NumField() == 0 {
+		return
+	}
 	structType := structValue.Type()
 	for i := 0; i < structType.NumField(); i++ {
 		fieldValue := structValue.Field(i)
@@ -180,7 +192,11 @@ func InitStruct(source interface{}) {
 
 		if DereferenceType(fieldType).Kind() == reflect.Struct {
 			fieldStruct := reflect.New(fieldValue.Type().Elem())
-			InitStruct(fieldStruct.Interface())
+			if fieldStruct.Type() != fieldValue.Type() {}
+				if reflect.TypeOf(source) != fieldStruct.Type() {
+					InitStruct(fieldStruct.Interface())
+				}
+
 			fieldValue.Set(fieldStruct)
 		}
 
