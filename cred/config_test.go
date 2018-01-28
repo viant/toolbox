@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"testing"
+	"strings"
 )
 
 func TestConfig_Load(t *testing.T) {
@@ -32,6 +33,16 @@ func TestConfig_Load(t *testing.T) {
 		assert.Equal(t, "abc", config.Password)
 		assert.Equal(t, "adrian", config.Username)
 		assert.Equal(t, "AAAAAAAAAAAXUPcVbxwWlQ==", config.EncryptedPassword)
+	}
+
+	{
+		configJSON := `{"Username":"adrian","EncryptedPassword":"AAAAAAAAAAAXUPcVbxwWlQ=="}`
+
+		config := cred.Config{}
+		err = config.LoadFromReader(strings.NewReader(configJSON), ".json")
+		assert.Nil(t, err)
+
+		assert.EqualValues(t, "abc", config.Password)
 	}
 
 	_ = os.Remove(testFile)
