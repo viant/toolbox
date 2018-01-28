@@ -111,3 +111,27 @@ func Test_AsJSONText(t *testing.T) {
 	}
 
 }
+
+func Test_JSONToInterface(t *testing.T) {
+	{
+		input := `{"a":1, "b":2}`
+		output, err := toolbox.JSONToInterface(input)
+		if assert.Nil(t, err) {
+			assert.NotNil(t, output)
+			assert.True(t, toolbox.IsMap(output))
+			aMap := toolbox.AsMap(output)
+			assert.EqualValues(t, 1, aMap["a"])
+			assert.EqualValues(t, 2, aMap["b"])
+		}
+	}
+	{
+		input := `[1,2]`
+		output, err := toolbox.JSONToInterface(input)
+		if assert.Nil(t, err) {
+			assert.NotNil(t, output)
+			assert.True(t, toolbox.IsSlice(output))
+			aSlice := toolbox.AsSlice(output)
+			assert.EqualValues(t, []interface{}{1.0, 2.0}, aSlice)
+		}
+	}
+}

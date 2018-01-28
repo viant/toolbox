@@ -136,6 +136,16 @@ func (e *MacroEvaluator) Expand(context Context, input string) (interface{}, err
 	return result, nil
 }
 
+//NewMacroEvaluator returns a new macro evaluator
+func NewMacroEvaluator(prefix, postfix string, registry ValueProviderRegistry) *MacroEvaluator {
+	return &MacroEvaluator{
+		Prefix:prefix,
+		Postfix:postfix,
+		ValueProviderRegistry:registry,
+	}
+}
+
+
 //ExpandParameters expands passed in parameters as strings
 func ExpandParameters(macroEvaluator *MacroEvaluator, parameters map[string]string) error {
 	for key := range parameters {

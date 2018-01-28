@@ -7,6 +7,9 @@ import (
 	"time"
 )
 
+
+
+
 //ValueProvider represents a value provider
 type ValueProvider interface {
 	//Get returns a value for passed in context and arguments. Context can be used to manage state.
@@ -245,7 +248,7 @@ type dictionaryProvider struct {
 
 func (p dictionaryProvider) Get(context Context, arguments ...interface{}) (interface{}, error) {
 	if len(arguments) == 0 {
-		return nil, fmt.Errorf("Expected at least one argument but had 0")
+		return nil, fmt.Errorf("expected at least one argument but had 0")
 	}
 	var key = AsString(arguments[0])
 	var dictionary Dictionary
@@ -259,4 +262,45 @@ func (p dictionaryProvider) Get(context Context, arguments ...interface{}) (inte
 //NewDictionaryProvider creates a new Dictionary provider, it takes a key context that is a MapDictionary pointer
 func NewDictionaryProvider(contextKey interface{}) ValueProvider {
 	return &dictionaryProvider{contextKey}
+}
+
+type betweenPredicateValueProvider struct{}
+
+func (p *betweenPredicateValueProvider) Get(context Context, arguments ...interface{}) (interface{}, error) {
+	if len(arguments) != 2 {
+		return nil, fmt.Errorf("expected 2 arguments with between predicate but had %v", len(arguments))
+	}
+	predicate := NewBetweenPredicate(arguments[0], arguments[1])
+	return &predicate, nil
+}
+
+//NewBetweenPredicateValueProvider returns a new between value provider
+func NewBetweenPredicateValueProvider() ValueProvider {
+	return &betweenPredicateValueProvider{}
+}
+
+type withinSecPredicateValueProvider struct{}
+
+func (p *withinSecPredicateValueProvider) Get(context Context, arguments ...interface{}) (interface{}, error) {
+	if len(arguments) != 3 {
+		return nil, fmt.Errorf("expected 3 arguments <ds:within_sec [timestamp, delta, dateFormat]>  predicate, but had %v", len(arguments))
+	}
+
+	if arguments[0] == "now" {
+		arguments[0] = time.Now()
+	}
+	dateFormat := AsString(arguments[2])
+	dateLayout := DateFormatToLayout(dateFormat)
+	targetTime := AsTime(arguments[0], dateLayout)
+	if targetTime == nil {
+		return nil, fmt.Errorf("Unable convert %v to time.Time", arguments[0])
+	}
+	delta := AsInt(arguments[1])
+	predicate := NewWithinPredicate(*targetTime, delta, dateLayout)
+	return &predicate, nil
+}
+
+//NewWithinSecPredicateValueProvider returns a new within second value provider
+func NewWithinSecPredicateValueProvider() ValueProvider {
+	return &withinSecPredicateValueProvider{}
 }
