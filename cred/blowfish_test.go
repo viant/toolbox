@@ -37,5 +37,15 @@ func TestNewBlowfishCipher(t *testing.T) {
 			decrypted := cipher.Decrypt(encrypted)
 			assert.Equal(t, secret, string(decrypted))
 		}
+
+		{
+			var secret = "test123@423 #!424"
+			encrypted := cipher.Encrypt([]byte(secret))
+			decrypted := cipher.Decrypt(encrypted)
+			assert.Equal(t, secret, string(decrypted))
+		}
+
+
+
 	}
 }

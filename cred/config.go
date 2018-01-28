@@ -14,6 +14,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"io"
 )
 
 var sshKeyFileCandidates = []string{"/.ssh/id_rsa", "/.ssh/id_dsa"}
@@ -46,7 +47,12 @@ func (c *Config) Load(filename string) error {
 	if err != nil {
 		return err
 	}
+	defer reader.Close()
 	ext := path.Ext(filename)
+	return c.LoadFromReader(reader, ext)
+}
+
+func (c *Config) LoadFromReader(reader io.Reader, ext string) error {
 	if strings.Contains(ext, "yaml") || strings.Contains(ext, "yml") {
 		var data, err = ioutil.ReadAll(reader)
 		if err != nil {
@@ -57,12 +63,11 @@ func (c *Config) Load(filename string) error {
 			return err
 		}
 	} else {
-		err = json.NewDecoder(reader).Decode(c)
+		err := json.NewDecoder(reader).Decode(c)
 		if err != nil {
 			return nil
 		}
 	}
-
 	if c.EncryptedPassword != "" {
 		decoder := base64.NewDecoder(base64.StdEncoding, strings.NewReader(c.EncryptedPassword))
 		data, err := ioutil.ReadAll(decoder)
