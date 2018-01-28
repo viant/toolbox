@@ -11,20 +11,29 @@ import (
 
 func TestProcessStruct(t *testing.T) {
 
+	type Super struct {
+		Parent int
+	}
 	type User struct {
+		*Super
 		Name        string    `column:"name"`
 		DateOfBirth time.Time `column:"date" dateFormat:"2006-01-02 15:04:05.000000"`
 		Id          int       `autogenrated:"true"`
+		prv         int
 		Other       string    `transient:"true"`
 	}
 
-	user := User{Id: 1, Other: "!@#", Name: "foo"}
+	user := User{Id: 1, Other: "!@#", Name: "foo", Super: &Super{12}}
 	var userMap = make(map[string]interface{})
-	toolbox.ProcessStruct(&user, func(field reflect.StructField, value interface{}) {
-		userMap[field.Name] = value
+	err := toolbox.ProcessStruct(&user,  func(fieldType reflect.StructField, field reflect.Value) error {
+		value := field.Interface()
+		userMap[fieldType.Name] = value
+		return nil
 	})
+	assert.Nil(t, err)
+	assert.Equal(t, 5, len(userMap))
 
-	assert.Equal(t, 4, len(userMap))
+	assert.Equal(t, 12, userMap["Parent"])
 	assert.Equal(t, 1, userMap["Id"])
 	assert.Equal(t, "!@#", userMap["Other"])
 }

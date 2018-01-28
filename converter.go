@@ -900,63 +900,33 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 }
 
 func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sourceValue reflect.Value) error {
+	if source == nil || !sourceValue.IsValid() {
+		return nil
+	}
 	targetMap := AsMap(target)
 	if targetMap == nil {
 		return fmt.Errorf("target %T is not a map", target)
 	}
-	if source == nil || !sourceValue.IsValid() {
-		return nil
-	}
+	ProcessStruct(source,  func(fieldType reflect.StructField, field reflect.Value) error {
+		value := field.Interface()
+		var fieldTarget interface{}
+		if IsStruct(value) {
+			fieldTarget = make(map[string]interface{})
 
-	sourceType := sourceValue.Type()
-
-	for i := 0; i < sourceValue.NumField(); i++ {
-		field := sourceValue.Field(i)
-
-		if !field.CanInterface() {
-			continue
-		}
-		var value interface{}
-		fieldKind := DereferenceType(field.Type()).Kind()
-		fieldType := sourceType.Field(i)
-		if fieldKind == reflect.Struct {
-			aMap := make(map[string]interface{})
-			err := c.AssignConverted(&aMap, field.Interface())
-			if err != nil {
-				return err
-			}
-			value = aMap
-		} else if fieldKind == reflect.Slice {
-
-			var componentType = DiscoverComponentType(field.Interface())
-			for componentType.Kind() == reflect.Ptr {
-				componentType = componentType.Elem()
-			}
+		} else if IsSlice(value) {
+			var componentType = DereferenceType(DiscoverComponentType(value))
 			if componentType.Kind() == reflect.Struct {
-				slice := make([]map[string]interface{}, 0)
-				err := c.AssignConverted(&slice, field.Interface())
-				if err != nil {
-					return err
-				}
-				value = slice
+				fieldTarget = make([]map[string]interface{}, 0)
 			} else {
-				slice := make([]interface{}, 0)
-				err := c.AssignConverted(&slice, field.Interface())
-				if err != nil {
-					return err
-				}
-				value = slice
-			}
-
-		} else {
-			err := c.AssignConverted(&value, field.Interface())
-			if err != nil {
-				return err
+				fieldTarget = make([]interface{}, 0)
 			}
 		}
-		targetMap[fieldType.Name] = value
-
-	}
+		if err := c.AssignConverted(&fieldTarget, value); err!= nil {
+			return err
+		}
+		targetMap[fieldType.Name] = fieldTarget
+		return nil
+	})
 	return nil
 }
 
