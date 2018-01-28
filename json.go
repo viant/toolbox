@@ -42,6 +42,29 @@ func IsNewLineDelimitedJSON(candidate string) bool {
 	return IsCompleteJSON(lines[0]) && IsCompleteJSON(lines[1])
 }
 
+
+
+
+//JSONToInterface converts JSON source to an interface (either map or slice)
+func JSONToInterface(source interface{}) (interface{}, error) {
+	var reader io.Reader
+	switch value := source.(type) {
+	case io.Reader:
+		reader = value
+	case []byte:
+		reader = bytes.NewReader(value)
+	case string:
+		reader = strings.NewReader(value)
+	default:
+		return nil, fmt.Errorf("unsupported type: %T", source)
+	}
+	var result interface{}
+	err := jsonDecoderFactory{}.Create(reader).Decode(&result)
+	return result, err
+}
+
+
+
 //JSONToMap converts JSON source into map
 func JSONToMap(source interface{}) (map[string]interface{}, error) {
 	var reader io.Reader
