@@ -802,12 +802,13 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		return nil
 	case *interface{}:
 
-		(*targetValuePointer) = source
-		return nil
-	case **interface{}:
-		(*targetValuePointer) = &source
-		return nil
 
+			(*targetValuePointer) = source
+			return nil
+
+	case **interface{}:
+			(*targetValuePointer) = &source
+			return nil
 	}
 
 	sourceValue := reflect.ValueOf(source)
@@ -854,11 +855,18 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		}
 
 	} else if targetIndirectPointerType.Kind() == reflect.Struct {
-
 		structPointer := reflect.New(targetIndirectPointerType)
+		if IsStruct(source) { //TO DO add struct to struct conversion
+			var sourceMap = make(map[string]interface{})
+			if err := c.AssignConverted(&sourceMap, source); err != nil {
+				return err
+			}
+			source = sourceMap
+		}
 		if !IsMap(source) {
 			return fmt.Errorf("unable transfer to %T,  source should be a map but was %T(%v)", target, source, source)
 		}
+
 		inputMap := AsMap(source)
 		if inputMap != nil {
 			err := c.assignConvertedStruct(target, inputMap, structPointer.Elem(), targetIndirectPointerType)
@@ -907,22 +915,40 @@ func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sou
 	if targetMap == nil {
 		return fmt.Errorf("target %T is not a map", target)
 	}
-	ProcessStruct(source,  func(fieldType reflect.StructField, field reflect.Value) error {
+	ProcessStruct(source, func(fieldType reflect.StructField, field reflect.Value) error {
 		value := field.Interface()
+		if value == nil {
+			return nil
+		}
 		var fieldTarget interface{}
 		if IsStruct(value) {
-			fieldTarget = make(map[string]interface{})
+			aMap := make(map[string]interface{})
+			if err := c.AssignConverted(&aMap, value); err != nil {
+				return err
+			}
+			fieldTarget = aMap
 
 		} else if IsSlice(value) {
 			var componentType = DereferenceType(DiscoverComponentType(value))
+
 			if componentType.Kind() == reflect.Struct {
-				fieldTarget = make([]map[string]interface{}, 0)
+				var slice = make([]map[string]interface{}, 0)
+				if err := c.AssignConverted(&slice, value); err != nil {
+					return err
+				}
+				fieldTarget = slice
 			} else {
-				fieldTarget = make([]interface{}, 0)
+				var slice = make([]interface{}, 0)
+				if err := c.AssignConverted(&slice, value); err != nil {
+					return err
+				}
+				fieldTarget = slice
+
 			}
-		}
-		if err := c.AssignConverted(&fieldTarget, value); err!= nil {
-			return err
+		} else {
+			if err := c.AssignConverted(&fieldTarget, value); err != nil {
+				return err
+			}
 		}
 		targetMap[fieldType.Name] = fieldTarget
 		return nil
