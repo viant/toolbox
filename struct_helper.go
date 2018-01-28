@@ -15,20 +15,62 @@ const (
 var columnMapping = []string{"column", "dateLayout", "dateFormat", "autoincrement", "primaryKey", "sequence", "valueMap", defaultKey, anonymousKey}
 
 //ProcessStruct reads passed in struct fields and values to pass it to provided handler
-func ProcessStruct(aStruct interface{}, handler func(field reflect.StructField, value interface{})) {
+func ProcessStruct(aStruct interface{}, handler func(fieldType reflect.StructField, field reflect.Value) error) error {
 	structValue := DiscoverValueByKind(reflect.ValueOf(aStruct), reflect.Struct)
 	structType := structValue.Type()
+	var isPrivate = func(candidate string) bool {
+		if candidate == "" {
+			return true
+		}
+		return strings.ToLower(candidate[0:1]) == candidate[0:1]
+	}
+
+
+	type fieldStruct struct {
+		Value reflect.Value
+		Type  reflect.StructField
+	}
+	var fields =make(map[string]*fieldStruct)
+
 	for i := 0; i < structType.NumField(); i++ {
-		fieldStruct := structType.Field(i)
-		fieldName := fieldStruct.Name
-		if strings.ToLower(fieldName[0:1]) == fieldName[0:1] {
-			//skip private fileds
+		fieldType := structType.Field(i)
+		if ! fieldType.Anonymous {
 			continue
 		}
 		field := structValue.Field(i)
-		value := UnwrapValue(&field)
-		handler(fieldStruct, value)
+		if ! IsStruct(field) {
+			continue
+		}
+
+		if err := ProcessStruct(field.Interface(), func(fieldType reflect.StructField, field reflect.Value) error{
+			fields[fieldType.Name] = &fieldStruct{Type:fieldType, Value:field}
+			return nil
+		}); err != nil {
+			return err
+		}
 	}
+
+
+	for i := 0; i < structType.NumField(); i++ {
+		fieldType := structType.Field(i)
+		fieldName := fieldType.Name
+		if isPrivate(fieldName) || fieldType.Anonymous {
+			continue
+		}
+		field := structValue.Field(i)
+		fields[fieldType.Name] = &fieldStruct{Type:fieldType, Value:field}
+	}
+
+
+	for _, field := range fields {
+		if err := handler(field.Type, field.Value); err != nil {
+			return err
+		}
+	}
+
+
+
+	return nil
 }
 
 //BuildTagMapping builds map keyed by mappedKeyTag tag value, and value is another map of keys where tag name is presents in the tags parameter.
@@ -96,7 +138,6 @@ func NewFieldSettingByKey(aStruct interface{}, key string) map[string](map[strin
 	return BuildTagMapping(aStruct, key, "transient", true, true, columnMapping)
 }
 
-
 func setEmptyMap(source reflect.Value) {
 	mapType := source.Type()
 	mapPointer := reflect.New(mapType)
@@ -120,7 +161,6 @@ func setEmptyMap(source reflect.Value) {
 	source.Set(mapPointer.Elem())
 }
 
-
 func createEmptySlice(source reflect.Value) {
 
 	sliceType := DiscoverTypeByKind(source.Type(), reflect.Slice)
@@ -138,7 +178,6 @@ func createEmptySlice(source reflect.Value) {
 	}
 	slice.Set(reflect.Append(slice, targetComponentPointer.Elem()))
 	source.Set(slicePointer.Elem())
-
 
 }
 
@@ -161,8 +200,7 @@ func InitStruct(source interface{}) {
 		sourceValue = reflect.ValueOf(source)
 	}
 
-
-	if sourceValue.Type().Kind() == reflect.Ptr &&  ! sourceValue.Elem().IsValid() {
+	if sourceValue.Type().Kind() == reflect.Ptr && ! sourceValue.Elem().IsValid() {
 		return
 	}
 
@@ -177,11 +215,11 @@ func InitStruct(source interface{}) {
 			continue
 		}
 		fieldType := structType.Field(i)
-		if fieldType.Type.Kind() == reflect.Map   {
+		if fieldType.Type.Kind() == reflect.Map {
 			setEmptyMap(fieldValue)
 			continue
 		}
-		if fieldType.Type.Kind() == reflect.Slice   {
+		if fieldType.Type.Kind() == reflect.Slice {
 			createEmptySlice(fieldValue)
 			continue
 		}
@@ -192,10 +230,11 @@ func InitStruct(source interface{}) {
 
 		if DereferenceType(fieldType).Kind() == reflect.Struct {
 			fieldStruct := reflect.New(fieldValue.Type().Elem())
-			if fieldStruct.Type() != fieldValue.Type() {}
-				if reflect.TypeOf(source) != fieldStruct.Type() {
-					InitStruct(fieldStruct.Interface())
-				}
+			if fieldStruct.Type() != fieldValue.Type() {
+			}
+			if reflect.TypeOf(source) != fieldStruct.Type() {
+				InitStruct(fieldStruct.Interface())
+			}
 
 			fieldValue.Set(fieldStruct)
 		}
