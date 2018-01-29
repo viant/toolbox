@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"io/ioutil"
 )
 
 //IsCompleteJSON returns true if supplied represent complete JSON
 func IsCompleteJSON(candidate string) bool {
-	candidate = strings.TrimSpace(candidate)
+	candidate = strings.Trim(candidate, "\n \t\r")
 	if candidate == "" {
 		return false
 	}
@@ -29,14 +30,48 @@ func IsCompleteJSON(candidate string) bool {
 	return err == nil
 }
 
+
+//NewLineDelimitedJSON returns JSON for supplied multi line JSON
+func NewLineDelimitedJSON(candidate string) ([]interface{}, error) {
+	var result = make([]interface{}, 0)
+	lines := getMultilineContent(candidate)
+	for _, line := range lines {
+		aStruct, err := JSONToInterface(line);
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, aStruct)
+	}
+	 return result, nil
+}
+
+
+
+
+
+
+func getMultilineContent(multiLineText string) []string {
+	multiLineText = strings.TrimSpace(multiLineText)
+	if multiLineText == "" {
+		return []string{}
+	}
+	lines := strings.Split(multiLineText, "\n")
+	var result = make([]string, 0)
+	for _, line := range lines {
+		if strings.Trim(line, " \r") == "" {
+			continue
+		}
+		result = append(result, line)
+	}
+	return result
+}
+
+
+
 //IsNewLineDelimitedJSON returns true if supplied content is multi line delimited JSON
 func IsNewLineDelimitedJSON(candidate string) bool {
-	candidate = strings.TrimSpace(candidate)
-	if candidate == "" {
-		return false
-	}
-	lines := strings.Split(candidate, "\n")
-	if len(lines) == 1 {
+	lines := getMultilineContent(candidate)
+	if len(lines) <= 1 {
 		return false
 	}
 	return IsCompleteJSON(lines[0]) && IsCompleteJSON(lines[1])
@@ -59,6 +94,13 @@ func JSONToInterface(source interface{}) (interface{}, error) {
 		return nil, fmt.Errorf("unsupported type: %T", source)
 	}
 	var result interface{}
+	if content, err := ioutil.ReadAll(reader);err == nil {
+		text := string(content)
+		if IsNewLineDelimitedJSON(text) {
+			return NewLineDelimitedJSON(text)
+		}
+		reader = strings.NewReader(text)
+	}
 	err := jsonDecoderFactory{}.Create(reader).Decode(&result)
 	return result, err
 }
