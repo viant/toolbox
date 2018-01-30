@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"os"
+	"path"
 )
 
 //ExtractURIParameters parses URIs to extract {<param>} defined in templateURI from requestURI, it returns extracted parameters and flag if requestURI matched templateURI
@@ -114,4 +116,16 @@ func URLSplit(URL string) (string, string) {
 		return URL, ""
 	}
 	return fmt.Sprintf("%v%v", URLBase(URL), string(parsedURL.Path[:splitPosition])), string(parsedURL.Path[splitPosition+1:])
+}
+
+
+//OpenFile open file converting path to elements and rebuling path safety with path.Join
+func OpenFile(filename string) (*os.File, error) {
+	var root =  make([]string, 0)
+	if strings.HasPrefix(filename, "/") || strings.HasPrefix(filename, "\\") {
+		root = append(root, "/")
+	}
+	elements := append(root, strings.Split(filename, "/")...)
+	filename = path.Join(elements...)
+	return  os.Open(filename)
 }

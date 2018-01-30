@@ -34,6 +34,8 @@ func ExtractMimeType(file string) string {
 // is not valid
 func OpenReaderFromURL(rawURL string) (io.ReadCloser, string, error) {
 	//this indicates a relative path
+
+
 	if strings.HasPrefix(rawURL, "file://.../") {
 		baseDirectory, _ := os.Getwd()
 		rawURL = strings.Replace(rawURL, "...", baseDirectory, 1)
@@ -52,7 +54,7 @@ func OpenReaderFromURL(rawURL string) (io.ReadCloser, string, error) {
 		mimeType := response.Header.Get("Content-Type")
 		return response.Body, mimeType, nil
 	case "file":
-		file, err := os.Open(url.Path)
+		file, err := OpenFile(url.Path)
 		if err != nil {
 			return nil, "", fmt.Errorf("failed to open file: %v due to %v", rawURL, err.Error())
 		}
