@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"github.com/pkg/errors"
 )
 
 
@@ -75,6 +76,44 @@ func NewEnvValueProvider() ValueProvider {
 	var result ValueProvider = &envValueProvider{}
 	return result
 }
+
+
+
+type dateOfBirthProvider struct {}
+
+func (p dateOfBirthProvider) Get(context Context, arguments ...interface{}) (interface{}, error) {
+	if len(arguments) < 1 {
+		return nil, errors.New("expected <age> | [month], [day], [timeformat]")
+	}
+	now := time.Now()
+	age := AsInt(arguments[0])
+	var month int = int(now.Month())
+	var day int = now.Day()
+	var timeFormat = "yyyy-MM-dd"
+	if len(arguments) >= 2 {
+		month = AsInt(arguments[1])
+	}
+	if len(arguments) >= 3 {
+		day = AsInt(arguments[2])
+	}
+	if len(arguments) >= 4 {
+		timeFormat = AsString(arguments[3])
+	}
+
+	dateOfBirthText := fmt.Sprintf("%04d-%02d-%02d", now.Year() - age, month, day)
+	date,err := time.Parse(DateFormatToLayout("yyyy-MM-dd"), dateOfBirthText)
+	if (err != nil) {
+		return nil, err
+	}
+	return date.Format(DateFormatToLayout(timeFormat)), nil
+}
+
+
+//NewDateOfBirthValueProvider provider for computing date for supplied expected age, month and day
+func NewDateOfBirthrovider() ValueProvider {
+	return &dateOfBirthProvider{}
+}
+
 
 type castedValueProvider struct{}
 

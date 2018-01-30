@@ -196,3 +196,56 @@ func Test_NewNewTimeProvider(t *testing.T) {
 		assert.Equal(t, time.Now().Hour()%12+1, toolbox.AsInt(result))
 	}
 }
+
+
+
+func Test_NewDateOfBirthValueProvider(t *testing.T) {
+	provider := toolbox.NewDateOfBirthrovider()
+
+	{
+		result, err := provider.Get(toolbox.NewContext(), 3, 6, 3)
+		assert.Nil(t, err)
+		assert.EqualValues(t, "2015-06-03", toolbox.AsString(result))
+	}
+
+
+	{
+		result, err := provider.Get(toolbox.NewContext(), 3, 6, 3,"yyyy-MM-dd")
+		assert.Nil(t, err)
+		assert.EqualValues(t, "2015-06-03", toolbox.AsString(result))
+	}
+
+
+
+	{
+		result, err := provider.Get(toolbox.NewContext(), 3, 6, 3,"yyyy")
+		assert.Nil(t, err)
+		assert.EqualValues(t, "2015", toolbox.AsString(result))
+	}
+
+
+	{
+		result, err := provider.Get(toolbox.NewContext(), 3, 9, 2,"yyyy-MM")
+		assert.Nil(t, err)
+		assert.EqualValues(t, "2015-09", toolbox.AsString(result))
+	}
+
+	{
+		result, err := provider.Get(toolbox.NewContext(), 5, 12, 25,"-MM-dd")
+		assert.Nil(t, err)
+		assert.EqualValues(t, "-12-25", toolbox.AsString(result))
+	}
+
+
+
+
+	{
+		_, err := provider.Get(toolbox.NewContext())
+		assert.NotNil(t, err)
+
+	}
+
+
+
+
+}
