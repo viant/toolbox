@@ -25,7 +25,7 @@ func openFileFromUrl(URL string) (*os.File, error) {
 	if parsedUrl.Scheme != "file" {
 		return nil, fmt.Errorf("Invalid schema, expected file but had: %v", parsedUrl.Scheme)
 	}
-	return os.Open(parsedUrl.Path)
+	return toolbox.OpenFile(parsedUrl.Path)
 }
 
 //List returns a list of object for supplied url

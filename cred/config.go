@@ -15,6 +15,7 @@ import (
 	"path"
 	"strings"
 	"io"
+	"github.com/viant/toolbox"
 )
 
 var sshKeyFileCandidates = []string{"/.ssh/id_rsa", "/.ssh/id_dsa"}
@@ -43,7 +44,7 @@ type Config struct {
 }
 
 func (c *Config) Load(filename string) error {
-	reader, err := os.Open(filename)
+	reader, err := toolbox.OpenFile(filename)
 	if err != nil {
 		return err
 	}
