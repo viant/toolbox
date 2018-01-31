@@ -1,4 +1,4 @@
-#Storage API
+##Storage API
 
 
 
@@ -15,6 +15,7 @@ It comes with the following implementation so far:
 
 
 ```go
+
 type Service interface {
 	//List returns a list of object for supplied url
 	List(URL string) ([]Object, error)
@@ -39,6 +40,30 @@ type Service interface {
 
 	//Closes storage service
 	Close() error
+}
+
+
+//Object represents a storage object
+type Object interface {
+	//URL return storage url
+	URL() string
+
+	//Type returns storage type  StorageObjectFolderType or StorageObjectContentType
+	Type() int
+
+	//IsFolder returns true if object is a folder
+	IsFolder() bool
+
+	//IsContent returns true if object is a file
+	IsContent() bool
+
+	//Wrap wraps source storage object
+	Wrap(source interface{})
+
+	//Unwrap unwraps source storage object into provided target.
+	Unwrap(target interface{}) error
+
+	FileInfo() os.FileInfo
 }
 
 ```
