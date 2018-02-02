@@ -35,6 +35,7 @@ type multiCommandSession struct {
 	stdError       chan string
 	stdInput       io.WriteCloser
 	shellPrompt    string
+	escapedShellPrompt string
 	system         string
 	running        int32
 }
@@ -138,11 +139,14 @@ func (s *multiCommandSession) drain(reader io.Reader, out chan string) {
 }
 
 func (s *multiCommandSession) hasTerminator(source string, terminators ...string) bool {
-	source = vtclean.Clean(source, false)
-	if  strings.HasSuffix(vtclean.Clean(source, false), s.shellPrompt) {
+	escapedSource := vtclean.Clean(source, false)
+	if s.escapedShellPrompt == "" {
+		s.escapedShellPrompt = vtclean.Clean(s.shellPrompt, false)
+	}
+	if  strings.HasSuffix(escapedSource, s.escapedShellPrompt) || strings.HasSuffix(source, s.shellPrompt) {
 		return true
 	}
-
+	source = escapedSource
 	for _, candidate := range terminators {
 		candidateLen := len(candidate)
 		if candidateLen == 0 {
@@ -271,7 +275,8 @@ func newMultiCommandSession(client *ssh.Client, config *SessionConfig, replayCom
 	if result.closeIfError(err) {
 		return nil, err
 	}
-	result.shellPrompt = vtclean.Clean(result.shellPrompt, false)
+	result.escapedShellPrompt = vtclean.Clean(result.shellPrompt, false)
+
 	result.system, err = result.Run("uname -s", 10000)
 	result.system = strings.ToLower(result.system)
 	return result, err
