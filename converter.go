@@ -221,13 +221,15 @@ func textToTime(value, dateLayout string) (*time.Time, error) {
 	if err == nil {
 		return unitToTime(int64(floatValue)), nil
 	}
-
-	if len(value) > len(dateLayout) {
-		value = string(value[:len(dateLayout)])
-	}
 	timeValue, err := ParseTime(value, dateLayout)
 	if err != nil {
-		return nil, err
+		if len(value) > len(dateLayout) {
+			value = string(value[:len(dateLayout)])
+		}
+		timeValue, err = ParseTime(value, dateLayout)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return &timeValue, nil
 }
