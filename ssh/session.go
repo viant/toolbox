@@ -139,9 +139,10 @@ func (s *multiCommandSession) drain(reader io.Reader, out chan string) {
 
 func (s *multiCommandSession) hasTerminator(source string, terminators ...string) bool {
 	source = vtclean.Clean(source, false)
-	if strings.HasSuffix(source, s.shellPrompt) {
+	if  strings.HasSuffix(vtclean.Clean(source, false), s.shellPrompt) {
 		return true
 	}
+
 	for _, candidate := range terminators {
 		candidateLen := len(candidate)
 		if candidateLen == 0 {
@@ -270,6 +271,7 @@ func newMultiCommandSession(client *ssh.Client, config *SessionConfig, replayCom
 	if result.closeIfError(err) {
 		return nil, err
 	}
+	result.shellPrompt = vtclean.Clean(result.shellPrompt, false)
 	result.system, err = result.Run("uname -s", 10000)
 	result.system = strings.ToLower(result.system)
 	return result, err
