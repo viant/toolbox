@@ -217,6 +217,8 @@ func Test_Udf(t *testing.T) {
 	state := NewMap()
 	state.Put("test", test)
 	state.Put("name", "endly")
+	state.Put("a", "1")
+	state.Put("b", "2")
 
 	{
 		var text = "!test(hello $name)"
@@ -227,6 +229,13 @@ func Test_Udf(t *testing.T) {
 		var text = "!test(hello $abc)"
 		expanded := state.Expand(text)
 		assert.EqualValues(t, "!test(hello $abc)", expanded)
+
+	}
+
+	{
+		var text = "zz $a ${b}a"
+		expanded := state.Expand(text)
+		assert.EqualValues(t, "zz 1 2a", expanded)
 
 	}
 

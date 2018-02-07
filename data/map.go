@@ -462,13 +462,24 @@ func (s *Map) Expand(source interface{}) interface{} {
 
     if strings.Contains(value, "$") {
       variables := s.extractVariables(value)
+      var canExpandAll = true
       for k := range variables {
-        if _, has := s.GetValue(k[1:]); !has {
-          return source //quit expansion if not all variable can be expanded
+        k = strings.TrimSpace(k)
+        if k == "" {
+          continue
         }
+        _, has := s.GetValue(k[1:]);
+        if !has {
+          canExpandAll = false
+
+        }
+        has = true
       }
-      has = true
+      if ! canExpandAll {
+         return s.expandExpressions(toolbox.AsString(source))
+      }
       sourceValue = s.expandExpressions(value)
+
     }
 
     if udf != nil {
