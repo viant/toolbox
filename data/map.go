@@ -387,6 +387,13 @@ func (s *Map) Expand(source interface{}) interface{} {
     udf, value, suffix := s.getUdfIfDefined(value)
     var sourceValue interface{} = value
 
+
+    if strings.HasPrefix(value, "$") {
+      if value, has := s.GetValue(value[1:]); !has {
+        return value
+      }
+    }
+
     if strings.Contains(value, "$") {
       variables := s.extractVariables(value)
       for k := range variables {
@@ -394,12 +401,12 @@ func (s *Map) Expand(source interface{}) interface{} {
           return source //quit expansion if not all variable can be expanded
         }
       }
-      expanded := s.expandExpressions(value)
-      sourceValue = expanded
+      sourceValue = s.expandExpressions(value)
     }
 
+
+
     if udf != nil {
-      sourceValue = s.Expand(sourceValue)
       transformed, err := udf(sourceValue, *s)
       if err != nil {
         log.Printf("failed to run udf: %v, %v\n", value, err)
@@ -463,6 +470,7 @@ func (s *Map) expandExpressions(text string) interface{} {
   if strings.Index(text, "$") == -1 {
     return text
   }
+  text = strings.TrimSpace(text)
   var expandVariable = func(variableName string) interface{} {
     value, has := s.GetValue(string(variableName[1:]))
     if has {
