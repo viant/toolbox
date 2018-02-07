@@ -379,6 +379,76 @@ func encodableValue(v interface{}) interface{} {
   return value
 }
 
+
+//extractVariables returns all extracted variabels
+func (s *Map) extractVariables(text string) map[string]bool {
+  var variables = make(map[string]bool)
+  if strings.Index(text, "$") == -1 {
+    return variables
+  }
+  var variableName = ""
+  var parsingState = expectVariableStart
+  var result = ""
+  var expectIndexEnd = false
+  for i, r := range text {
+    aChar := string(text[i: i+1])
+    var isLast = i+1 == len(text)
+    switch parsingState {
+    case expectVariableStart:
+      if aChar == "$" {
+        variableName += aChar
+        if i+1 < len(text) {
+          nextChar := string(text[i+1: i+2])
+          if nextChar == "{" {
+            parsingState = expectVariableNameEnclosureEnd
+            continue
+          }
+        }
+        parsingState = expectVariableName
+        continue
+      }
+      result += aChar
+
+    case expectVariableNameEnclosureEnd:
+      variableName += aChar
+      if aChar != "}" {
+        continue
+      }
+      variables[variableName] = true
+      if isLast && result == "" {
+        return variables
+      }
+      variableName = ""
+      parsingState = expectVariableStart
+
+    case expectVariableName:
+
+      if unicode.IsLetter(r) || unicode.IsDigit(r) || aChar == "[" || (expectIndexEnd && aChar == "]") || aChar == "." || aChar == "_" || aChar == "+" || aChar == "<" || aChar == "-" {
+        if aChar == "[" {
+          expectIndexEnd = true
+        } else if aChar == "]" {
+          expectIndexEnd = false
+        }
+        variableName += aChar
+        continue
+      }
+      variables[variableName] = true
+      if isLast && result == "" {
+        return variables
+      }
+      variableName = ""
+      parsingState = expectVariableStart
+
+    }
+  }
+  if len(variableName) > 0 {
+    variables[variableName] = true
+  }
+  return variables
+}
+
+
+
 //Expand expands provided value of any type with dollar sign expression/
 func (s *Map) Expand(source interface{}) interface{} {
   switch value := source.(type) {
@@ -388,16 +458,17 @@ func (s *Map) Expand(source interface{}) interface{} {
     var has bool
     udf, value, suffix := s.getUdfIfDefined(value)
     var sourceValue interface{} = value
-    if strings.HasPrefix(value, "$") {
-      sourceValue, has = s.GetValue(string(value[1:]))
-      if !has && udf != nil { //variable is not present in the context, thus delay udf execution
-        return source
+
+
+    if strings.Contains(value, "$") {
+      variables := s.extractVariables(value)
+      for k := range variables {
+        if _, has := s.GetValue(k[1:]); !has {
+          return source //quit expansion if not all variable can be expanded
+        }
       }
-      //you do not want to double evaluate case if there is UDF, just get value for it
-      if !has || udf == nil {
-        sourceValue = s.expandExpressions(value)
-        has = true
-      }
+      has = true
+      sourceValue = s.expandExpressions(value)
     }
 
     if udf != nil {
@@ -444,6 +515,12 @@ func (s *Map) Expand(source interface{}) interface{} {
   }
   return source
 }
+
+
+
+
+
+
 
 //ExpandAsText expands all matching expressions starting with dollar sign ($)
 func (s *Map) ExpandAsText(text string) string {
