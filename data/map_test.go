@@ -4,6 +4,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
 	"testing"
+	"fmt"
 )
 
 func TestMap_GetValue(t *testing.T) {
@@ -204,5 +205,29 @@ func Test_ExpandFun(t *testing.T) {
 
 	var text = state.ExpandAsText("a $vv-ee /usr/local/app_${name}v1 $build.Target $abc $build.Args")
 	assert.Equal(t, "a $vv-ee /usr/local/app_etlyv1 app $abc -Dmvn.test.skip", text)
+
+}
+
+func Test_Udf(t *testing.T) {
+
+	var test = func(s interface{}, m Map) (interface{}, error) {
+		return fmt.Sprintf("%v", s), nil
+	}
+
+	state := NewMap()
+	state.Put("test", test)
+	state.Put("name", "endly")
+
+	{
+		var text = "!test(hello $name)"
+		expanded := state.Expand(text)
+		assert.EqualValues(t, "hello endly", expanded)
+	}
+	{
+		var text = "!test(hello $abc)"
+		expanded := state.Expand(text)
+		assert.EqualValues(t, "!test(hello $abc)", expanded)
+
+	}
 
 }
