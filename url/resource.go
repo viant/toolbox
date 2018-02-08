@@ -16,15 +16,17 @@ import (
 
 //Resource represents a URL based resource, with enriched meta info
 type Resource struct {
-	URL             string   //URL of resource
-	Credential      string   //name of file or alias to the file defined via credential service
+	URL             string   `description:"resource URL or relative or absolute path" required:"true"`//URL of resource
+	Credential      string   `description:"credentials file"`//name of credential file or credential key depending on implementation
 	ParsedURL       *url.URL `json:"-"`//parsed URL resource
-	Cache           string   //Cache path for the resource, if specified resource will be cached in the specified path
+	Cache           string    `description:"local cache path"`//Cache path for the resource, if specified resource will be cached in the specified path
 	CacheExpiryMs   int      //CacheExpiryMs expiry time in ms
-	Name            string   //name of a resource
-	Type            string   //resource type
+	Name            string   `description:"name of resource, for instance Docker Resource could use name as docker instance name"`//name of a resource
+	Type            string   `description:"type, for instance Version Control resource could be either git or svn"`//resource type
 	modificationTag int64
 }
+
+
 
 //Clone creates a clone of the resource
 func (r *Resource) Clone() *Resource {

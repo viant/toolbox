@@ -186,11 +186,6 @@ func Test_NewNewTimeProvider(t *testing.T) {
 		assert.True(t, timeResult < in8Days)
 	}
 	{
-		result, err := provider.Get(nil, "now", -1, "hour", "h")
-		assert.Nil(t, err)
-		assert.Equal(t, time.Now().Hour()%12-1, toolbox.AsInt(result))
-	}
-	{
 		result, err := provider.Get(nil, "now", 1, "hour", "h")
 		assert.Nil(t, err)
 		assert.Equal(t, time.Now().Hour()%12+1, toolbox.AsInt(result))

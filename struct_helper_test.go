@@ -152,6 +152,9 @@ func TestBuildEmbededStructTagMapping(t *testing.T) {
 
 }
 
+
+
+
 type Type3 struct {
 	Name map[string]string
 }
@@ -176,4 +179,15 @@ func Test_InitStruct(t *testing.T) {
 	assert.NotNil(t, t1.F3)
 	assert.NotNil(t, t1.F4)
 	assert.NotNil(t, t1.F5)
+}
+
+
+func Test_GetStructMeta(t *testing.T) {
+
+	var t1 = &Type1{}
+	toolbox.InitStruct(t1)
+	meta := toolbox.GetStructMeta(t1)
+	assert.NotNil(t, meta)
+
+
 }

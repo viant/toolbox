@@ -3,6 +3,7 @@ package toolbox
 import (
 	"reflect"
 	"strings"
+	"fmt"
 )
 
 const (
@@ -241,4 +242,112 @@ func InitStruct(source interface{}) {
 
 	}
 
+}
+
+
+
+
+
+//StructFieldMeta represents struct field meta
+type StructFieldMeta struct {
+	Name string `json:"name,omitempty"`
+	Type string `json:"type,omitempty"`
+	Required bool `json:"required,"`
+	Description string `json:"description,omitempty"`
+	Example interface{} `json:"example,omitempty"`
+}
+
+
+
+//StructMeta represents struct meta details
+type StructMeta struct {
+	Type string
+	Fields []*StructFieldMeta `json:"fields,omitempty"`
+	Dependencies []*StructMeta `json:"dependencies,omitempty"`
+}
+
+
+
+
+
+
+func GetStructMeta(source interface{}) *StructMeta {
+	var result = &StructMeta{}
+	var trackedTypes = make(map[string]bool)
+	getStructMeta(source, result, trackedTypes)
+	return result
+}
+
+//InitStruct initialise any struct pointer to empty struct
+func getStructMeta(source interface{}, meta *StructMeta, trackedTypes map[string]bool) bool {
+	if source == nil {
+		return false
+	}
+	var structType = fmt.Sprintf("%T", source)
+	if _, has:=trackedTypes[structType];has {
+		return false
+	}
+	meta.Type = structType
+	trackedTypes[structType] = true
+	meta.Fields  = make([]*StructFieldMeta, 0)
+	meta.Dependencies = make([]*StructMeta, 0)
+	ProcessStruct(source, func(fieldType reflect.StructField, field reflect.Value) error {
+		fieldMeta := &StructFieldMeta{
+		}
+		if strings.Contains(string(fieldType.Tag), "-") {
+			return nil
+		}
+
+		meta.Fields = append(meta.Fields, fieldMeta)
+		fieldMeta.Name = fieldType.Name
+		if value , ok := fieldType.Tag.Lookup("required");ok {
+			fieldMeta.Required = AsBoolean(value)
+		}
+		if value , ok := fieldType.Tag.Lookup("description");ok {
+			fieldMeta.Description = value
+		}
+		if value , ok := fieldType.Tag.Lookup("example");ok {
+			fieldMeta.Example = value
+		}
+		var value = field.Interface()
+		fieldMeta.Type = fmt.Sprintf("%T", value)
+
+		if IsStruct(value) {
+			var fieldStruct = &StructMeta{
+			}
+			if (getStructMeta(field.Elem().Interface(), fieldStruct, trackedTypes)) {
+				meta.Dependencies = append(meta.Dependencies, fieldStruct)
+			}
+			return nil
+		}
+		if IsMap(value) {
+			var aMap = AsMap(field.Interface())
+			var mapValue  interface{}
+			for _, mapValue = range aMap {
+				break
+			}
+			if mapValue != nil && IsStruct(mapValue) {
+				var fieldStruct = &StructMeta{}
+				if (getStructMeta(mapValue, fieldStruct, trackedTypes)) {
+					meta.Dependencies = append(meta.Dependencies, fieldStruct)
+
+				}
+			}
+			return nil
+		}
+		if IsSlice(value) {
+			var aSlice = AsSlice(field.Interface())
+			if len(aSlice) > 0 {
+				if aSlice[0] != nil && IsStruct(aSlice[0]) {
+					var fieldStruct = &StructMeta{}
+					if (getStructMeta(aSlice[0], fieldStruct, trackedTypes)) {
+						meta.Dependencies = append(meta.Dependencies, fieldStruct)
+					}
+				}
+			}
+			return nil
+		}
+		return nil
+	})
+	return true
 }
