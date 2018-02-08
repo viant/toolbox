@@ -307,7 +307,12 @@ func getStructMeta(source interface{}, meta *StructMeta, trackedTypes map[string
 			fieldMeta.Description = value
 		}
 		if value , ok := fieldType.Tag.Lookup("example");ok {
-			fieldMeta.Example = value
+			if IsCompleteJSON(value) {
+				fieldMeta.Example, _ = JSONToInterface(value)
+			}
+			if fieldMeta.Example == nil {
+				fieldMeta.Example = value
+			}
 		}
 		var value = field.Interface()
 		fieldMeta.Type = fmt.Sprintf("%T", value)
