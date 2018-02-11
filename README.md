@@ -13,6 +13,7 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 - [Struct Utilities](#Struct-Utilities)
 - [Function Utilities](#Function-Utilities)
 - [Time Utilities](#TimeUtilities)
+- [Storage API](#storage)
 - [Macro](#Macro)
 - [ServiceRouter](#ServiceRouter)
 - [Decoder and Encoder](#DecoderandEncoder)
@@ -284,6 +285,33 @@ Java date format style to go date layout conversion.
         dateLaout := toolbox.DateFormatToLayout("yyyy-MM-dd hh:mm:ss z")
 		timeValue, err := time.Parse(dateLaout, "2016-02-22 12:32:01 UTC")
 ```
+
+
+
+
+<a name="storage"></a>
+
+## Storage API
+
+[Storage API](storage/README.md) provides unified way of accessing local or remote storage system.  
+
+
+**Example** 
+
+```go
+    import (
+    	"github.com/viant/toolbox/storage"
+    	_ "github.com/viant/toolbox/storage/gs"	
+    )
+    
+    
+    destinationURL := "gs://myBucket/set1/content.gz"
+    destinationCredentialFile = "gs-secret.json"
+    storageService, err := storage.NewServiceForURL(destinationURL, destinationCredentialFile)
+
+```
+
+
 
 <a name="Macro"></a>
 ### Macro

@@ -1,7 +1,6 @@
 ## Storage API
 
 
-
 This API provides unified way of accessing any storage system. 
 
 It comes with the following implementation so far:
