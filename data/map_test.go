@@ -220,16 +220,38 @@ func Test_Udf(t *testing.T) {
 	state.Put("a", "1")
 	state.Put("b", "2")
 
+
 	{
-		var text = "!test(hello $name)"
+		var text = "$xyz($name)"
+		expanded := state.Expand(text)
+		assert.EqualValues(t, "$xyz(endly)", expanded)
+
+	}
+
+	{
+		var text = "$xyz(hello $name $abc)"
+		expanded := state.Expand(text)
+		assert.EqualValues(t, "$xyz(hello endly $abc)", expanded)
+
+	}
+
+
+	{
+		var text = "$test(hello $abc)"
+		expanded := state.Expand(text)
+		assert.EqualValues(t, "$test(hello $abc)", expanded)
+	}
+
+	{
+		var text = "$test(hello $name $abc)"
+		expanded := state.Expand(text)
+		assert.EqualValues(t, "$test(hello endly $abc)", expanded)
+	}
+
+	{
+		var text = "$test(hello $name)"
 		expanded := state.Expand(text)
 		assert.EqualValues(t, "hello endly", expanded)
-	}
-	{
-		var text = "!test(hello $abc)"
-		expanded := state.Expand(text)
-		assert.EqualValues(t, "!test(hello $abc)", expanded)
-
 	}
 
 	{
@@ -238,5 +260,6 @@ func Test_Udf(t *testing.T) {
 		assert.EqualValues(t, "zz 1 2a", expanded)
 
 	}
+
 
 }
