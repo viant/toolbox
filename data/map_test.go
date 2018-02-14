@@ -214,12 +214,37 @@ func Test_Udf(t *testing.T) {
 		return fmt.Sprintf("%v", s), nil
 	}
 
+
+	var dateOfBirth = func(source interface{}, m Map) (interface{}, error) {
+		if ! toolbox.IsSlice(source) {
+			return nil, fmt.Errorf("expected slice but had: %T %v", source, source)
+		}
+        return toolbox.NewDateOfBirthrovider().Get(toolbox.NewContext(), toolbox.AsSlice(source)...)
+	}
+
+
 	state := NewMap()
 	state.Put("test", test)
 	state.Put("name", "endly")
 	state.Put("a", "1")
 	state.Put("b", "2")
+	state.Put("Dob",dateOfBirth)
 
+
+	{
+		var text = "$Dob([11,2,2,\"yyyy\"])"
+		expanded := state.Expand(text)
+		assert.EqualValues(t, "2007", expanded)
+
+	}
+	{
+		state.Put("args", []interface{}{11,2,2,"yyyy"})
+
+		var text = "$Dob($args)"
+		expanded := state.Expand(text)
+		assert.EqualValues(t, "2007", expanded)
+
+	}
 
 	{
 		var text = "$xyz($name)"
@@ -260,6 +285,10 @@ func Test_Udf(t *testing.T) {
 		assert.EqualValues(t, "zz 1 2a", expanded)
 
 	}
+
+
+
+
 
 
 }
