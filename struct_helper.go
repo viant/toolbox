@@ -26,12 +26,11 @@ func ProcessStruct(aStruct interface{}, handler func(fieldType reflect.StructFie
 		return strings.ToLower(candidate[0:1]) == candidate[0:1]
 	}
 
-
 	type fieldStruct struct {
 		Value reflect.Value
 		Type  reflect.StructField
 	}
-	var fields =make(map[string]*fieldStruct)
+	var fields = make(map[string]*fieldStruct)
 
 	for i := 0; i < structType.NumField(); i++ {
 		fieldType := structType.Field(i)
@@ -42,15 +41,24 @@ func ProcessStruct(aStruct interface{}, handler func(fieldType reflect.StructFie
 		if ! IsStruct(field) {
 			continue
 		}
+		var aStruct  interface{}
+		if fieldType.Type.Kind() == reflect.Ptr {
+			if field.IsNil() {
+				superType := reflect.New(fieldType.Type.Elem())
+				field.Set(superType)
+			}
+			aStruct = field.Interface()
+		} else {
+			aStruct = field.Addr().Interface()
+		}
 
-		if err := ProcessStruct(field.Interface(), func(fieldType reflect.StructField, field reflect.Value) error{
-			fields[fieldType.Name] = &fieldStruct{Type:fieldType, Value:field}
+		if err := ProcessStruct(aStruct, func(fieldType reflect.StructField, field reflect.Value) error {
+			fields[fieldType.Name] = &fieldStruct{Type: fieldType, Value: field}
 			return nil
 		}); err != nil {
 			return err
 		}
 	}
-
 
 	for i := 0; i < structType.NumField(); i++ {
 		fieldType := structType.Field(i)
@@ -59,18 +67,14 @@ func ProcessStruct(aStruct interface{}, handler func(fieldType reflect.StructFie
 			continue
 		}
 		field := structValue.Field(i)
-		fields[fieldType.Name] = &fieldStruct{Type:fieldType, Value:field}
+		fields[fieldType.Name] = &fieldStruct{Type: fieldType, Value: field}
 	}
-
 
 	for _, field := range fields {
 		if err := handler(field.Type, field.Value); err != nil {
 			return err
 		}
 	}
-
-
-
 	return nil
 }
 
@@ -140,35 +144,62 @@ func NewFieldSettingByKey(aStruct interface{}, key string) map[string](map[strin
 }
 
 func setEmptyMap(source reflect.Value) {
+	if ! source.CanSet() {
+		return
+	}
 	mapType := source.Type()
+
 	mapPointer := reflect.New(mapType)
+
+
 	mapValueType := mapType.Elem()
 	mapKeyType := mapType.Key()
+
+
 	newMap := mapPointer.Elem()
+
 	newMap.Set(reflect.MakeMap(mapType))
 	targetMapKeyPointer := reflect.New(mapKeyType)
+
+
+
 	targetMapValuePointer := reflect.New(mapValueType)
+
+
+
 	var elementKey = targetMapKeyPointer.Elem()
 	var elementValue = targetMapValuePointer.Elem()
+
+	if elementValue.Kind() == reflect.Ptr && elementValue.IsNil() {
+		component := reflect.New(elementValue.Type().Elem())
+		elementValue.Set(component)
+	}
 	if elementKey.Type() != mapKeyType {
 		if elementKey.Type().AssignableTo(mapKeyType) {
 			elementKey = elementKey.Convert(mapKeyType)
 		}
 	}
+
 	if DereferenceType(elementValue.Type()).Kind() == reflect.Struct {
 		InitStruct(elementValue.Interface())
 	}
+
 	newMap.SetMapIndex(elementKey, elementValue)
-	source.Set(mapPointer.Elem())
+	var elem = mapPointer.Elem()
+	source.Set(elem)
 }
 
-func createEmptySlice(source reflect.Value) {
 
+
+
+func createEmptySlice(source reflect.Value) {
 	sliceType := DiscoverTypeByKind(source.Type(), reflect.Slice)
+	if ! source.CanSet() {
+		return
+	}
 	slicePointer := reflect.New(sliceType)
 	slice := slicePointer.Elem()
 	componentType := DiscoverComponentType(sliceType)
-
 	var targetComponentPointer = reflect.New(componentType)
 	var targetComponent = targetComponentPointer.Elem()
 	if DereferenceType(componentType).Kind() == reflect.Struct {
@@ -187,11 +218,6 @@ func InitStruct(source interface{}) {
 	if source == nil {
 		return
 	}
-	//defer func() {
-	//	if r := recover(); r != nil {
-	//		fmt.Printf("Recovered %v %T\n", r, source)
-	//	}
-	//}()
 	if ! IsStruct(source) {
 		return
 	}
@@ -205,69 +231,56 @@ func InitStruct(source interface{}) {
 		return
 	}
 
-	structValue := DiscoverValueByKind(sourceValue, reflect.Struct)
-	if structValue.NumField() == 0 {
-		return
-	}
-	structType := structValue.Type()
-	for i := 0; i < structType.NumField(); i++ {
-		fieldValue := structValue.Field(i)
+	ProcessStruct(source, func(fieldType reflect.StructField, fieldValue reflect.Value) error {
 		if ! fieldValue.CanInterface() {
-			continue
+			return nil
 		}
-		fieldType := structType.Field(i)
+
 		if fieldType.Type.Kind() == reflect.Map {
 			setEmptyMap(fieldValue)
-			continue
+			return nil
 		}
 		if fieldType.Type.Kind() == reflect.Slice {
 			createEmptySlice(fieldValue)
-			continue
+			return nil
 		}
-
 		if fieldType.Type.Kind() != reflect.Ptr {
-			continue
+			return nil
 		}
-
 		if DereferenceType(fieldType).Kind() == reflect.Struct {
-			fieldStruct := reflect.New(fieldValue.Type().Elem())
-			if fieldStruct.Type() != fieldValue.Type() {
+
+			if !fieldValue.CanSet() {
+				return nil
 			}
-			if reflect.TypeOf(source) != fieldStruct.Type() {
-				InitStruct(fieldStruct.Interface())
+			if fieldValue.Type().Kind() == reflect.Ptr {
+				fieldStruct := reflect.New(fieldValue.Type().Elem())
+
+				if reflect.TypeOf(source) != fieldStruct.Type() {
+					InitStruct(fieldStruct.Interface())
+				}
+				fieldValue.Set(fieldStruct)
 			}
 
-			fieldValue.Set(fieldStruct)
+
 		}
-
-	}
-
+		return nil
+	})
 }
-
-
-
-
 
 //StructFieldMeta represents struct field meta
 type StructFieldMeta struct {
-	Name string `json:"name,omitempty"`
-	Type string `json:"type,omitempty"`
-	Required bool `json:"required,"`
+	Name        string `json:"name,omitempty"`
+	Type        string `json:"type,omitempty"`
+	Required    bool   `json:"required,"`
 	Description string `json:"description,omitempty"`
-	Example interface{} `json:"example,omitempty"`
 }
-
-
 
 //StructMeta represents struct meta details
 type StructMeta struct {
-	Type string
-	Fields []*StructFieldMeta `json:"fields,omitempty"`
-	Dependencies []*StructMeta `json:"dependencies,omitempty"`
+	Type         string
+	Fields       []*StructFieldMeta `json:"fields,omitempty"`
+	Dependencies []*StructMeta      `json:"dependencies,omitempty"`
 }
-
-
-
 
 
 
@@ -284,12 +297,12 @@ func getStructMeta(source interface{}, meta *StructMeta, trackedTypes map[string
 		return false
 	}
 	var structType = fmt.Sprintf("%T", source)
-	if _, has:=trackedTypes[structType];has {
+	if _, has := trackedTypes[structType]; has {
 		return false
 	}
 	meta.Type = structType
 	trackedTypes[structType] = true
-	meta.Fields  = make([]*StructFieldMeta, 0)
+	meta.Fields = make([]*StructFieldMeta, 0)
 	meta.Dependencies = make([]*StructMeta, 0)
 	ProcessStruct(source, func(fieldType reflect.StructField, field reflect.Value) error {
 		fieldMeta := &StructFieldMeta{
@@ -300,19 +313,11 @@ func getStructMeta(source interface{}, meta *StructMeta, trackedTypes map[string
 
 		meta.Fields = append(meta.Fields, fieldMeta)
 		fieldMeta.Name = fieldType.Name
-		if value , ok := fieldType.Tag.Lookup("required");ok {
+		if value, ok := fieldType.Tag.Lookup("required"); ok {
 			fieldMeta.Required = AsBoolean(value)
 		}
-		if value , ok := fieldType.Tag.Lookup("description");ok {
+		if value, ok := fieldType.Tag.Lookup("description"); ok {
 			fieldMeta.Description = value
-		}
-		if value , ok := fieldType.Tag.Lookup("example");ok {
-			if IsCompleteJSON(value) {
-				fieldMeta.Example, _ = JSONToInterface(value)
-			}
-			if fieldMeta.Example == nil {
-				fieldMeta.Example = value
-			}
 		}
 		var value = field.Interface()
 		fieldMeta.Type = fmt.Sprintf("%T", value)
@@ -327,7 +332,7 @@ func getStructMeta(source interface{}, meta *StructMeta, trackedTypes map[string
 		}
 		if IsMap(value) {
 			var aMap = AsMap(field.Interface())
-			var mapValue  interface{}
+			var mapValue interface{}
 			for _, mapValue = range aMap {
 				break
 			}
