@@ -22,7 +22,6 @@ type Resource struct {
 	Cache           string    `description:"local cache path"`//Cache path for the resource, if specified resource will be cached in the specified path
 	CacheExpiryMs   int      //CacheExpiryMs expiry time in ms
 	Name            string   `description:"name of resource, for instance Docker Resource could use it as docker instance name"`//name of a resource
-	Type            string   `description:"type, for instance Version Control resource could be either git or svn"`//resource type
 	modificationTag int64
 }
 
@@ -33,7 +32,6 @@ func (r *Resource) Clone() *Resource {
 	return &Resource{
 		Name:          r.Name,
 		URL:           r.URL,
-		Type:          r.Type,
 		Credential:    r.Credential,
 		ParsedURL:     r.ParsedURL,
 		Cache:         r.Cache,
