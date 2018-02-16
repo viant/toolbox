@@ -297,7 +297,7 @@ func getStructMeta(source interface{}, meta *StructMeta, trackedTypes map[string
 		return false
 	}
 	var structType = fmt.Sprintf("%T", source)
-	if _, has := trackedTypes[structType]; has {
+	if _, has := trackedTypes[structType]; has  {
 		return false
 	}
 	meta.Type = structType
@@ -305,9 +305,8 @@ func getStructMeta(source interface{}, meta *StructMeta, trackedTypes map[string
 	meta.Fields = make([]*StructFieldMeta, 0)
 	meta.Dependencies = make([]*StructMeta, 0)
 	ProcessStruct(source, func(fieldType reflect.StructField, field reflect.Value) error {
-		fieldMeta := &StructFieldMeta{
-		}
-		if strings.Contains(string(fieldType.Tag), "-") {
+		fieldMeta := &StructFieldMeta{}
+		if strings.Contains(string(fieldType.Tag), "json:\"-") {
 			return nil
 		}
 
@@ -320,13 +319,17 @@ func getStructMeta(source interface{}, meta *StructMeta, trackedTypes map[string
 			fieldMeta.Description = value
 		}
 		var value = field.Interface()
-		fieldMeta.Type = fmt.Sprintf("%T", value)
+		if value== nil {
+			return nil
+		}
 
+		fieldMeta.Type = fmt.Sprintf("%T", value)
 		if IsStruct(value) {
-			var fieldStruct = &StructMeta{
-			}
-			if (getStructMeta(field.Elem().Interface(), fieldStruct, trackedTypes)) {
-				meta.Dependencies = append(meta.Dependencies, fieldStruct)
+			var fieldStruct = &StructMeta{}
+			if field.Kind() == reflect.Ptr && ! field.IsNil() {
+				if (getStructMeta(field.Elem().Interface(), fieldStruct, trackedTypes)) {
+					meta.Dependencies = append(meta.Dependencies, fieldStruct)
+				}
 			}
 			return nil
 		}
