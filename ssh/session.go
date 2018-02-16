@@ -138,27 +138,33 @@ func (s *multiCommandSession) drain(reader io.Reader, out chan string) {
 	}
 }
 
-func (s *multiCommandSession) hasTerminator(source string, terminators ...string) bool {
-	escapedSource := vtclean.Clean(source, false)
-	if s.escapedShellPrompt == "" {
-		s.escapedShellPrompt = vtclean.Clean(s.shellPrompt, false)
+func (s *multiCommandSession) hasTerminator(input string, terminators ...string) bool {
+
+	escapedSource := vtclean.Clean(input, false)
+
+	if len(escapedSource) > 0 {
+		escapedSource = strings.Trim(escapedSource, "\n\r\t")
 	}
-	if  strings.HasSuffix(escapedSource, s.escapedShellPrompt) || strings.HasSuffix(source, s.shellPrompt) {
+	if s.escapedShellPrompt == "" {
+		s.escapedShellPrompt = strings.Trim(vtclean.Clean(s.shellPrompt, false), "\n\r\t")
+	}
+
+	if  strings.HasSuffix(escapedSource, s.escapedShellPrompt) || strings.HasSuffix(input, s.shellPrompt) {
 		return true
 	}
-	source = escapedSource
+	input = escapedSource
 	for _, candidate := range terminators {
 		candidateLen := len(candidate)
 		if candidateLen == 0 {
 			continue
 		}
-		if candidate[0:1] == "^" && strings.HasPrefix(source, candidate[1:]) {
+		if candidate[0:1] == "^" && strings.HasPrefix(input, candidate[1:]) {
 			return true
 		}
-		if candidate[candidateLen-1:] == "$" && strings.HasSuffix(source, candidate[:candidateLen-1]) {
+		if candidate[candidateLen-1:] == "$" && strings.HasSuffix(input, candidate[:candidateLen-1]) {
 			return true
 		}
-		if strings.Contains(source, candidate) {
+		if strings.Contains(input, candidate) {
 			return true
 		}
 	}
@@ -275,7 +281,7 @@ func newMultiCommandSession(client *ssh.Client, config *SessionConfig, replayCom
 	if result.closeIfError(err) {
 		return nil, err
 	}
-	result.escapedShellPrompt = vtclean.Clean(result.shellPrompt, false)
+	result.escapedShellPrompt = strings.Trim(vtclean.Clean(result.shellPrompt, false), "\n\r\t")
 
 	result.system, err = result.Run("uname -s", 10000)
 	result.system = strings.ToLower(result.system)
