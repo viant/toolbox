@@ -21,7 +21,6 @@ type Resource struct {
 	ParsedURL       *url.URL `json:"-"`//parsed URL resource
 	Cache           string    `description:"local cache path"`//Cache path for the resource, if specified resource will be cached in the specified path
 	CacheExpiryMs   int      //CacheExpiryMs expiry time in ms
-	Name            string   `description:"name of resource, for instance Docker Resource could use it as docker instance name"`//name of a resource
 	modificationTag int64
 }
 
@@ -30,7 +29,6 @@ type Resource struct {
 //Clone creates a clone of the resource
 func (r *Resource) Clone() *Resource {
 	return &Resource{
-		Name:          r.Name,
 		URL:           r.URL,
 		Credential:    r.Credential,
 		ParsedURL:     r.ParsedURL,
