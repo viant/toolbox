@@ -3,7 +3,7 @@ package ssh
 import (
 	"errors"
 	"strings"
-)
+	)
 
 const commandNotFound = "Command not found"
 
@@ -17,13 +17,9 @@ func (s *replayMultiCommandSession) Run(command string, timeoutMs int, terminato
 	if !strings.HasSuffix(command, "\n") {
 		command = command + "\n"
 	}
-
 	replay, ok := s.commands.Commands[command]
-
-
-
 	if !ok {
-				return commandNotFound, nil
+		return commandNotFound, nil
 	}
 	if replay.Error != "" {
 		return "", errors.New(replay.Error)

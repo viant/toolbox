@@ -28,16 +28,16 @@ type MultiCommandSession interface {
 //multiCommandSession represents a multi command session
 //a new command are send vi stdin
 type multiCommandSession struct {
-	replayCommands *ReplayCommands
-	recordSession  bool
-	session        *ssh.Session
-	stdOutput      chan string
-	stdError       chan string
-	stdInput       io.WriteCloser
-	shellPrompt    string
+	replayCommands     *ReplayCommands
+	recordSession      bool
+	session            *ssh.Session
+	stdOutput          chan string
+	stdError           chan string
+	stdInput           io.WriteCloser
+	shellPrompt        string
 	escapedShellPrompt string
-	system         string
-	running        int32
+	system             string
+	running            int32
 }
 
 func (s *multiCommandSession) Run(command string, timeoutMs int, terminators ...string) (string, error) {
@@ -138,21 +138,33 @@ func (s *multiCommandSession) drain(reader io.Reader, out chan string) {
 	}
 }
 
+func escapeInput(input string) string {
+	input = vtclean.Clean(input, false)
+	if input == "" {
+		return input
+	}
+	return strings.Trim(input, "\n\r\t ")
+}
+
+
 func (s *multiCommandSession) hasTerminator(input string, terminators ...string) bool {
+	escapedInput := escapeInput(input)
 
-	escapedSource := vtclean.Clean(input, false)
-
-	if len(escapedSource) > 0 {
-		escapedSource = strings.Trim(escapedSource, "\n\r\t")
+	var shellPrompt = s.shellPrompt
+	if shellPrompt == "" {
+		shellPrompt = "$"
 	}
-	if s.escapedShellPrompt == "" {
-		s.escapedShellPrompt = strings.Trim(vtclean.Clean(s.shellPrompt, false), "\n\r\t")
+	if s.escapedShellPrompt == "" && s.shellPrompt != "" {
+		s.escapedShellPrompt = escapeInput(s.shellPrompt)
 	}
 
-	if  strings.HasSuffix(escapedSource, s.escapedShellPrompt) || strings.HasSuffix(input, s.shellPrompt) {
+
+
+	if (s.escapedShellPrompt != "" && strings.HasSuffix(escapedInput, s.escapedShellPrompt) || strings.HasSuffix(input, s.shellPrompt)) {
 		return true
 	}
-	input = escapedSource
+
+	input = escapedInput
 	for _, candidate := range terminators {
 		candidateLen := len(candidate)
 		if candidateLen == 0 {
@@ -281,8 +293,7 @@ func newMultiCommandSession(client *ssh.Client, config *SessionConfig, replayCom
 	if result.closeIfError(err) {
 		return nil, err
 	}
-	result.escapedShellPrompt = strings.Trim(vtclean.Clean(result.shellPrompt, false), "\n\r\t")
-
+	result.escapedShellPrompt =  escapeInput(result.shellPrompt)
 	result.system, err = result.Run("uname -s", 10000)
 	result.system = strings.ToLower(result.system)
 	return result, err

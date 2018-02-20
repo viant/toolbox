@@ -44,7 +44,7 @@ func (s *replayService) Upload(destination string, content []byte) error {
 //Download downloads content from specified source.
 func (s *replayService) Download(source string) ([]byte, error) {
 	if _, has := s.storage[source]; !has {
-		return nil, fmt.Errorf("No such file or directory")
+		return nil, fmt.Errorf("no such file or directory")
 	}
 	return s.storage[source], nil
 }
