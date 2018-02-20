@@ -347,22 +347,25 @@ func NewWithinSecPredicateValueProvider() ValueProvider {
 }
 
 
-type fileValueProvider struct{}
+type fileValueProvider struct{
+	trim bool
+}
 
 func (p *fileValueProvider) Get(context Context, arguments ...interface{}) (interface{}, error) {
 	filePath := AsString(arguments[0])
-
 	fileContent, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		panic(err)
 	}
-	content := bytes.TrimSpace(fileContent)
-	result := string(content)
+	if p.trim {
+		fileContent = bytes.TrimSpace(fileContent)
+	}
+	result := string(fileContent)
 	return result, nil
 }
 
 
 //NewFileValueProvider create  new file value provider
 func NewFileValueProvider(trim bool) ValueProvider {
-	return  &fileValueProvider{}
+	return  &fileValueProvider{trim :trim}
 }
