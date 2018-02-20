@@ -363,6 +363,6 @@ func (p *fileValueProvider) Get(context Context, arguments ...interface{}) (inte
 
 
 //NewFileValueProvider create  new file value provider
-func NewFileValueProvider() ValueProvider {
+func NewFileValueProvider(trim bool) ValueProvider {
 	return  &fileValueProvider{}
 }
