@@ -6,6 +6,9 @@ import (
 	"strings"
 	"time"
 	"github.com/pkg/errors"
+	"github.com/viant/toolbox"
+	"io/ioutil"
+	"bytes"
 )
 
 
@@ -342,4 +345,25 @@ func (p *withinSecPredicateValueProvider) Get(context Context, arguments ...inte
 //NewWithinSecPredicateValueProvider returns a new within second value provider
 func NewWithinSecPredicateValueProvider() ValueProvider {
 	return &withinSecPredicateValueProvider{}
+}
+
+
+type fileValueProvider struct{}
+
+func (p *fileValueProvider) Get(context Context, arguments ...interface{}) (interface{}, error) {
+	filePath := AsString(arguments[0])
+
+	fileContent, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		panic(err)
+	}
+	content := bytes.TrimSpace(fileContent)
+	result := string(content)
+	return result, nil
+}
+
+
+//NewFileValueProvider create  new file value provider
+func NewFileValueProvider() ValueProvider {
+	return  &fileValueProvider{}
 }
