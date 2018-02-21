@@ -188,6 +188,11 @@ func ToInt(value interface{}) (int, error) {
 		return int(*actual), nil
 	case *float64:
 		return int(*actual), nil
+	case bool:
+		if actual {
+			return 1, nil
+		}
+		return 0, nil
 	}
 	valueAsString := AsString(value)
 	if strings.Contains(valueAsString, ".") {
