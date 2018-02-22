@@ -45,10 +45,16 @@ func ProcessStruct(aStruct interface{}, handler func(fieldType reflect.StructFie
 		if fieldType.Type.Kind() == reflect.Ptr {
 			if field.IsNil() {
 				superType := reflect.New(fieldType.Type.Elem())
+				if ! field.CanSet() {
+					continue
+				}
 				field.Set(superType)
 			}
 			aStruct = field.Interface()
 		} else {
+			if !field.CanAddr() {
+				continue
+			}
 			aStruct = field.Addr().Interface()
 		}
 
@@ -143,7 +149,7 @@ func NewFieldSettingByKey(aStruct interface{}, key string) map[string](map[strin
 	return BuildTagMapping(aStruct, key, "transient", true, true, columnMapping)
 }
 
-func setEmptyMap(source reflect.Value) {
+func setEmptyMap(source reflect.Value, dataTypes map[string]bool) {
 	if ! source.CanSet() {
 		return
 	}
@@ -181,7 +187,7 @@ func setEmptyMap(source reflect.Value) {
 	}
 
 	if DereferenceType(elementValue.Type()).Kind() == reflect.Struct {
-		InitStruct(elementValue.Interface())
+		initStruct(elementValue.Interface(), dataTypes)
 	}
 
 	newMap.SetMapIndex(elementKey, elementValue)
@@ -192,7 +198,7 @@ func setEmptyMap(source reflect.Value) {
 
 
 
-func createEmptySlice(source reflect.Value) {
+func createEmptySlice(source reflect.Value, dataTypes map[string]bool) {
 	sliceType := DiscoverTypeByKind(source.Type(), reflect.Slice)
 	if ! source.CanSet() {
 		return
@@ -204,9 +210,9 @@ func createEmptySlice(source reflect.Value) {
 	var targetComponent = targetComponentPointer.Elem()
 	if DereferenceType(componentType).Kind() == reflect.Struct {
 		structElement := reflect.New(targetComponent.Type().Elem())
-		InitStruct(structElement.Interface())
+		initStruct(structElement.Interface(), dataTypes)
 		targetComponentPointer.Elem().Set(structElement)
-		InitStruct(targetComponentPointer.Elem().Interface())
+		initStruct(targetComponentPointer.Elem().Interface(), dataTypes)
 	}
 	slice.Set(reflect.Append(slice, targetComponentPointer.Elem()))
 	source.Set(slicePointer.Elem())
@@ -215,33 +221,45 @@ func createEmptySlice(source reflect.Value) {
 
 //InitStruct initialise any struct pointer to empty struct
 func InitStruct(source interface{}) {
+	var dataTypes = make(map[string]bool)
+	initStruct(source, dataTypes)
+}
+
+
+func initStruct(source interface{}, dataTypes map[string]bool) {
 	if source == nil {
 		return
 	}
+
+
 	if ! IsStruct(source) {
 		return
 	}
+
+	var key = DereferenceType(source).Name()
+	if _, has :=dataTypes[key];has {
+		return
+	}
+	dataTypes[key] = true
 
 	sourceValue, ok := source.(reflect.Value)
 	if ! ok {
 		sourceValue = reflect.ValueOf(source)
 	}
-
 	if sourceValue.Type().Kind() == reflect.Ptr && ! sourceValue.Elem().IsValid() {
 		return
 	}
-
 	ProcessStruct(source, func(fieldType reflect.StructField, fieldValue reflect.Value) error {
 		if ! fieldValue.CanInterface() {
 			return nil
 		}
 
 		if fieldType.Type.Kind() == reflect.Map {
-			setEmptyMap(fieldValue)
+			setEmptyMap(fieldValue, dataTypes)
 			return nil
 		}
 		if fieldType.Type.Kind() == reflect.Slice {
-			createEmptySlice(fieldValue)
+			createEmptySlice(fieldValue, dataTypes)
 			return nil
 		}
 		if fieldType.Type.Kind() != reflect.Ptr {
@@ -256,7 +274,7 @@ func InitStruct(source interface{}) {
 				fieldStruct := reflect.New(fieldValue.Type().Elem())
 
 				if reflect.TypeOf(source) != fieldStruct.Type() {
-					InitStruct(fieldStruct.Interface())
+					initStruct(fieldStruct.Interface(), dataTypes)
 				}
 				fieldValue.Set(fieldStruct)
 			}
