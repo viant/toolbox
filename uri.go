@@ -119,13 +119,28 @@ func URLSplit(URL string) (string, string) {
 }
 
 
-//OpenFile open file converting path to elements and rebuling path safety with path.Join
-func OpenFile(filename string) (*os.File, error) {
+//Filename reformat file name
+func Filename(filename string) string {
+	if strings.Contains(filename, "://") {
+		if parsed, err := url.Parse(filename); err == nil {
+			filename = parsed.Path
+		}
+	}
 	var root =  make([]string, 0)
-	if strings.HasPrefix(filename, "/") || strings.HasPrefix(filename, "\\") {
+	if strings.HasPrefix(filename, "/") {
 		root = append(root, "/")
 	}
+
 	elements := append(root, strings.Split(filename, "/")...)
 	filename = path.Join(elements...)
-	return  os.Open(filename)
+	return filename
+}
+
+
+
+//OpenFile open file converting path to elements and rebuling path safety with path.Join
+func OpenFile(filename string) (*os.File, error) {
+	var file = Filename(filename)
+	var result, err =  os.Open(file)
+	return result, err
 }

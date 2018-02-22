@@ -16,19 +16,19 @@ import (
 
 //Resource represents a URL based resource, with enriched meta info
 type Resource struct {
-	URL             string   `description:"resource URL or relative or absolute path" required:"true"`//URL of resource
-	Credential      string   `description:"credentials file"`//name of credential file or credential key depending on implementation
-	ParsedURL       *url.URL `json:"-"`//parsed URL resource
-	Cache           string    `description:"local cache path"`//Cache path for the resource, if specified resource will be cached in the specified path
-	CacheExpiryMs   int      //CacheExpiryMs expiry time in ms
+	URL             string   `description:"resource URL or relative or absolute path" required:"true"` //URL of resource
+	Credential      string   `description:"credentials file"`                                          //name of credential file or credential key depending on implementation
+	ParsedURL       *url.URL `json:"-"`                                                                //parsed URL resource
+	Cache           string   `description:"local cache path"`                                          //Cache path for the resource, if specified resource will be cached in the specified path
+	CacheExpiryMs   int                                                                                //CacheExpiryMs expiry time in ms
 	modificationTag int64
+	init            bool
 }
-
-
 
 //Clone creates a clone of the resource
 func (r *Resource) Clone() *Resource {
 	return &Resource{
+		init:          r.init,
 		URL:           r.URL,
 		Credential:    r.Credential,
 		ParsedURL:     r.ParsedURL,
@@ -119,14 +119,12 @@ func (r *Resource) Download() ([]byte, error) {
 	if r == nil {
 		return nil, fmt.Errorf("Fail to download content on empty resource")
 	}
-
 	if r.Cachable() {
 		content := r.readFromCache()
 		if content != nil {
 			return content, nil
 		}
 	}
-
 	service, err := storage.NewServiceForURL(r.URL, r.Credential)
 	if err != nil {
 		return nil, err
@@ -162,7 +160,7 @@ func (r *Resource) DownloadText() (string, error) {
 //Decode decodes url's data into target, it takes decoderFactory which decodes data into target
 func (r *Resource) Decode(target interface{}, decoderFactory toolbox.DecoderFactory) error {
 	if r == nil {
-		return fmt.Errorf("Fail to %T decode on empty resource", decoderFactory)
+		return fmt.Errorf("fail to %T decode on empty resource", decoderFactory)
 	}
 	if r == nil {
 		return fmt.Errorf("Fail to decode %v,  decoderFactory was empty", r.URL, decoderFactory)
@@ -279,12 +277,19 @@ func normalizeURL(URL string) string {
 		currentDirectory, err := os.Getwd()
 		if err == nil {
 			candidate := path.Join(currentDirectory, URL)
-			if toolbox.FileExists(candidate) {
-				URL = candidate
-			}
+			URL = candidate
 		}
 	}
 	return toolbox.FileSchema + URL
+}
+
+func (r *Resource) Init() {
+	if r.init {
+		return
+	}
+	r.init = true
+	r.URL = normalizeURL(r.URL)
+	r.ParsedURL, _ = url.Parse(r.URL)
 }
 
 //NewResource returns a new resource for provided URL, followed by optional credential, cache and cache expiryMs.
@@ -309,6 +314,7 @@ func NewResource(Params ...interface{}) *Resource {
 	}
 	parsedURL, _ := url.Parse(URL)
 	return &Resource{
+		init:          true,
 		ParsedURL:     parsedURL,
 		URL:           URL,
 		Credential:    credential,

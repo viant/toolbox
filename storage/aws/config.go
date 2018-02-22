@@ -1,6 +1,8 @@
 package aws
 
-import "github.com/viant/toolbox"
+import (
+	"github.com/viant/toolbox/url"
+)
 
 //Config represents storage
 type Config struct {
@@ -13,5 +15,6 @@ type Config struct {
 //NewConfig creates a new config from URL
 func NewConfig(URL string) (*Config, error) {
 	var result = &Config{}
-	return result, toolbox.LoadConfigFromUrl(URL, result)
+	resource := url.NewResource(URL)
+	return result, resource.JSONDecode(result)
 }

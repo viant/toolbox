@@ -373,6 +373,9 @@ func (c *ToolboxHTTPClient) Request(method, url string, request, response interf
 	var serverResponse *http.Response
 	var httpRequest *http.Request
 	httpMethod := strings.ToUpper(method)
+
+
+
 	if request != nil {
 		httpRequest, err = http.NewRequest(httpMethod, url, buffer)
 		if err != nil {
@@ -385,7 +388,6 @@ func (c *ToolboxHTTPClient) Request(method, url string, request, response interf
 			return err
 		}
 	}
-
 	serverResponse, err = c.httpClient.Do(httpRequest)
 	if serverResponse != nil {
 		// must close we have serverResponse to avoid fd leak

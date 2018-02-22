@@ -199,10 +199,7 @@ func (s *httpStorageService) Register(schema string, service Service) error {
 
 //Delete removes passed in storage object
 func (s *httpStorageService) Delete(object Object) error {
-	fileName, err := toolbox.FileFromURL(object.URL())
-	if err != nil {
-		return err
-	}
+	fileName := toolbox.Filename(object.URL())
 	return os.Remove(fileName)
 }
 

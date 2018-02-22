@@ -1,12 +1,12 @@
 package aws
 
 import (
-	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+	"github.com/viant/toolbox/url"
 )
 
 const ProviderScheme = "s3"
@@ -21,7 +21,8 @@ func serviceProvider(credentialFile string) (storage.Service, error) {
 		credentialFile = path.Join(dir, credentialFile)
 	}
 	s3config := &Config{}
-	err := toolbox.LoadConfigFromUrl("file://"+credentialFile, s3config)
+	resource := url.NewResource(credentialFile)
+	err := resource.JSONDecode(credentialFile)
 	if err != nil {
 		return nil, err
 	}

@@ -139,8 +139,6 @@ func NewServiceForURL(URL, credentialFile string) (Service, error) {
 	if err != nil {
 		return nil, err
 	}
-
-
 	service := NewService()
 	provider := NewStorageProvider().Get(parsedURL.Scheme)
 

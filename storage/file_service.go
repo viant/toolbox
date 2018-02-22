@@ -17,20 +17,11 @@ var fileMode os.FileMode = 0644
 //Service represents abstract way to accessing local or remote storage
 type fileStorageService struct{}
 
-func openFileFromUrl(URL string) (*os.File, error) {
-	parsedUrl, err := url.Parse(URL)
-	if err != nil {
-		return nil, err
-	}
-	if parsedUrl.Scheme != "file" {
-		return nil, fmt.Errorf("Invalid schema, expected file but had: %v", parsedUrl.Scheme)
-	}
-	return toolbox.OpenFile(parsedUrl.Path)
-}
+
 
 //List returns a list of object for supplied url
 func (s *fileStorageService) List(URL string) ([]Object, error) {
-	file, err := openFileFromUrl(URL)
+	file, err := toolbox.OpenFile(URL)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +72,7 @@ func (s *fileStorageService) Close() error {
 
 //Object returns a Object for supplied url
 func (s *fileStorageService) StorageObject(URL string) (Object, error) {
-	file, err := openFileFromUrl(URL)
+	file, err :=  toolbox.OpenFile(URL)
 	if err != nil {
 		return nil, err
 	}
@@ -95,10 +86,8 @@ func (s *fileStorageService) StorageObject(URL string) (Object, error) {
 
 //Download returns reader for downloaded storage object
 func (s *fileStorageService) Download(object Object) (io.ReadCloser, error) {
-	reader, _, err :=  toolbox.OpenReaderFromURL(object.URL())
-	return reader, err
+	return toolbox.OpenFile(object.URL())
 }
-
 
 //Upload uploads provided reader content for supplied url.
 func (s *fileStorageService) Upload(URL string, reader io.Reader) error {
@@ -129,10 +118,7 @@ func (s *fileStorageService) Register(schema string, service Service) error {
 
 //Delete removes passed in storage object
 func (s *fileStorageService) Delete(object Object) error {
-	fileName, err := toolbox.FileFromURL(object.URL())
-	if err != nil {
-		return err
-	}
+	fileName := toolbox.Filename(object.URL())
 	return os.Remove(fileName)
 }
 

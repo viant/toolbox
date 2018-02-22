@@ -515,3 +515,14 @@ func MakeReverseStringMap(text string, valueSepartor string, itemSeparator strin
 	}
 	return result
 }
+
+
+//Pairs returns map for pairs.
+func Pairs(params ...interface{}) map[string]interface{} {
+	var result = make(map[string]interface{})
+	for i := 0; i+1 < len(params); i += 2 {
+		var key = AsString(params[i])
+		result[key] = params[i+1]
+	}
+	return result
+}
