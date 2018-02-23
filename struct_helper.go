@@ -31,7 +31,6 @@ func ProcessStruct(aStruct interface{}, handler func(fieldType reflect.StructFie
 		Type  reflect.StructField
 	}
 	var fields = make(map[string]*fieldStruct)
-
 	for i := 0; i < structType.NumField(); i++ {
 		fieldType := structType.Field(i)
 		if ! fieldType.Anonymous {
@@ -44,11 +43,12 @@ func ProcessStruct(aStruct interface{}, handler func(fieldType reflect.StructFie
 		var aStruct  interface{}
 		if fieldType.Type.Kind() == reflect.Ptr {
 			if field.IsNil() {
-				superType := reflect.New(fieldType.Type.Elem())
+
+
 				if ! field.CanSet() {
 					continue
 				}
-				field.Set(superType)
+				structValue.Field(i).Set(reflect.New(fieldType.Type.Elem()))
 			}
 			aStruct = field.Interface()
 		} else {

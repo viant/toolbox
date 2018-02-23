@@ -471,6 +471,7 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 	newStruct := newStructPointer.Elem()
 	fieldsMapping := NewFieldSettingByKey(newStructPointer.Interface(), c.MappedKeyTag)
 
+
 	var defaultValueMap = make(map[string]interface{})
 
 	var anonymousValueMap map[string]reflect.Value
@@ -492,16 +493,19 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 			anonymousFields[index] = field
 		}
 	}
+
 	for key, value := range inputMap {
 		aStruct := newStruct
 		mapping, found := fieldsMapping[strings.ToLower(key)]
 		if found {
 			var field reflect.Value
 			fieldName := mapping[fieldNameKey]
+
 			if fieldIndex, ok := mapping[fieldIndexKey]; ok {
 				var structPointer = anonymousValueMap[fieldIndex]
 				anonymousFields[fieldIndex].Set(structPointer)
 				aStruct = structPointer.Elem()
+				initAnonymousStruct(structPointer.Interface())
 			}
 			field = aStruct.FieldByName(fieldName)
 			if _, has := defaultValueMap[fieldName]; has {
@@ -534,7 +538,6 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 		}
 	}
 
-	//			field.Set(fieldStruct)
 
 	if targetIndirectPointerType.Kind() == reflect.Slice {
 		targetIndirectValue.Set(newStructPointer)
@@ -543,6 +546,8 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 	}
 	return nil
 }
+
+
 
 //AssignConverted assign to the target source, target needs to be pointer, input has to be convertible or compatible type
 func (c *Converter) AssignConverted(target, source interface{}) error {
@@ -809,13 +814,12 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		return nil
 	case *interface{}:
 
-
-			(*targetValuePointer) = source
-			return nil
+		(*targetValuePointer) = source
+		return nil
 
 	case **interface{}:
-			(*targetValuePointer) = &source
-			return nil
+		(*targetValuePointer) = &source
+		return nil
 	}
 
 	sourceValue := reflect.ValueOf(source)
@@ -1071,4 +1075,39 @@ func CountPointers(value interface{}) int {
 	}
 
 	return result
+}
+
+
+
+
+func initAnonymousStruct(aStruct interface{}) {
+	structValue := DiscoverValueByKind(reflect.ValueOf(aStruct), reflect.Struct)
+	structType := structValue.Type()
+	for i := 0; i < structType.NumField(); i++ {
+		fieldType := structType.Field(i)
+		if ! fieldType.Anonymous {
+			continue
+		}
+		field := structValue.Field(i)
+		if ! IsStruct(field) {
+			continue
+		}
+
+		var aStruct  interface{}
+		if fieldType.Type.Kind() == reflect.Ptr {
+			if field.IsNil() {
+				if ! field.CanSet() {
+					continue
+				}
+				structValue.Field(i).Set(reflect.New(fieldType.Type.Elem()))
+			}
+			aStruct = field.Interface()
+		} else {
+			if !field.CanAddr() {
+				continue
+			}
+			aStruct = field.Addr().Interface()
+		}
+		 initAnonymousStruct(aStruct)
+	}
 }
