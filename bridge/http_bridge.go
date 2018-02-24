@@ -330,21 +330,12 @@ func writeData(filename string, source interface{}, printStrOut bool) error {
 func HttpFileRecorder(directory string, printStdOut bool) func(request *http.Request, response *http.Response) {
 	tripCounter := 0
 
-
-
-
 	err := toolbox.CreateDirIfNotExist(directory)
 	if err != nil {
 		fmt.Printf("failed to create directory%v %v\n, ", err, directory)
 	}
-
 	return func(request *http.Request, response *http.Response) {
-
-		fmt.Printf("req :%v\n", request.URL)
-
-
 		var body string
-
 		if request.Body != nil {
 			body = ReaderAsText(request.Body)
 		}

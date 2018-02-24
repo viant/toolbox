@@ -283,13 +283,14 @@ func normalizeURL(URL string) string {
 	return toolbox.FileSchema + URL
 }
 
-func (r *Resource) Init() {
+func (r *Resource) Init() (err error) {
 	if r.init {
-		return
+		return nil
 	}
 	r.init = true
 	r.URL = normalizeURL(r.URL)
-	r.ParsedURL, _ = url.Parse(r.URL)
+	r.ParsedURL, err = url.Parse(r.URL)
+	return err
 }
 
 //NewResource returns a new resource for provided URL, followed by optional credential, cache and cache expiryMs.
