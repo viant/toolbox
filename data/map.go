@@ -401,10 +401,13 @@ func (s *Map) Expand(source interface{}) interface{} {
 		if source == nil {
 			return nil
 		}
+
 		if toolbox.IsMap(source) {
 			return s.Expand(toolbox.AsMap(value))
 		} else if toolbox.IsSlice(source) {
 			return s.Expand(toolbox.AsSlice(value))
+		} else if toolbox.IsStruct(value)  {
+			return value
 		} else {
 			return s.Expand(toolbox.AsString(value))
 		}
