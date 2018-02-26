@@ -96,6 +96,11 @@ func ToFloat(value interface{}) (float64, error) {
 		return float64(actualValue), nil
 	case *float64:
 		return *actualValue, nil
+	case bool:
+		if actualValue {
+			return 1.0, nil
+		}
+		return 0.0, nil
 	}
 	valueAsString := AsString(DereferenceValue(value))
 	return strconv.ParseFloat(valueAsString, 64)
@@ -471,7 +476,6 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 	newStruct := newStructPointer.Elem()
 	fieldsMapping := NewFieldSettingByKey(newStructPointer.Interface(), c.MappedKeyTag)
 
-
 	var defaultValueMap = make(map[string]interface{})
 
 	var anonymousValueMap map[string]reflect.Value
@@ -538,7 +542,6 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 		}
 	}
 
-
 	if targetIndirectPointerType.Kind() == reflect.Slice {
 		targetIndirectValue.Set(newStructPointer)
 	} else {
@@ -546,8 +549,6 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 	}
 	return nil
 }
-
-
 
 //AssignConverted assign to the target source, target needs to be pointer, input has to be convertible or compatible type
 func (c *Converter) AssignConverted(target, source interface{}) error {
@@ -1077,26 +1078,23 @@ func CountPointers(value interface{}) int {
 	return result
 }
 
-
-
-
 func initAnonymousStruct(aStruct interface{}) {
 	structValue := DiscoverValueByKind(reflect.ValueOf(aStruct), reflect.Struct)
 	structType := structValue.Type()
 	for i := 0; i < structType.NumField(); i++ {
 		fieldType := structType.Field(i)
-		if ! fieldType.Anonymous {
+		if !fieldType.Anonymous {
 			continue
 		}
 		field := structValue.Field(i)
-		if ! IsStruct(field) {
+		if !IsStruct(field) {
 			continue
 		}
 
-		var aStruct  interface{}
+		var aStruct interface{}
 		if fieldType.Type.Kind() == reflect.Ptr {
 			if field.IsNil() {
-				if ! field.CanSet() {
+				if !field.CanSet() {
 					continue
 				}
 				structValue.Field(i).Set(reflect.New(fieldType.Type.Elem()))
@@ -1108,6 +1106,6 @@ func initAnonymousStruct(aStruct interface{}) {
 			}
 			aStruct = field.Addr().Interface()
 		}
-		 initAnonymousStruct(aStruct)
+		initAnonymousStruct(aStruct)
 	}
 }
