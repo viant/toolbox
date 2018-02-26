@@ -385,7 +385,7 @@ func AsMap(source interface{}) map[string]interface{} {
 	}
 	if IsStruct(source) {
 		var result = make(map[string]interface{})
-		converter:=NewColumnConverter(DefaultDateLayout)
+		converter := NewColumnConverter(DefaultDateLayout)
 		converter.AssignConverted(&result, source)
 		return result
 	}
@@ -486,14 +486,28 @@ func JoinAsString(slice interface{}, separator string) string {
 }
 
 //MakeStringMap creates a mapstring]string from string,
-func MakeStringMap(text string, valueSepartor string, itemSeparator string) map[string]string {
+func MakeStringMap(text string, valueSeparator string, itemSeparator string) map[string]string {
 	var result = make(map[string]string)
 	for _, item := range strings.Split(text, itemSeparator) {
-
 		if len(item) == 0 {
 			continue
 		}
-		keyValue := strings.SplitN(item, valueSepartor, 2)
+		keyValue := strings.SplitN(item, valueSeparator, 2)
+		if len(keyValue) == 2 {
+			result[strings.Trim(keyValue[0], " \t")] = strings.Trim(keyValue[1], " \n\t")
+		}
+	}
+	return result
+}
+
+//MakeMap creates a mapstring]interface{} from string,
+func MakeMap(text string, valueSeparator string, itemSeparator string) map[string]interface{} {
+	var result = make(map[string]interface{})
+	for _, item := range strings.Split(text, itemSeparator) {
+		if len(item) == 0 {
+			continue
+		}
+		keyValue := strings.SplitN(item, valueSeparator, 2)
 		if len(keyValue) == 2 {
 			result[strings.Trim(keyValue[0], " \t")] = strings.Trim(keyValue[1], " \n\t")
 		}
@@ -515,7 +529,6 @@ func MakeReverseStringMap(text string, valueSepartor string, itemSeparator strin
 	}
 	return result
 }
-
 
 //Pairs returns map for pairs.
 func Pairs(params ...interface{}) map[string]interface{} {
