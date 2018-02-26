@@ -20,12 +20,12 @@ func TestProcessStruct(t *testing.T) {
 		DateOfBirth time.Time `column:"date" dateFormat:"2006-01-02 15:04:05.000000"`
 		Id          int       `autogenrated:"true"`
 		prv         int
-		Other       string    `transient:"true"`
+		Other       string `transient:"true"`
 	}
 
 	user := User{Id: 1, Other: "!@#", Name: "foo", Super: &Super{12}}
 	var userMap = make(map[string]interface{})
-	err := toolbox.ProcessStruct(&user,  func(fieldType reflect.StructField, field reflect.Value) error {
+	err := toolbox.ProcessStruct(&user, func(fieldType reflect.StructField, field reflect.Value) error {
 		value := field.Interface()
 		userMap[fieldType.Name] = value
 		return nil
@@ -152,17 +152,14 @@ func TestBuildEmbededStructTagMapping(t *testing.T) {
 
 }
 
-
-
 type Type4 struct {
 	Id int
 }
 
 type Type3 struct {
-	Name map[string]string
+	Name  map[string]string
 	Type4 map[string]*Type4
 }
-
 
 type Type2 struct {
 	F1 int
@@ -177,21 +174,18 @@ type Type1 struct {
 	F5 []*Type3
 }
 
-
 type SuperType1 struct {
 	*Type1
 }
-
 
 type SuperType2 struct {
 	Type1
 }
 
-
 func Test_InitStruct(t *testing.T) {
 
 	{
-		var t1= &Type1{}
+		var t1 = &Type1{}
 		toolbox.InitStruct(t1)
 		assert.NotNil(t, t1.F2)
 		assert.NotNil(t, t1.F3)
@@ -200,7 +194,7 @@ func Test_InitStruct(t *testing.T) {
 
 	}
 	{
-		var t1= &SuperType1{}
+		var t1 = &SuperType1{}
 		toolbox.InitStruct(t1)
 		assert.NotNil(t, t1.F2)
 		assert.NotNil(t, t1.F3)
@@ -208,17 +202,15 @@ func Test_InitStruct(t *testing.T) {
 		assert.NotNil(t, t1.F5)
 	}
 	{
-		var t1= &SuperType2{}
+		var t1 = &SuperType2{}
 		toolbox.InitStruct(t1)
 		assert.NotNil(t, t1.F2)
 		assert.NotNil(t, t1.F3)
 		assert.NotNil(t, t1.F4)
 		assert.NotNil(t, t1.F5)
 	}
-
 
 }
-
 
 func Test_GetStructMeta(t *testing.T) {
 
@@ -226,8 +218,5 @@ func Test_GetStructMeta(t *testing.T) {
 	toolbox.InitStruct(t1)
 	meta := toolbox.GetStructMeta(t1)
 	assert.NotNil(t, meta)
-
-
-
 
 }

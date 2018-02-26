@@ -35,17 +35,13 @@ func DateFormatToLayout(dateFormat string) string {
 
 	dateFormat = strings.Replace(dateFormat, "SSS", "000", 1)
 
-
 	dateFormat = strings.Replace(dateFormat, "a", "pm", 1)
 	dateFormat = strings.Replace(dateFormat, "aa", "PM", 1)
-
 
 	dateFormat = strings.Replace(dateFormat, "MMMM", "January", 1)
 	dateFormat = strings.Replace(dateFormat, "MMM", "Jan", 1)
 	dateFormat = strings.Replace(dateFormat, "MM", "01", 1)
 	dateFormat = strings.Replace(dateFormat, "M", "1", 1)
-
-
 
 	dateFormat = strings.Replace(dateFormat, "z", "MST", 1)
 	dateFormat = strings.Replace(dateFormat, "zzzz", "Z0700", 1)
@@ -54,33 +50,55 @@ func DateFormatToLayout(dateFormat string) string {
 
 	dateFormat = strings.Replace(dateFormat, "Z", "-07", 1)
 
-
 	dateFormat = strings.Replace(dateFormat, "EEEE", "Monday", 1)
 	dateFormat = strings.Replace(dateFormat, "E", "Mon", 1)
-
 
 	return dateFormat
 }
 
 //GetTimeLayout returns time laout from passed in map, first it check if DateLayoutKeyword is defined is so it returns it, otherwise it check DateFormatKeyword and if exists converts it to  dateLayout
 //If neithers keys exists it panics, please use HasTimeLayout to avoid panic
-func GetTimeLayout(settings map[string]string) string {
-	if value, found := settings[DateLayoutKeyword]; found {
-		return value
+func GetTimeLayout(input interface{}) string {
+	switch settings := input.(type) {
+	case map[string]string:
+		if value, found := settings[DateLayoutKeyword]; found {
+			return value
+		}
+		if value, found := settings[DateFormatKeyword]; found {
+			return value
+		}
+
+	case map[string]interface{}:
+		if value, found := settings[DateLayoutKeyword]; found {
+			return AsString(value)
+		}
+		if value, found := settings[DateFormatKeyword]; found {
+			return AsString(value)
+		}
+
 	}
-	if value, found := settings[DateFormatKeyword]; found {
-		return DateFormatToLayout(value)
-	}
-	panic("Date format or date layout is not defined")
+	return ""
 }
 
 //HasTimeLayout checks if dateLayout can be taken from the passed in setting map
-func HasTimeLayout(settings map[string]string) bool {
-	if _, found := settings[DateLayoutKeyword]; found {
-		return true
-	}
-	if _, found := settings[DateFormatKeyword]; found {
-		return true
+func HasTimeLayout(input interface{}) bool {
+	switch settings := input.(type) {
+	case map[string]string:
+		if _, found := settings[DateLayoutKeyword]; found {
+			return true
+		}
+		if _, found := settings[DateFormatKeyword]; found {
+			return true
+		}
+
+	case map[string]interface{}:
+		if _, found := settings[DateLayoutKeyword]; found {
+			return true
+		}
+		if _, found := settings[DateFormatKeyword]; found {
+			return true
+		}
+
 	}
 	return false
 }

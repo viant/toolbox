@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"strings"
 	"io/ioutil"
+	"strings"
 )
 
 //IsCompleteJSON returns true if supplied represent complete JSON
@@ -30,25 +30,19 @@ func IsCompleteJSON(candidate string) bool {
 	return err == nil
 }
 
-
 //NewLineDelimitedJSON returns JSON for supplied multi line JSON
 func NewLineDelimitedJSON(candidate string) ([]interface{}, error) {
 	var result = make([]interface{}, 0)
 	lines := getMultilineContent(candidate)
 	for _, line := range lines {
-		aStruct, err := JSONToInterface(line);
+		aStruct, err := JSONToInterface(line)
 		if err != nil {
 			return nil, err
 		}
 		result = append(result, aStruct)
 	}
-	 return result, nil
+	return result, nil
 }
-
-
-
-
-
 
 func getMultilineContent(multiLineText string) []string {
 	multiLineText = strings.TrimSpace(multiLineText)
@@ -66,8 +60,6 @@ func getMultilineContent(multiLineText string) []string {
 	return result
 }
 
-
-
 //IsNewLineDelimitedJSON returns true if supplied content is multi line delimited JSON
 func IsNewLineDelimitedJSON(candidate string) bool {
 	lines := getMultilineContent(candidate)
@@ -76,9 +68,6 @@ func IsNewLineDelimitedJSON(candidate string) bool {
 	}
 	return IsCompleteJSON(lines[0]) && IsCompleteJSON(lines[1])
 }
-
-
-
 
 //JSONToInterface converts JSON source to an interface (either map or slice)
 func JSONToInterface(source interface{}) (interface{}, error) {
@@ -94,7 +83,7 @@ func JSONToInterface(source interface{}) (interface{}, error) {
 		return nil, fmt.Errorf("unsupported type: %T", source)
 	}
 	var result interface{}
-	if content, err := ioutil.ReadAll(reader);err == nil {
+	if content, err := ioutil.ReadAll(reader); err == nil {
 		text := string(content)
 		if IsNewLineDelimitedJSON(text) {
 			return NewLineDelimitedJSON(text)
@@ -104,8 +93,6 @@ func JSONToInterface(source interface{}) (interface{}, error) {
 	err := jsonDecoderFactory{}.Create(reader).Decode(&result)
 	return result, err
 }
-
-
 
 //JSONToMap converts JSON source into map
 func JSONToMap(source interface{}) (map[string]interface{}, error) {
@@ -125,7 +112,6 @@ func JSONToMap(source interface{}) (map[string]interface{}, error) {
 	return result, err
 }
 
-
 //JSONToSlice converts JSON source into slice
 func JSONToSlice(source interface{}) ([]interface{}, error) {
 	var reader io.Reader
@@ -143,8 +129,6 @@ func JSONToSlice(source interface{}) ([]interface{}, error) {
 	err := jsonDecoderFactory{}.Create(reader).Decode(&result)
 	return result, err
 }
-
-
 
 //AsJSONText converts data structure int text JSON
 func AsJSONText(source interface{}) (string, error) {

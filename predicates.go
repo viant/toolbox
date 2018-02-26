@@ -1,17 +1,15 @@
 package toolbox
 
 import (
-	"time"
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
 )
 
 var TrueProvider = func(input interface{}) bool {
 	return true
 }
-
-
 
 type withinSecPredicate struct {
 	baseTime       time.Time
@@ -44,7 +42,6 @@ func NewWithinPredicate(baseTime time.Time, deltaInSeconds int, dateLayout strin
 		dateLayout:     dateLayout,
 	}
 }
-
 
 type betweenPredicate struct {
 	from float64
@@ -187,7 +184,6 @@ func (p *nilPredicate) Apply(value interface{}) bool {
 func NewNilPredicate() Predicate {
 	return &nilPredicate{}
 }
-
 
 type likePredicate struct {
 	matchingFragments []string

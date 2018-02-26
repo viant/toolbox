@@ -8,7 +8,6 @@ import (
 //FileSchema file://
 var FileSchema = "file://"
 
-
 //Deprecated start using url.Resource
 
 //ExtractMimeType extracts mime type by extension
@@ -23,7 +22,6 @@ func ExtractMimeType(file string) string {
 	}
 	return "text/plain"
 }
-
 
 //QueryIntValue returns query value for passed in url's name or default value
 func QueryIntValue(u *url.URL, name string, defaultValue int) int {

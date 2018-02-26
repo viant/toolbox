@@ -1,17 +1,14 @@
 package toolbox
 
 import (
+	"bytes"
 	"fmt"
+	"github.com/pkg/errors"
+	"io/ioutil"
 	"os"
 	"strings"
 	"time"
-	"github.com/pkg/errors"
-	"io/ioutil"
-	"bytes"
 )
-
-
-
 
 //ValueProvider represents a value provider
 type ValueProvider interface {
@@ -79,9 +76,7 @@ func NewEnvValueProvider() ValueProvider {
 	return result
 }
 
-
-
-type dateOfBirthProvider struct {}
+type dateOfBirthProvider struct{}
 
 func (p dateOfBirthProvider) Get(context Context, arguments ...interface{}) (interface{}, error) {
 	if len(arguments) < 1 {
@@ -102,20 +97,18 @@ func (p dateOfBirthProvider) Get(context Context, arguments ...interface{}) (int
 		timeFormat = AsString(arguments[3])
 	}
 
-	dateOfBirthText := fmt.Sprintf("%04d-%02d-%02d", now.Year() - age, month, day)
-	date,err := time.Parse(DateFormatToLayout("yyyy-MM-dd"), dateOfBirthText)
-	if (err != nil) {
+	dateOfBirthText := fmt.Sprintf("%04d-%02d-%02d", now.Year()-age, month, day)
+	date, err := time.Parse(DateFormatToLayout("yyyy-MM-dd"), dateOfBirthText)
+	if err != nil {
 		return nil, err
 	}
 	return date.Format(DateFormatToLayout(timeFormat)), nil
 }
 
-
 //NewDateOfBirthValueProvider provider for computing date for supplied expected age, month and day
 func NewDateOfBirthrovider() ValueProvider {
 	return &dateOfBirthProvider{}
 }
-
 
 type castedValueProvider struct{}
 
@@ -346,8 +339,7 @@ func NewWithinSecPredicateValueProvider() ValueProvider {
 	return &withinSecPredicateValueProvider{}
 }
 
-
-type fileValueProvider struct{
+type fileValueProvider struct {
 	trim bool
 }
 
@@ -364,8 +356,7 @@ func (p *fileValueProvider) Get(context Context, arguments ...interface{}) (inte
 	return result, nil
 }
 
-
 //NewFileValueProvider create  new file value provider
 func NewFileValueProvider(trim bool) ValueProvider {
-	return  &fileValueProvider{trim :trim}
+	return &fileValueProvider{trim: trim}
 }

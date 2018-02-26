@@ -1,9 +1,9 @@
 package toolbox
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
-	"fmt"
 )
 
 const (
@@ -33,19 +33,18 @@ func ProcessStruct(aStruct interface{}, handler func(fieldType reflect.StructFie
 	var fields = make(map[string]*fieldStruct)
 	for i := 0; i < structType.NumField(); i++ {
 		fieldType := structType.Field(i)
-		if ! fieldType.Anonymous {
+		if !fieldType.Anonymous {
 			continue
 		}
 		field := structValue.Field(i)
-		if ! IsStruct(field) {
+		if !IsStruct(field) {
 			continue
 		}
-		var aStruct  interface{}
+		var aStruct interface{}
 		if fieldType.Type.Kind() == reflect.Ptr {
 			if field.IsNil() {
 
-
-				if ! field.CanSet() {
+				if !field.CanSet() {
 					continue
 				}
 				structValue.Field(i).Set(reflect.New(fieldType.Type.Elem()))
@@ -150,28 +149,22 @@ func NewFieldSettingByKey(aStruct interface{}, key string) map[string](map[strin
 }
 
 func setEmptyMap(source reflect.Value, dataTypes map[string]bool) {
-	if ! source.CanSet() {
+	if !source.CanSet() {
 		return
 	}
 	mapType := source.Type()
 
 	mapPointer := reflect.New(mapType)
 
-
 	mapValueType := mapType.Elem()
 	mapKeyType := mapType.Key()
-
 
 	newMap := mapPointer.Elem()
 
 	newMap.Set(reflect.MakeMap(mapType))
 	targetMapKeyPointer := reflect.New(mapKeyType)
 
-
-
 	targetMapValuePointer := reflect.New(mapValueType)
-
-
 
 	var elementKey = targetMapKeyPointer.Elem()
 	var elementValue = targetMapValuePointer.Elem()
@@ -195,12 +188,9 @@ func setEmptyMap(source reflect.Value, dataTypes map[string]bool) {
 	source.Set(elem)
 }
 
-
-
-
 func createEmptySlice(source reflect.Value, dataTypes map[string]bool) {
 	sliceType := DiscoverTypeByKind(source.Type(), reflect.Slice)
-	if ! source.CanSet() {
+	if !source.CanSet() {
 		return
 	}
 	slicePointer := reflect.New(sliceType)
@@ -225,32 +215,30 @@ func InitStruct(source interface{}) {
 	initStruct(source, dataTypes)
 }
 
-
 func initStruct(source interface{}, dataTypes map[string]bool) {
 	if source == nil {
 		return
 	}
 
-
-	if ! IsStruct(source) {
+	if !IsStruct(source) {
 		return
 	}
 
 	var key = DereferenceType(source).Name()
-	if _, has :=dataTypes[key];has {
+	if _, has := dataTypes[key]; has {
 		return
 	}
 	dataTypes[key] = true
 
 	sourceValue, ok := source.(reflect.Value)
-	if ! ok {
+	if !ok {
 		sourceValue = reflect.ValueOf(source)
 	}
-	if sourceValue.Type().Kind() == reflect.Ptr && ! sourceValue.Elem().IsValid() {
+	if sourceValue.Type().Kind() == reflect.Ptr && !sourceValue.Elem().IsValid() {
 		return
 	}
 	ProcessStruct(source, func(fieldType reflect.StructField, fieldValue reflect.Value) error {
-		if ! fieldValue.CanInterface() {
+		if !fieldValue.CanInterface() {
 			return nil
 		}
 
@@ -279,7 +267,6 @@ func initStruct(source interface{}, dataTypes map[string]bool) {
 				fieldValue.Set(fieldStruct)
 			}
 
-
 		}
 		return nil
 	})
@@ -300,8 +287,6 @@ type StructMeta struct {
 	Dependencies []*StructMeta      `json:"dependencies,omitempty"`
 }
 
-
-
 func GetStructMeta(source interface{}) *StructMeta {
 	var result = &StructMeta{}
 	var trackedTypes = make(map[string]bool)
@@ -315,7 +300,7 @@ func getStructMeta(source interface{}, meta *StructMeta, trackedTypes map[string
 		return false
 	}
 	var structType = fmt.Sprintf("%T", source)
-	if _, has := trackedTypes[structType]; has  {
+	if _, has := trackedTypes[structType]; has {
 		return false
 	}
 	meta.Type = structType
@@ -337,15 +322,15 @@ func getStructMeta(source interface{}, meta *StructMeta, trackedTypes map[string
 			fieldMeta.Description = value
 		}
 		var value = field.Interface()
-		if value== nil {
+		if value == nil {
 			return nil
 		}
 
 		fieldMeta.Type = fmt.Sprintf("%T", value)
 		if IsStruct(value) {
 			var fieldStruct = &StructMeta{}
-			if field.Kind() == reflect.Ptr && ! field.IsNil() {
-				if (getStructMeta(field.Elem().Interface(), fieldStruct, trackedTypes)) {
+			if field.Kind() == reflect.Ptr && !field.IsNil() {
+				if getStructMeta(field.Elem().Interface(), fieldStruct, trackedTypes) {
 					meta.Dependencies = append(meta.Dependencies, fieldStruct)
 				}
 			}
@@ -359,7 +344,7 @@ func getStructMeta(source interface{}, meta *StructMeta, trackedTypes map[string
 			}
 			if mapValue != nil && IsStruct(mapValue) {
 				var fieldStruct = &StructMeta{}
-				if (getStructMeta(mapValue, fieldStruct, trackedTypes)) {
+				if getStructMeta(mapValue, fieldStruct, trackedTypes) {
 					meta.Dependencies = append(meta.Dependencies, fieldStruct)
 
 				}
@@ -371,7 +356,7 @@ func getStructMeta(source interface{}, meta *StructMeta, trackedTypes map[string
 			if len(aSlice) > 0 {
 				if aSlice[0] != nil && IsStruct(aSlice[0]) {
 					var fieldStruct = &StructMeta{}
-					if (getStructMeta(aSlice[0], fieldStruct, trackedTypes)) {
+					if getStructMeta(aSlice[0], fieldStruct, trackedTypes) {
 						meta.Dependencies = append(meta.Dependencies, fieldStruct)
 					}
 				}

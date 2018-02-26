@@ -1,10 +1,10 @@
 package toolbox_test
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
 	"net/url"
+	"testing"
 )
 
 func Test_QueryValue(t *testing.T) {

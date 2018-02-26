@@ -374,8 +374,6 @@ func (c *ToolboxHTTPClient) Request(method, url string, request, response interf
 	var httpRequest *http.Request
 	httpMethod := strings.ToUpper(method)
 
-
-
 	if request != nil {
 		httpRequest, err = http.NewRequest(httpMethod, url, buffer)
 		if err != nil {

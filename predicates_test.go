@@ -1,10 +1,10 @@
 package toolbox_test
 
 import (
-	"testing"
-	"time"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
+	"testing"
+	"time"
 )
 
 func TestWithinPredicate(t *testing.T) {
@@ -16,8 +16,6 @@ func TestWithinPredicate(t *testing.T) {
 	timeValue = time.Unix(1465009044, 0)
 	assert.False(t, predicate.Apply(timeValue))
 }
-
-
 
 func TestBetweenPredicate(t *testing.T) {
 
@@ -75,7 +73,6 @@ func TestNewLikePredicate(t *testing.T) {
 
 	}
 }
-
 
 func TestNewComparablePredicate(t *testing.T) {
 
