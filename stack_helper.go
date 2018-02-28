@@ -23,3 +23,34 @@ func CallerDirectory(callerIndex int) string {
 	parent, _ := path.Split(file)
 	return parent
 }
+
+
+
+func hasMatch(target string, candidates ...string) bool {
+	for _, candidate := range candidates {
+		if strings.HasSuffix(target, candidate) {
+			return true
+		}
+	}
+	return false
+}
+
+//DiscoverCaller returns the first matched caller info
+func DiscoverCaller(offset, maxDepth int, ignoreFiles ...string) (string, string, int) {
+	var callerPointer = make([]uintptr, maxDepth) // at least 1 entry needed
+	var caller *runtime.Func
+	var filename string
+	var line int
+	for i := offset; i < maxDepth; i++ {
+		runtime.Callers(i, callerPointer)
+		caller = runtime.FuncForPC(callerPointer[0])
+		filename, line = caller.FileLine(callerPointer[0])
+		if hasMatch(filename, ignoreFiles...) {
+			continue
+		}
+		break
+	}
+	callerName := caller.Name()
+	dotPosition := strings.LastIndex(callerName, ".")
+	return filename, callerName[dotPosition+1:], line
+}
