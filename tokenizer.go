@@ -128,6 +128,7 @@ func (m IntMatcher) Match(input string, offset int) (matched int) {
 	return i
 }
 
+
 //LiteralMatcher represents a matcher that finds any literals in the input
 type LiteralMatcher struct{}
 
@@ -163,6 +164,92 @@ func (m IdMatcher) Match(input string, offset int) (matched int) {
 	}
 	return i
 }
+
+//SequenceMatcher represents a matcher that finds any sequence until find provided terminators
+type sequenceMatcher struct{
+	Terminators []string
+}
+
+
+func (m sequenceMatcher) hasTerminator(candidate string) bool {
+	var candidateLength = len(candidate)
+	for _, terminator := range m.Terminators {
+		terminatorLength :=len(terminator)
+		if len(terminator) > candidateLength {
+			continue
+		}
+		if terminator == string(candidate[:terminatorLength]) {
+			return  true
+		}
+	}
+	return false
+}
+
+
+//Match matches a literal in the input, it returns number of character matched.
+func (m sequenceMatcher) Match(input string, offset int) (matched int) {
+	var i = 0;
+	for ; i < len(input)-offset; i++ {
+		if m.hasTerminator(string(input[offset+i:])) {
+			break
+		}
+	}
+	return i
+}
+//NewSequenceMatcher creates a new matcher that finds any sequence until find provided terminators
+func NewSequenceMatcher(terminators ... string) Matcher {
+	return &sequenceMatcher{
+		Terminators:terminators,
+	}
+}
+
+//CustomIdMatcher represents a matcher that finds any literals with additional custom set of characters in the input
+type customIdMatcher struct{
+	Allowed map[string]bool
+}
+
+
+func (m *customIdMatcher) isValid(aChar string) bool {
+	if isLetter(aChar) {
+			return true
+	}
+	if isDigit(aChar) {
+		return true
+	}
+	return m.Allowed[aChar]
+}
+
+//Match matches a literal in the input, it returns number of character matched.
+func (m *customIdMatcher) Match(input string, offset int) (matched int) {
+
+	if !m.isValid(input[offset:offset+1])  {
+		return 0
+	}
+	var i = 1
+	for ; i < len(input)-offset; i++ {
+		aChar := input[offset+i : offset+i+1]
+		if !m.isValid(aChar) {
+			break
+		}
+	}
+	return i
+}
+
+//NewCustomIdMatcher creates new custom matcher
+func NewCustomIdMatcher(allowedChars ... string) Matcher {
+	var result = &customIdMatcher{
+		Allowed:make(map[string]bool),
+	}
+	for _, allowed := range allowedChars {
+		result.Allowed[allowed] = true
+	}
+	return result
+}
+
+
+
+
+
 
 //LiteralMatcher represents a matcher that finds any literals in the input
 type BodyMatcher struct {
