@@ -248,7 +248,7 @@ func newMultiCommandSession(client *ssh.Client, config *SessionConfig, replayCom
 	session, err := client.NewSession()
 	defer func() {
 		if err != nil {
-			session.Close()
+			client.Close()
 		}
 	}()
 	if err != nil {
