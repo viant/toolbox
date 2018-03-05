@@ -76,6 +76,9 @@ func IsMap(input interface{}) bool {
 
 //IsStruct returns true if input is a map
 func IsStruct(input interface{}) bool {
+	if input == nil {
+		return false
+	}
 	inputType := DereferenceType(input)
 	return inputType.Kind() == reflect.Struct
 }
