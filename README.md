@@ -26,7 +26,7 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 
 ## Motivation
 
-This library was developed as part of Datastore Connectivity and Testibility libraries (dsc, dsunit) 
+This library was developed as part of [Datastore Connectivity](https://github.com/viant/dsc/) and Testibility libraries: ([Assertly](https://github.com/viant/assertly),  [Datastore testing](https://github.com/viant/dsunit/), [End to end testing](https://github.com/viant/endly/)) 
 as a way to share utilities, and other abstractions that may be useful in other projects.
 
 
