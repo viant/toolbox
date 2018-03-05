@@ -24,8 +24,6 @@ func CallerDirectory(callerIndex int) string {
 	return parent
 }
 
-
-
 func hasMatch(target string, candidates ...string) bool {
 	for _, candidate := range candidates {
 		if strings.HasSuffix(target, candidate) {

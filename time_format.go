@@ -69,7 +69,6 @@ func GetTimeLayout(input interface{}) string {
 			return DateFormatToLayout(value)
 		}
 
-
 	case map[string]interface{}:
 		if value, found := settings[DateLayoutKeyword]; found {
 			return AsString(value)

@@ -25,25 +25,19 @@ func TestNewTokenizer(t *testing.T) {
 
 }
 
-
-
 func Test_NewCustomIdMatcher(t *testing.T) {
-	matcher:= toolbox.NewCustomIdMatcher("$")
+	matcher := toolbox.NewCustomIdMatcher("$")
 	assert.Equal(t, 5, matcher.Match("Z $Abcf", 2))
 	assert.Equal(t, 1, matcher.Match("Z Abcf", 0))
 	assert.Equal(t, 0, matcher.Match("### ##", 0))
 }
 
-
-
 func Test_NewSequenceMatcher(t *testing.T) {
-	matcher:= toolbox.NewSequenceMatcher("&&", "||")
+	matcher := toolbox.NewSequenceMatcher("&&", "||")
 	assert.Equal(t, 2, matcher.Match("123", 1))
 	assert.Equal(t, 4, matcher.Match("123 && 123", 0))
 
-
 }
-
 
 func TestMatchKeyword(t *testing.T) {
 	matcher := toolbox.KeywordMatcher{"Abc", true}
