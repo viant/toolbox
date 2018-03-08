@@ -856,10 +856,16 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		} else if sourceKind == reflect.Struct {
 			sourceValue = reflect.ValueOf(DereferenceValue(source))
 			return c.assignConvertedMapFromStruct(source, target, sourceValue)
+		} else if sourceKind == reflect.Slice {
+			componentType := DereferenceType(DiscoverComponentType(source))
+			if componentType.ConvertibleTo(reflect.TypeOf(keyValue{})) {
+				return c.assignConvertedStructSliceToMap(target, source)
+			} else if componentType.Kind() == reflect.Map {
+				return c.assignConvertedMapSliceToMap(target, source)
+			}
 		}
 
 	} else if targetIndirectValue.Kind() == reflect.Struct {
-
 		inputMap := AsMap(source)
 		if inputMap != nil {
 			err := c.assignConvertedStruct(target, inputMap, targetIndirectValue, targetIndirectPointerType)
@@ -918,6 +924,122 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 	}
 	return fmt.Errorf("Unable to convert type %T into type %T\n\t%v", source, target, source)
 }
+
+type keyValue struct {
+	Key, Value interface{}
+}
+
+func (c *Converter) assignConvertedStructSliceToMap(target, source interface{}) (err error) {
+	mapType := DiscoverTypeByKind(target, reflect.Map)
+	mapPointer := reflect.ValueOf(target)
+	mapValueType := mapType.Elem()
+	mapKeyType := mapType.Key()
+	newMap := mapPointer.Elem()
+	newMap.Set(reflect.MakeMap(mapType))
+	keyValueType := reflect.TypeOf(keyValue{})
+	ProcessSlice(source, func(item interface{}) bool {
+		if item == nil {
+			return true
+		}
+		item = reflect.ValueOf(DereferenceValue(item)).Convert(keyValueType).Interface()
+		pair, ok := item.(keyValue)
+		if ! ok {
+			return true
+		}
+
+		targetMapValuePointer := reflect.New(mapValueType)
+		err = c.AssignConverted(targetMapValuePointer.Interface(), pair.Value)
+		if err != nil {
+			return false
+		}
+		targetMapKeyPointer := reflect.New(mapKeyType)
+		err = c.AssignConverted(targetMapKeyPointer.Interface(), pair.Key)
+		if err != nil {
+			return false
+		}
+		var elementKey = targetMapKeyPointer.Elem()
+		var elementValue = targetMapValuePointer.Elem()
+
+		if elementKey.Type() != mapKeyType {
+			if elementKey.Type().AssignableTo(mapKeyType) {
+				elementKey = elementKey.Convert(mapKeyType)
+			}
+		}
+		if !elementValue.Type().AssignableTo(newMap.Type().Elem()) {
+			var compatibleValue = reflect.New(newMap.Type().Elem())
+			err = c.AssignConverted(compatibleValue.Interface(), elementValue.Interface())
+			if err != nil {
+				return false
+			}
+			elementValue = compatibleValue.Elem()
+		}
+		newMap.SetMapIndex(elementKey, elementValue)
+		return true
+	})
+	return err
+}
+
+
+func (c *Converter) assignConvertedMapSliceToMap(target, source interface{}) (err error) {
+	mapType := DiscoverTypeByKind(target, reflect.Map)
+	mapPointer := reflect.ValueOf(target)
+	mapValueType := mapType.Elem()
+	mapKeyType := mapType.Key()
+	newMap := mapPointer.Elem()
+	newMap.Set(reflect.MakeMap(mapType))
+	ProcessSlice(source, func(item interface{}) bool {
+		if item == nil {
+			return true
+		}
+		itemMap := AsMap(item)
+		if len(itemMap) != 2 {
+			err = fmt.Errorf("unable to convert %T to %T", source, target)
+			return false
+		}
+		var key, value interface{}
+		for k, v := range itemMap {
+			if strings.ToLower(k) == "key" {
+				key = v
+			} else if strings.ToLower(k) == "value" {
+				value = v
+			}
+		}
+		if key == nil || value == nil {
+			err = fmt.Errorf("unable to convert %T to %T", source, target)
+			return false
+		}
+		targetMapValuePointer := reflect.New(mapValueType)
+		err = c.AssignConverted(targetMapValuePointer.Interface(), value)
+		if err != nil {
+			return false
+		}
+		targetMapKeyPointer := reflect.New(mapKeyType)
+		err = c.AssignConverted(targetMapKeyPointer.Interface(), key)
+		if err != nil {
+			return false
+		}
+		var elementKey = targetMapKeyPointer.Elem()
+		var elementValue = targetMapValuePointer.Elem()
+
+		if elementKey.Type() != mapKeyType {
+			if elementKey.Type().AssignableTo(mapKeyType) {
+				elementKey = elementKey.Convert(mapKeyType)
+			}
+		}
+		if !elementValue.Type().AssignableTo(newMap.Type().Elem()) {
+			var compatibleValue = reflect.New(newMap.Type().Elem())
+			err = c.AssignConverted(compatibleValue.Interface(), elementValue.Interface())
+			if err != nil {
+				return false
+			}
+			elementValue = compatibleValue.Elem()
+		}
+		newMap.SetMapIndex(elementKey, elementValue)
+		return true
+	})
+	return err
+}
+
 
 func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sourceValue reflect.Value) error {
 	if source == nil || !sourceValue.IsValid() {

@@ -6,7 +6,11 @@ import (
 	"reflect"
 	"testing"
 	"time"
+
 )
+
+
+
 
 func TestConverter(t *testing.T) {
 	converter := toolbox.NewColumnConverter(toolbox.DateFormatToLayout("yyyy-MM-dd hh:mm:ss z"))
@@ -477,6 +481,49 @@ func TestConverter(t *testing.T) {
 	}
 
 }
+
+
+
+
+func Test_Converter_SliceToMap(t *testing.T) {
+
+	//KeyValue represents sorted map entry
+	type KeyValue struct {
+		Key, Value interface{}
+	}
+
+	{
+		converter := toolbox.NewColumnConverter(toolbox.DateFormatToLayout("yyyy-MM-dd hh:mm:ss z"))
+		var slice = []*KeyValue{
+			{Key: "k1", Value: 1},
+			{Key: "k2", Value: 2},
+		}
+
+		var aMap= make(map[string]interface{})
+		err := converter.AssignConverted(&aMap, slice)
+		assert.Nil(t, err)
+		assert.EqualValues(t, map[string]interface{}{
+			"k1": 1,
+			"k2": 2,
+		}, aMap)
+	}
+	{
+		converter := toolbox.NewColumnConverter(toolbox.DateFormatToLayout("yyyy-MM-dd hh:mm:ss z"))
+		var slice = []map[string]interface{}{
+			{"Key": "k1", "Value": 1},
+			{"Key": "k2", "Value": 2},
+		}
+		var aMap= make(map[string]interface{})
+		err := converter.AssignConverted(&aMap, slice)
+		assert.Nil(t, err)
+		assert.EqualValues(t, map[string]interface{}{
+			"k1": 1,
+			"k2": 2,
+		}, aMap)
+	}
+}
+
+
 
 func Test_ToTime(t *testing.T) {
 	{

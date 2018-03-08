@@ -165,17 +165,25 @@ func (m IdMatcher) Match(input string, offset int) (matched int) {
 }
 
 //SequenceMatcher represents a matcher that finds any sequence until find provided terminators
-type sequenceMatcher struct {
+type SequenceMatcher struct {
 	Terminators []string
+	CaseSensitive bool
 }
 
-func (m sequenceMatcher) hasTerminator(candidate string) bool {
+func (m *SequenceMatcher) hasTerminator(candidate string) bool {
 	var candidateLength = len(candidate)
 	for _, terminator := range m.Terminators {
 		terminatorLength := len(terminator)
 		if len(terminator) > candidateLength {
 			continue
 		}
+
+		if ! m.CaseSensitive {
+			if strings.ToLower(terminator) == strings.ToLower(string(candidate[:terminatorLength])) {
+				return true
+			}
+		}
+
 		if terminator == string(candidate[:terminatorLength]) {
 			return true
 		}
@@ -184,7 +192,7 @@ func (m sequenceMatcher) hasTerminator(candidate string) bool {
 }
 
 //Match matches a literal in the input, it returns number of character matched.
-func (m sequenceMatcher) Match(input string, offset int) (matched int) {
+func (m *SequenceMatcher) Match(input string, offset int) (matched int) {
 	var i = 0
 	for ; i < len(input)-offset; i++ {
 		if m.hasTerminator(string(input[offset+i:])) {
@@ -194,12 +202,16 @@ func (m sequenceMatcher) Match(input string, offset int) (matched int) {
 	return i
 }
 
+
 //NewSequenceMatcher creates a new matcher that finds any sequence until find provided terminators
 func NewSequenceMatcher(terminators ...string) Matcher {
-	return &sequenceMatcher{
+	return &SequenceMatcher{
 		Terminators: terminators,
 	}
 }
+
+
+
 
 //CustomIdMatcher represents a matcher that finds any literals with additional custom set of characters in the input
 type customIdMatcher struct {
