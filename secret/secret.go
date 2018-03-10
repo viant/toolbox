@@ -1,59 +1,88 @@
-package main
+package secret
 
 import (
-	"bufio"
-	"fmt"
-	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/cred"
-	"golang.org/x/crypto/ssh/terminal"
-	"log"
-	"os"
-	"path"
 	"strings"
-	"syscall"
+	"github.com/viant/toolbox/cred"
+	"fmt"
 )
 
-func printUsage() {
-	fmt.Printf("Usage: secret <secretname>\n where secretnmae if name of the file in $HOME/.secret/ directory\n i.e secret scp, will be generated $HOME/.secret/scp.json\n")
+//Secrets represents credentials secret map
+type Secrets map[SecretKey]Secret
+
+//NewSecrets creates new secrets
+func NewSecrets() Secrets {
+	return make(map[SecretKey]Secret)
 }
 
-func main() {
 
-	if len(os.Args) < 2 || os.Args[1] == "" {
-		printUsage()
-		return
+
+
+/**
+SecretKey represent secret key
+Take the following secrets as example:
+<pre>
+
+	"secrets": {
+		"git": "${env.HOME}/.secret/git.json",
+		"github.com": "${env.HOME}/.secret/github.json",
+		"github.private.com": "${env.HOME}/.secret/github-private.json",
+		"**replace**": "${env.HOME}/.secret/git.json",
 	}
 
-	var secretPath = path.Join(os.Getenv("HOME"), ".secret")
-	if !toolbox.FileExists(secretPath) {
-		os.Mkdir(secretPath, 0744)
-	}
-	username, password := credentials()
-	fmt.Println("")
-	config := &cred.Config{
-		Username: username,
-		Password: password,
-	}
-	var privateKeyPath = path.Join(os.Getenv("HOME"), ".ssh/id_rsa")
-	if toolbox.FileExists(privateKeyPath) && ! cred.IsKeyEncrypted(privateKeyPath) {
-		config.PrivateKeyPath = privateKeyPath
-	}
-	var secretFile = path.Join(secretPath, fmt.Sprintf("%v.json", os.Args[1]))
-	err := config.Save(secretFile)
-	if err != nil {
-		log.Fatal(err)
-	}
+</pre>
+
+The secret key can be static or dynamic. The first type is already enclosed with '*' or '#', the later is not.
+
+In the command corresponding dynamic key can be enclosed with the following
+'**' for password expansion  i.e.  command: **git** will expand to password from  git secret key
+'##' for username expansion  i.e.  command: ##git## will expand to username from  git secret key
+'*?' for conditional password expansion  i.e.  command: *?github?* will expand to password either to github.com or github.private.com when matched with previous stdout
+'#?' for conditional username expansion  i.e.  command: #?github?# will expand to username either to github.com or github.private.com when matched with previous stdout
+ */
+type SecretKey string
+
+//IsDynamic returns true if key is dynamic
+func (s SecretKey) IsDynamic() bool {
+	return !(strings.HasPrefix(string(s), "*") || strings.HasPrefix(string(s), "#"))
 }
 
-func credentials() (string, string) {
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Print("Enter Username: ")
-	username, _ := reader.ReadString('\n')
-	fmt.Print("Enter Password: ")
-	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
-	if err != nil {
-		log.Fatal("failed to read password %v", err)
+//String returns  secret key as string
+func (s SecretKey) String() string {
+	return string(s)
+}
+
+//Get extracts username or password or JSON based on key type (# prefix for user, otherwise password or JSON)
+func (s SecretKey) Secret(cred *cred.Config) string {
+	if strings.HasPrefix(s.String(), "#") {
+		return cred.Username
 	}
-	password := string(bytePassword)
-	return strings.TrimSpace(username), strings.TrimSpace(password)
+	if cred.Password != "" {
+		return cred.Password
+	}
+	return cred.Data
+}
+
+//IsMatchable returns true if key is matchable
+func (s SecretKey) IsMatchable() bool {
+	return strings.HasPrefix(s.String(), "*?") || strings.HasPrefix(s.String(), "#?")
+}
+
+//Keys expands to statics keys
+func (s SecretKey) Keys() []SecretKey {
+	var key = s.String()
+	var result = []SecretKey{
+		SecretKey(fmt.Sprintf("**%v**", key)),
+		SecretKey(fmt.Sprintf("##%v##", key)),
+		SecretKey(fmt.Sprintf("*?%v?*", key)),
+		SecretKey(fmt.Sprintf("#?%v?#", key)),
+	}
+	return result
+}
+
+//Secret represents a secret
+type Secret string
+
+//IsLocation returns true if secret is a location
+func (s Secret) IsLocation() bool {
+	return ! strings.ContainsAny(string(s), "{}[]=+()@#^&*|")
 }
