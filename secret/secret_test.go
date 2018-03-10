@@ -40,22 +40,6 @@ func TestSecretKey_IsDynamic(t *testing.T) {
 }
 
 
-func TestSecretKey_IsMatchable(t *testing.T) {
-	{
-		key := secret.SecretKey("**key1**")
-		assert.False(t, key.IsDynamic())
-	}
-	{
-		key := secret.SecretKey("#?key1?#")
-		assert.True(t, key.IsMatchable())
-	}
-	{
-		key := secret.SecretKey("*?key1?*")
-		assert.True(t, key.IsMatchable())
-	}
-}
-
-
 func TestSecretKey_Secret(t *testing.T) {
 
 	{	//test user and password secret

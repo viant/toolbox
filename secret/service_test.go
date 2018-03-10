@@ -56,6 +56,15 @@ func TestService_Expand(t *testing.T) {
 	assert.Nil(t, err)
 	service := New(baseDirectory, false)
 
+	var original = ReadUserAndPassword
+	defer func() {
+		ReadUserAndPassword = original
+	}()
+
+	ReadUserAndPassword = func(timeout time.Duration) (string, string, error) {
+		return "user1", "password2", nil
+	}
+
 	var useCases = []struct {
 		Description string
 		Interactive bool
@@ -121,34 +130,13 @@ func TestService_Expand(t *testing.T) {
 			Credentials: map[SecretKey]Secret{
 				"key": "test",
 			},
-			HasError: true,
-		},
-
-		{
-			Description: "Matching password",
-			Interactive: true,
-			Matchable:   "passwor for awitas@github.com ?",
-			Input:       "*?github?*",
-			Credentials: map[SecretKey]Secret{
-				"github": "github.com.json",
-			},
-			Expended: "p",
-		},
-		{
-			Description: "Matching username",
-			Interactive: true,
-			Matchable:   "username for github.com ?",
-			Input:       "#?github?#",
-			Credentials: map[SecretKey]Secret{
-				"github": "github.com.json",
-			},
-			Expended: "xxx",
+			Expended:"password2",
 		},
 	}
 
 	for _, useCase := range useCases {
 		service.interactive = useCase.Interactive
-		expaned, err := service.Expand(useCase.Matchable, useCase.Input, useCase.Credentials)
+		expaned, err := service.Expand(useCase.Input, useCase.Credentials)
 		if useCase.HasError {
 			assert.NotNil(t, err, useCase.Description)
 			continue
@@ -185,9 +173,9 @@ func TestService_Create(t *testing.T) {
 
 	}
 
-	{//Test interactive
+	{ //Test interactive
 
-		service.interactive  = true
+		service.interactive = true
 		ReadUserAndPassword = func(timeout time.Duration) (string, string, error) {
 			return "user2", "password3", nil
 		}

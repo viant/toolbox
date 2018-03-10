@@ -71,21 +71,15 @@ Take the following code as example:
     {//password expansion
         secrets["mysql"] = "~/.secret/mysql.json"
         input := "docker run --name db1 -e MYSQL_ROOT_PASSWORD=**mysql** -d mysql:tag"
-   	    expaned, err := service.Expand("", input, secrets)
+   	    expaned, err := service.Expand(input, secrets)
    	}
 
    	{//username and password expansion
         secrets["pg"] = "~/.secret/pg.json"
         input := "docker run --name some-postgres -e POSTGRES_PASSWORD=**pg** -e POSTGRES_USER=##pg## -d postgres"
-        expaned, err := service.Expand("", input, secrets)
+        expaned, err := service.Expand(input, secrets)
     }
-    
-    {//expands input only if previous command output is matched
-        secrets["github.private.com"] = "~/.secret/github-private.json"
-        stdout := "Usernane for github.private.com ?"    
-        input := "#?github.private.com?#"
-        expaned, err := service.Expand(stdout, input, secrets) //expands to github.private.com user name
-    } 
+  
    
     
 
@@ -109,5 +103,3 @@ The secret key can be static or dynamic. The first type in input/command is encl
 In the command corresponding dynamic key can be enclosed with the following
 1) '**' for password expansion  i.e.  command: **git** will expand to password from  git secret key
 2) '##' for username expansion  i.e.  command: ##git## will expand to username from  git secret key
-3) '*?' for conditional password expansion  i.e.  command: *?github?* will expand to password either to github.com or github.private.com when matched with previous stdout
-4) '#?' for conditional username expansion  i.e.  command: #?github?# will expand to username either to github.com or github.private.com when matched with previous stdout

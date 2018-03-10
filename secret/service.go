@@ -60,6 +60,9 @@ func (s *Service) credentials(secret string) (*cred.Config, error) {
 
 //GetOrCreate gets or creates credential
 func (s *Service) GetOrCreate(secret string) (*cred.Config, error) {
+	if secret == "" {
+		return nil, errors.New("secret was empty")
+	}
 	result, err := s.GetCredentials(secret)
 	if s.interactive &&  err != nil && Secret(secret).IsLocation() {
 		secretLocation, err := s.Create(secret, "")
@@ -84,20 +87,17 @@ func (s *Service) GetCredentials(secret string) (*cred.Config, error) {
 	return s.credentials(secretLocation);
 }
 
-func (s *Service) expandDynamicSecret(matchable, command string, key SecretKey, secret Secret) (string, error) {
-	if ! strings.Contains(command, key.String()) {
-		return command, nil
+func (s *Service) expandDynamicSecret(input string, key SecretKey, secret Secret) (string, error) {
+	if ! strings.Contains(input, key.String()) {
+		return input, nil
 	}
 	var err error
 	for _, candidate := range key.Keys() {
-		if candidate.IsMatchable() && ! strings.Contains(matchable, key.String()) {
-			continue
-		}
-		if command, err = s.expandSecret(command, candidate, secret); err != nil {
-			return command, err
+		if input, err = s.expandSecret(input, candidate, secret); err != nil {
+			return input, err
 		}
 	}
-	return command, nil
+	return input, nil
 }
 
 func (s *Service) expandSecret(command string, key SecretKey, secret Secret) (string, error) {
@@ -110,7 +110,7 @@ func (s *Service) expandSecret(command string, key SecretKey, secret Secret) (st
 }
 
 //Expand expands input credential keys with actual credentials
-func (s *Service) Expand(matchable, input string, credentials map[SecretKey]Secret) (string, error) {
+func (s *Service) Expand(input string, credentials map[SecretKey]Secret) (string, error) {
 	if len(credentials) == 0 {
 		return input, nil
 	}
@@ -118,7 +118,7 @@ func (s *Service) Expand(matchable, input string, credentials map[SecretKey]Secr
 	for k, v := range credentials {
 		if strings.Contains(input, k.String()) {
 			if k.IsDynamic() {
-				input, err = s.expandDynamicSecret(matchable, input, k, v)
+				input, err = s.expandDynamicSecret(input, k, v)
 			} else {
 				input, err = s.expandSecret(input, k, v)
 			}
@@ -136,6 +136,7 @@ func (s *Service) Create(name, privateKeyPath string) (string, error) {
 	if strings.HasPrefix(privateKeyPath, "~") {
 		privateKeyPath = strings.Replace(privateKeyPath, "~", os.Getenv("HOME"), 1)
 	}
+	fmt.Printf("Credentials %v\n", name)
 	username, password, err := ReadUserAndPassword(ReadingCredentialTimeout)
 	if err != nil {
 		return "", err

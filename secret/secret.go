@@ -36,8 +36,6 @@ The secret key can be static or dynamic. The first type is already enclosed with
 In the command corresponding dynamic key can be enclosed with the following
 '**' for password expansion  i.e.  command: **git** will expand to password from  git secret key
 '##' for username expansion  i.e.  command: ##git## will expand to username from  git secret key
-'*?' for conditional password expansion  i.e.  command: *?github?* will expand to password either to github.com or github.private.com when matched with previous stdout
-'#?' for conditional username expansion  i.e.  command: #?github?# will expand to username either to github.com or github.private.com when matched with previous stdout
  */
 type SecretKey string
 
@@ -62,10 +60,6 @@ func (s SecretKey) Secret(cred *cred.Config) string {
 	return cred.Data
 }
 
-//IsMatchable returns true if key is matchable
-func (s SecretKey) IsMatchable() bool {
-	return strings.HasPrefix(s.String(), "*?") || strings.HasPrefix(s.String(), "#?")
-}
 
 //Keys expands to statics keys
 func (s SecretKey) Keys() []SecretKey {
@@ -73,8 +67,6 @@ func (s SecretKey) Keys() []SecretKey {
 	var result = []SecretKey{
 		SecretKey(fmt.Sprintf("**%v**", key)),
 		SecretKey(fmt.Sprintf("##%v##", key)),
-		SecretKey(fmt.Sprintf("*?%v?*", key)),
-		SecretKey(fmt.Sprintf("#?%v?#", key)),
 	}
 	return result
 }
