@@ -39,9 +39,13 @@ type Config struct {
 	PrivateKey   string `json:"private_key,omitempty"`
 	PrivateKeyID string `json:"private_key_id,omitempty"`
 
+	//JSON string for this secret
+	Data string `json:",omitempty"`
 	sshClientConfig *ssh.ClientConfig
 	jwtClientConfig *jwt.Config
 }
+
+
 
 func (c *Config) Load(filename string) error {
 	reader, err := toolbox.OpenFile(filename)
@@ -52,6 +56,8 @@ func (c *Config) Load(filename string) error {
 	ext := path.Ext(filename)
 	return c.LoadFromReader(reader, ext)
 }
+
+
 
 func (c *Config) LoadFromReader(reader io.Reader, ext string) error {
 	if strings.Contains(ext, "yaml") || strings.Contains(ext, "yml") {
@@ -83,21 +89,28 @@ func (c *Config) LoadFromReader(reader io.Reader, ext string) error {
 }
 
 func (c *Config) Save(filename string) error {
-	var password = c.Password
-	defer func() { c.Password = password }()
-	if password != "" {
-		c.encryptPassword(password)
-		c.Password = ""
-	}
-
 	_ = os.Remove(filename)
 	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
-	return json.NewEncoder(file).Encode(c)
+	return c.Write(file)
 }
+
+
+
+func (c *Config) Write(writer io.Writer) error {
+	var password = c.Password
+	defer func() { c.Password = password }()
+	if password != "" {
+		c.encryptPassword(password)
+		c.Password = ""
+	}
+	return json.NewEncoder(writer).Encode(c)
+}
+
+
 
 func (c *Config) encryptPassword(password string) {
 	encrypted := PasswordCipher.Encrypt([]byte(password))
@@ -128,6 +141,7 @@ func (c *Config) applyDefaultIfNeeded() {
 		}
 	}
 }
+
 
 //IsKeyEncrypted checks if supplied key content is encrypyed by password
 func IsKeyEncrypted(keyPath string) bool {
