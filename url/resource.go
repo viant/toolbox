@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/storage"
 	"io/ioutil"
 	"net/url"
@@ -71,6 +70,9 @@ func (r *Resource) CredentialURL(username, password string) string {
 	return result
 }
 
+
+
+
 //Path returns url's path  directory, assumption is that directory does not have extension, if path ends with '/' it is being stripped.
 func (r *Resource) DirectoryPath() string {
 	if r.ParsedURL == nil {
@@ -99,20 +101,6 @@ func (r *Resource) Port() string {
 	return port
 }
 
-//LoadCredentialload credential, returns username, password. It takes errorIfEmpty flag to return an error if there is issue with credential
-func (r *Resource) LoadCredential(errorIfEmpty bool) (string, string, error) {
-	if r.Credential == "" {
-		if errorIfEmpty {
-			return "", "", fmt.Errorf("Credential was empty: %v", r.Credential)
-		}
-		return "", "", nil
-	}
-	credential, err := cred.NewConfig(r.Credential)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to load credential: %v %v", r.Credential, err)
-	}
-	return credential.Username, credential.Password, nil
-}
 
 //Download downloads data from URL, it returns data as []byte, or error, if resource is cacheable it first look into cache
 func (r *Resource) Download() ([]byte, error) {
@@ -292,6 +280,8 @@ func (r *Resource) Init() (err error) {
 	r.ParsedURL, err = url.Parse(r.URL)
 	return err
 }
+
+
 
 //NewResource returns a new resource for provided URL, followed by optional credential, cache and cache expiryMs.
 func NewResource(Params ...interface{}) *Resource {
