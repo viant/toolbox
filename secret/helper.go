@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"errors"
 	"time"
+//	"github.com/bgentry/speakeasy"
 )
 
 //ReadingCredentialTimeout represents max time for providing credentials
@@ -23,8 +24,10 @@ var ReadUserAndPassword = func(timeout time.Duration) (user string, pass string,
 		defer func() {
 			completed<-true
 		}()
+
 		var bytePassword, bytePassword2 []byte
 		reader := bufio.NewReader(os.Stdin)
+
 		fmt.Print("Enter Username: ")
 		user, _ = reader.ReadString('\n')
 		fmt.Print("Enter Password: ")
@@ -41,14 +44,14 @@ var ReadUserAndPassword = func(timeout time.Duration) (user string, pass string,
 		}
 		password := string(bytePassword)
 		if string(bytePassword2) != password {
-			err = errors.New("Password did not match")
+			err = errors.New("password did not match")
 		}
 	}
 	go reader()
 	select {
 		case <-completed:
 		case <-time.After(timeout):
-			err = fmt.Errorf("reading credential timeout exceeded")
+			err = fmt.Errorf("reading credential timeout")
 	}
 	user = strings.TrimSpace(user)
 	pass = strings.TrimSpace(pass)

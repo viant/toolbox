@@ -10,11 +10,16 @@ import (
 type Secrets map[SecretKey]Secret
 
 //NewSecrets creates new secrets
-func NewSecrets() Secrets {
-	return make(map[SecretKey]Secret)
+func NewSecrets(secrets  map[string]string) Secrets {
+	var result = make(map[SecretKey]Secret)
+	if len(secrets) == 0 {
+		return result
+	}
+	for k, v:= range secrets {
+		result[SecretKey(k)]=Secret(v)
+	}
+	return result
 }
-
-
 
 
 /**

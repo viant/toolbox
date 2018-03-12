@@ -28,7 +28,13 @@ func (s *Service) credentials(secret string) (*cred.Config, error) {
 		return nil, errors.New("secretLocation was empty")
 	}
 
+	if strings.HasPrefix(secret, "~") {
+		secret = strings.Replace(secret, "~", os.Getenv("HOME"), 1)
+	}
 	secretLocation := secret
+
+
+
 	if ! (strings.Contains(secret, "://") || strings.HasPrefix(secret, "/")) {
 		secretLocation = toolbox.URLPathJoin(s.baseDirectory, secret)
 	}
@@ -64,7 +70,7 @@ func (s *Service) GetOrCreate(secret string) (*cred.Config, error) {
 		return nil, errors.New("secret was empty")
 	}
 	result, err := s.GetCredentials(secret)
-	if s.interactive &&  err != nil && Secret(secret).IsLocation() {
+	if err != nil  && s.interactive && Secret(secret).IsLocation() {
 		secretLocation, err := s.Create(secret, "")
 		if err != nil {
 			return nil, err
