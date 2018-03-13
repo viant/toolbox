@@ -97,11 +97,12 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 			arrayIndexPosition := strings.Index(fragment, "[")
 			if arrayIndexPosition != -1 {
 				arrayEndPosition := strings.Index(fragment, "]")
-				arrayIndex := toolbox.AsInt(string(fragment[arrayIndexPosition+1: arrayEndPosition]))
-				index = &arrayIndex
-				fragment = string(fragment[:arrayIndexPosition])
+				if arrayEndPosition > arrayIndexPosition && arrayEndPosition < len(fragment) {
+					arrayIndex := toolbox.AsInt(string(fragment[arrayIndexPosition+1: arrayEndPosition]))
+					index = &arrayIndex
+					fragment = string(fragment[:arrayIndexPosition])
+				}
 			}
-
 			isLast := i+1 == len(fragments)
 
 			hasKey := state.Has(fragment)
