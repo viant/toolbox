@@ -167,7 +167,7 @@ func manageWritesInBatchLoopFlush(s *LogStream, messageCount int, messages strin
 //FileLogger represents a file logger
 type FileLogger struct {
 	config         map[string]*FileLoggerConfig
-	streamMapMutex *sync.Mutex
+	streamMapMutex *sync.RWMutex
 	streams        map[string]*LogStream
 	siginal        chan os.Signal
 }
@@ -216,18 +216,22 @@ func (l *FileLogger) acquireLogStream(messageType string) (*LogStream, error) {
 		return nil, err
 	}
 	fileName := ExpandFileTemplate(config.FileTemplate)
-	l.streamMapMutex.Lock()
-	defer l.streamMapMutex.Unlock()
-	logStream, found := l.streams[fileName]
 
+
+	l.streamMapMutex.RLock()
+	logStream, found := l.streams[fileName]
+	l.streamMapMutex.RUnlock()
 	if found {
 		return logStream, nil
 	}
+
 	logStream, err = l.NewLogStream(fileName, config)
 	if err != nil {
 		return nil, err
 	}
+	l.streamMapMutex.Lock()
 	l.streams[fileName] = logStream
+	l.streamMapMutex.Unlock()
 	return logStream, nil
 }
 
@@ -248,7 +252,7 @@ func (l *FileLogger) Notify(siginal os.Signal) {
 func NewFileLogger(configs ...FileLoggerConfig) (*FileLogger, error) {
 	result := &FileLogger{
 		config:         make(map[string]*FileLoggerConfig),
-		streamMapMutex: &sync.Mutex{},
+		streamMapMutex: &sync.RWMutex{},
 		streams:        make(map[string]*LogStream),
 	}
 
