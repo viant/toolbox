@@ -1,15 +1,15 @@
 package secret
 
 import (
-	"testing"
-	"github.com/viant/toolbox/storage"
-	"github.com/viant/toolbox/cred"
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/cred"
+	"github.com/viant/toolbox/storage"
+	"testing"
 	"time"
-	"errors"
 )
 
 func setupData(baseDirectory string, data map[string]*cred.Config) error {
@@ -130,7 +130,7 @@ func TestService_Expand(t *testing.T) {
 			Credentials: map[SecretKey]Secret{
 				"key": "test",
 			},
-			Expended:"password2",
+			Expended: "password2",
 		},
 	}
 

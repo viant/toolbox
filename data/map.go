@@ -3,14 +3,14 @@ package data
 import (
 	"bytes"
 	"github.com/viant/toolbox"
+	"log"
 	"strings"
 	"time"
 	"unicode"
-	"log"
 )
 
 const (
-	expectVariableStart            = iota
+	expectVariableStart = iota
 	expectVariableName
 	expectFunctionCallEnd
 	expectVariableNameEnclosureEnd
@@ -87,7 +87,7 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 
 	state := *s
 	if string(expr[0:1]) == "{" {
-		expr = expr[1: len(expr)-1]
+		expr = expr[1 : len(expr)-1]
 	}
 
 	if strings.Contains(expr, ".") || strings.HasSuffix(expr, "]") {
@@ -98,7 +98,7 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 			if arrayIndexPosition != -1 {
 				arrayEndPosition := strings.Index(fragment, "]")
 				if arrayEndPosition > arrayIndexPosition && arrayEndPosition < len(fragment) {
-					arrayIndex := toolbox.AsInt(string(fragment[arrayIndexPosition+1: arrayEndPosition]))
+					arrayIndex := toolbox.AsInt(string(fragment[arrayIndexPosition+1 : arrayEndPosition]))
 					index = &arrayIndex
 					fragment = string(fragment[:arrayIndexPosition])
 				}
@@ -207,7 +207,7 @@ func (s *Map) SetValue(expr string, value interface{}) {
 		expr = string(expr[2:])
 	}
 	if string(expr[0:1]) == "{" {
-		expr = expr[1: len(expr)-1]
+		expr = expr[1 : len(expr)-1]
 	}
 	if strings.Contains(expr, ".") {
 		fragments := strings.Split(expr, ".")
@@ -407,7 +407,7 @@ func (s *Map) Expand(source interface{}) interface{} {
 			return s.Expand(toolbox.AsMap(value))
 		} else if toolbox.IsSlice(source) {
 			return s.Expand(toolbox.AsSlice(value))
-		} else if toolbox.IsStruct(value)  {
+		} else if toolbox.IsStruct(value) {
 			return value
 		} else {
 			return s.Expand(toolbox.AsString(value))
@@ -438,14 +438,14 @@ func (s *Map) parseExpression(text string, handler func(expression string, isUDF
 	var result = ""
 	var expectIndexEnd = false
 	for i, r := range text {
-		aChar := string(text[i: i+1])
+		aChar := string(text[i : i+1])
 		var isLast = i+1 == len(text)
 		switch expectToken {
 		case expectVariableStart:
 			if aChar == "$" {
 				variableName += aChar
 				if i+1 < len(text) {
-					nextChar := string(text[i+1: i+2])
+					nextChar := string(text[i+1 : i+2])
 					if nextChar == "{" {
 						expectToken = expectVariableNameEnclosureEnd
 						continue
@@ -461,7 +461,7 @@ func (s *Map) parseExpression(text string, handler func(expression string, isUDF
 				continue
 			}
 			expanded, ok := handler(variableName, false, "")
-			if ! ok {
+			if !ok {
 				continue
 			}
 			if isLast && result == "" {
@@ -476,7 +476,7 @@ func (s *Map) parseExpression(text string, handler func(expression string, isUDF
 				if callNesting == 0 {
 					expanded, ok := handler(variableName, true, callArguments)
 					variableName = ""
-					if ! ok {
+					if !ok {
 						continue
 					}
 					if isLast && result == "" {
@@ -510,7 +510,7 @@ func (s *Map) parseExpression(text string, handler func(expression string, isUDF
 			}
 
 			expanded, ok := handler(variableName, false, "")
-			if ! ok {
+			if !ok {
 				continue
 			}
 			if isLast && result == "" {
@@ -525,7 +525,7 @@ func (s *Map) parseExpression(text string, handler func(expression string, isUDF
 	}
 	if len(variableName) > 0 {
 		expanded, ok := handler(variableName, false, "")
-		if ! ok {
+		if !ok {
 			return nil
 		}
 		if result == "" {
@@ -545,10 +545,10 @@ func (s *Map) evaluateUDF(candidate interface{}, argument string) (interface{}, 
 		return nil, false
 	})
 
-	if ! canExpandAll {
+	if !canExpandAll {
 		return nil, false
 	}
-	udf, ok := candidate.(func(interface{}, Map) (interface{}, error));
+	udf, ok := candidate.(func(interface{}, Map) (interface{}, error))
 	if !ok {
 		return nil, false
 	}
@@ -562,7 +562,7 @@ func (s *Map) evaluateUDF(candidate interface{}, argument string) (interface{}, 
 			}
 		}
 	}
-	evaluated, err := udf(expandedArgument, *s);
+	evaluated, err := udf(expandedArgument, *s)
 	if err == nil {
 		return evaluated, true
 	}
@@ -593,7 +593,7 @@ func (s *Map) expandExpressions(text string) interface{} {
 
 		if isUDF {
 			expandedArgument := s.expandExpressions(argument)
-			if ! toolbox.IsMap(expandedArgument) && ! toolbox.IsSlice(expandedArgument) {
+			if !toolbox.IsMap(expandedArgument) && !toolbox.IsSlice(expandedArgument) {
 				argument = toolbox.AsString(expandedArgument)
 			}
 			return expression + "(" + argument + ")", true

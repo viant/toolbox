@@ -1,8 +1,8 @@
 package data
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func Test_ExtractPath(t *testing.T) {
@@ -13,5 +13,3 @@ func Test_ExtractPath(t *testing.T) {
 	assert.EqualValues(t, "var.z", ExtractPath("->${var.z}"))
 
 }
-
-

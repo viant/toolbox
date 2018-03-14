@@ -1,10 +1,10 @@
 package secret_test
 
 import (
-	"testing"
-	"github.com/viant/toolbox/secret"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox/cred"
+	"github.com/viant/toolbox/secret"
+	"testing"
 )
 
 func TestSecret_IsLocation(t *testing.T) {
@@ -19,8 +19,6 @@ func TestSecret_IsLocation(t *testing.T) {
 	}
 
 }
-
-
 
 func TestSecretKey_IsDynamic(t *testing.T) {
 
@@ -39,10 +37,9 @@ func TestSecretKey_IsDynamic(t *testing.T) {
 
 }
 
-
 func TestSecretKey_Secret(t *testing.T) {
 
-	{	//test user and password secret
+	{ //test user and password secret
 		credConfig := &cred.Config{Username: "abc", Password: "pass"}
 		{
 			key := secret.SecretKey("**key1**")
@@ -54,7 +51,7 @@ func TestSecretKey_Secret(t *testing.T) {
 		}
 	}
 
-	{	//test json secret
+	{ //test json secret
 		credConfig := &cred.Config{Username: "abc", Data: "{}"}
 		{
 			key := secret.SecretKey("**key1**")

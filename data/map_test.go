@@ -1,10 +1,10 @@
 package data
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
 	"testing"
-	"fmt"
 )
 
 func TestMap_GetValue(t *testing.T) {
@@ -214,22 +214,19 @@ func Test_Udf(t *testing.T) {
 		return fmt.Sprintf("%v", s), nil
 	}
 
-
 	var dateOfBirth = func(source interface{}, m Map) (interface{}, error) {
-		if ! toolbox.IsSlice(source) {
+		if !toolbox.IsSlice(source) {
 			return nil, fmt.Errorf("expected slice but had: %T %v", source, source)
 		}
-        return toolbox.NewDateOfBirthrovider().Get(toolbox.NewContext(), toolbox.AsSlice(source)...)
+		return toolbox.NewDateOfBirthrovider().Get(toolbox.NewContext(), toolbox.AsSlice(source)...)
 	}
-
 
 	state := NewMap()
 	state.Put("test", test)
 	state.Put("name", "endly")
 	state.Put("a", "1")
 	state.Put("b", "2")
-	state.Put("Dob",dateOfBirth)
-
+	state.Put("Dob", dateOfBirth)
 
 	{
 		var text = "$Dob([11,2,2,\"yyyy\"])"
@@ -238,7 +235,7 @@ func Test_Udf(t *testing.T) {
 
 	}
 	{
-		state.Put("args", []interface{}{11,2,2,"yyyy"})
+		state.Put("args", []interface{}{11, 2, 2, "yyyy"})
 
 		var text = "$Dob($args)"
 		expanded := state.Expand(text)
@@ -259,7 +256,6 @@ func Test_Udf(t *testing.T) {
 		assert.EqualValues(t, "$xyz(hello endly $abc)", expanded)
 
 	}
-
 
 	{
 		var text = "$test(hello $abc)"
@@ -285,10 +281,5 @@ func Test_Udf(t *testing.T) {
 		assert.EqualValues(t, "zz 1 2a", expanded)
 
 	}
-
-
-
-
-
 
 }

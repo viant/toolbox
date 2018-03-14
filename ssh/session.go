@@ -157,7 +157,7 @@ func (s *multiCommandSession) hasTerminator(input string, terminators ...string)
 		s.escapedShellPrompt = escapeInput(s.shellPrompt)
 	}
 
-	if (s.escapedShellPrompt != "" && strings.HasSuffix(escapedInput, s.escapedShellPrompt) || strings.HasSuffix(input, s.shellPrompt)) {
+	if s.escapedShellPrompt != "" && strings.HasSuffix(escapedInput, s.escapedShellPrompt) || strings.HasSuffix(input, s.shellPrompt) {
 		return true
 	}
 
@@ -287,19 +287,19 @@ func newMultiCommandSession(client *ssh.Client, config *SessionConfig, replayCom
 
 	var ts = toolbox.AsString(time.Now().UnixNano())
 
-	for i := 0;i<3;i++ {//for slow connection, make sure that you have right promot
-		 result.shellPrompt, err = result.Run("PS1=\"\\h:\\u"+ts+"\\$\"", 1000)
-		 if err != nil {
-		 	return nil, err
-		 }
+	for i := 0; i < 3; i++ { //for slow connection, make sure that you have right promot
+		result.shellPrompt, err = result.Run("PS1=\"\\h:\\u"+ts+"\\$\"", 1000)
+		if err != nil {
+			return nil, err
+		}
 		if strings.Contains(result.shellPrompt, ts+"$") {
 			break
 		}
 	}
-	if ! strings.Contains(result.shellPrompt, ts+"$") {
+	if !strings.Contains(result.shellPrompt, ts+"$") {
 		result.shellPrompt = client.User() + ts + "$"
 	}
-	
+
 	if result.closeIfError(err) {
 		return nil, err
 	}

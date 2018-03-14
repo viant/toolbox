@@ -6,11 +6,7 @@ import (
 	"reflect"
 	"testing"
 	"time"
-
 )
-
-
-
 
 func TestConverter(t *testing.T) {
 	converter := toolbox.NewColumnConverter(toolbox.DateFormatToLayout("yyyy-MM-dd hh:mm:ss z"))
@@ -482,9 +478,6 @@ func TestConverter(t *testing.T) {
 
 }
 
-
-
-
 func Test_Converter_SliceToMap(t *testing.T) {
 
 	//KeyValue represents sorted map entry
@@ -499,7 +492,7 @@ func Test_Converter_SliceToMap(t *testing.T) {
 			{Key: "k2", Value: 2},
 		}
 
-		var aMap= make(map[string]interface{})
+		var aMap = make(map[string]interface{})
 		err := converter.AssignConverted(&aMap, slice)
 		assert.Nil(t, err)
 		assert.EqualValues(t, map[string]interface{}{
@@ -513,7 +506,7 @@ func Test_Converter_SliceToMap(t *testing.T) {
 			{"Key": "k1", "Value": 1},
 			{"Key": "k2", "Value": 2},
 		}
-		var aMap= make(map[string]interface{})
+		var aMap = make(map[string]interface{})
 		err := converter.AssignConverted(&aMap, slice)
 		assert.Nil(t, err)
 		assert.EqualValues(t, map[string]interface{}{
@@ -522,8 +515,6 @@ func Test_Converter_SliceToMap(t *testing.T) {
 		}, aMap)
 	}
 }
-
-
 
 func Test_ToTime(t *testing.T) {
 	{

@@ -77,7 +77,7 @@ func TestUpload(t *testing.T) {
 	var path = "/tmp/local/test.txt"
 	toolbox.RemoveFileIfExist(path)
 	exec.Command("rmdir /tmp/local").CombinedOutput()
-	var destination = "scp://localhost:22/" + path
+	var destination = "scp://127.0.0.1/" + path
 
 	service, err := storage.NewServiceForURL(destination, "")
 	assert.Nil(t, err)

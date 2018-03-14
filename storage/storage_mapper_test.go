@@ -17,6 +17,8 @@ func TestTemplateWriter_GenerateStorageCode(t *testing.T) {
 	var destination = path.Join("test", "source")
 	var target = path.Join(parent, "test", "gen", "source.go")
 
+	parent, _ = path.Split(target)
+	toolbox.CreateDirIfNotExist(parent)
 	err := storage.GenerateStorageCode(&storage.StorageMapping{
 		SourceURL:      source,
 		DestinationURI: destination,

@@ -7,6 +7,7 @@ import (
 	"github.com/viant/toolbox/url"
 	"os"
 	"path"
+	"strings"
 	"testing"
 )
 
@@ -51,7 +52,7 @@ func TestNew_DirectoryPath(t *testing.T) {
 	}
 	{
 		var resource = url.NewResource("hter")
-		assert.EqualValues(t, "", resource.DirectoryPath())
+		assert.True(t, strings.HasSuffix(resource.DirectoryPath(), "hter"))
 	}
 }
 
@@ -77,7 +78,6 @@ func TestResource_YamlDecode(t *testing.T) {
 	var resourceData = make(map[string]interface{})
 	err = resource.YAMLDecode(&resourceData)
 	assert.Nil(t, err)
-
 	assert.EqualValues(t, resourceData["a"], 1)
 	assert.EqualValues(t, resourceData["b"], "123")
 
@@ -102,7 +102,7 @@ func TestResource_JsonDecode(t *testing.T) {
 	assert.EqualValues(t, resource.ParsedURL.String(), toolbox.FileSchema+filename)
 
 	var resourceData = make(map[string]interface{})
-	err = resource.JSONDecode(&resourceData)
+	err = resource.Decode(&resourceData)
 	assert.Nil(t, err)
 
 	assert.EqualValues(t, resourceData["a"], 1)

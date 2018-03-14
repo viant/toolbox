@@ -6,8 +6,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"testing"
 	"strings"
+	"testing"
 )
 
 func TestConfig_Load(t *testing.T) {

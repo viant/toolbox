@@ -1,28 +1,25 @@
 package secret
 
 import (
+	"bufio"
+	"errors"
+	"fmt"
+	"golang.org/x/crypto/ssh/terminal"
 	"os"
 	"strings"
-	"fmt"
-	"bufio"
-	"golang.org/x/crypto/ssh/terminal"
 	"syscall"
-	"errors"
 	"time"
-//	"github.com/bgentry/speakeasy"
+	//	"github.com/bgentry/speakeasy"
 )
 
 //ReadingCredentialTimeout represents max time for providing credentials
 var ReadingCredentialTimeout = time.Second * 45
 
-
-
-
-var ReadUserAndPassword = func(timeout time.Duration) (user string, pass string,err  error) {
+var ReadUserAndPassword = func(timeout time.Duration) (user string, pass string, err error) {
 	completed := make(chan bool)
-	var reader = func()  {
+	var reader = func() {
 		defer func() {
-			completed<-true
+			completed <- true
 		}()
 
 		var bytePassword, bytePassword2 []byte
@@ -49,9 +46,9 @@ var ReadUserAndPassword = func(timeout time.Duration) (user string, pass string,
 	}
 	go reader()
 	select {
-		case <-completed:
-		case <-time.After(timeout):
-			err = fmt.Errorf("reading credential timeout")
+	case <-completed:
+	case <-time.After(timeout):
+		err = fmt.Errorf("reading credential timeout")
 	}
 	user = strings.TrimSpace(user)
 	pass = strings.TrimSpace(pass)

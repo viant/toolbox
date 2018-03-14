@@ -102,7 +102,6 @@ func (s *service) Download(object tstorage.Object) (io.ReadCloser, error) {
 		NewReader(ctx)
 }
 
-
 //Upload uploads provided reader content for supplied url.
 func (s *service) Upload(URL string, reader io.Reader) error {
 	parsedUrl, err := url.Parse(URL)

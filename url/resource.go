@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -19,7 +20,7 @@ type Resource struct {
 	Credential      string   `description:"credentials file"`                                          //name of credential file or credential key depending on implementation
 	ParsedURL       *url.URL `json:"-"`                                                                //parsed URL resource
 	Cache           string   `description:"local cache path"`                                          //Cache path for the resource, if specified resource will be cached in the specified path
-	CacheExpiryMs   int                                                                                //CacheExpiryMs expiry time in ms
+	CacheExpiryMs   int      //CacheExpiryMs expiry time in ms
 	modificationTag int64
 	init            bool
 }
@@ -70,9 +71,6 @@ func (r *Resource) CredentialURL(username, password string) string {
 	return result
 }
 
-
-
-
 //Path returns url's path  directory, assumption is that directory does not have extension, if path ends with '/' it is being stripped.
 func (r *Resource) DirectoryPath() string {
 	if r.ParsedURL == nil {
@@ -100,7 +98,6 @@ func (r *Resource) Port() string {
 	}
 	return port
 }
-
 
 //Download downloads data from URL, it returns data as []byte, or error, if resource is cacheable it first look into cache
 func (r *Resource) Download() ([]byte, error) {
@@ -145,8 +142,25 @@ func (r *Resource) DownloadText() (string, error) {
 	return string(result), err
 }
 
+//Decode decodes url's data into target, it support JSON and YAML exp.
+func (r *Resource) Decode(target interface{}) (err error) {
+	defer func() {
+		if err != nil {
+			err = fmt.Errorf("failed to decode: %v, %v", r.URL, err)
+		}
+	}()
+	ext := path.Ext(r.ParsedURL.Path)
+	switch ext {
+	case ".yaml", ".yml":
+		err = r.YAMLDecode(target)
+	default:
+		err = r.JSONDecode(target)
+	}
+	return err
+}
+
 //Decode decodes url's data into target, it takes decoderFactory which decodes data into target
-func (r *Resource) Decode(target interface{}, decoderFactory toolbox.DecoderFactory) error {
+func (r *Resource) DecodeWith(target interface{}, decoderFactory toolbox.DecoderFactory) error {
 	if r == nil {
 		return fmt.Errorf("fail to %T decode on empty resource", decoderFactory)
 	}
@@ -170,12 +184,25 @@ func (r *Resource) Rename(name string) (err error) {
 
 //JSONDecode decodes json resource into target
 func (r *Resource) JSONDecode(target interface{}) error {
-	return r.Decode(target, toolbox.NewJSONDecoderFactory())
+	return r.DecodeWith(target, toolbox.NewJSONDecoderFactory())
 }
 
 //JSONDecode decodes yaml resource into target
 func (r *Resource) YAMLDecode(target interface{}) error {
-	return r.Decode(target, toolbox.NewYamlDecoderFactory())
+	var mapSlice = yaml.MapSlice{}
+	if err := r.DecodeWith(&mapSlice, toolbox.NewYamlDecoderFactory()); err != nil {
+		return err
+	}
+	if !toolbox.IsMap(target) {
+		converter := toolbox.NewColumnConverter(toolbox.DefaultDateLayout)
+		return converter.AssignConverted(target, mapSlice)
+
+	}
+	resultMap := toolbox.AsMap(target)
+	for _, v := range mapSlice {
+		resultMap[toolbox.AsString(v.Key)] = v.Value
+	}
+	return nil
 }
 
 func (r *Resource) readFromCache() []byte {
@@ -280,8 +307,6 @@ func (r *Resource) Init() (err error) {
 	r.ParsedURL, err = url.Parse(r.URL)
 	return err
 }
-
-
 
 //NewResource returns a new resource for provided URL, followed by optional credential, cache and cache expiryMs.
 func NewResource(Params ...interface{}) *Resource {

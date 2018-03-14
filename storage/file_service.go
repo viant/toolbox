@@ -17,8 +17,6 @@ var fileMode os.FileMode = 0644
 //Service represents abstract way to accessing local or remote storage
 type fileStorageService struct{}
 
-
-
 //List returns a list of object for supplied url
 func (s *fileStorageService) List(URL string) ([]Object, error) {
 	file, err := toolbox.OpenFile(URL)
@@ -72,7 +70,7 @@ func (s *fileStorageService) Close() error {
 
 //Object returns a Object for supplied url
 func (s *fileStorageService) StorageObject(URL string) (Object, error) {
-	file, err :=  toolbox.OpenFile(URL)
+	file, err := toolbox.OpenFile(URL)
 	if err != nil {
 		return nil, err
 	}

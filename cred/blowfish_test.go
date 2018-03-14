@@ -45,7 +45,5 @@ func TestNewBlowfishCipher(t *testing.T) {
 			assert.Equal(t, secret, string(decrypted))
 		}
 
-
-
 	}
 }

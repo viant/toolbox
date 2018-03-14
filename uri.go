@@ -120,7 +120,7 @@ func URLSplit(URL string) (string, string) {
 
 //Filename reformat file name
 func Filename(filename string) string {
-	if strings.Contains(filename, "://") {
+	if strings.Contains(filename, ":/") {
 		if parsed, err := url.Parse(filename); err == nil {
 			filename = parsed.Path
 		}

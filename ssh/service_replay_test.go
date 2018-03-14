@@ -10,12 +10,13 @@ import (
 
 func Test_NewReplayService(t *testing.T) {
 
-	fileName, _, _ := toolbox.CallerInfo(2)
-	parent, _ := path.Split(fileName)
+	parent := toolbox.CallerDirectory(3)
 	commands, err := ssh.NewReplayCommands(path.Join(parent, "test/ls"))
 	assert.Nil(t, err)
 	err = commands.Load()
-
+	if !assert.Nil(t, err) {
+		return
+	}
 	assert.Equal(t, 3, len(commands.Commands))
 
 	assert.Nil(t, err)

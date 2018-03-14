@@ -77,16 +77,14 @@ func readAll(pathTemplate string, provider func() interface{}) ([]interface{}, e
 	return result, nil
 }
 
-
 //StartRecordingBridge start recording bridge proxy
-func StartRecordingBridge(port string, outputDirectory string, routes ... *HttpBridgeProxyRoute) (*HttpBridge, error)  {
+func StartRecordingBridge(port string, outputDirectory string, routes ...*HttpBridgeProxyRoute) (*HttpBridge, error) {
 
 	if len(routes) == 0 {
 		routes = append(routes, &HttpBridgeProxyRoute{
-			Pattern:          "/",
+			Pattern: "/",
 		})
 	}
-
 
 	config := &HttpBridgeConfig{
 		Endpoint: &HttpBridgeEndpointConfig{
@@ -99,10 +97,9 @@ func StartRecordingBridge(port string, outputDirectory string, routes ... *HttpB
 		Routes: routes,
 	}
 
-	for _, route:= range routes {
+	for _, route := range routes {
 		route.Listener = HttpFileRecorder(outputDirectory, false)
 	}
-
 
 	httpBridge, err := NewHttpBridge(config, NewProxyRecordingHandler)
 	if err != nil {

@@ -29,14 +29,15 @@ func urlPath(URL string) string {
 	return result
 }
 
-
-
 func copyStorageContent(sourceService Service, sourceURL string, destinationService Service, destinationURL string, modifyContentHandler ModificationHandler, subPath string, copyHandler CopyHandler) error {
 	sourceListURL := sourceURL
 	if subPath != "" {
 		sourceListURL = toolbox.URLPathJoin(sourceURL, subPath)
 	}
 	objects, err := sourceService.List(sourceListURL)
+	if err != nil {
+		return err
+	}
 	var objectRelativePath string
 	sourceURLPath := urlPath(sourceURL)
 	for _, object := range objects {
@@ -60,7 +61,9 @@ func copyStorageContent(sourceService Service, sourceURL string, destinationServ
 		if objectRelativePath != "" {
 			destinationObjectURL = toolbox.URLPathJoin(destinationURL, objectRelativePath)
 		}
+
 		if object.IsContent() {
+
 			reader, err := sourceService.Download(object)
 			if err != nil {
 				err = fmt.Errorf("unable download, %v -> %v, %v", object.URL(), destinationObjectURL, err)

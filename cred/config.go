@@ -6,16 +6,16 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"github.com/viant/toolbox"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/jwt"
 	"gopkg.in/yaml.v2"
+	"io"
 	"io/ioutil"
 	"os"
 	"path"
 	"strings"
-	"io"
-	"github.com/viant/toolbox"
 )
 
 var sshKeyFileCandidates = []string{"/.ssh/id_rsa", "/.ssh/id_dsa"}
@@ -40,12 +40,10 @@ type Config struct {
 	PrivateKeyID string `json:"private_key_id,omitempty"`
 
 	//JSON string for this secret
-	Data string `json:",omitempty"`
+	Data            string `json:",omitempty"`
 	sshClientConfig *ssh.ClientConfig
 	jwtClientConfig *jwt.Config
 }
-
-
 
 func (c *Config) Load(filename string) error {
 	reader, err := toolbox.OpenFile(filename)
@@ -56,8 +54,6 @@ func (c *Config) Load(filename string) error {
 	ext := path.Ext(filename)
 	return c.LoadFromReader(reader, ext)
 }
-
-
 
 func (c *Config) LoadFromReader(reader io.Reader, ext string) error {
 	if strings.Contains(ext, "yaml") || strings.Contains(ext, "yml") {
@@ -98,8 +94,6 @@ func (c *Config) Save(filename string) error {
 	return c.Write(file)
 }
 
-
-
 func (c *Config) Write(writer io.Writer) error {
 	var password = c.Password
 	defer func() { c.Password = password }()
@@ -109,8 +103,6 @@ func (c *Config) Write(writer io.Writer) error {
 	}
 	return json.NewEncoder(writer).Encode(c)
 }
-
-
 
 func (c *Config) encryptPassword(password string) {
 	encrypted := PasswordCipher.Encrypt([]byte(password))
@@ -141,7 +133,6 @@ func (c *Config) applyDefaultIfNeeded() {
 		}
 	}
 }
-
 
 //IsKeyEncrypted checks if supplied key content is encrypyed by password
 func IsKeyEncrypted(keyPath string) bool {

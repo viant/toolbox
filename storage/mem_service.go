@@ -180,8 +180,8 @@ func (s *memoryStorageService) Upload(URL string, reader io.Reader) error {
 		pathFragment := pathFragments[i]
 		if subFolder, ok := node.folders[pathFragment]; ok {
 			node = subFolder
-		} else  {
-			var folderURL =  MemoryProviderScheme + "://" + strings.Join(pathFragments[:i+1], "/")
+		} else {
+			var folderURL = MemoryProviderScheme + "://" + strings.Join(pathFragments[:i+1], "/")
 			var folderInfo = NewFileInfo(pathFragment, 102, folderMode, time.Now(), true)
 			newFolder := newMemoryFolder(folderURL, folderInfo)
 			node.mutext.Lock()
@@ -190,7 +190,6 @@ func (s *memoryStorageService) Upload(URL string, reader io.Reader) error {
 			node = newFolder
 		}
 	}
-
 
 	var pathLeaf = pathFragments[len(pathFragments)-1]
 	fileInfo := NewFileInfo(pathLeaf, int64(len(content)), fileMode, time.Now(), false)

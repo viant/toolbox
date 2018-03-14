@@ -866,10 +866,21 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		}
 
 	} else if targetIndirectValue.Kind() == reflect.Struct {
-		inputMap := AsMap(source)
-		if inputMap != nil {
-			err := c.assignConvertedStruct(target, inputMap, targetIndirectValue, targetIndirectPointerType)
-			return err
+		if IsSlice(source) {
+			var aMap = make(map[string]interface{})
+			if err := c.AssignConverted(&aMap, source); err == nil {
+				source = aMap
+			}
+		}
+
+		if IsMap(source) {
+			sourceMap := AsMap(source)
+			if sourceMap != nil {
+				err := c.assignConvertedStruct(target, sourceMap, targetIndirectValue, targetIndirectPointerType)
+				return err
+			}
+		} else {
+			return fmt.Errorf("unable to convert %T to %T", source, target)
 		}
 
 	} else if targetIndirectPointerType.Kind() == reflect.Struct {
@@ -943,7 +954,7 @@ func (c *Converter) assignConvertedStructSliceToMap(target, source interface{}) 
 		}
 		item = reflect.ValueOf(DereferenceValue(item)).Convert(keyValueType).Interface()
 		pair, ok := item.(keyValue)
-		if ! ok {
+		if !ok {
 			return true
 		}
 
@@ -979,6 +990,23 @@ func (c *Converter) assignConvertedStructSliceToMap(target, source interface{}) 
 	return err
 }
 
+//entryMapToKeyValue converts entry map into map
+func entryMapToKeyValue(entryMap map[string]interface{}) (key string, value interface{}, err error) {
+	if len(entryMap) != 2 {
+		return key, value, fmt.Errorf("map entry needs to have 2 elements but had: %v, %v", len(entryMap), entryMap)
+	}
+	for k, v := range entryMap {
+		if strings.ToLower(k) == "key" {
+			key = AsString(v)
+			continue
+		}
+		value = v
+	}
+	if key == "" {
+		return key, value, fmt.Errorf("key is required in entryMap %v", entryMap)
+	}
+	return key, value, nil
+}
 
 func (c *Converter) assignConvertedMapSliceToMap(target, source interface{}) (err error) {
 	mapType := DiscoverTypeByKind(target, reflect.Map)
@@ -991,21 +1019,10 @@ func (c *Converter) assignConvertedMapSliceToMap(target, source interface{}) (er
 		if item == nil {
 			return true
 		}
-		itemMap := AsMap(item)
-		if len(itemMap) != 2 {
-			err = fmt.Errorf("unable to convert %T to %T", source, target)
-			return false
-		}
-		var key, value interface{}
-		for k, v := range itemMap {
-			if strings.ToLower(k) == "key" {
-				key = v
-			} else if strings.ToLower(k) == "value" {
-				value = v
-			}
-		}
-		if key == nil || value == nil {
-			err = fmt.Errorf("unable to convert %T to %T", source, target)
+		entryMap := AsMap(item)
+		key, value, err := entryMapToKeyValue(entryMap)
+		if err != nil {
+			err = fmt.Errorf("unable to case %T to %T", source, target)
 			return false
 		}
 		targetMapValuePointer := reflect.New(mapValueType)
@@ -1039,7 +1056,6 @@ func (c *Converter) assignConvertedMapSliceToMap(target, source interface{}) (er
 	})
 	return err
 }
-
 
 func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sourceValue reflect.Value) error {
 	if source == nil || !sourceValue.IsValid() {

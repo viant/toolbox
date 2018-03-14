@@ -187,7 +187,6 @@ func (s *httpStorageService) Download(object Object) (io.ReadCloser, error) {
 	return response.Body, err
 }
 
-
 //Upload uploads provided reader content for supplied url.
 func (s *httpStorageService) Upload(URL string, reader io.Reader) error {
 	return errors.New("unsupported")

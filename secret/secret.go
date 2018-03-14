@@ -1,26 +1,25 @@
 package secret
 
 import (
-	"strings"
-	"github.com/viant/toolbox/cred"
 	"fmt"
+	"github.com/viant/toolbox/cred"
+	"strings"
 )
 
 //Secrets represents credentials secret map
 type Secrets map[SecretKey]Secret
 
 //NewSecrets creates new secrets
-func NewSecrets(secrets  map[string]string) Secrets {
+func NewSecrets(secrets map[string]string) Secrets {
 	var result = make(map[SecretKey]Secret)
 	if len(secrets) == 0 {
 		return result
 	}
-	for k, v:= range secrets {
-		result[SecretKey(k)]=Secret(v)
+	for k, v := range secrets {
+		result[SecretKey(k)] = Secret(v)
 	}
 	return result
 }
-
 
 /**
 SecretKey represent secret key
@@ -41,7 +40,7 @@ The secret key can be static or dynamic. The first type is already enclosed with
 In the command corresponding dynamic key can be enclosed with the following
 '**' for password expansion  i.e.  command: **git** will expand to password from  git secret key
 '##' for username expansion  i.e.  command: ##git## will expand to username from  git secret key
- */
+*/
 type SecretKey string
 
 //IsDynamic returns true if key is dynamic
@@ -65,7 +64,6 @@ func (s SecretKey) Secret(cred *cred.Config) string {
 	return cred.Data
 }
 
-
 //Keys expands to statics keys
 func (s SecretKey) Keys() []SecretKey {
 	var key = s.String()
@@ -81,5 +79,5 @@ type Secret string
 
 //IsLocation returns true if secret is a location
 func (s Secret) IsLocation() bool {
-	return ! strings.ContainsAny(string(s), "{}[]=+()@#^&*|")
+	return !strings.ContainsAny(string(s), "{}[]=+()@#^&*|")
 }

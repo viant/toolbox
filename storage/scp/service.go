@@ -177,6 +177,9 @@ func (s *service) Download(object storage.Object) (io.ReadCloser, error) {
 	}
 
 	service, err := s.getService(parsedURL)
+	if err != nil {
+		return nil, err
+	}
 	content, err := service.Download(parsedURL.Path)
 	if err != nil {
 		return nil, err

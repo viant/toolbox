@@ -2,11 +2,11 @@ package storage_test
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
 	"io/ioutil"
 	"strings"
 	"testing"
-	"github.com/viant/toolbox"
 )
 
 func Test_NewMemoryService(t *testing.T) {
@@ -114,8 +114,6 @@ func TestMemCopy(t *testing.T) {
 	err := storage.Copy(service, sourceURL, service, targetURL, nil, nil)
 	assert.Nil(t, err)
 
-
-
 	for k, v := range files {
 		k = strings.Replace(k, "mem:///test/", "mem:///target/", 1)
 
@@ -131,7 +129,5 @@ func TestMemCopy(t *testing.T) {
 			}
 		}
 	}
-
-
 
 }

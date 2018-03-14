@@ -217,7 +217,6 @@ func (l *FileLogger) acquireLogStream(messageType string) (*LogStream, error) {
 	}
 	fileName := ExpandFileTemplate(config.FileTemplate)
 
-
 	l.streamMapMutex.RLock()
 	logStream, found := l.streams[fileName]
 	l.streamMapMutex.RUnlock()

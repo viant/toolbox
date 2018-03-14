@@ -100,7 +100,6 @@ func NewHttpBridge(config *HttpBridgeConfig, factory HttpBridgeProxyHandlerFacto
 	}, nil
 }
 
-
 type handlerWrapper struct {
 	Handler http.Handler
 }

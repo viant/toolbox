@@ -16,5 +16,5 @@ type Config struct {
 func NewConfig(URL string) (*Config, error) {
 	var result = &Config{}
 	resource := url.NewResource(URL)
-	return result, resource.JSONDecode(result)
+	return result, resource.Decode(result)
 }

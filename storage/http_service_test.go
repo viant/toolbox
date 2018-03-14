@@ -29,5 +29,4 @@ func TestNewHttpStorageService(t *testing.T) {
 
 	}
 
-
 }

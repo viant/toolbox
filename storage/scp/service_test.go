@@ -31,7 +31,6 @@ func TestService_List(t *testing.T) {
 func TestService_Delete(t *testing.T) {
 
 	service := scp.NewService(nil)
-
 	assert.NotNil(t, service)
 
 	err := service.Upload("scp://127.0.0.1//tmp/file.txt", strings.NewReader("this is test"))
@@ -45,14 +44,13 @@ func TestService_Delete(t *testing.T) {
 	assert.Nil(t, err)
 
 	reader, err := service.Download(object)
-	if assert.Nil(t, err) {
+	if err == nil {
 		defer reader.Close()
 		content, err := ioutil.ReadAll(reader)
 		assert.Nil(t, err)
 		assert.Equal(t, "this is test", string(content))
+		err = service.Delete(object)
+		assert.Nil(t, nil)
 	}
-
-	err = service.Delete(object)
-	assert.Nil(t, err)
 
 }

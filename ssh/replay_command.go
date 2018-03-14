@@ -115,20 +115,23 @@ func (c *ReplayCommands) Load() error {
 	var stdoutMap = make(map[string]string)
 
 	for _, candidate := range files {
+		ext := path.Ext(candidate.Name())
 		var contentMap map[string]string
-		if strings.HasSuffix(candidate.Name(), ".stdin") {
+		if ext == ".stdin" {
 			contentMap = stdinMap
-		} else if strings.HasSuffix(candidate.Name(), ".stdout") {
+		} else if ext == ".stdout" {
 			contentMap = stdoutMap
 		} else {
 			continue
 		}
-		content, err := ioutil.ReadFile(path.Join(c.BaseDir, candidate.Name()))
+		var filename = path.Join(c.BaseDir, candidate.Name())
+		content, err := ioutil.ReadFile(filename)
 		if err != nil {
 			return nil
 		}
 		contentMap[candidate.Name()] = string(content)
 	}
+
 	for key, stdin := range stdinMap {
 		var prefix = key[:len(key)-10]
 		var candidateKeys = toolbox.MapKeysToStringSlice(stdoutMap)

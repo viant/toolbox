@@ -1,17 +1,17 @@
 package secret
 
 import (
-	"strings"
-	"github.com/viant/toolbox/cred"
-	"sync"
-	"fmt"
 	"bytes"
-	"path"
 	"errors"
-	"github.com/viant/toolbox/url"
+	"fmt"
 	"github.com/viant/toolbox"
-	"os"
+	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/storage"
+	"github.com/viant/toolbox/url"
+	"os"
+	"path"
+	"strings"
+	"sync"
 )
 
 //represents a secret service
@@ -33,9 +33,7 @@ func (s *Service) credentials(secret string) (*cred.Config, error) {
 	}
 	secretLocation := secret
 
-
-
-	if ! (strings.Contains(secret, "://") || strings.HasPrefix(secret, "/")) {
+	if !(strings.Contains(secret, "://") || strings.HasPrefix(secret, "/")) {
 		secretLocation = toolbox.URLPathJoin(s.baseDirectory, secret)
 	}
 	if path.Ext(secretLocation) == "" {
@@ -63,14 +61,13 @@ func (s *Service) credentials(secret string) (*cred.Config, error) {
 	return credConfig, nil
 }
 
-
 //GetOrCreate gets or creates credential
 func (s *Service) GetOrCreate(secret string) (*cred.Config, error) {
 	if secret == "" {
 		return nil, errors.New("secret was empty")
 	}
 	result, err := s.GetCredentials(secret)
-	if err != nil  && s.interactive && Secret(secret).IsLocation() {
+	if err != nil && s.interactive && Secret(secret).IsLocation() {
 		secretLocation, err := s.Create(secret, "")
 		if err != nil {
 			return nil, err
@@ -80,21 +77,20 @@ func (s *Service) GetOrCreate(secret string) (*cred.Config, error) {
 	return result, err
 }
 
-
 //Credential returns credential config
 func (s *Service) GetCredentials(secret string) (*cred.Config, error) {
-	if ! Secret(secret).IsLocation() {
+	if !Secret(secret).IsLocation() {
 		var result = &cred.Config{Data: string(secret)}
 		//try to load credential
 		result.LoadFromReader(strings.NewReader(string(secret)), "")
 		return result, nil
 	}
 	secretLocation := string(secret)
-	return s.credentials(secretLocation);
+	return s.credentials(secretLocation)
 }
 
 func (s *Service) expandDynamicSecret(input string, key SecretKey, secret Secret) (string, error) {
-	if ! strings.Contains(input, key.String()) {
+	if !strings.Contains(input, key.String()) {
 		return input, nil
 	}
 	var err error
@@ -136,7 +132,6 @@ func (s *Service) Expand(input string, credentials map[SecretKey]Secret) (string
 	return input, nil
 }
 
-
 //Create creates a new credential config for supplied name
 func (s *Service) Create(name, privateKeyPath string) (string, error) {
 	if strings.HasPrefix(privateKeyPath, "~") {
@@ -168,8 +163,6 @@ func (s *Service) Create(name, privateKeyPath string) (string, error) {
 	err = storageService.Upload(secretResource.URL, buf)
 	return secretResource.URL, err
 }
-
-
 
 //NewSecretService creates a new secret service
 func New(baseDirectory string, interactive bool) *Service {
