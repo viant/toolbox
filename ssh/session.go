@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+	"sync"
 )
 
 //ErrTerminated - command session terminated
@@ -21,7 +22,7 @@ const defaultShell = "/bin/bash"
 const (
 	drainTimeoutMs       = 10
 	defaultTimeoutMs     = 5000
-	initTimeoutMs        = 1000
+	initTimeoutMs        = 200
 	defaultTickFrequency = 100
 )
 
@@ -113,16 +114,26 @@ func (s *multiCommandSession) start(shell string) (output string, err error) {
 	if err != nil {
 		return "", err
 	}
-	go s.copy(reader, s.stdOutput)
-
 	errReader, err = s.session.StderrPipe()
 	if err != nil {
 		return "", err
 	}
-	go s.copy(errReader, s.stdError)
+
+	waitGroup := sync.WaitGroup{}
+	waitGroup.Add(2)
+	go func(){
+		waitGroup.Done()
+		s.copy(reader, s.stdOutput)
+	}()
+	go func() {
+		waitGroup.Done()
+		s.copy(errReader, s.stdError)
+	}()
+
 	if shell == "" {
 		shell = defaultShell
 	}
+	waitGroup.Wait()
 	err = s.session.Start(shell)
 	if err != nil {
 		return "", err
@@ -331,17 +342,18 @@ func (s *multiCommandSession) shellInit() (err error) {
 			return err
 		}
 	}
+
 	var ts = toolbox.AsString(time.Now().UnixNano())
 	s.promptSequence = "PS1=\"\\h:\\u" + ts + "\\$\""
 	s.shellPrompt = ""
 	s.escapedShellPrompt = ""
-
-	for i := 0; i < 3; i++ { //for slow connection, make sure that you have right promot
-		s.shellPrompt, err = s.Run(s.promptSequence, nil, initTimeoutMs)
+	for i := 1; i < 10; i++ { //for slow connection, make sure that you have right promot
+		s.shellPrompt, err = s.Run(s.promptSequence, nil, i * initTimeoutMs)
 		if err != nil {
 			return err
 		}
 		if strings.Contains(s.shellPrompt, ts+"$") {
+			fmt.Printf("has shell %v\n", i)
 			break
 		}
 	}
@@ -352,7 +364,7 @@ func (s *multiCommandSession) shellInit() (err error) {
 		return err
 	}
 	s.escapedShellPrompt = escapeInput(s.shellPrompt)
-	s.system, err = s.Run("uname -s", nil, initTimeoutMs)
+	s.system, err = s.Run("uname -s", nil, defaultTimeoutMs)
 	s.system = strings.ToLower(s.system)
 	return nil
 }
@@ -390,9 +402,7 @@ func (s *multiCommandSession) init() (err error) {
 	if s.closeIfError(err) {
 		return err
 	}
-
 	return s.shellInit()
-
 }
 
 func newMultiCommandSession(service *service, config *SessionConfig, replayCommands *ReplayCommands, recordSession bool) (MultiCommandSession, error) {
