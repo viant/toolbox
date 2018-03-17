@@ -32,10 +32,10 @@ func (s *Service) credentials(secret string) (*cred.Config, error) {
 	}
 	secretLocation := secret
 
-	if ! strings.Contains(secret, "/") {
+	if !strings.Contains(secret, "/") {
 		secretLocation = toolbox.URLPathJoin(s.baseDirectory, secret)
-	} else 	if !(strings.Contains(secret, "://") || strings.HasPrefix(secret, "/")) {
-		if currentDirectory, err := os.Getwd();err == nil {
+	} else if !(strings.Contains(secret, "://") || strings.HasPrefix(secret, "/")) {
+		if currentDirectory, err := os.Getwd(); err == nil {
 			secretLocation = toolbox.URLPathJoin(currentDirectory, secret)
 		}
 	}

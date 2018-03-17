@@ -197,7 +197,6 @@ func TestService_Create(t *testing.T) {
 
 }
 
-
 func TestSecret_IsLocation(t *testing.T) {
 	secret := Secret("mem://github.com/viant/endly/workflow/docker/build/secret/build.json")
 	assert.True(t, secret.IsLocation())
