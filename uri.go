@@ -78,17 +78,29 @@ func ExtractURIParameters(templateURI, requestURI string) (map[string]string, bo
 	return uriParameters, matched
 }
 
+//URLStripPath removes path from URL
+func URLStripPath(URL string) string {
+	protoIndex := strings.Index(URL, "://")
+	if protoIndex != -1 {
+		pathIndex := strings.Index(string(URL[protoIndex+3:]), "/")
+		if pathIndex != -1 {
+			return string(URL[:protoIndex+3+pathIndex])
+		}
+	}
+	return URL
+}
+
+//URLPathJoin joins URL paths
 func URLPathJoin(baseURL, path string) string {
 	if path == "" {
 		return baseURL
 	}
-	if strings.HasSuffix(baseURL, "/") {
-		return baseURL + path
+	if strings.HasPrefix(path, "/") {
+		return URLStripPath(baseURL) + path
 	}
-	if !strings.HasPrefix(path, "/") {
-		path = "/" + path
+	if !strings.HasSuffix(baseURL, "/") {
+		baseURL += "/"
 	}
-
 	return baseURL + path
 }
 

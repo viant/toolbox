@@ -72,11 +72,39 @@ func TestURLBase(t *testing.T) {
 
 }
 
-func TestURLSploy(t *testing.T) {
+func TestURLSplit(t *testing.T) {
 
-	URL := "http://github.com/abc/trter/rds"
-	parentURL, resource := toolbox.URLSplit(URL)
-	assert.Equal(t, "http://github.com/abc/trter", parentURL)
-	assert.Equal(t, "rds", resource)
+	{
+		URL := "http://github.com/abc/trter/rds"
+		parentURL, resource := toolbox.URLSplit(URL)
+		assert.Equal(t, "http://github.com/abc/trter", parentURL)
+		assert.Equal(t, "rds", resource)
+	}
+}
 
+func TestURLStripPath(t *testing.T) {
+	{
+		URL := "http://github.com/abc"
+		assert.EqualValues(t, "http://github.com", toolbox.URLStripPath(URL))
+	}
+	{
+		URL := "http://github.com"
+		assert.EqualValues(t, "http://github.com", toolbox.URLStripPath(URL))
+	}
+}
+
+func TestURLPathJoin(t *testing.T) {
+
+	{
+		URL := "http://github.com/abc"
+		assert.EqualValues(t, "http://github.com/abc/path/a.txt", toolbox.URLPathJoin(URL, "path/a.txt"))
+	}
+	{
+		URL := "http://github.com/abc/"
+		assert.EqualValues(t, "http://github.com/abc/path/a.txt", toolbox.URLPathJoin(URL, "path/a.txt"))
+	}
+	{
+		URL := "http://github.com/abc/"
+		assert.EqualValues(t, "http://github.com/a.txt", toolbox.URLPathJoin(URL, "/a.txt"))
+	}
 }
