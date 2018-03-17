@@ -13,10 +13,11 @@ type replayMultiCommandSession struct {
 	replay      *ReplayCommands
 }
 
-func (s *replayMultiCommandSession) Run(command string, timeoutMs int, terminators ...string) (string, error) {
+func (s *replayMultiCommandSession) Run(command string, listener Listener, timeoutMs int, terminators ...string) (string, error) {
 	if !strings.HasSuffix(command, "\n") {
 		command = command + "\n"
 	}
+
 	replay, ok := s.replay.Commands[command]
 	if !ok {
 		return commandNotFound, nil
@@ -25,6 +26,10 @@ func (s *replayMultiCommandSession) Run(command string, timeoutMs int, terminato
 		return "", errors.New(replay.Error)
 	}
 	return s.replay.Next(command), nil
+}
+
+func (s *replayMultiCommandSession) Reconnect() error {
+	return errors.New("unsupported")
 }
 
 func (s *replayMultiCommandSession) ShellPrompt() string {

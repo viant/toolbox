@@ -49,10 +49,12 @@ type Service interface {
 
 //service represnt SSH service
 type service struct {
+	host string
 	client         *ssh.Client
 	forwarding     []*Tunnel
 	replayCommands *ReplayCommands
 	recordSession  bool
+	config *ssh.ClientConfig
 }
 
 //Service returns undelying ssh Service
@@ -67,7 +69,7 @@ func (c *service) NewSession() (*ssh.Session, error) {
 
 //MultiCommandSession create a new MultiCommandSession
 func (c *service) OpenMultiCommandSession(config *SessionConfig) (MultiCommandSession, error) {
-	return newMultiCommandSession(c.client, config, c.replayCommands, c.recordSession)
+	return newMultiCommandSession(c, config, c.replayCommands, c.recordSession)
 }
 
 func (c *service) Run(command string) error {
@@ -186,6 +188,11 @@ func (c *service) Download(source string) ([]byte, error) {
 	return session.Output(fmt.Sprintf("cat %s", source))
 }
 
+//Host returns client host
+func (c *service) Host() string {
+	return c.host
+}
+
 //Close closes service
 func (c *service) Close() error {
 	if len(c.forwarding) > 0 {
@@ -194,6 +201,11 @@ func (c *service) Close() error {
 		}
 	}
 	return c.client.Close()
+}
+
+//Reconnect client
+func (c *service) Reconnect() error {
+	return c.connect()
 }
 
 //OpenTunnel tunnels data between localAddress and remoteAddress on ssh connection
@@ -211,6 +223,15 @@ func (c *service) OpenTunnel(localAddress, remoteAddress string) error {
 	return nil
 }
 
+
+
+func (c *service) connect() (err error) {
+	if c.client, err = ssh.Dial("tcp", c.host, c.config); err != nil {
+		return fmt.Errorf("failed to dial %v: %s", c.host, err)
+	}
+	return nil
+}
+
 //NewService create a new ssh service, it takes host port and authentication config
 func NewService(host string, port int, authConfig *cred.Config) (Service, error) {
 	if authConfig == nil {
@@ -220,12 +241,9 @@ func NewService(host string, port int, authConfig *cred.Config) (Service, error)
 	if err != nil {
 		return nil, err
 	}
-	hostWithPort := fmt.Sprintf("%s:%d", host, port)
-	client, err := ssh.Dial("tcp", hostWithPort, clientConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to dial %v: %s", hostWithPort, err)
+	var result =  &service{
+		host:fmt.Sprintf("%s:%d", host, port),
+		config:clientConfig,
 	}
-	return &service{
-		client: client,
-	}, nil
+	return result, result.connect()
 }

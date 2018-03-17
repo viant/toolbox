@@ -58,6 +58,10 @@ func (s *replayService) NewSession() (*ssh.Session, error) {
 	return &ssh.Session{}, nil
 }
 
+func (s *replayService) Reconnect() error {
+	return errors.New("unsupported")
+}
+
 func (s *replayService) Close() error {
 	return nil
 }
