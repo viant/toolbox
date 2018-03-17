@@ -443,7 +443,6 @@ func (c *Converter) assignConvertedSlice(target, source interface{}, targetIndir
 	sliceType := DiscoverTypeByKind(target, reflect.Slice)
 	slicePointer := reflect.New(sliceType)
 	slice := slicePointer.Elem()
-
 	componentType := DiscoverComponentType(target)
 	var err error
 	ProcessSlice(source, func(item interface{}) bool {
@@ -862,49 +861,29 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 				return c.assignConvertedStructSliceToMap(target, source)
 			} else if componentType.Kind() == reflect.Map {
 				return c.assignConvertedMapSliceToMap(target, source)
+			} else if componentType.Kind() == reflect.Interface {
+				return c.assignConvertedMapSliceToMap(target, source)
 			}
 		}
 
 	} else if targetIndirectValue.Kind() == reflect.Struct {
-		if IsSlice(source) {
-			var aMap = make(map[string]interface{})
-			if err := c.AssignConverted(&aMap, source); err == nil {
-				source = aMap
-			}
-		}
-
-		if IsMap(source) {
-			sourceMap := AsMap(source)
-			if sourceMap != nil {
-				err := c.assignConvertedStruct(target, sourceMap, targetIndirectValue, targetIndirectPointerType)
-				return err
-			}
-		} else {
+		sourceMap, err := ToMap(source)
+		if err != nil {
 			return fmt.Errorf("unable to convert %T to %T", source, target)
 		}
+		return c.assignConvertedStruct(target, sourceMap, targetIndirectValue, targetIndirectPointerType)
 
 	} else if targetIndirectPointerType.Kind() == reflect.Struct {
 		structPointer := reflect.New(targetIndirectPointerType)
-		if IsStruct(source) { //TO DO add struct to struct conversion
-			var sourceMap = make(map[string]interface{})
-			if err := c.AssignConverted(&sourceMap, source); err != nil {
-				return err
-			}
-			source = sourceMap
-		}
-		if !IsMap(source) {
+		inputMap, err := ToMap(source)
+		if err != nil {
 			return fmt.Errorf("unable transfer to %T,  source should be a map but was %T(%v)", target, source, source)
 		}
-
-		inputMap := AsMap(source)
-		if inputMap != nil {
-			err := c.assignConvertedStruct(target, inputMap, structPointer.Elem(), targetIndirectPointerType)
-			if err != nil {
-				return err
-			}
-			targetIndirectValue.Set(structPointer)
-			return nil
+		if err = c.assignConvertedStruct(target, inputMap, structPointer.Elem(), targetIndirectPointerType); err != nil {
+			return err
 		}
+		targetIndirectValue.Set(structPointer)
+		return nil
 
 	}
 
@@ -999,11 +978,15 @@ func entryMapToKeyValue(entryMap map[string]interface{}) (key string, value inte
 		if strings.ToLower(k) == "key" {
 			key = AsString(v)
 			continue
+		} else if strings.ToLower(k) == "value" {
+			value = v
 		}
-		value = v
 	}
 	if key == "" {
 		return key, value, fmt.Errorf("key is required in entryMap %v", entryMap)
+	}
+	if value == nil {
+		return key, value, fmt.Errorf("value is required in entryMap %v", entryMap)
 	}
 	return key, value, nil
 }
@@ -1110,6 +1093,17 @@ func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sou
 func NewColumnConverter(dateLayout string) *Converter {
 	return &Converter{dateLayout, "column"}
 }
+
+//NewConverter create a new converter, that has ability to convert map to struct, it uses keytag to identify source and dest of fields/keys
+func NewConverter(dateLayout, keyTag string) *Converter {
+	if keyTag == "" {
+		keyTag = "name"
+	}
+	return &Converter{dateLayout, keyTag}
+}
+
+//DefaultConverter represents a default data structure converter
+var DefaultConverter = NewConverter("", "name")
 
 //DereferenceValues replaces pointer to its value within a generic  map or slice
 func DereferenceValues(source interface{}) interface{} {
