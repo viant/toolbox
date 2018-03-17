@@ -384,7 +384,6 @@ func ProcessMap(sourceMap interface{}, handler func(key, value interface{}) bool
 	return nil
 }
 
-
 //ToMap converts underlying map/struct/[]KV as map[string]interface{}
 func ToMap(source interface{}) (map[string]interface{}, error) {
 	var result map[string]interface{}
@@ -402,14 +401,14 @@ func ToMap(source interface{}) (map[string]interface{}, error) {
 	}
 	if IsStruct(source) {
 		var result = make(map[string]interface{})
-		if err :=DefaultConverter.AssignConverted(&result, source);err != nil {
+		if err := DefaultConverter.AssignConverted(&result, source); err != nil {
 			return nil, err
 		}
 
 		return result, nil
 	} else if IsSlice(source) {
 		var result = make(map[string]interface{})
-		if err :=DefaultConverter.AssignConverted(&result, source); err != nil {
+		if err := DefaultConverter.AssignConverted(&result, source); err != nil {
 			return nil, err
 		}
 		return result, nil
@@ -417,8 +416,8 @@ func ToMap(source interface{}) (map[string]interface{}, error) {
 	sourceMapValue := reflect.ValueOf(source)
 	mapType := reflect.TypeOf(result)
 	if sourceMapValue.Type().AssignableTo(mapType) {
-		result, ok := sourceMapValue.Convert(mapType).Interface().(map[string]interface{});
-		if ! ok {
+		result, ok := sourceMapValue.Convert(mapType).Interface().(map[string]interface{})
+		if !ok {
 			return nil, fmt.Errorf("unable to convert: %T to %T", source, map[string]interface{}{})
 		}
 		return result, nil
@@ -428,11 +427,9 @@ func ToMap(source interface{}) (map[string]interface{}, error) {
 	return result, nil
 }
 
-
-
 //AsMap converts underlying map as map[string]interface{}
 func AsMap(source interface{}) map[string]interface{} {
-	if result, err := ToMap(source);err == nil {
+	if result, err := ToMap(source); err == nil {
 		return result
 	}
 	return nil
@@ -569,7 +566,6 @@ func MakeReverseStringMap(text string, valueSepartor string, itemSeparator strin
 	return result
 }
 
-
 //DeleteEmptyKeys removes empty keys from map
 func DeleteEmptyKeys(input interface{}) {
 	aMap := AsMap(input)
@@ -577,14 +573,14 @@ func DeleteEmptyKeys(input interface{}) {
 		if v == nil {
 			delete(aMap, k)
 		}
-		if text, ok := v.(string);ok && text == "" {
+		if text, ok := v.(string); ok && text == "" {
 			delete(aMap, k)
 		}
 		if IsMap(v) {
 			DeleteEmptyKeys(v)
 		} else if IsSlice(v) {
 			aSlice := AsSlice(v)
-			for _, item:=range aSlice {
+			for _, item := range aSlice {
 				if IsMap(item) {
 					DeleteEmptyKeys(item)
 				}

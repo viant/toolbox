@@ -183,16 +183,16 @@ func DiscoverTypeByKind(input interface{}, expected reflect.Kind) reflect.Type {
 
 //DiscoverComponentType returns type unwrapped from pointer, slice or map
 func DiscoverComponentType(input interface{}) reflect.Type {
-	value, ok := input.(reflect.Type)
+	valueType, ok := input.(reflect.Type)
 	if !ok {
-		value = reflect.TypeOf(input)
+		valueType = reflect.TypeOf(input)
 	}
-	if value.Kind() == reflect.Ptr {
-		return DiscoverComponentType(value.Elem())
-	} else if value.Kind() == reflect.Slice {
-		return value.Elem()
-	} else if value.Kind() == reflect.Map {
-		return value.Elem()
+	if valueType.Kind() == reflect.Ptr {
+		return DiscoverComponentType(valueType.Elem())
+	} else if valueType.Kind() == reflect.Slice {
+		return valueType.Elem()
+	} else if valueType.Kind() == reflect.Map {
+		return valueType.Elem()
 	}
-	return value
+	return valueType
 }

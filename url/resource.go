@@ -250,7 +250,6 @@ func computeResourceModificationTag(resource *Resource) (int64, error) {
 		if objectResource.ParsedURL.Path == resource.ParsedURL.Path {
 			continue
 		}
-
 		modificationTag, err := computeResourceModificationTag(NewResource(object.URL(), resource.Credential))
 		if err != nil {
 			return 0, err
