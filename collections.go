@@ -384,36 +384,58 @@ func ProcessMap(sourceMap interface{}, handler func(key, value interface{}) bool
 	return nil
 }
 
-//AsMap converts underlying map as map[string]interface{}
-func AsMap(source interface{}) map[string]interface{} {
+
+//ToMap converts underlying map/struct/[]KV as map[string]interface{}
+func ToMap(source interface{}) (map[string]interface{}, error) {
 	var result map[string]interface{}
 	switch candidate := source.(type) {
 	case map[string]interface{}:
-		return candidate
+		return candidate, nil
 	case *map[string]interface{}:
-		return *candidate
+		return *candidate, nil
 	case map[interface{}]interface{}:
 		result = make(map[string]interface{})
 		for k, v := range candidate {
 			result[AsString(k)] = v
 		}
-		return result
+		return result, nil
 	}
 	if IsStruct(source) {
 		var result = make(map[string]interface{})
-		converter := NewColumnConverter(DefaultDateLayout)
-		converter.AssignConverted(&result, source)
-		return result
+		if err :=DefaultConverter.AssignConverted(&result, source);err != nil {
+			return nil, err
+		}
+
+		return result, nil
+	} else if IsSlice(source) {
+		var result = make(map[string]interface{})
+		if err :=DefaultConverter.AssignConverted(&result, source); err != nil {
+			return nil, err
+		}
+		return result, nil
 	}
 	sourceMapValue := reflect.ValueOf(source)
 	mapType := reflect.TypeOf(result)
 	if sourceMapValue.Type().AssignableTo(mapType) {
-		result, _ = sourceMapValue.Convert(mapType).Interface().(map[string]interface{})
-		return result
+		result, ok := sourceMapValue.Convert(mapType).Interface().(map[string]interface{});
+		if ! ok {
+			return nil, fmt.Errorf("unable to convert: %T to %T", source, map[string]interface{}{})
+		}
+		return result, nil
 	}
 	result = make(map[string]interface{})
 	CopyMapEntries(source, result)
-	return result
+	return result, nil
+}
+
+
+
+//AsMap converts underlying map as map[string]interface{}
+func AsMap(source interface{}) map[string]interface{} {
+	if result, err := ToMap(source);err == nil {
+		return result
+	}
+	return nil
 }
 
 //CopyMapEntries appends map entry from source map to target map
@@ -545,6 +567,30 @@ func MakeReverseStringMap(text string, valueSepartor string, itemSeparator strin
 		}
 	}
 	return result
+}
+
+
+//DeleteEmptyKeys removes empty keys from map
+func DeleteEmptyKeys(input interface{}) {
+	aMap := AsMap(input)
+	for k, v := range aMap {
+		if v == nil {
+			delete(aMap, k)
+		}
+		if text, ok := v.(string);ok && text == "" {
+			delete(aMap, k)
+		}
+		if IsMap(v) {
+			DeleteEmptyKeys(v)
+		} else if IsSlice(v) {
+			aSlice := AsSlice(v)
+			for _, item:=range aSlice {
+				if IsMap(item) {
+					DeleteEmptyKeys(item)
+				}
+			}
+		}
+	}
 }
 
 //Pairs returns map for pairs.
