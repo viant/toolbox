@@ -21,7 +21,7 @@ const defaultShell = "/bin/bash"
 const (
 	drainTimeoutMs       = 10
 	defaultTimeoutMs     = 5000
-	initTimeoutMs        = 15000
+	initTimeoutMs        = 1000
 	defaultTickFrequency = 100
 )
 
@@ -30,6 +30,8 @@ type Listener func(stdout string, hasMore bool)
 
 //MultiCommandSession represents a multi command session
 type MultiCommandSession interface {
+
+
 	Run(command string, listener Listener, timeoutMs int, terminators ...string) (string, error)
 
 	ShellPrompt() string
@@ -333,6 +335,7 @@ func (s *multiCommandSession) shellInit() (err error) {
 	s.promptSequence = "PS1=\"\\h:\\u" + ts + "\\$\""
 	s.shellPrompt = ""
 	s.escapedShellPrompt = ""
+
 	for i := 0; i < 3; i++ { //for slow connection, make sure that you have right promot
 		s.shellPrompt, err = s.Run(s.promptSequence, nil, initTimeoutMs)
 		if err != nil {
