@@ -27,14 +27,17 @@ func (s *Service) credentials(secret string) (*cred.Config, error) {
 	if secret == "" {
 		return nil, errors.New("secretLocation was empty")
 	}
-
 	if strings.HasPrefix(secret, "~") {
 		secret = strings.Replace(secret, "~", os.Getenv("HOME"), 1)
 	}
 	secretLocation := secret
 
-	if !(strings.Contains(secret, "://") || strings.HasPrefix(secret, "/")) {
+	if ! strings.Contains(secret, "/") {
 		secretLocation = toolbox.URLPathJoin(s.baseDirectory, secret)
+	} else 	if !(strings.Contains(secret, "://") || strings.HasPrefix(secret, "/")) {
+		if currentDirectory, err := os.Getwd();err == nil {
+			secretLocation = toolbox.URLPathJoin(currentDirectory, secret)
+		}
 	}
 	if path.Ext(secretLocation) == "" {
 		secretLocation += ".json"
@@ -85,8 +88,7 @@ func (s *Service) GetCredentials(secret string) (*cred.Config, error) {
 		result.LoadFromReader(strings.NewReader(string(secret)), "")
 		return result, nil
 	}
-	secretLocation := string(secret)
-	return s.credentials(secretLocation)
+	return s.credentials(secret)
 }
 
 func (s *Service) expandDynamicSecret(input string, key SecretKey, secret Secret) (string, error) {
@@ -137,12 +139,10 @@ func (s *Service) Create(name, privateKeyPath string) (string, error) {
 	if strings.HasPrefix(privateKeyPath, "~") {
 		privateKeyPath = strings.Replace(privateKeyPath, "~", os.Getenv("HOME"), 1)
 	}
-	fmt.Printf("Credentials %v\n", name)
 	username, password, err := ReadUserAndPassword(ReadingCredentialTimeout)
 	if err != nil {
 		return "", err
 	}
-	fmt.Println("")
 	config := &cred.Config{
 		Username: username,
 		Password: password,
