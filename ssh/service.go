@@ -49,12 +49,12 @@ type Service interface {
 
 //service represnt SSH service
 type service struct {
-	host string
+	host           string
 	client         *ssh.Client
 	forwarding     []*Tunnel
 	replayCommands *ReplayCommands
 	recordSession  bool
-	config *ssh.ClientConfig
+	config         *ssh.ClientConfig
 }
 
 //Service returns undelying ssh Service
@@ -223,8 +223,6 @@ func (c *service) OpenTunnel(localAddress, remoteAddress string) error {
 	return nil
 }
 
-
-
 func (c *service) connect() (err error) {
 	if c.client, err = ssh.Dial("tcp", c.host, c.config); err != nil {
 		return fmt.Errorf("failed to dial %v: %s", c.host, err)
@@ -241,9 +239,9 @@ func NewService(host string, port int, authConfig *cred.Config) (Service, error)
 	if err != nil {
 		return nil, err
 	}
-	var result =  &service{
-		host:fmt.Sprintf("%s:%d", host, port),
-		config:clientConfig,
+	var result = &service{
+		host:   fmt.Sprintf("%s:%d", host, port),
+		config: clientConfig,
 	}
 	return result, result.connect()
 }

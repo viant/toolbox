@@ -129,9 +129,6 @@ func (s *multiCommandSession) start(shell string) (output string, err error) {
 	return output, err
 }
 
-
-
-
 //copy copy data from reader to channel
 func (s *multiCommandSession) copy(reader io.Reader, out chan string) {
 	var written int64 = 0
@@ -260,7 +257,7 @@ func (s *multiCommandSession) readResponse(timeoutMs int, listener Listener, ter
 	var errOut string
 	var hasOutput bool
 
-	var waitTimeMs = 0;
+	var waitTimeMs = 0
 	var tickFrequencyMs = defaultTickFrequency
 	if tickFrequencyMs > timeoutMs {
 		tickFrequencyMs = timeoutMs
@@ -316,7 +313,6 @@ outer:
 	return out, hasOutput, err
 }
 
-
 func (s *multiCommandSession) drainStdout() {
 	//read any outstanding output
 	for {
@@ -329,12 +325,12 @@ func (s *multiCommandSession) drainStdout() {
 
 func (s *multiCommandSession) shellInit() (err error) {
 	if s.promptSequence != "" {
-		if _, err =  s.Run( s.promptSequence, nil, initTimeoutMs);err !=nil {
+		if _, err = s.Run(s.promptSequence, nil, initTimeoutMs); err != nil {
 			return err
 		}
 	}
 	var ts = toolbox.AsString(time.Now().UnixNano())
-	s.promptSequence = "PS1=\"\\h:\\u"+ts+"\\$\""
+	s.promptSequence = "PS1=\"\\h:\\u" + ts + "\\$\""
 	s.shellPrompt = ""
 	s.escapedShellPrompt = ""
 	for i := 0; i < 3; i++ { //for slow connection, make sure that you have right promot
@@ -387,8 +383,7 @@ func (s *multiCommandSession) init() (err error) {
 		return err
 	}
 
-
-	_, err = s.start(s.config.Shell);
+	_, err = s.start(s.config.Shell)
 	if s.closeIfError(err) {
 		return err
 	}
