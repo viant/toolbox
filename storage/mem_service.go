@@ -174,6 +174,7 @@ func (s *memoryStorageService) Upload(URL string, reader io.Reader) error {
 	if err != nil {
 		return err
 	}
+
 	var node = s.root
 	var pathFragments = strings.Split(urlPath, "/")
 	for i := 1; i+1 < len(pathFragments); i++ {

@@ -31,6 +31,10 @@ func GenerateStorageCode(mappings ...*StorageMapping) error {
 			return err
 		}
 		defer writer.Close()
+		if strings.Contains(mapping.SourceURL, "selen") {
+			fmt.Printf("!!!!!!!!! %v %v\n\n\n", mapping.SourceURL)
+		}
+
 		destinationURL := "mem://" + mapping.DestinationURI
 		err = copyStorageContent(sourceService, mapping.SourceURL, destinationService, destinationURL, nil, "", handler)
 		if err != nil {

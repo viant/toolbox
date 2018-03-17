@@ -63,7 +63,6 @@ func copyStorageContent(sourceService Service, sourceURL string, destinationServ
 		}
 
 		if object.IsContent() {
-
 			reader, err := sourceService.Download(object)
 			if err != nil {
 				err = fmt.Errorf("unable download, %v -> %v, %v", object.URL(), destinationObjectURL, err)
@@ -94,6 +93,7 @@ func copyStorageContent(sourceService Service, sourceURL string, destinationServ
 					}
 				}
 			}
+
 			err = copyHandler(object, reader, destinationService, destinationObjectURL)
 			if err != nil {
 				return err

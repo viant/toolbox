@@ -3,28 +3,26 @@ package scp
 import (
 	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/storage"
-	"os"
-	"path"
-	"path/filepath"
+	"github.com/viant/toolbox/secret"
 	"strings"
 )
 
+//ProviderScheme represents scp URL scheme for this provider
 const ProviderScheme = "scp"
+//SSHProviderScheme represents ssh URL scheme for this provider
+const SSHProviderScheme = "ssh"
 
 func init() {
 	storage.NewStorageProvider().Registry[ProviderScheme] = serviceProvider
+	storage.NewStorageProvider().Registry[SSHProviderScheme] = serviceProvider
 }
 
-func serviceProvider(credentialFile string) (storage.Service, error) {
+func serviceProvider(credentials string) (storage.Service, error) {
 	var config = &cred.Config{}
-	if credentialFile != "" {
-
-		if !strings.HasPrefix(credentialFile, "/") {
-			dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
-			credentialFile = path.Join(dir, credentialFile)
-		}
+	if strings.TrimSpace(credentials) != "" {
 		var err error
-		config, err = cred.NewConfig(credentialFile)
+		secrets := secret.New("", false)
+		config, err = secrets.GetCredentials(credentials)
 		if err != nil {
 			return nil, err
 		}

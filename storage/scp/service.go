@@ -34,7 +34,7 @@ type service struct {
 func (s *service) runCommand(session ssh.MultiCommandSession, URL string, command string) (string, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	output, _ := session.Run(command, 5000)
+	output, _ := session.Run(command, nil, 5000)
 	var stdout = s.stdout(output)
 	return stdout, nil
 }

@@ -5,12 +5,20 @@ This API provides unified way of accessing any storage system.
 
 It comes with the following implementation so far:
 
-1) Local file system
-2) SCP/SSH
-3) Memory file system
-4) Google Storage
-5) Amazon Web Service S3
-6) HTTP/S
+
+
+<a name="import></a>
+
+
+| URL Scheme | Description | Pacakge |
+|-----|-----|-----|
+|file | Local file system | github.com/viant/toolbox/storage |
+|https | HTTP/s based system | github.com/viant/toolbox/storage |
+|mem | Memory file system | github.com/viant/toolbox/storage |
+|scp | SCP/SSH base systm | github.com/viant/toolbox/storage/scp |
+|s3 |Amazon Web Service S3| github.com/viant/toolbox/storage/aws |
+|gs | Google Storage | github.com/viant/toolbox/storage/gs |
+
 
 
 ```go
@@ -67,7 +75,7 @@ type Object interface {
 
 ```
 
-**Usage** 
+**Usage:** 
 
 
 ```go

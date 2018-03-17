@@ -134,7 +134,7 @@ func NewService() Service {
 }
 
 //NewServiceForURL creates a new storage service for provided URL scheme and optional credential file
-func NewServiceForURL(URL, credentialFile string) (Service, error) {
+func NewServiceForURL(URL, credentials string) (Service, error) {
 	parsedURL, err := url.Parse(URL)
 	if err != nil {
 		return nil, err
@@ -143,10 +143,10 @@ func NewServiceForURL(URL, credentialFile string) (Service, error) {
 	provider := NewStorageProvider().Get(parsedURL.Scheme)
 
 	if provider != nil {
-		if len(credentialFile) > 0 {
-			credentialFile = strings.Replace(credentialFile, "${env.HOME}", os.Getenv("HOME"), 1)
+		if len(credentials) > 0 {
+			credentials = strings.Replace(credentials, "${env.HOME}", os.Getenv("HOME"), 1)
 		}
-		serviceForScheme, err := provider(credentialFile)
+		serviceForScheme, err := provider(credentials)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get storage for url %v: %v", URL, err)
 		}
