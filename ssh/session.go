@@ -353,7 +353,6 @@ func (s *multiCommandSession) shellInit() (err error) {
 			return err
 		}
 		if strings.Contains(s.shellPrompt, ts+"$") {
-			fmt.Printf("has shell %v\n", i)
 			break
 		}
 	}

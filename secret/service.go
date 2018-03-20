@@ -80,7 +80,7 @@ func (s *Service) GetOrCreate(secret string) (*cred.Config, error) {
 	return result, err
 }
 
-//Credential returns credential config
+//Credentials returns credential config
 func (s *Service) GetCredentials(secret string) (*cred.Config, error) {
 	if !Secret(secret).IsLocation() {
 		var result = &cred.Config{Data: string(secret)}

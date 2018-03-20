@@ -98,6 +98,7 @@ func URLPathJoin(baseURL, path string) string {
 	if strings.HasPrefix(path, "/") {
 		return URLStripPath(baseURL) + path
 	}
+
 	if !strings.HasSuffix(baseURL, "/") {
 		baseURL += "/"
 	}

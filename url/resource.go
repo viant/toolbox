@@ -17,10 +17,10 @@ import (
 //Resource represents a URL based resource, with enriched meta info
 type Resource struct {
 	URL             string   `description:"resource URL or relative or absolute path" required:"true"` //URL of resource
-	Credential      string   `description:"credentials file"`                                          //name of credential file or credential key depending on implementation
+	Credentials     string   `description:"credentials file"`                                          //name of credential file or credential key depending on implementation
 	ParsedURL       *url.URL `json:"-"`                                                                //parsed URL resource
 	Cache           string   `description:"local cache path"`                                          //Cache path for the resource, if specified resource will be cached in the specified path
-	CacheExpiryMs   int      //CacheExpiryMs expiry time in ms
+	CacheExpiryMs   int                                                                                //CacheExpiryMs expiry time in ms
 	modificationTag int64
 	init            bool
 }
@@ -30,7 +30,7 @@ func (r *Resource) Clone() *Resource {
 	return &Resource{
 		init:          r.init,
 		URL:           r.URL,
-		Credential:    r.Credential,
+		Credentials:   r.Credentials,
 		ParsedURL:     r.ParsedURL,
 		Cache:         r.Cache,
 		CacheExpiryMs: r.CacheExpiryMs,
@@ -110,7 +110,7 @@ func (r *Resource) Download() ([]byte, error) {
 			return content, nil
 		}
 	}
-	service, err := storage.NewServiceForURL(r.URL, r.Credential)
+	service, err := storage.NewServiceForURL(r.URL, r.Credentials)
 	if err != nil {
 		return nil, err
 	}
@@ -227,7 +227,7 @@ func (r *Resource) Cachable() bool {
 }
 
 func computeResourceModificationTag(resource *Resource) (int64, error) {
-	service, err := storage.NewServiceForURL(resource.URL, resource.Credential)
+	service, err := storage.NewServiceForURL(resource.URL, resource.Credentials)
 	if err != nil {
 		return 0, err
 	}
@@ -250,7 +250,7 @@ func computeResourceModificationTag(resource *Resource) (int64, error) {
 		if objectResource.ParsedURL.Path == resource.ParsedURL.Path {
 			continue
 		}
-		modificationTag, err := computeResourceModificationTag(NewResource(object.URL(), resource.Credential))
+		modificationTag, err := computeResourceModificationTag(NewResource(object.URL(), resource.Credentials))
 		if err != nil {
 			return 0, err
 		}
@@ -332,7 +332,7 @@ func NewResource(Params ...interface{}) *Resource {
 		init:          true,
 		ParsedURL:     parsedURL,
 		URL:           URL,
-		Credential:    credential,
+		Credentials:   credential,
 		Cache:         cache,
 		CacheExpiryMs: cacheExpiryMs,
 	}
