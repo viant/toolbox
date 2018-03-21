@@ -462,8 +462,12 @@ func (s *Map) parseExpression(text string, handler func(expression string, isUDF
 			}
 			expanded, ok := handler(variableName, false, "")
 			if !ok {
+				result += "${" + variableName + "}"
+				variableName = ""
+				expectToken = expectVariableStart
 				continue
 			}
+
 			if isLast && result == "" {
 				return expanded
 			}
@@ -499,6 +503,7 @@ func (s *Map) parseExpression(text string, handler func(expression string, isUDF
 				expectToken = expectFunctionCallEnd
 				continue
 			}
+
 			if unicode.IsLetter(r) || unicode.IsDigit(r) || aChar == "[" || (expectIndexEnd && aChar == "]") || aChar == "." || aChar == "_" || aChar == "+" || aChar == "<" || aChar == "-" {
 				if aChar == "[" {
 					expectIndexEnd = true
@@ -511,6 +516,9 @@ func (s *Map) parseExpression(text string, handler func(expression string, isUDF
 
 			expanded, ok := handler(variableName, false, "")
 			if !ok {
+				result += "${" + variableName + "}"
+				variableName = ""
+				expectToken = expectVariableStart
 				continue
 			}
 			if isLast && result == "" {
@@ -538,13 +546,18 @@ func (s *Map) parseExpression(text string, handler func(expression string, isUDF
 
 func (s *Map) evaluateUDF(candidate interface{}, argument string) (interface{}, bool) {
 	var canExpandAll = true
-	s.parseExpression(argument, func(expression string, udf bool, argument string) (interface{}, bool) {
+
+	var expandable = strings.TrimSpace(argument)
+	if toolbox.IsCompleteJSON(argument) {
+		expandable = string(argument[1 : len(argument)-1])
+	}
+
+	s.parseExpression(expandable, func(expression string, udf bool, argument string) (interface{}, bool) {
 		if _, has := s.GetValue(string(expression[1:])); !has {
 			canExpandAll = false
 		}
 		return nil, false
 	})
-
 	if !canExpandAll {
 		return nil, false
 	}
@@ -552,6 +565,7 @@ func (s *Map) evaluateUDF(candidate interface{}, argument string) (interface{}, 
 	if !ok {
 		return nil, false
 	}
+
 	expandedArgument := s.expandExpressions(argument)
 	if toolbox.IsString(expandedArgument) {
 		var expandedTextArgument = toolbox.AsString(expandedArgument)
@@ -580,6 +594,7 @@ func (s *Map) expandExpressions(text string) interface{} {
 		value, hasExpValue := s.GetValue(string(expression[1:]))
 		if hasExpValue {
 			if isUDF {
+
 				if evaluated, ok := s.evaluateUDF(value, argument); ok {
 					return evaluated, true
 				}
