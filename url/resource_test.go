@@ -21,8 +21,20 @@ func TestNewResource(t *testing.T) {
 		assert.NotNil(t, data)
 	}
 
-	var resource = url.NewResource("https://raw.githubusercontent.com/viant//toolbox//master/LICENSE.txt")
-	assert.Equal(t, "https://raw.githubusercontent.com/viant/toolbox/master/LICENSE.txt", resource.URL)
+	{
+		var resource= url.NewResource("https://raw.githubusercontent.com/viant//toolbox//master/LICENSE.txt")
+		assert.Equal(t, "https://raw.githubusercontent.com/viant/toolbox/master/LICENSE.txt", resource.URL)
+	}
+	{
+		var resource= url.NewResource("./../test")
+		assert.True(t, strings.HasSuffix(resource.DirectoryPath(), "/toolbox/test"))
+
+	}
+	{
+		var resource= url.NewResource("../test")
+		assert.True(t, strings.HasSuffix(resource.DirectoryPath(), "/toolbox/test"))
+
+	}
 }
 
 func TestNew_CredentialURL(t *testing.T) {

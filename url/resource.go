@@ -288,6 +288,25 @@ func normalizeURL(URL string) string {
 		return URL
 	}
 	if !strings.HasPrefix(URL, "/") {
+		currentDirectory, _ := os.Getwd()
+		if strings.Contains(URL, "..") {
+			fragments := strings.Split(URL, "/")
+			var index = 0
+			var offset = 0
+			 if fragments[0] == "." {
+			 	offset = 1
+			 }
+			for index =offset;index< len(fragments);index++{
+				var fragment = fragments[index]
+				if fragment == ".." {
+					currentDirectory, _ = path.Split(currentDirectory)
+					continue
+				}
+				break
+			}
+			return toolbox.FileSchema + path.Join(currentDirectory , strings.Join(fragments[index:], "/"))
+		}
+
 		currentDirectory, err := os.Getwd()
 		if err == nil {
 			candidate := path.Join(currentDirectory, URL)
