@@ -268,8 +268,11 @@ func (m BodyMatcher) Match(input string, offset int) (matched int) {
 		aChar := input[offset+i : offset+i+1]
 		switch aChar {
 		case m.Begin:
-			depth++
-			break
+			if m.Begin != m.End {
+				depth++
+				break
+			}
+			fallthrough
 		case m.End:
 			depth--
 
