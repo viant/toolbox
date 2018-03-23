@@ -9,9 +9,9 @@ import (
 	"golang.org/x/crypto/ssh"
 	"io"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
-	"sync"
 )
 
 //ErrTerminated - command session terminated
@@ -31,8 +31,6 @@ type Listener func(stdout string, hasMore bool)
 
 //MultiCommandSession represents a multi command session
 type MultiCommandSession interface {
-
-
 	Run(command string, listener Listener, timeoutMs int, terminators ...string) (string, error)
 
 	ShellPrompt() string
@@ -121,7 +119,7 @@ func (s *multiCommandSession) start(shell string) (output string, err error) {
 
 	waitGroup := sync.WaitGroup{}
 	waitGroup.Add(2)
-	go func(){
+	go func() {
 		waitGroup.Done()
 		s.copy(reader, s.stdOutput)
 	}()
@@ -348,7 +346,7 @@ func (s *multiCommandSession) shellInit() (err error) {
 	s.shellPrompt = ""
 	s.escapedShellPrompt = ""
 	for i := 1; i < 10; i++ { //for slow connection, make sure that you have right promot
-		s.shellPrompt, err = s.Run(s.promptSequence, nil, i * initTimeoutMs)
+		s.shellPrompt, err = s.Run(s.promptSequence, nil, i*initTimeoutMs)
 		if err != nil {
 			return err
 		}

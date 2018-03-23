@@ -1,41 +1,40 @@
 package toolbox
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestIsASCIIText(t *testing.T) {
 
-
-	var useCases = []struct{
+	var useCases = []struct {
 		Description string
-		Candidate string
-		Expected bool
+		Candidate   string
+		Expected    bool
 	}{
 		{
-			Description:"basic text",
-			Candidate:`abc`,
-			Expected:true,
+			Description: "basic text",
+			Candidate:   `abc`,
+			Expected:    true,
 		},
 		{
-			Description:"JSON object like text",
-			Candidate:`{"k1"}`,
-			Expected:true,
+			Description: "JSON object like text",
+			Candidate:   `{"k1"}`,
+			Expected:    true,
 		},
 		{
-			Description:"JSON array like text",
-			Candidate:`["$k1"]`,
-			Expected:true,
+			Description: "JSON array like text",
+			Candidate:   `["$k1"]`,
+			Expected:    true,
 		},
 		{
-			Description:"bin data",
-			Candidate:"\u0000",
-			Expected:false,
+			Description: "bin data",
+			Candidate:   "\u0000",
+			Expected:    false,
 		},
 		{
-			Description:"JSON  text",
-			Candidate:`{
+			Description: "JSON  text",
+			Candidate: `{
   "RepositoryDatastore":"db1",
   "Datastores": [
     {
@@ -51,7 +50,7 @@ func TestIsASCIIText(t *testing.T) {
   ]
 }
 `,
-			Expected:true,
+			Expected: true,
 		},
 	}
 

@@ -20,7 +20,7 @@ type Resource struct {
 	Credentials     string   `description:"credentials file"`                                          //name of credential file or credential key depending on implementation
 	ParsedURL       *url.URL `json:"-"`                                                                //parsed URL resource
 	Cache           string   `description:"local cache path"`                                          //Cache path for the resource, if specified resource will be cached in the specified path
-	CacheExpiryMs   int                                                                                //CacheExpiryMs expiry time in ms
+	CacheExpiryMs   int      //CacheExpiryMs expiry time in ms
 	modificationTag int64
 	init            bool
 }
@@ -293,10 +293,10 @@ func normalizeURL(URL string) string {
 			fragments := strings.Split(URL, "/")
 			var index = 0
 			var offset = 0
-			 if fragments[0] == "." {
-			 	offset = 1
-			 }
-			for index =offset;index< len(fragments);index++{
+			if fragments[0] == "." {
+				offset = 1
+			}
+			for index = offset; index < len(fragments); index++ {
 				var fragment = fragments[index]
 				if fragment == ".." {
 					currentDirectory, _ = path.Split(currentDirectory)
@@ -304,7 +304,7 @@ func normalizeURL(URL string) string {
 				}
 				break
 			}
-			return toolbox.FileSchema + path.Join(currentDirectory , strings.Join(fragments[index:], "/"))
+			return toolbox.FileSchema + path.Join(currentDirectory, strings.Join(fragments[index:], "/"))
 		}
 
 		currentDirectory, err := os.Getwd()

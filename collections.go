@@ -2,6 +2,7 @@ package toolbox
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"reflect"
 	"sort"
 	"strings"
@@ -54,6 +55,15 @@ func ReverseSlice(source interface{}) {
 func ProcessSlice(slice interface{}, handler func(item interface{}) bool) {
 	//The common cases with reflection for speed
 	if aSlice, ok := slice.([]interface{}); ok {
+		for _, item := range aSlice {
+			if !handler(item) {
+				break
+			}
+
+		}
+		return
+	}
+	if aSlice, ok := slice.([]map[string]interface{}); ok {
 		for _, item := range aSlice {
 			if !handler(item) {
 				break
@@ -320,61 +330,73 @@ func GetSliceValue(slice interface{}, index int) interface{} {
 	return sliceValue.Index(index).Interface()
 }
 
+var errSliceDoesNotHoldKeyValuePairs = errors.New("unable process map, not key value pairs")
+
 //ProcessMap iterates over any map, it calls handler with every key, value pair unless handler returns false.
-func ProcessMap(sourceMap interface{}, handler func(key, value interface{}) bool) error {
-	switch aMap := sourceMap.(type) {
+func ProcessMap(source interface{}, handler func(key, value interface{}) bool) error {
+	switch aSlice := source.(type) {
 	case map[string]string:
-		for key, value := range aMap {
+		for key, value := range aSlice {
 			if !handler(key, value) {
 				break
 			}
 		}
 		return nil
 	case map[string]interface{}:
-		for key, value := range aMap {
+		for key, value := range aSlice {
 			if !handler(key, value) {
 				break
 			}
 		}
 		return nil
 	case map[string]bool:
-		for key, value := range aMap {
+		for key, value := range aSlice {
 			if !handler(key, value) {
 				break
 			}
 		}
 		return nil
 	case map[string]int:
-		for key, value := range aMap {
+		for key, value := range aSlice {
 			if !handler(key, value) {
 				break
 			}
 		}
 		return nil
 	case map[interface{}]interface{}:
-		for key, value := range aMap {
+		for key, value := range aSlice {
 			if !handler(key, value) {
 				break
 			}
 		}
 		return nil
-	case []map[string]interface{}:
-		for _, entryMap := range aMap {
+
+	}
+	if IsSlice(source) {
+		var err error
+		var entryMap map[string]interface{}
+
+		ProcessSlice(source, func(item interface{}) bool {
+			entryMap, err = ToMap(item)
+			if err != nil {
+				return false
+			}
 			key, value, err := entryMapToKeyValue(entryMap)
 			if err != nil {
-				return fmt.Errorf("unable to process map, %T", sourceMap, err)
+				return false
 			}
-			if !handler(key, value) {
-				break
-			}
+			return handler(key, value)
+		})
+		if err != nil {
+			return errSliceDoesNotHoldKeyValuePairs
 		}
 		return nil
 	}
 
-	if !IsMap(sourceMap) {
-		return fmt.Errorf("unsupported type %T", sourceMap)
+	if !IsMap(source) {
+		return errSliceDoesNotHoldKeyValuePairs
 	}
-	mapValue := DiscoverValueByKind(reflect.ValueOf(sourceMap), reflect.Map)
+	mapValue := DiscoverValueByKind(reflect.ValueOf(source), reflect.Map)
 	for _, key := range mapValue.MapKeys() {
 		value := mapValue.MapIndex(key)
 		if !handler(key.Interface(), value.Interface()) {

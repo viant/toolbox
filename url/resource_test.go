@@ -22,16 +22,16 @@ func TestNewResource(t *testing.T) {
 	}
 
 	{
-		var resource= url.NewResource("https://raw.githubusercontent.com/viant//toolbox//master/LICENSE.txt")
+		var resource = url.NewResource("https://raw.githubusercontent.com/viant//toolbox//master/LICENSE.txt")
 		assert.Equal(t, "https://raw.githubusercontent.com/viant/toolbox/master/LICENSE.txt", resource.URL)
 	}
 	{
-		var resource= url.NewResource("./../test")
+		var resource = url.NewResource("./../test")
 		assert.True(t, strings.HasSuffix(resource.DirectoryPath(), "/toolbox/test"))
 
 	}
 	{
-		var resource= url.NewResource("../test")
+		var resource = url.NewResource("../test")
 		assert.True(t, strings.HasSuffix(resource.DirectoryPath(), "/toolbox/test"))
 
 	}

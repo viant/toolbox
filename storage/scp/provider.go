@@ -2,13 +2,14 @@ package scp
 
 import (
 	"github.com/viant/toolbox/cred"
-	"github.com/viant/toolbox/storage"
 	"github.com/viant/toolbox/secret"
+	"github.com/viant/toolbox/storage"
 	"strings"
 )
 
 //ProviderScheme represents scp URL scheme for this provider
 const ProviderScheme = "scp"
+
 //SSHProviderScheme represents ssh URL scheme for this provider
 const SSHProviderScheme = "ssh"
 

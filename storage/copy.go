@@ -2,13 +2,13 @@ package storage
 
 import (
 	"archive/zip"
+	"bytes"
 	"fmt"
 	"github.com/viant/toolbox"
 	"io"
+	"io/ioutil"
 	"path"
 	"strings"
-	"io/ioutil"
-	"bytes"
 )
 
 type CopyHandler func(sourceObject Object, source io.Reader, destinationService Service, destinationURL string) error
@@ -72,10 +72,9 @@ func copyStorageContent(sourceService Service, sourceURL string, destinationServ
 			}
 			defer reader.Close()
 
-
 			if modifyContentHandler != nil {
 
-				content, err := ioutil.ReadAll(reader);
+				content, err := ioutil.ReadAll(reader)
 				if err != nil {
 					return err
 				}
