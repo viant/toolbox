@@ -381,7 +381,8 @@ func ProcessMap(source interface{}, handler func(key, value interface{}) bool) e
 			if err != nil {
 				return false
 			}
-			key, value, err := entryMapToKeyValue(entryMap)
+			var key, value interface{}
+			key, value, err = entryMapToKeyValue(entryMap)
 			if err != nil {
 				return false
 			}
