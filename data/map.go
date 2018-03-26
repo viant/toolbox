@@ -285,11 +285,18 @@ func (s *Map) GetCollection(key string) *Collection {
 		if ok {
 			return collectionPoiner
 		}
+
 		aSlice, ok := result.([]interface{})
 		collection := Collection(aSlice)
 		if ok {
 			return &collection
 		}
+		if ! toolbox.IsSlice(result) {
+			return nil
+		}
+		aSlice= toolbox.AsSlice(result)
+		collection = Collection(aSlice)
+		return &collection
 	}
 	return nil
 }
