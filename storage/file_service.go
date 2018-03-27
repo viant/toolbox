@@ -13,6 +13,7 @@ import (
 )
 
 var fileMode os.FileMode = 0644
+var execFileMode os.FileMode = 0755
 
 //Service represents abstract way to accessing local or remote storage
 type fileStorageService struct{}
@@ -106,6 +107,9 @@ func (s *fileStorageService) Upload(URL string, reader io.Reader) error {
 	data, err := ioutil.ReadAll(reader)
 	if err != nil {
 		return err
+	}
+	if path.Ext(parsedUrl.Path) == "" {
+		return ioutil.WriteFile(parsedUrl.Path, data, execFileMode)
 	}
 	return ioutil.WriteFile(parsedUrl.Path, data, fileMode)
 }
