@@ -291,10 +291,10 @@ func (s *Map) GetCollection(key string) *Collection {
 		if ok {
 			return &collection
 		}
-		if ! toolbox.IsSlice(result) {
+		if !toolbox.IsSlice(result) {
 			return nil
 		}
-		aSlice= toolbox.AsSlice(result)
+		aSlice = toolbox.AsSlice(result)
 		collection = Collection(aSlice)
 		return &collection
 	}
@@ -396,6 +396,15 @@ func (s *Map) Expand(source interface{}) interface{} {
 	case map[string]interface{}:
 		var resultMap = make(map[string]interface{})
 		for k, v := range value {
+			var expanded = s.Expand(v)
+			if k == "..." {
+				if expanded != nil && toolbox.IsMap(expanded) {
+					for key, value := range toolbox.AsMap(expanded) {
+						resultMap[key] = value
+					}
+					continue
+				}
+			}
 			resultMap[s.ExpandAsText(k)] = s.Expand(v)
 		}
 		return resultMap
