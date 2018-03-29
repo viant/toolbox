@@ -350,6 +350,10 @@ func (s *multiCommandSession) shellInit() (err error) {
 		if err != nil {
 			return err
 		}
+		var breakCount = strings.Count(s.shellPrompt, "\n")
+		if breakCount > 0 {
+			continue
+		}
 		if strings.Contains(s.shellPrompt, ts+"$") {
 			break
 		}
