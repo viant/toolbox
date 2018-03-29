@@ -79,13 +79,12 @@ func copyStorageContent(sourceService Service, sourceURL string, destinationServ
 					return err
 				}
 				reader = ioutil.NopCloser(bytes.NewReader(content))
-				if toolbox.IsASCIIText(string(content)) {
-					reader, err = modifyContentHandler(reader)
-					if err != nil {
-						err = fmt.Errorf("unable modify content, %v %v %v", object.URL(), destinationObjectURL, err)
-						return err
-					}
+				reader, err = modifyContentHandler(reader)
+				if err != nil {
+					err = fmt.Errorf("unable modify content, %v %v %v", object.URL(), destinationObjectURL, err)
+					return err
 				}
+
 			}
 			if subPath == "" {
 				_, sourceName := path.Split(object.URL())
