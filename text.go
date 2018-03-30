@@ -21,6 +21,9 @@ func IsASCIIText(candidate string) bool {
 func IsPrintText(candidate string) bool {
 	for _, r := range candidate {
 		if ! unicode.IsPrint(r) {
+			if r == '\n' || r == '\r' || r == '\t' || r == '`' {
+				continue
+			}
 			return false
 		}
 	}
