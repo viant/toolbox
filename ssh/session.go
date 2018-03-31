@@ -342,28 +342,12 @@ func (s *multiCommandSession) shellInit() (err error) {
 	}
 
 	var ts = toolbox.AsString(time.Now().UnixNano())
-	s.promptSequence = "PS1=\"\\h:\\u" + ts + "\\$\""
-	s.shellPrompt = ""
-	s.escapedShellPrompt = ""
-	for i := 1; i < 10; i++ { //for slow connection, make sure that you have right promot
-		s.shellPrompt, err = s.Run(s.promptSequence, nil, i*initTimeoutMs)
-		if err != nil {
-			return err
-		}
-		var breakCount = strings.Count(s.shellPrompt, "\n")
-		if breakCount > 0 {
-			continue
-		}
-		if strings.Contains(s.shellPrompt, ts+"$") {
-			break
-		}
-	}
-	if !strings.Contains(s.shellPrompt, ts+"$") {
-		s.shellPrompt = ts + "$"
-	}
+	s.promptSequence = "PS1=\"" + ts + "\\$\""
+		_, err = s.Run(s.promptSequence, nil, initTimeoutMs)
 	if s.closeIfError(err) {
 		return err
 	}
+	s.shellPrompt = ts + "$"
 	s.escapedShellPrompt = escapeInput(s.shellPrompt)
 	s.system, err = s.Run("uname -s", nil, defaultTimeoutMs)
 	s.system = strings.ToLower(s.system)
