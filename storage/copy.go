@@ -127,25 +127,14 @@ func copySourceToDestination(sourceObject Object, reader io.Reader, destinationS
 	return err
 }
 
-func addPathIfNeeded(directories map[string]bool, path string, archive zip.Writer) {
-	if path == "" {
-		return
-	}
-	if _, has := directories[path]; has {
-		return
-	}
+func getArchiveCopyHandler(archive *zip.Writer, parentURL string) CopyHandler {
 
-}
-
-func getArchiveCopyHandler(archive zip.Writer, parentURL string) CopyHandler {
-	var directories = make(map[string]bool)
 	return func(sourceObject Object, reader io.Reader, destinationService Service, destinationURL string) error {
 		var _, relativePath = toolbox.URLSplit(destinationURL)
 		if destinationURL != parentURL {
 			relativePath = strings.Replace(destinationURL, parentURL, "", 1)
-			var parent, _ = path.Split(relativePath)
-			addPathIfNeeded(directories, parent, archive)
 		}
+
 		header, err := zip.FileInfoHeader(sourceObject.FileInfo())
 		if err != nil {
 			return err
@@ -171,4 +160,12 @@ func Copy(sourceService Service, sourceURL string, destinationService Service, d
 		err = fmt.Errorf("failed to copy %v -> %v: %v", sourceURL, destinationURL, err)
 	}
 	return err
+}
+
+
+//Archive archives supplied URL assets into zip writer
+func Archive(service Service, URL string, writer *zip.Writer) error {
+	memService := NewMemoryService()
+	var destURL = "mem:///dev/nul"
+	return Copy(service, URL, memService, destURL, nil, getArchiveCopyHandler(writer, destURL))
 }

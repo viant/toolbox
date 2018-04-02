@@ -7,6 +7,9 @@ import (
 	_ "github.com/viant/toolbox/storage/scp"
 	"path"
 	"testing"
+	"strings"
+	"os"
+	"archive/zip"
 )
 
 func TestCopy(t *testing.T) {
@@ -35,37 +38,22 @@ func TestCopy(t *testing.T) {
 			//os.Remove(file)
 		}
 	}
-	//
-	//{ //copy file to dir
-	//
-	//	sourceURL := toolbox.URLPathJoin(baseUrl, "source/dir/file.json")
-	//	targetURL := toolbox.URLPathJoin(baseUrl, "target/dir3/")
-	//
-	//	err := storage.Copy(service, sourceURL, service, targetURL, nil, nil)
-	//	assert.Nil(t, err)
-	//
-	//	expectedFiles := []string{
-	//		path.Join(parent, "test/target/dir3/file.json"),
-	//	}
-	//	for _, file := range expectedFiles {
-	//		assert.True(t, toolbox.FileExists(file))
-	//		os.Remove(file)
-	//	}
-	//}
-	//{ //copy file to file
-	//
-	//	sourceURL := path.Join(baseUrl, "source/dir/file.json")
-	//	targetURL := path.Join(baseUrl, "target/dir4/file.json")
-	//
-	//	err := storage.Copy(service, sourceURL, service, targetURL, nil, nil)
-	//	assert.Nil(t, err)
-	//
-	//	expectedFiles := []string{
-	//		path.Join(parent, "test/target/dir4/file.json"),
-	//	}
-	//	for _, file := range expectedFiles {
-	//		assert.True(t, toolbox.FileExists(file))
-	//		os.Remove(file)
-	//	}
-	//}
+}
+
+
+func TestArchive(t *testing.T) {
+	memService := storage.NewMemoryService()
+	memService.Upload("mem://test/copy/archive/file1.txt", strings.NewReader("abc"))
+	memService.Upload("mem://test/copy/archive/file2.txt", strings.NewReader("xyz"))
+	memService.Upload("mem://test/copy/archive/config/test.prop", strings.NewReader("123"))
+	toolbox.RemoveFileIfExist("/tmp/testCopy.zip")
+	var writer, err = os.OpenFile("/tmp/testCopy.zip", os.O_CREATE|os.O_WRONLY, 06444)
+	if assert.Nil(t, err) {
+		defer writer.Close()
+		archive := zip.NewWriter(writer)
+		err = storage.Archive(memService, "mem://test/copy/archive/", archive)
+		assert.Nil(t,  err)
+		archive.Flush()
+		archive.Close()
+	}
 }
