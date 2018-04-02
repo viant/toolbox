@@ -70,13 +70,13 @@ Take the following code as example:
     secrets := NewSecrets()
     {//password expansion
         secrets["mysql"] = "~/.secret/mysql.json"
-        input := "docker run --name db1 -e MYSQL_ROOT_PASSWORD=**mysql** -d mysql:tag"
+        input := "docker run --name db1 -e MYSQL_ROOT_PASSWORD=${mysql.password} -d mysql:tag"
    	    expaned, err := service.Expand(input, secrets)
    	}
 
    	{//username and password expansion
         secrets["pg"] = "~/.secret/pg.json"
-        input := "docker run --name some-postgres -e POSTGRES_PASSWORD=**pg** -e POSTGRES_USER=##pg## -d postgres"
+        input := "docker run --name some-postgres -e POSTGRES_PASSWORD=${pg.password} -e POSTGRES_USER=${pg.username} -d postgres"
         expaned, err := service.Expand(input, secrets)
     }
   
@@ -101,5 +101,7 @@ Here are some possible combination of secret map pairs.
 The secret key can be static or dynamic. The first type in input/command is enclosed with either '*' or '#', the later is not.
 
 In the command corresponding dynamic key can be enclosed with the following
-1) '**' for password expansion  i.e.  command: **git** will expand to password from  git secret key
-2) '##' for username expansion  i.e.  command: ##git## will expand to username from  git secret key
+1) '${secretKey.password}' for password expansion  i.e.  command: **${git.password}**  will expand to password from  git secret key
+2) '**' for password expansion  i.e.  command: `**git**`will expand to password from  git secret key
+3) '${secretKey.username}'  for username expansion  i.e.  command: **${git.username}** will expand to username from  git secret key
+4) '##' for username expansion  i.e.  command: `##git##` will expand to username from  git secret key
