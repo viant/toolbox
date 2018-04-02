@@ -44,7 +44,7 @@ func TestIsASCIIText(t *testing.T) {
         "MaxPoolSize": 5,
         "DriverName": "mysql",
         "Descriptor": "[username]:[password]@tcp(127.0.0.1:3306)/db1?parseTime=true",
-        "Credentials": "$mysqlCredential"
+        "Credentials": "$mysqlCredentials"
       }
     }
   ]

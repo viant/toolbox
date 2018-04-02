@@ -55,7 +55,7 @@ func (s SecretKey) String() string {
 
 //Get extracts username or password or JSON based on key type (# prefix for user, otherwise password or JSON)
 func (s SecretKey) Secret(cred *cred.Config) string {
-	if strings.HasPrefix(s.String(), "#") {
+	if strings.HasPrefix(s.String(), "#") || strings.HasSuffix(s.String(), ".username}") {
 		return cred.Username
 	}
 	if cred.Password != "" {
@@ -69,7 +69,9 @@ func (s SecretKey) Keys() []SecretKey {
 	var key = s.String()
 	var result = []SecretKey{
 		SecretKey(fmt.Sprintf("**%v**", key)),
+		SecretKey(fmt.Sprintf("${%v.username}", key)),
 		SecretKey(fmt.Sprintf("##%v##", key)),
+		SecretKey(fmt.Sprintf("${%v.password}", key)),
 	}
 	return result
 }

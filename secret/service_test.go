@@ -84,6 +84,15 @@ func TestService_Expand(t *testing.T) {
 			Expended: "pass1",
 		},
 		{
+			Description: "Password replacement with secret short name, explicit",
+			Input:       "${sudo.password}",
+			Matchable:   "",
+			Credentials: map[SecretKey]Secret{
+				"sudo": "localhost",
+			},
+			Expended: "pass1",
+		},
+		{
 			Description: "Username replacement with URL based secret",
 			Input:       "##sudo##",
 			Matchable:   "",
@@ -95,6 +104,16 @@ func TestService_Expand(t *testing.T) {
 		{
 			Description: "Username replacement with URL based secret and dynamic key",
 			Input:       "##sudo##",
+			Matchable:   "",
+			Credentials: map[SecretKey]Secret{
+				"sudo": "mem://secret/localhost",
+			},
+			Expended: "user1",
+		},
+
+		{
+			Description: "Username replacement with URL based secret and dynamic key - explicit",
+			Input:       "${sudo.username}",
 			Matchable:   "",
 			Credentials: map[SecretKey]Secret{
 				"sudo": "mem://secret/localhost",
@@ -132,6 +151,8 @@ func TestService_Expand(t *testing.T) {
 			},
 			Expended: "password2",
 		},
+
+
 	}
 
 	for _, useCase := range useCases {
