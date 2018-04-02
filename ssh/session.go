@@ -349,8 +349,16 @@ func (s *multiCommandSession) shellInit() (err error) {
 	}
 	s.shellPrompt = ts + "$"
 	s.escapedShellPrompt = escapeInput(s.shellPrompt)
-	s.system, err = s.Run("uname -s", nil, defaultTimeoutMs)
-	s.system = strings.ToLower(s.system)
+
+	s.drainStdout()
+	for i := 0; i< 3; i++ {
+		s.system, err = s.Run("uname -s", nil, defaultTimeoutMs)
+		s.system = strings.ToLower(strings.TrimSpace(s.system))
+		if s.system != "" && ! strings.Contains(s.system, "$") {
+			break
+		}
+
+	}
 	return nil
 }
 
