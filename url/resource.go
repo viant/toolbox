@@ -296,10 +296,14 @@ func normalizeURL(URL string) string {
 			if fragments[0] == "." {
 				offset = 1
 			}
+
 			for index = offset; index < len(fragments); index++ {
 				var fragment = fragments[index]
 				if fragment == ".." {
 					currentDirectory, _ = path.Split(currentDirectory)
+					if strings.HasSuffix(currentDirectory, "/") {
+						currentDirectory = string(currentDirectory[:len(currentDirectory)-1])
+					}
 					continue
 				}
 				break

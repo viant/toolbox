@@ -14,6 +14,13 @@ import (
 func TestNewResource(t *testing.T) {
 
 	{
+		var resource = url.NewResource("./../../test")
+		fmt.Printf("%v\n", resource.ParsedURL.Path)
+		assert.True(t, strings.HasSuffix(resource.DirectoryPath(), "viant/test"))
+
+	}
+
+	{
 		var resource = url.NewResource("https://raw.githubusercontent.com/viant/toolbox/master/LICENSE.txt")
 		assert.EqualValues(t, resource.ParsedURL.String(), "https://raw.githubusercontent.com/viant/toolbox/master/LICENSE.txt")
 		data, err := resource.Download()
@@ -30,6 +37,8 @@ func TestNewResource(t *testing.T) {
 		assert.True(t, strings.HasSuffix(resource.DirectoryPath(), "/toolbox/test"))
 
 	}
+
+
 	{
 		var resource = url.NewResource("../test")
 		assert.True(t, strings.HasSuffix(resource.DirectoryPath(), "/toolbox/test"))
