@@ -12,8 +12,11 @@ import (
 	"time"
 )
 
-var jsonContentType = "application/json"
-var textPlainContentType = "text/plain"
+const (
+	jsonContentType      = "application/json"
+	textPlainContentType = "text/plain"
+	contentTypeHeader    = "Content-Type"
+)
 
 const (
 	MethodGet     = "GET"
@@ -77,7 +80,7 @@ func (sr ServiceRouting) getEncoderFactory(contentType string) EncoderFactory {
 
 func (sr ServiceRouting) extractParameterFromBody(parameterName string, targetType reflect.Type, request *http.Request) (interface{}, error) {
 	targetValuePointer := reflect.New(targetType)
-	contentType := getContentTypeOrJSONContentType(request.Header.Get("Content-Type"))
+	contentType := getContentTypeOrJSONContentType(request.Header.Get(contentTypeHeader))
 	decoderFactory := sr.getDecoderFactory(contentType)
 
 	body, err := ioutil.ReadAll(request.Body)
@@ -214,7 +217,7 @@ func (r *ServiceRouter) Route(response http.ResponseWriter, request *http.Reques
 			}
 			return nil
 		}
-		response.Header().Set("Content-Type", textPlainContentType)
+		response.Header().Set(contentTypeHeader, textPlainContentType)
 	}
 	if finalError != nil {
 		return fmt.Errorf("failed to route request - %v", finalError)
@@ -224,17 +227,34 @@ func (r *ServiceRouter) Route(response http.ResponseWriter, request *http.Reques
 
 //WriteServiceRoutingResponse writes service router response
 func WriteServiceRoutingResponse(response http.ResponseWriter, request *http.Request, serviceRouting *ServiceRouting, result interface{}) error {
-	requestContentType := request.Header.Get("Content-Type")
-	responseContentType := getContentTypeOrJSONContentType(requestContentType)
+	if result == nil {
+		result = struct{}{}
+	}
+	statusCodeAccessor, ok := result.(StatucCodeAccessor)
+	if ok {
+		statusCode := statusCodeAccessor.GetStatusCode()
+		if statusCode > 0 && statusCode != http.StatusOK {
+			response.WriteHeader(statusCode)
+			return nil
+		}
+	}
+	contentTypeAccessor, ok := result.(ContentTypeAccessor)
+	var responseContentType string
+	if ok {
+		responseContentType = contentTypeAccessor.GetContentType()
+	}
+	if responseContentType == "" {
+		requestContentType := request.Header.Get(contentTypeHeader)
+		responseContentType = getContentTypeOrJSONContentType(requestContentType)
+	}
 	encoderFactory := serviceRouting.getEncoderFactory(responseContentType)
 	encoder := encoderFactory.Create(response)
-	response.Header().Set("Content-Type", responseContentType)
+	response.Header().Set(contentTypeHeader, responseContentType)
 	err := encoder.Encode(result)
 	if err != nil {
 		return fmt.Errorf("failed to encode response %v, due to %v", response, err)
 	}
 	return nil
-
 	if err != nil {
 		return fmt.Errorf("failed to write response response %v, due to %v", result, err)
 	}
@@ -243,10 +263,10 @@ func WriteServiceRoutingResponse(response http.ResponseWriter, request *http.Req
 
 //WriteResponse writes response to response writer, it used encoder factory to encode passed in response to the writer, it sets back request contenttype to response.
 func (r *ServiceRouter) WriteResponse(encoderFactory EncoderFactory, response interface{}, request *http.Request, responseWriter http.ResponseWriter) error {
-	requestContentType := request.Header.Get("Content-Type")
+	requestContentType := request.Header.Get(contentTypeHeader)
 	responseContentType := getContentTypeOrJSONContentType(requestContentType)
 	encoder := encoderFactory.Create(responseWriter)
-	responseWriter.Header().Set("Content-Type", responseContentType)
+	responseWriter.Header().Set(contentTypeHeader, responseContentType)
 	err := encoder.Encode(response)
 	if err != nil {
 		return fmt.Errorf("failed to encode response %v, due to %v", response, err)
@@ -379,7 +399,7 @@ func (c *ToolboxHTTPClient) Request(method, url string, request, response interf
 		if err != nil {
 			return err
 		}
-		httpRequest.Header.Set("Content-Type", jsonContentType)
+		httpRequest.Header.Set(contentTypeHeader, jsonContentType)
 	} else {
 		httpRequest, err = http.NewRequest(httpMethod, url, nil)
 		if err != nil {
@@ -396,10 +416,7 @@ func (c *ToolboxHTTPClient) Request(method, url string, request, response interf
 	}
 
 	if response != nil {
-		statusSettable, canSetStatus := response.(StatusCodeSettable)
-		if canSetStatus {
-			statusSettable.SetStatusCode(serverResponse.StatusCode)
-		}
+		updateResponse(serverResponse, response)
 		if serverResponse == nil {
 			return fmt.Errorf("failed to receive response %v", err)
 		}
@@ -416,13 +433,43 @@ func (c *ToolboxHTTPClient) Request(method, url string, request, response interf
 		if err != nil {
 			return fmt.Errorf("%v. unable decode response as %T: body: %v: %v", errorPrefix, response, string(body), err)
 		}
-		if canSetStatus {
-			statusSettable.SetStatusCode(serverResponse.StatusCode)
-		}
+		updateResponse(serverResponse, response)
 	}
 	return nil
 }
 
-type StatusCodeSettable interface {
+//StatucCodeMutator client side reponse optional interface
+type StatucCodeMutator interface {
 	SetStatusCode(code int)
+}
+
+//StatucCodeAccessor server side response accessor
+type StatucCodeAccessor interface {
+	GetStatusCode() int
+}
+
+//ContentTypeMutator client side reponse optional interface
+type ContentTypeMutator interface {
+	SetContentType(contentType string)
+}
+
+//ContentTypeAccessor server side response accessor
+type ContentTypeAccessor interface {
+	GetContentType() string
+}
+
+
+//updateResponse update response with content type and status code if applicable
+func updateResponse(httpResponse *http.Response, response interface{}) {
+	if response == nil {
+		return
+	}
+	statusCodeMutator, ok := response.(StatucCodeMutator)
+	if ok {
+		statusCodeMutator.SetStatusCode(httpResponse.StatusCode)
+	}
+	contentTypeMutator, ok := response.(ContentTypeMutator)
+	if ok {
+		contentTypeMutator.SetContentType(httpResponse.Header.Get(contentTypeHeader))
+	}
 }
