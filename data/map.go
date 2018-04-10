@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	expectVariableStart = iota
+	expectVariableStart            = iota
 	expectVariableName
 	expectFunctionCallEnd
 	expectVariableNameEnclosureEnd
@@ -87,7 +87,7 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 
 	state := *s
 	if string(expr[0:1]) == "{" {
-		expr = expr[1 : len(expr)-1]
+		expr = expr[1: len(expr)-1]
 	}
 
 	if strings.Contains(expr, ".") || strings.HasSuffix(expr, "]") {
@@ -98,7 +98,7 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 			if arrayIndexPosition != -1 {
 				arrayEndPosition := strings.Index(fragment, "]")
 				if arrayEndPosition > arrayIndexPosition && arrayEndPosition < len(fragment) {
-					arrayIndex := toolbox.AsInt(string(fragment[arrayIndexPosition+1 : arrayEndPosition]))
+					arrayIndex := toolbox.AsInt(string(fragment[arrayIndexPosition+1: arrayEndPosition]))
 					index = &arrayIndex
 					fragment = string(fragment[:arrayIndexPosition])
 				}
@@ -207,7 +207,7 @@ func (s *Map) SetValue(expr string, value interface{}) {
 		expr = string(expr[2:])
 	}
 	if string(expr[0:1]) == "{" {
-		expr = expr[1 : len(expr)-1]
+		expr = expr[1: len(expr)-1]
 	}
 	if strings.Contains(expr, ".") {
 		fragments := strings.Split(expr, ".")
@@ -453,15 +453,16 @@ func (s *Map) parseExpression(text string, handler func(expression string, isUDF
 	var expectToken = expectVariableStart
 	var result = ""
 	var expectIndexEnd = false
+
 	for i, r := range text {
-		aChar := string(text[i : i+1])
+		aChar := string(text[i: i+1])
 		var isLast = i+1 == len(text)
 		switch expectToken {
 		case expectVariableStart:
 			if aChar == "$" {
 				variableName += aChar
 				if i+1 < len(text) {
-					nextChar := string(text[i+1 : i+2])
+					nextChar := string(text[i+1: i+2])
 					if nextChar == "{" {
 						expectToken = expectVariableNameEnclosureEnd
 						continue
@@ -565,15 +566,18 @@ func (s *Map) evaluateUDF(candidate interface{}, argument string) (interface{}, 
 
 	var expandable = strings.TrimSpace(argument)
 	if toolbox.IsCompleteJSON(argument) {
-		expandable = string(argument[1 : len(argument)-1])
+		expandable = string(argument[1: len(argument)-1])
 	}
 
 	s.parseExpression(expandable, func(expression string, udf bool, argument string) (interface{}, bool) {
+
 		if _, has := s.GetValue(string(expression[1:])); !has {
 			canExpandAll = false
 		}
+
 		return nil, false
 	})
+
 	if !canExpandAll {
 		return nil, false
 	}
@@ -600,6 +604,40 @@ func (s *Map) evaluateUDF(candidate interface{}, argument string) (interface{}, 
 	return nil, false
 }
 
+func (s *Map) hasCycle(source interface{}, ownerVariable string) bool {
+	switch value := source.(type) {
+	case string:
+		return strings.Contains(value, ownerVariable)
+	case Map:
+		for k, v := range value {
+			if s.hasCycle(k, ownerVariable) || s.hasCycle(v, ownerVariable) {
+				return true
+			}
+		}
+
+	case map[string]interface{}:
+		for k, v := range value {
+			if s.hasCycle(k, ownerVariable) || s.hasCycle(v, ownerVariable) {
+				return true
+			}
+		}
+
+	case []interface{}:
+		for _, v := range value {
+			if s.hasCycle(v, ownerVariable) {
+				return true
+			}
+		}
+	case Collection:
+		for _, v := range value {
+			if s.hasCycle(v, ownerVariable) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 //expandExpressions will check provided text with any expression starting with dollar sign ($) to substitute it with key in the map if it is present.
 //The result can be an expanded text or type of key referenced by the expression.
 func (s *Map) expandExpressions(text string) interface{} {
@@ -609,6 +647,9 @@ func (s *Map) expandExpressions(text string) interface{} {
 	var expandVariable = func(expression string, isUDF bool, argument string) (interface{}, bool) {
 		value, hasExpValue := s.GetValue(string(expression[1:]))
 		if hasExpValue {
+			if s.hasCycle(value, expression) {
+				return text, true
+			}
 			if isUDF {
 
 				if evaluated, ok := s.evaluateUDF(value, argument); ok {
