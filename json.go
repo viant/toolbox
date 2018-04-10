@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"strings"
+	"encoding/json"
 )
 
 //IsCompleteJSON returns true if supplied represent complete JSON
@@ -136,6 +137,20 @@ func AsJSONText(source interface{}) (string, error) {
 		buf := new(bytes.Buffer)
 		err := NewJSONEncoderFactory().Create(buf).Encode(source)
 		return buf.String(), err
+	}
+	return "", fmt.Errorf("unsupported type: %T", source)
+}
+
+
+
+//AsIndentJSONText converts data structure int text JSON
+func AsIndentJSONText(source interface{}) (string, error) {
+	if IsStruct(source) || IsMap(source) || IsSlice(source) {
+		buf, err := json.MarshalIndent(source, "", "\t")
+		if err != nil {
+			return "", err
+		}
+		return string(buf), nil
 	}
 	return "", fmt.Errorf("unsupported type: %T", source)
 }
