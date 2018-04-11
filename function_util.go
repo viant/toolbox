@@ -27,7 +27,6 @@ func GetFunction(owner interface{}, name string) (interface{}, error) {
 func CallFunction(function interface{}, parameters ...interface{}) []interface{} {
 	AssertKind(function, reflect.Func, "function")
 	var functionParameters = make([]reflect.Value, 0)
-
 	ProcessSlice(parameters, func(item interface{}) bool {
 		functionParameters = append(functionParameters, reflect.ValueOf(item))
 		return true

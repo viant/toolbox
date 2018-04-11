@@ -343,7 +343,7 @@ func (s *multiCommandSession) shellInit() (err error) {
 
 	var ts = toolbox.AsString(time.Now().UnixNano())
 	s.promptSequence = "PS1=\"" + ts + "\\$\""
-		_, err = s.Run(s.promptSequence, nil, initTimeoutMs)
+	_, err = s.Run(s.promptSequence, nil, initTimeoutMs)
 	if s.closeIfError(err) {
 		return err
 	}
@@ -351,10 +351,10 @@ func (s *multiCommandSession) shellInit() (err error) {
 	s.escapedShellPrompt = escapeInput(s.shellPrompt)
 
 	s.drainStdout()
-	for i := 0; i< 3; i++ {
+	for i := 0; i < 3; i++ {
 		s.system, err = s.Run("uname -s", nil, defaultTimeoutMs)
 		s.system = strings.ToLower(strings.TrimSpace(s.system))
-		if s.system != "" && ! strings.Contains(s.system, "$") {
+		if s.system != "" && !strings.Contains(s.system, "$") {
 			break
 		}
 

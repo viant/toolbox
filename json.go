@@ -2,11 +2,11 @@ package toolbox
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"strings"
-	"encoding/json"
 )
 
 //IsCompleteJSON returns true if supplied represent complete JSON
@@ -140,8 +140,6 @@ func AsJSONText(source interface{}) (string, error) {
 	}
 	return "", fmt.Errorf("unsupported type: %T", source)
 }
-
-
 
 //AsIndentJSONText converts data structure int text JSON
 func AsIndentJSONText(source interface{}) (string, error) {

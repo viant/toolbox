@@ -458,7 +458,6 @@ type ContentTypeAccessor interface {
 	GetContentType() string
 }
 
-
 //updateResponse update response with content type and status code if applicable
 func updateResponse(httpResponse *http.Response, response interface{}) {
 	if response == nil {

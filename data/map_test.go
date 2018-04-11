@@ -194,7 +194,6 @@ func Test_Expand(t *testing.T) {
 
 }
 
-
 func Test_ExpandCycleIssue(t *testing.T) {
 	state := NewMap()
 	originMap := NewMap()
@@ -203,8 +202,6 @@ func Test_ExpandCycleIssue(t *testing.T) {
 	var text = state.Expand("abc ${origin}\n ")
 	assert.Equal(t, "abc {\"URL\":\"$origin\"}\n\n ", text)
 }
-
-
 
 func Test_ExpandFun(t *testing.T) {
 

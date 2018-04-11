@@ -151,8 +151,6 @@ func TestService_Expand(t *testing.T) {
 			},
 			Expended: "password2",
 		},
-
-
 	}
 
 	for _, useCase := range useCases {

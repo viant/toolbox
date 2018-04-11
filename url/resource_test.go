@@ -17,7 +17,6 @@ func TestNewResource(t *testing.T) {
 		var resource = url.NewResource("./../../test")
 		fmt.Printf("%v\n", resource.ParsedURL.Path)
 		assert.True(t, strings.HasSuffix(resource.DirectoryPath(), "viant/test"))
-
 	}
 
 	{
@@ -35,14 +34,11 @@ func TestNewResource(t *testing.T) {
 	{
 		var resource = url.NewResource("./../test")
 		assert.True(t, strings.HasSuffix(resource.DirectoryPath(), "/toolbox/test"))
-
 	}
-
 
 	{
 		var resource = url.NewResource("../test")
 		assert.True(t, strings.HasSuffix(resource.DirectoryPath(), "/toolbox/test"))
-
 	}
 }
 

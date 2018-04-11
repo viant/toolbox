@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	expectVariableStart            = iota
+	expectVariableStart = iota
 	expectVariableName
 	expectFunctionCallEnd
 	expectVariableNameEnclosureEnd
@@ -87,7 +87,7 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 
 	state := *s
 	if string(expr[0:1]) == "{" {
-		expr = expr[1: len(expr)-1]
+		expr = expr[1 : len(expr)-1]
 	}
 
 	if strings.Contains(expr, ".") || strings.HasSuffix(expr, "]") {
@@ -98,7 +98,7 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 			if arrayIndexPosition != -1 {
 				arrayEndPosition := strings.Index(fragment, "]")
 				if arrayEndPosition > arrayIndexPosition && arrayEndPosition < len(fragment) {
-					arrayIndex := toolbox.AsInt(string(fragment[arrayIndexPosition+1: arrayEndPosition]))
+					arrayIndex := toolbox.AsInt(string(fragment[arrayIndexPosition+1 : arrayEndPosition]))
 					index = &arrayIndex
 					fragment = string(fragment[:arrayIndexPosition])
 				}
@@ -206,8 +206,8 @@ func (s *Map) SetValue(expr string, value interface{}) {
 	if isPushOperation {
 		expr = string(expr[2:])
 	}
-	if string(expr[0:1]) == "{" {
-		expr = expr[1: len(expr)-1]
+	if len(expr) > 2 && string(expr[0:1]) == "{" {
+		expr = expr[1 : len(expr)-1]
 	}
 	if strings.Contains(expr, ".") {
 		fragments := strings.Split(expr, ".")
@@ -455,14 +455,14 @@ func (s *Map) parseExpression(text string, handler func(expression string, isUDF
 	var expectIndexEnd = false
 
 	for i, r := range text {
-		aChar := string(text[i: i+1])
+		aChar := string(text[i : i+1])
 		var isLast = i+1 == len(text)
 		switch expectToken {
 		case expectVariableStart:
 			if aChar == "$" {
 				variableName += aChar
 				if i+1 < len(text) {
-					nextChar := string(text[i+1: i+2])
+					nextChar := string(text[i+1 : i+2])
 					if nextChar == "{" {
 						expectToken = expectVariableNameEnclosureEnd
 						continue
@@ -566,7 +566,7 @@ func (s *Map) evaluateUDF(candidate interface{}, argument string) (interface{}, 
 
 	var expandable = strings.TrimSpace(argument)
 	if toolbox.IsCompleteJSON(argument) {
-		expandable = string(argument[1: len(argument)-1])
+		expandable = string(argument[1 : len(argument)-1])
 	}
 
 	s.parseExpression(expandable, func(expression string, udf bool, argument string) (interface{}, bool) {

@@ -1,15 +1,16 @@
 package storage_test
 
 import (
+	"archive/zip"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
 	_ "github.com/viant/toolbox/storage/scp"
-	"path"
-	"testing"
-	"strings"
+	"log"
 	"os"
-	"archive/zip"
+	"path"
+	"strings"
+	"testing"
 )
 
 func TestCopy(t *testing.T) {
@@ -40,7 +41,6 @@ func TestCopy(t *testing.T) {
 	}
 }
 
-
 func TestArchive(t *testing.T) {
 	memService := storage.NewMemoryService()
 	memService.Upload("mem://test/copy/archive/file1.txt", strings.NewReader("abc"))
@@ -52,7 +52,7 @@ func TestArchive(t *testing.T) {
 		defer writer.Close()
 		archive := zip.NewWriter(writer)
 		err = storage.Archive(memService, "mem://test/copy/archive/", archive)
-		assert.Nil(t,  err)
+		assert.Nil(t, err)
 		archive.Flush()
 		archive.Close()
 	}

@@ -15,12 +15,10 @@ func IsASCIIText(candidate string) bool {
 	return true
 }
 
-
-
 //IsPrintText return true if all candidate characters are printable (unicode.IsPrintText)
 func IsPrintText(candidate string) bool {
 	for _, r := range candidate {
-		if ! unicode.IsPrint(r) {
+		if !unicode.IsPrint(r) {
 			if r == '\n' || r == '\r' || r == '\t' || r == '`' {
 				continue
 			}

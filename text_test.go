@@ -59,7 +59,6 @@ func TestIsASCIIText(t *testing.T) {
 	}
 }
 
-
 func TestIsPrintText(t *testing.T) {
 	var useCases = []struct {
 		Description string
