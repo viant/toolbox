@@ -46,15 +46,7 @@ func copyStorageContent(sourceService Service, sourceURL string, destinationServ
 
 		var objectURLPath = urlPath(object.URL())
 		if object.IsFolder() {
-
 			if sourceURLPath == objectURLPath {
-				if subPath == "" {
-					_, targetSubpath := path.Split(sourceURLPath)
-					if targetSubpath != "" {
-						destinationURL = toolbox.URLPathJoin(destinationURL, targetSubpath)
-					}
-				}
-
 				continue
 			}
 			if subPath != "" && objectURLPath == toolbox.URLPathJoin(sourceURLPath, subPath) {
