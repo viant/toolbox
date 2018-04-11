@@ -43,16 +43,25 @@ func copyStorageContent(sourceService Service, sourceURL string, destinationServ
 	var objectRelativePath string
 	sourceURLPath := urlPath(sourceURL)
 	for _, object := range objects {
+
 		var objectURLPath = urlPath(object.URL())
 		if object.IsFolder() {
 
 			if sourceURLPath == objectURLPath {
+				if subPath == "" {
+					_, targetSubpath := path.Split(sourceURLPath)
+					if targetSubpath != "" {
+						destinationURL = toolbox.URLPathJoin(destinationURL, targetSubpath)
+					}
+				}
+
 				continue
 			}
 			if subPath != "" && objectURLPath == toolbox.URLPathJoin(sourceURLPath, subPath) {
 				continue
 			}
 		}
+
 		if len(objectURLPath) > len(sourceURLPath) {
 			objectRelativePath = objectURLPath[len(sourceURLPath):]
 			if strings.HasPrefix(objectRelativePath, "/") {
@@ -63,7 +72,6 @@ func copyStorageContent(sourceService Service, sourceURL string, destinationServ
 		if objectRelativePath != "" {
 			destinationObjectURL = toolbox.URLPathJoin(destinationURL, objectRelativePath)
 		}
-
 		if object.IsContent() {
 			reader, err := sourceService.Download(object)
 			if err != nil {
@@ -161,7 +169,6 @@ func Copy(sourceService Service, sourceURL string, destinationService Service, d
 	}
 	return err
 }
-
 
 //Archive archives supplied URL assets into zip writer
 func Archive(service Service, URL string, writer *zip.Writer) error {
