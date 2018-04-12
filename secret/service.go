@@ -33,7 +33,13 @@ func (s *Service) credentials(secret string) (*cred.Config, error) {
 	secretLocation := secret
 
 	if !strings.Contains(secret, "/") {
-		secretLocation = toolbox.URLPathJoin(s.baseDirectory, secret)
+		for _, candidate := range []string{"secret", ".secret", s.baseDirectory} {
+			secretLocation = toolbox.URLPathJoin(candidate, secret)
+			if toolbox.FileExists(secretLocation) {
+				break
+			}
+		}
+
 	} else if !(strings.Contains(secret, "://") || strings.HasPrefix(secret, "/")) {
 		if currentDirectory, err := os.Getwd(); err == nil {
 			secretLocation = toolbox.URLPathJoin(currentDirectory, secret)
