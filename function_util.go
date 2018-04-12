@@ -49,7 +49,7 @@ func AsCompatibleFunctionParameters(function interface{}, parameters []interface
 	actualMethodSignatureLength := len(funcSignature)
 	converter := Converter{}
 	if actualMethodSignatureLength != len(parameters) {
-		return nil, fmt.Errorf("invalid number of parameters wanted: [%T],  had: %v", function, 0)
+		return nil, fmt.Errorf("invalid number of parameters wanted: [%T],  had: %v", function, len(parameters))
 	}
 	var functionParameters = make([]interface{}, 0)
 	for i, parameterValue := range parameters {
