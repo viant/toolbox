@@ -15,6 +15,7 @@ type StorageMapping struct {
 	DestinationURI   string
 	TargetFile       string
 	TargetPackage    string
+	UseTextFormat    bool
 }
 
 //GenerateStorageCode create a *.go files with statically scanned content from source URL.
@@ -26,7 +27,7 @@ func GenerateStorageCode(mappings ...*StorageMapping) error {
 		if err != nil {
 			return err
 		}
-		handler, writer, err := NewStorageMapperHandler(mapping.TargetFile, mapping.TargetPackage)
+		handler, writer, err := NewStorageMapperHandler(mapping.TargetFile, mapping.TargetPackage, mapping.UseTextFormat)
 		if err != nil {
 			return err
 		}
@@ -41,7 +42,7 @@ func GenerateStorageCode(mappings ...*StorageMapping) error {
 }
 
 //NewStorageMapperHandler creates a template handler for generating go file that write static content into memory service.
-func NewStorageMapperHandler(filename, pkg string) (CopyHandler, io.WriteCloser, error) {
+func NewStorageMapperHandler(filename, pkg string, useText bool) (CopyHandler, io.WriteCloser, error) {
 	toolbox.RemoveFileIfExist(filename)
 	writer, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -60,7 +61,8 @@ func NewStorageMapperHandler(filename, pkg string) (CopyHandler, io.WriteCloser,
 		if err != nil {
 			return err
 		}
-		template.WriteStorageContent(destinationURL, content)
+
+		template.WriteStorageContent(destinationURL, content, useText)
 		return nil
 	}, template, nil
 }
@@ -85,9 +87,17 @@ func init() {
 	return err
 }
 
-func (t *templateWriter) WriteStorageContent(URL string, content []byte) error {
+func (t *templateWriter) WriteStorageContent(URL string, content []byte, useText bool) error {
+	if useText {
+		text := string(content)
+		var count = strings.Count(text, "`")
+		if count > 0 {
+			text = strings.Replace(text, "`", "`+\"`\"+`", count)
+			content = []byte(text)
+		}
+	}
 	var contentReader = fmt.Sprintf("bytes.NewReader([]byte(`%s`))", content)
-	if !toolbox.IsASCIIText(contentReader) {
+	if !toolbox.IsASCIIText(contentReader) && ! useText {
 		var byteArray = make([]string, 0)
 		for _, b := range content {
 			byteArray = append(byteArray, fmt.Sprintf("%d", b))

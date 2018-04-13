@@ -289,6 +289,10 @@ func normalizeURL(URL string) string {
 	}
 	if !strings.HasPrefix(URL, "/") {
 		currentDirectory, _ := os.Getwd()
+
+
+
+
 		if strings.Contains(URL, "..") {
 			fragments := strings.Split(URL, "/")
 			var index = 0

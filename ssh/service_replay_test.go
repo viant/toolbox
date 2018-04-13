@@ -31,7 +31,7 @@ func Test_NewReplayService(t *testing.T) {
 		assert.NotNil(t, session)
 
 		var out string
-		out, err = session.Run("ls /etc/hosts", 2000)
+		out, err = session.Run("ls /etc/hosts", nil, 2000)
 		assert.Equal(t, "/etc/hosts", out)
 
 	} else {

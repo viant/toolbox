@@ -36,7 +36,7 @@ func TestIsASCIIText(t *testing.T) {
 			Description: "JSON  text",
 			Candidate: `{
   "RepositoryDatastore":"db1",
-  "Datastores": [
+  "Db": [
     {
       "Name": "db1",
       "Config": {
@@ -89,7 +89,7 @@ func TestIsPrintText(t *testing.T) {
 			Description: "JSON  text",
 			Candidate: `{
   "RepositoryDatastore":"db1",
-  "Datastores": [
+  "Db": [
     {
       "Name": "db1",
       "Config": {
