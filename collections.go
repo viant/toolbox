@@ -370,6 +370,13 @@ func ProcessMap(source interface{}, handler func(key, value interface{}) bool) e
 			}
 		}
 		return nil
+	case map[int]interface{}:
+		for key, value := range aSlice {
+			if !handler(key, value) {
+				break
+			}
+		}
+		return nil
 
 	}
 	if IsSlice(source) {
@@ -457,6 +464,9 @@ func AsMap(source interface{}) map[string]interface{} {
 	}
 	return nil
 }
+
+
+
 
 //CopyMapEntries appends map entry from source map to target map
 func CopyMapEntries(sourceMap, targetMap interface{}) {

@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	expectVariableStart = iota
+	expectVariableStart            = iota
 	expectVariableName
 	expectFunctionCallEnd
 	expectVariableNameEnclosureEnd
@@ -87,7 +87,7 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 
 	state := *s
 	if string(expr[0:1]) == "{" {
-		expr = expr[1 : len(expr)-1]
+		expr = expr[1: len(expr)-1]
 	}
 
 	if strings.Contains(expr, ".") || strings.HasSuffix(expr, "]") {
@@ -98,7 +98,7 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 			if arrayIndexPosition != -1 {
 				arrayEndPosition := strings.Index(fragment, "]")
 				if arrayEndPosition > arrayIndexPosition && arrayEndPosition < len(fragment) {
-					arrayIndex := toolbox.AsInt(string(fragment[arrayIndexPosition+1 : arrayEndPosition]))
+					arrayIndex := toolbox.AsInt(string(fragment[arrayIndexPosition+1: arrayEndPosition]))
 					index = &arrayIndex
 					fragment = string(fragment[:arrayIndexPosition])
 				}
@@ -207,7 +207,7 @@ func (s *Map) SetValue(expr string, value interface{}) {
 		expr = string(expr[2:])
 	}
 	if len(expr) > 2 && string(expr[0:1]) == "{" {
-		expr = expr[1 : len(expr)-1]
+		expr = expr[1: len(expr)-1]
 	}
 	if strings.Contains(expr, ".") {
 		fragments := strings.Split(expr, ".")
@@ -408,6 +408,21 @@ func (s *Map) Expand(source interface{}) interface{} {
 			resultMap[s.ExpandAsText(k)] = s.Expand(v)
 		}
 		return resultMap
+	case map[interface{}]interface{}:
+		var resultMap = make(map[interface{}]interface{})
+		for k, v := range value {
+			var expanded = s.Expand(v)
+			if k == "..." {
+				if expanded != nil && toolbox.IsMap(expanded) {
+					for key, value := range toolbox.AsMap(expanded) {
+						resultMap[key] = value
+					}
+					continue
+				}
+			}
+			resultMap[s.Expand(k)] = s.Expand(v)
+		}
+		return resultMap
 	case []interface{}:
 		var resultSlice = make([]interface{}, len(value))
 		for i, value := range value {
@@ -420,7 +435,15 @@ func (s *Map) Expand(source interface{}) interface{} {
 		}
 
 		if toolbox.IsMap(source) {
-			return s.Expand(toolbox.AsMap(value))
+			switch aMap := value.(type) {
+			case map[string]interface{}:
+				return s.Expand(aMap)
+			case map[interface{}]interface{}:
+				return s.Expand(aMap)
+			default:
+				return s.Expand(toolbox.AsMap(value))
+			}
+
 		} else if toolbox.IsSlice(source) {
 			return s.Expand(toolbox.AsSlice(value))
 		} else if toolbox.IsStruct(value) {
@@ -455,14 +478,14 @@ func (s *Map) parseExpression(text string, handler func(expression string, isUDF
 	var expectIndexEnd = false
 
 	for i, r := range text {
-		aChar := string(text[i : i+1])
+		aChar := string(text[i: i+1])
 		var isLast = i+1 == len(text)
 		switch expectToken {
 		case expectVariableStart:
 			if aChar == "$" {
 				variableName += aChar
 				if i+1 < len(text) {
-					nextChar := string(text[i+1 : i+2])
+					nextChar := string(text[i+1: i+2])
 					if nextChar == "{" {
 						expectToken = expectVariableNameEnclosureEnd
 						continue
@@ -566,7 +589,7 @@ func (s *Map) evaluateUDF(candidate interface{}, argument string) (interface{}, 
 
 	var expandable = strings.TrimSpace(argument)
 	if toolbox.IsCompleteJSON(argument) {
-		expandable = string(argument[1 : len(argument)-1])
+		expandable = string(argument[1: len(argument)-1])
 	}
 
 	s.parseExpression(expandable, func(expression string, udf bool, argument string) (interface{}, bool) {
