@@ -226,6 +226,14 @@ func (s *memoryStorageService) Delete(object Object) error {
 	return noSuchFileOrDirectoryError
 }
 
+// creates a new private memory service
+func NewPrivateMemoryService() Service {
+	return &memoryStorageService{
+		root: newMemoryFolder("mem:///", NewFileInfo("/", 102, folderMode, time.Now(), true)),
+	}
+}
+
+//creates a new memory service
 func NewMemoryService() Service {
 	return &memoryStorageService{
 		root: MemoryRoot,
