@@ -386,6 +386,16 @@ func asEncodableValue(v interface{}) interface{} {
 	return value
 }
 
+
+func hasGenericKeys(aMap map[string]interface{}) bool {
+	for k := range aMap {
+		if strings.HasPrefix(k, "$As") {
+			return true
+		}
+	}
+	return false
+}
+
 //Expand expands provided value of any type with dollar sign expression/
 func (s *Map) Expand(source interface{}) interface{} {
 	switch value := source.(type) {
@@ -394,7 +404,14 @@ func (s *Map) Expand(source interface{}) interface{} {
 	case string:
 		return s.expandExpressions(value)
 	case map[string]interface{}:
-		var resultMap = make(map[string]interface{})
+		if hasGenericKeys(value) {
+			resultMap := make(map[interface{}]interface{})
+			for k, v := range value {
+				resultMap[s.Expand(k)] = s.Expand(v)
+			}
+			return resultMap
+		}
+		resultMap := make(map[string]interface{})
 		for k, v := range value {
 			var expanded = s.Expand(v)
 			if k == "..." {
