@@ -5,7 +5,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
 	"testing"
+	"strings"
+	"log"
 )
+
+
 
 func TestMap_GetValue(t *testing.T) {
 
@@ -194,46 +198,6 @@ func Test_Expand(t *testing.T) {
 
 }
 
-func Test_ExpandGenericMap(t *testing.T) {
-
-	{
-		var aMap = map[string]interface{}{
-			"k1": map[interface{}]interface{}{
-				1:   "123",
-				"L": 1,
-			},
-		}
-
-		var state= NewMap()
-		expanded := toolbox.AsMap(state.Expand(aMap))
-		subMap, ok := expanded["k1"].(map[interface{}]interface{})
-		assert.True(t, ok)
-		assert.EqualValues(t, map[interface{}]interface{}{
-			1:   "123",
-			"L": 1,
-		}, subMap)
-	}
-
-	{
-
-		var aMap = map[string]interface{}{
-			"k1": map[string]interface{} {
-				"$AsInt(1)":"123",
-				"L":	1,
-			},
-		}
-
-		var state = NewMap()
-		expanded := toolbox.AsMap(state.Expand(aMap))
-		subMap, ok := expanded["k1"].(map[interface{}]interface{})
-		assert.True(t, ok)
-		assert.EqualValues(t, map[interface{}]interface{} {
-			1:"123",
-			"L":1,
-		}, subMap)
-	}
-
-}
 
 func Test_ExpandCycleIssue(t *testing.T) {
 	state := NewMap()
@@ -333,3 +297,4 @@ func Test_Udf(t *testing.T) {
 	}
 
 }
+

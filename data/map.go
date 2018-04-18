@@ -389,7 +389,7 @@ func asEncodableValue(v interface{}) interface{} {
 
 func hasGenericKeys(aMap map[string]interface{}) bool {
 	for k := range aMap {
-		if strings.HasPrefix(k, "$As") {
+		if strings.HasPrefix(k, "$AsInt") || strings.HasPrefix(k, "$AsFloat") || strings.HasPrefix(k, "$AsBool") {
 			return true
 		}
 	}
@@ -405,16 +405,18 @@ func (s *Map) Expand(source interface{}) interface{} {
 		return s.expandExpressions(value)
 	case map[string]interface{}:
 		if hasGenericKeys(value) {
-			resultMap := make(map[interface{}]interface{})
+			result := make(map[interface{}]interface{})
 			for k, v := range value {
-				resultMap[s.Expand(k)] = s.Expand(v)
+				var key = s.Expand(k)
+				result[key] = s.Expand(v)
 			}
-			return resultMap
+			return result
 		}
 		resultMap := make(map[string]interface{})
 		for k, v := range value {
+			var key = s.ExpandAsText(k)
 			var expanded = s.Expand(v)
-			if k == "..." {
+			if key == "..." {
 				if expanded != nil && toolbox.IsMap(expanded) {
 					for key, value := range toolbox.AsMap(expanded) {
 						resultMap[key] = value
@@ -422,14 +424,15 @@ func (s *Map) Expand(source interface{}) interface{} {
 					continue
 				}
 			}
-			resultMap[s.ExpandAsText(k)] = s.Expand(v)
+			resultMap[key] = expanded
 		}
 		return resultMap
 	case map[interface{}]interface{}:
 		var resultMap = make(map[interface{}]interface{})
 		for k, v := range value {
+			var key = s.Expand(k)
 			var expanded = s.Expand(v)
-			if k == "..." {
+			if key == "..." {
 				if expanded != nil && toolbox.IsMap(expanded) {
 					for key, value := range toolbox.AsMap(expanded) {
 						resultMap[key] = value
@@ -437,7 +440,7 @@ func (s *Map) Expand(source interface{}) interface{} {
 					continue
 				}
 			}
-			resultMap[s.Expand(k)] = s.Expand(v)
+			resultMap[key] = expanded
 		}
 		return resultMap
 	case []interface{}:
