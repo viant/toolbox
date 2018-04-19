@@ -503,11 +503,10 @@ func (s *Map) parseExpression(text string, handler func(expression string, isUDF
 		aChar := string(text[i: i+1])
 		var isLast = i+1 == len(text)
 
-		if aChar == "{" {
+		if (expectToken == expectVariableNameEnclosureEnd || expectToken == expectVariableName)  &&  aChar == "{" {
 			enclosingDeepth++
 		}
-
-		if aChar == "}" {
+		if aChar == "}" && enclosingDeepth > 0 {
 			enclosingDeepth--
 		}
 
@@ -531,13 +530,12 @@ func (s *Map) parseExpression(text string, handler func(expression string, isUDF
 			if aChar != "}" || enclosingDeepth > 0 {
 				continue
 			}
-
-			if strings.Contains(variableName, "$") {
-				var normalizedVariable = strings.Trim(string(variableName[1:]), "{}")
-				expanded := s.parseExpression(normalizedVariable, handler)
-				if text, ok := expanded.(string); ok && text != normalizedVariable {
-					variableName = "${" + text + "}"
-				}
+			var normalizedVariable = strings.Trim(string(variableName[1:]), "{}")
+			if strings.Contains(normalizedVariable, "$") {
+				//expanded := s.parseExpression(normalizedVariable, handler)
+				//if text, ok := expanded.(string); ok && text != normalizedVariable {
+				//	variableName = "${" + text + "}"
+				//}
 			}
 			expanded, ok := handler(variableName, false, "")
 			if !ok {
