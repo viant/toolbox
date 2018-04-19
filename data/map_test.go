@@ -7,8 +7,6 @@ import (
 	"testing"
 )
 
-
-
 func TestMap_GetValue(t *testing.T) {
 
 	aMap := NewMap()
@@ -193,9 +191,12 @@ func Test_Expand(t *testing.T) {
 
 	var text = state.ExpandAsText("a $vv-ee /usr/local/app_${name}v1 $build.Target $abc $build.Args")
 	assert.Equal(t, "a $vv-ee /usr/local/app_etlyv1 app $abc -Dmvn.test.skip", text)
+	state.Put("nestedappleone", "juice")
+	state.Put("tag", "apple")
+	var txt2 = state.ExpandAsText("${nested${tag}one}")
+	assert.Equal(t, "juice", txt2)
 
 }
-
 
 func Test_ExpandCycleIssue(t *testing.T) {
 	state := NewMap()
@@ -295,4 +296,3 @@ func Test_Udf(t *testing.T) {
 	}
 
 }
-

@@ -386,7 +386,6 @@ func asEncodableValue(v interface{}) interface{} {
 	return value
 }
 
-
 func hasGenericKeys(aMap map[string]interface{}) bool {
 	for k := range aMap {
 		if strings.HasPrefix(k, "$AsInt") || strings.HasPrefix(k, "$AsFloat") || strings.HasPrefix(k, "$AsBool") {
@@ -498,10 +497,20 @@ func (s *Map) parseExpression(text string, handler func(expression string, isUDF
 	var expectToken = expectVariableStart
 	var result = ""
 	var expectIndexEnd = false
+	var enclosingDeepth = 0
 
 	for i, r := range text {
 		aChar := string(text[i: i+1])
 		var isLast = i+1 == len(text)
+
+		if aChar == "{" {
+			enclosingDeepth++
+		}
+
+		if aChar == "}" {
+			enclosingDeepth--
+		}
+
 		switch expectToken {
 		case expectVariableStart:
 			if aChar == "$" {
@@ -519,8 +528,16 @@ func (s *Map) parseExpression(text string, handler func(expression string, isUDF
 			result += aChar
 		case expectVariableNameEnclosureEnd:
 			variableName += aChar
-			if aChar != "}" {
+			if aChar != "}" || enclosingDeepth > 0 {
 				continue
+			}
+
+			if strings.Contains(variableName, "$") {
+				var normalizedVariable = strings.Trim(string(variableName[1:]), "{}")
+				expanded := s.parseExpression(normalizedVariable, handler)
+				if text, ok := expanded.(string); ok && text != normalizedVariable {
+					variableName = "${" + text + "}"
+				}
 			}
 			expanded, ok := handler(variableName, false, "")
 			if !ok {
