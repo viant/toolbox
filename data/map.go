@@ -401,6 +401,8 @@ func (s *Map) Expand(source interface{}) interface{} {
 	switch value := source.(type) {
 	case bool, []byte, int, uint, int8, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64, time.Time:
 		return source
+	case *string:
+		return s.expandExpressions(*value)
 	case string:
 		return s.expandExpressions(value)
 	case map[string]interface{}:
@@ -468,8 +470,8 @@ func (s *Map) Expand(source interface{}) interface{} {
 			return s.Expand(toolbox.AsSlice(value))
 		} else if toolbox.IsStruct(value) {
 			return value
-		} else {
-			return s.Expand(toolbox.AsString(value))
+		} else if value != nil {
+			return s.Expand(toolbox.AsString(toolbox.DereferenceValue(value)))
 		}
 	}
 	return source
