@@ -498,14 +498,18 @@ func (s *Map) parseExpression(text string, handler func(expression string, isUDF
 	var result = ""
 	var expectIndexEnd = false
 	var enclosingDeepth = 0
+	var expectEnclosure bool
 
 	for i, r := range text {
 		aChar := string(text[i: i+1])
 		var isLast = i+1 == len(text)
 
-		if (expectToken == expectVariableNameEnclosureEnd || expectToken == expectVariableName)  &&  aChar == "{" {
-			enclosingDeepth++
+
+
+		if  aChar == "{"  && expectEnclosure {
+				enclosingDeepth++
 		}
+
 		if aChar == "}" && enclosingDeepth > 0 {
 			enclosingDeepth--
 		}
@@ -513,6 +517,7 @@ func (s *Map) parseExpression(text string, handler func(expression string, isUDF
 		switch expectToken {
 		case expectVariableStart:
 			if aChar == "$" {
+				expectEnclosure = true
 				variableName += aChar
 				if i+1 < len(text) {
 					nextChar := string(text[i+1: i+2])
@@ -530,12 +535,13 @@ func (s *Map) parseExpression(text string, handler func(expression string, isUDF
 			if aChar != "}" || enclosingDeepth > 0 {
 				continue
 			}
+			expectEnclosure = false
 			var normalizedVariable = strings.Trim(string(variableName[1:]), "{}")
 			if strings.Contains(normalizedVariable, "$") {
-				//expanded := s.parseExpression(normalizedVariable, handler)
-				//if text, ok := expanded.(string); ok && text != normalizedVariable {
-				//	variableName = "${" + text + "}"
-				//}
+				expanded := s.parseExpression(normalizedVariable, handler)
+				if text, ok := expanded.(string); ok && text != normalizedVariable {
+					variableName = "${" + text + "}"
+				}
 			}
 			expanded, ok := handler(variableName, false, "")
 			if !ok {
@@ -605,6 +611,7 @@ func (s *Map) parseExpression(text string, handler func(expression string, isUDF
 			result += aChar
 			variableName = ""
 			expectToken = expectVariableStart
+			expectEnclosure = false
 
 		}
 	}
