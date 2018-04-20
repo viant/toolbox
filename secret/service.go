@@ -22,16 +22,15 @@ type Service struct {
 	lock          *sync.RWMutex
 }
 
-//Credentials returns credential config for supplied location.
-func (s *Service) credentials(secret string) (*cred.Config, error) {
+
+func (s *Service) CredentialsLocation(secret string) (string, error) {
 	if secret == "" {
-		return nil, errors.New("secretLocation was empty")
+		return "", errors.New("secretLocation was empty")
 	}
 	if strings.HasPrefix(secret, "~") {
 		secret = strings.Replace(secret, "~", os.Getenv("HOME"), 1)
 	}
 	secretLocation := secret
-
 	if !strings.Contains(secret, "/") {
 		secretLocation = toolbox.URLPathJoin(s.baseDirectory, secret)
 	} else if !(strings.Contains(secret, "://") || strings.HasPrefix(secret, "/")) {
@@ -42,7 +41,15 @@ func (s *Service) credentials(secret string) (*cred.Config, error) {
 	if path.Ext(secretLocation) == "" {
 		secretLocation += ".json"
 	}
+	return secretLocation, nil
+}
 
+//Credentials returns credential config for supplied location.
+func (s *Service) CredentialsFromLocation(secret string) (*cred.Config, error) {
+	secretLocation, err := s.CredentialsLocation(secret)
+	if err != nil {
+		return nil, err
+	}
 	s.lock.RLock()
 	credConfig, has := s.cache[secretLocation]
 	s.lock.RUnlock()
@@ -58,6 +65,7 @@ func (s *Service) credentials(secret string) (*cred.Config, error) {
 	if err = credConfig.LoadFromReader(bytes.NewReader(configContent), path.Ext(secretLocation)); err != nil {
 		return nil, err
 	}
+	credConfig.Data = string(configContent)
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	s.cache[secretLocation] = credConfig
@@ -88,7 +96,7 @@ func (s *Service) GetCredentials(secret string) (*cred.Config, error) {
 		result.LoadFromReader(strings.NewReader(string(secret)), "")
 		return result, nil
 	}
-	return s.credentials(secret)
+	return s.CredentialsFromLocation(secret)
 }
 
 func (s *Service) expandDynamicSecret(input string, key SecretKey, secret Secret) (string, error) {
@@ -113,7 +121,7 @@ func (s *Service) expandSecret(command string, key SecretKey, secret Secret) (st
 	return command, nil
 }
 
-//Expand expands input credential keys with actual credentials
+//Expand expands input credential keys with actual CredentialsFromLocation
 func (s *Service) Expand(input string, credentials map[SecretKey]Secret) (string, error) {
 	if len(credentials) == 0 {
 		return input, nil

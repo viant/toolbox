@@ -132,7 +132,7 @@ func TestService_Expand(t *testing.T) {
 		},
 
 		{
-			Description: "Non existing credentials",
+			Description: "Non existing CredentialsFromLocation",
 			Input:       "**key**",
 			Matchable:   "",
 			Credentials: map[SecretKey]Secret{

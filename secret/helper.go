@@ -12,7 +12,7 @@ import (
 	//	"github.com/bgentry/speakeasy"
 )
 
-//ReadingCredentialTimeout represents max time for providing credentials
+//ReadingCredentialTimeout represents max time for providing CredentialsFromLocation
 var ReadingCredentialTimeout = time.Second * 45
 
 var ReadUserAndPassword = func(timeout time.Duration) (user string, pass string, err error) {

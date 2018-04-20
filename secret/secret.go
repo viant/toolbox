@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-//Secrets represents credentials secret map
+//Secrets represents CredentialsFromLocation secret map
 type Secrets map[SecretKey]Secret
 
 //NewSecrets creates new secrets
