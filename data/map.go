@@ -715,7 +715,8 @@ func (s *Map) expandExpressions(text string) interface{} {
 		value, hasExpValue := s.GetValue(string(expression[1:]))
 		if hasExpValue {
 			if s.hasCycle(value, expression) {
-				return text, true
+				log.Printf("detected data cycle on %v", expression)
+				return expression, true
 			}
 			if isUDF {
 

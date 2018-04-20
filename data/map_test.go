@@ -182,6 +182,8 @@ func TestMap_SetValue(t *testing.T) {
 
 func Test_Expand(t *testing.T) {
 
+
+
 	state := NewMap()
 	state.Put("name", "etly")
 	build := NewMap()
@@ -196,6 +198,13 @@ func Test_Expand(t *testing.T) {
 	var txt2 = state.ExpandAsText("${nested${tag}one}")
 	assert.Equal(t, "juice", txt2)
 
+
+
+	text = "docker build -t $registryUsername/site_profile_backup:0.1.4 /site_profile_backup:0.1.4   /tmp/site_profile_backup/release/"
+	state  =NewMap()
+	state.Put("registryUsername", "$registryUsername")
+	expanded := state.Expand(text)
+	assert.Equal(t, text, expanded)
 }
 
 func Test_ExpandCycleIssue(t *testing.T) {
