@@ -22,7 +22,6 @@ type Service struct {
 	lock          *sync.RWMutex
 }
 
-
 func (s *Service) CredentialsLocation(secret string) (string, error) {
 	if secret == "" {
 		return "", errors.New("secretLocation was empty")
