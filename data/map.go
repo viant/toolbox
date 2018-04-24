@@ -400,6 +400,8 @@ func (s *Map) Expand(source interface{}) interface{} {
 	switch value := source.(type) {
 	case bool, []byte, int, uint, int8, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64, time.Time:
 		return source
+	case *[]byte:
+		return s.expandExpressions(string(*value))
 	case *string:
 		return s.expandExpressions(*value)
 	case string:
@@ -470,7 +472,7 @@ func (s *Map) Expand(source interface{}) interface{} {
 		} else if toolbox.IsStruct(value) {
 			return value
 		} else if value != nil {
-			return s.Expand(toolbox.AsString(toolbox.DereferenceValue(value)))
+			return s.Expand(toolbox.AsString(value))
 		}
 	}
 	return source
@@ -485,6 +487,9 @@ func (s *Map) ExpandAsText(text string) string {
 		if err == nil {
 			return buf.String()
 		}
+	}
+	if text, ok := result.(string);ok || result == nil {
+		return text
 	}
 	return toolbox.AsString(result)
 }
@@ -503,9 +508,6 @@ func (s *Map) parseExpression(text string, handler func(expression string, isUDF
 	for i, r := range text {
 		aChar := string(text[i: i+1])
 		var isLast = i+1 == len(text)
-
-
-
 		if  aChar == "{"  && expectEnclosure {
 				enclosingDeepth++
 		}
@@ -713,19 +715,26 @@ func (s *Map) expandExpressions(text string) interface{} {
 	}
 	var expandVariable = func(expression string, isUDF bool, argument string) (interface{}, bool) {
 		value, hasExpValue := s.GetValue(string(expression[1:]))
+
 		if hasExpValue {
 			if s.hasCycle(value, expression) {
 				log.Printf("detected data cycle on %v", expression)
 				return expression, true
 			}
-			if isUDF {
 
+			if isUDF {
 				if evaluated, ok := s.evaluateUDF(value, argument); ok {
 					return evaluated, true
 				}
 			} else {
 				if value != nil && (toolbox.IsMap(value) || toolbox.IsSlice(value)) {
 					return s.Expand(value), true
+				}
+				if text, ok := value.(string);ok {
+					return text, true
+				}
+				if value != nil {
+					return toolbox.DereferenceValue(value), true
 				}
 				return value, true
 			}
