@@ -465,9 +465,6 @@ func AsMap(source interface{}) map[string]interface{} {
 	return nil
 }
 
-
-
-
 //CopyMapEntries appends map entry from source map to target map
 func CopyMapEntries(sourceMap, targetMap interface{}) {
 	targetMapValue := reflect.ValueOf(targetMap)
@@ -599,27 +596,103 @@ func MakeReverseStringMap(text string, valueSepartor string, itemSeparator strin
 	return result
 }
 
-//DeleteEmptyKeys removes empty keys from map
-func DeleteEmptyKeys(input interface{}) {
+//DeleteEmptyKeys removes empty keys from map result
+func DeleteEmptyKeys(input interface{}) map[string]interface{} {
 	aMap := AsMap(input)
 	for k, v := range aMap {
-		if v == nil {
-			delete(aMap, k)
-		}
-		if text, ok := v.(string); ok && text == "" {
-			delete(aMap, k)
-		}
-		if IsMap(v) {
-			DeleteEmptyKeys(v)
-		} else if IsSlice(v) {
-			aSlice := AsSlice(v)
-			for _, item := range aSlice {
+		if value, ok := v.([]map[string]interface{});ok {
+			if len(value) == 0 {
+				delete(aMap, k)
+				continue
+			}
+			for i, item := range value {
 				if IsMap(item) {
-					DeleteEmptyKeys(item)
+					value[i] = DeleteEmptyKeys(item)
 				}
 			}
+			continue
+		}
+		switch value := v.(type) {
+		case string:
+			if value == "" {
+				delete(aMap, k)
+				continue
+			}
+		case bool:
+			if ! value {
+				delete(aMap, k)
+				continue
+			}
+		case int:
+			if value == 0 {
+				delete(aMap, k)
+				continue
+			}
+
+		case interface{}:
+			if value == nil {
+				delete(aMap, k)
+				continue
+			}
+
+		case map[string]interface{}:
+			if len(value) == 0 {
+				delete(aMap, k)
+				continue
+			}
+			aMap[k] = DeleteEmptyKeys(value)
+			continue
+		case map[interface{}]interface{}:
+			if len(value) == 0 {
+				delete(aMap, k)
+				continue
+			}
+			aMap[k] = DeleteEmptyKeys(value)
+			continue
+
+		case []interface{}:
+			if len(value) == 0 {
+				delete(aMap, k)
+				continue
+			}
+			for i, item := range value {
+				if IsMap(item) {
+					value[i] = DeleteEmptyKeys(item)
+				}
+			}
+			continue
+
+		default:
+			if value == nil {
+				delete(aMap, k)
+				continue
+			}
+		}
+
+
+		if IsMap(v) {
+			subMap := AsMap(v)
+			if len(subMap ) == 0 {
+				delete(aMap, k)
+				continue
+			}
+			aMap[k] = DeleteEmptyKeys(v)
+		} else if IsSlice(v) {
+			aSlice := AsSlice(v)
+			if len(aSlice) == 0 {
+				delete(aMap, k)
+				continue
+			}
+			for i, item := range aSlice {
+				if IsMap(item) || IsStruct(item) {
+					aSlice[i] = DeleteEmptyKeys(item)
+				}
+			}
+			aMap[k] = aSlice
+
 		}
 	}
+	return aMap
 }
 
 //Pairs returns map for pairs.
