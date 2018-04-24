@@ -21,7 +21,7 @@ const defaultShell = "/bin/bash"
 
 const (
 	drainTimeoutMs       = 10
-	defaultTimeoutMs     = 5000
+	defaultTimeoutMs     = 10000
 	initTimeoutMs        = 200
 	defaultTickFrequency = 100
 )
@@ -334,6 +334,21 @@ func (s *multiCommandSession) drainStdout() {
 	}
 }
 
+func waitTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
+	c := make(chan bool)
+	go func() {
+		defer close(c)
+		wg.Wait()
+		c <- true
+	}()
+	select {
+	case <-c:
+		return false // completed normally
+	case <-time.After(timeout):
+		return true // timed out
+	}
+}
+
 func (s *multiCommandSession) shellInit() (err error) {
 	if s.promptSequence != "" {
 		if _, err = s.Run(s.promptSequence, nil, initTimeoutMs); err != nil {
@@ -342,23 +357,33 @@ func (s *multiCommandSession) shellInit() (err error) {
 	}
 
 	var ts = toolbox.AsString(time.Now().UnixNano())
+	var waitGroup = &sync.WaitGroup{}
+	waitGroup.Add(1)
+
 	s.promptSequence = "PS1=\"" + ts + "\\$\""
-	_, err = s.Run(s.promptSequence, nil, initTimeoutMs)
+	s.shellPrompt = ts + "$"
+	s.escapedShellPrompt = escapeInput(s.shellPrompt)
+	var listener Listener
+	listener = func(stdout string, hasMore bool) {
+		if ! hasMore {
+			waitGroup.Done()
+		}
+	}
+	_, err = s.Run("", listener, initTimeoutMs)
+	waitTimeout(waitGroup, 60*time.Second)
+	s.drainStdout()
+	_, err = s.Run(s.promptSequence,  nil, defaultTimeoutMs)
 	if s.closeIfError(err) {
 		return err
 	}
-	s.shellPrompt = ts + "$"
-	s.escapedShellPrompt = escapeInput(s.shellPrompt)
-
-	s.drainStdout()
 	for i := 0; i < 3; i++ {
-		s.system, err = s.Run("uname -s", nil, defaultTimeoutMs)
+		s.system, err = s.Run("uname -s", nil, initTimeoutMs)
 		s.system = strings.ToLower(strings.TrimSpace(s.system))
-		if s.system != "" && !strings.Contains(s.system, "$") {
+		if strings.TrimSpace(s.system) != "" && !strings.Contains(s.system, "$") {
 			break
 		}
-
 	}
+	s.drainStdout()
 	return nil
 }
 
