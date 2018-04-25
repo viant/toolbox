@@ -15,6 +15,7 @@ import (
 	"github.com/viant/toolbox"
 	tstorage "github.com/viant/toolbox/storage"
 	"google.golang.org/api/option"
+	"strings"
 )
 
 type service struct {
@@ -49,6 +50,7 @@ func (s *service) List(URL string) ([]tstorage.Object, error) {
 	if len(parsedUrl.Path) > 0 {
 		query.Prefix = parsedUrl.Path[1:]
 	}
+
 	responseIterator := client.Bucket(parsedUrl.Host).Objects(ctx, query)
 	var result = make([]tstorage.Object, 0)
 	for obj, err := responseIterator.Next(); err == nil; obj, err = responseIterator.Next() {
@@ -164,6 +166,28 @@ func (s *service) Close() error {
 	return nil
 }
 
+
+
+func (s *service) listAll(URL string, result *[]tstorage.Object) error {
+	if ! strings.HasSuffix(URL, "/") {
+		URL += "/"
+	}
+	objects, err := s.List(URL)
+	if err != nil {
+		return err
+	}
+	for _, object := range objects {
+		if ! object.IsFolder() {
+			*result = append(*result, object)
+			continue
+		}
+		if err = s.listAll(object.URL(), result);err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 //Delete removes passed in storage object
 func (s *service) Delete(object tstorage.Object) error {
 	client, ctx, err := s.NewClient()
@@ -176,9 +200,23 @@ func (s *service) Delete(object tstorage.Object) error {
 	if err != nil {
 		return err
 	}
+	if object.IsFolder() {
+		var objects= []tstorage.Object{}
+		err := s.listAll(object.URL(), &objects)
+		if err != nil {
+			return err
+		}
+		for _, object := range objects {
+			if err := s.Delete(object); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 	return client.Bucket(objectInfo.Bucket).
 		Object(objectInfo.Name).Delete(ctx)
 }
+
 
 //NewService create a new gc storage service
 func NewService(options ...option.ClientOption) *service {
