@@ -619,10 +619,7 @@ func DeleteEmptyKeys(input interface{}) map[string]interface{} {
 				continue
 			}
 		case bool:
-			if ! value {
-				delete(aMap, k)
 				continue
-			}
 		case int:
 			if value == 0 {
 				delete(aMap, k)
