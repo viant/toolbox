@@ -596,100 +596,132 @@ func MakeReverseStringMap(text string, valueSepartor string, itemSeparator strin
 	return result
 }
 
-//DeleteEmptyKeys removes empty keys from map result
-func DeleteEmptyKeys(input interface{}) map[string]interface{} {
-	aMap := AsMap(input)
-	for k, v := range aMap {
-		if value, ok := v.([]map[string]interface{});ok {
-			if len(value) == 0 {
-				delete(aMap, k)
-				continue
-			}
-			for i, item := range value {
-				if IsMap(item) {
-					value[i] = DeleteEmptyKeys(item)
-				}
-			}
-			continue
+func isNilOrEmpty(v interface{}) bool {
+	if v == nil {
+		return true
+	}
+	switch value := v.(type) {
+	case string:
+		if value == "" {
+			return true
 		}
-		switch value := v.(type) {
-		case string:
-			if value == "" {
-				delete(aMap, k)
-				continue
-			}
-		case bool:
-				continue
-		case int:
-			if value == 0 {
-				delete(aMap, k)
-				continue
-			}
-
-		case interface{}:
-			if value == nil {
-				delete(aMap, k)
-				continue
-			}
-
-		case map[string]interface{}:
-			if len(value) == 0 {
-				delete(aMap, k)
-				continue
-			}
-			aMap[k] = DeleteEmptyKeys(value)
-			continue
-		case map[interface{}]interface{}:
-			if len(value) == 0 {
-				delete(aMap, k)
-				continue
-			}
-			aMap[k] = DeleteEmptyKeys(value)
-			continue
-
-		case []interface{}:
-			if len(value) == 0 {
-				delete(aMap, k)
-				continue
-			}
-			for i, item := range value {
-				if IsMap(item) {
-					value[i] = DeleteEmptyKeys(item)
-				}
-			}
-			continue
-
-		default:
-			if value == nil {
-				delete(aMap, k)
-				continue
-			}
+	case int:
+		if value == 0 {
+			return true
+		}
+	case map[string]interface{}:
+		if len(value) == 0 {
+			return true
+		}
+	case map[interface{}]interface{}:
+		if len(value) == 0 {
+			return true
 		}
 
-
-		if IsMap(v) {
-			subMap := AsMap(v)
-			if len(subMap ) == 0 {
-				delete(aMap, k)
-				continue
-			}
-			aMap[k] = DeleteEmptyKeys(v)
-		} else if IsSlice(v) {
-			aSlice := AsSlice(v)
-			if len(aSlice) == 0 {
-				delete(aMap, k)
-				continue
-			}
-			for i, item := range aSlice {
-				if IsMap(item) || IsStruct(item) {
-					aSlice[i] = DeleteEmptyKeys(item)
-				}
-			}
-			aMap[k] = aSlice
-
+	case []map[string]interface{}:
+		if len(value) == 0 {
+			return true
+		}
+	case []map[interface{}]interface{}:
+		if len(value) == 0 {
+			return true
+		}
+	case []interface{}:
+		if len(value) == 0 {
+			return true
+		}
+	case interface{}:
+		if value == nil {
+			return true
 		}
 	}
-	return aMap
+	return AsString(v) == ""
+}
+
+//CloneNonEmptyMap removes empty keys from map result
+func CopyNonEmptyMapEntries(input, output interface{}) (err error) {
+
+	var mutator func(k, v interface{})
+	if aMap, ok := output.(map[interface{}]interface{}); ok {
+		mutator = func(k, v interface{}) {
+			aMap[k] = v
+		}
+	} else if aMap, ok := output.(map[string]interface{}); ok {
+		mutator = func(k, v interface{}) {
+			aMap[AsString(k)] = v
+		}
+	} else {
+		return fmt.Errorf("unsupported map type: %v", output)
+	}
+
+	mapProvider := func(source interface{}) func() interface{} {
+		if _, ok := source.(map[interface{}]interface{}); ok {
+			return func() interface{} {
+				return map[interface{}]interface{}{}
+			}
+		}
+		return func() interface{} {
+			return map[string]interface{}{}
+		}
+	}
+	ProcessMap(input, func(k, v interface{}) bool {
+		if isNilOrEmpty(v) {
+			return true
+		}
+		if IsMap(v) {
+			transformed := mapProvider(v)()
+			err = CopyNonEmptyMapEntries(v, transformed)
+			if err != nil {
+				return false
+			}
+			if  isNilOrEmpty(transformed) {
+				return true
+			}
+			v = transformed
+
+		} else if IsSlice(v) {
+			aSlice := AsSlice(v)
+			var transformed = []interface{}{}
+			for _, item := range aSlice {
+				if isNilOrEmpty(item) {
+					continue
+				}
+				if IsMap(item) {
+					transformedItem := mapProvider(item)()
+
+					err = CopyNonEmptyMapEntries(item, transformedItem)
+					if err != nil {
+						return false
+					}
+					if isNilOrEmpty(transformedItem) {
+						return true
+					}
+					transformed = append(transformed, transformedItem)
+				} else {
+					transformed = append(transformed, item)
+				}
+
+			}
+
+			if len(transformed) == 0 {
+				return true
+			}
+			v = transformed
+		}
+		mutator(k, v)
+		return true
+	})
+	return err
+}
+
+//DeleteEmptyKeys removes empty keys from map result
+func DeleteEmptyKeys(input interface{}) map[string]interface{} {
+	result := map[string]interface{}{}
+	err := CopyNonEmptyMapEntries(input, result);
+	if err == nil {
+		return result
+	}
+	return AsMap(input)
 }
 
 //Pairs returns map for pairs.
