@@ -16,6 +16,7 @@ import (
 	tstorage "github.com/viant/toolbox/storage"
 	"google.golang.org/api/option"
 	"strings"
+	"time"
 )
 
 type service struct {
@@ -24,6 +25,8 @@ type service struct {
 
 func (s *service) NewClient() (*storage.Client, context.Context, error) {
 	ctx := context.Background()
+	deadline, _ := ctx.Deadline()
+	deadline.Add(time.Minute * 30)
 	client, err := storage.NewClient(ctx, s.options...)
 	if err != nil {
 		err = fmt.Errorf("failed to create google storage client:%v", err)
