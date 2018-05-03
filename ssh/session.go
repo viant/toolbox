@@ -21,8 +21,8 @@ const defaultShell = "/bin/bash"
 
 const (
 	drainTimeoutMs       = 10
-	defaultTimeoutMs     = 10000
-	initTimeoutMs        = 200
+	defaultTimeoutMs     = 20000
+	initTimeoutMs        = 300
 	defaultTickFrequency = 100
 )
 
