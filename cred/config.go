@@ -38,6 +38,7 @@ type Config struct {
 	TokenURL     string `json:"token_uri,omitempty"`
 	PrivateKey   string `json:"private_key,omitempty"`
 	PrivateKeyID string `json:"private_key_id,omitempty"`
+	ProjectID  string `json:"project_id,omitempty"`
 
 	//JSON string for this secret
 	Data            string `json:",omitempty"`
