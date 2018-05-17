@@ -21,7 +21,8 @@ type httpStorageService struct {
 	Credential *cred.Config
 }
 
-func newHttpClient() (*http.Client, error) {
+//HTTPClientProvider represents http client provider
+var HTTPClientProvider = func() (*http.Client, error) {
 	return toolbox.NewHttpClient(&toolbox.HttpOptions{Key: "MaxIdleConns", Value: 0})
 }
 
@@ -76,7 +77,7 @@ func extractLinks(body string) []*hRef {
 //List returns a list of object for supplied url
 func (s *httpStorageService) List(URL string) ([]Object, error) {
 	listURL := s.addCredentialToURLIfNeeded(URL)
-	client, err := newHttpClient()
+	client, err := HTTPClientProvider()
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +154,7 @@ func (s *httpStorageService) List(URL string) ([]Object, error) {
 
 //Exists returns true if resource exists
 func (s *httpStorageService) Exists(URL string) (bool, error) {
-	client, err := newHttpClient()
+	client, err := HTTPClientProvider()
 	if err != nil {
 		return false, err
 	}
@@ -179,7 +180,7 @@ func (s *httpStorageService) StorageObject(URL string) (Object, error) {
 
 //Download returns reader for downloaded storage object
 func (s *httpStorageService) Download(object Object) (io.ReadCloser, error) {
-	client, err := newHttpClient()
+	client, err := HTTPClientProvider()
 	if err != nil {
 		return nil, err
 	}
