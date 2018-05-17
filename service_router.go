@@ -429,6 +429,10 @@ func (c *ToolboxHTTPClient) Request(method, url string, request, response interf
 			return fmt.Errorf("%v response body was empty", errorPrefix)
 		}
 
+		if serverResponse.StatusCode == http.StatusNotFound {
+			updateResponse(serverResponse, response)
+			return nil
+		}
 		err = decoderFactory.Create(strings.NewReader(string(body))).Decode(response)
 		if err != nil {
 			return fmt.Errorf("%v. unable decode response as %T: body: %v: %v", errorPrefix, response, string(body), err)
