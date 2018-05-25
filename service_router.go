@@ -14,6 +14,7 @@ import (
 
 const (
 	jsonContentType      = "application/json"
+	yamlContentType      = "text/yaml"
 	textPlainContentType = "text/plain"
 	contentTypeHeader    = "Content-Type"
 )
@@ -49,6 +50,14 @@ var DefaultEncoderFactory = NewJSONEncoderFactory()
 //DefaultDecoderFactory - NewJSONDecoderFactory
 var DefaultDecoderFactory = NewJSONDecoderFactory()
 
+
+//YamlDefaultEncoderFactory  - NewYamlEncoderFactory
+var YamlDefaultEncoderFactory = NewYamlEncoderFactory()
+
+//YamlDefaultDecoderFactory - NewYamlDecoderFactory
+var YamlDefaultDecoderFactory = NewYamlDecoderFactory()
+
+
 //ServiceRouting represents a simple web services routing rule, which is matched with http request
 type ServiceRouting struct {
 	URI                 string      //matching uri
@@ -66,6 +75,9 @@ func (sr ServiceRouting) getDecoderFactory(contentType string) DecoderFactory {
 			return factory
 		}
 	}
+	if contentType == yamlContentType {
+		return YamlDefaultDecoderFactory
+	}
 	return DefaultDecoderFactory
 }
 
@@ -75,6 +87,9 @@ func (sr ServiceRouting) getEncoderFactory(contentType string) EncoderFactory {
 			return factory
 		}
 	}
+	if contentType == yamlContentType {
+		return YamlDefaultEncoderFactory
+	}
 	return DefaultEncoderFactory
 }
 
@@ -82,16 +97,17 @@ func (sr ServiceRouting) extractParameterFromBody(parameterName string, targetTy
 	targetValuePointer := reflect.New(targetType)
 	contentType := getContentTypeOrJSONContentType(request.Header.Get(contentTypeHeader))
 	decoderFactory := sr.getDecoderFactory(contentType)
-
 	body, err := ioutil.ReadAll(request.Body)
 	if err != nil {
 		return nil, err
 	}
+
 	decoder := decoderFactory.Create(bytes.NewReader(body))
-	if !strings.Contains(parameterName, ":") {
+
+	if ! strings.Contains(parameterName, ":") {
 		err := decoder.Decode(targetValuePointer.Interface())
 		if err != nil {
-			return nil, fmt.Errorf("unable to extract %T due to: %v, body: %s", targetValuePointer.Interface(), err, body)
+			return nil, fmt.Errorf("unable to extract %T due to: %v, body: !%s!", targetValuePointer.Interface(), err, body)
 		}
 	} else {
 		var valueMap = make(map[string]interface{})
