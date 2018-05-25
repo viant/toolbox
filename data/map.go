@@ -403,6 +403,9 @@ func (s *Map) Expand(source interface{}) interface{} {
 	case *[]byte:
 		return s.expandExpressions(string(*value))
 	case *string:
+		if value == nil {
+			return ""
+		}
 		return s.expandExpressions(*value)
 	case string:
 		return s.expandExpressions(value)
