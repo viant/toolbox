@@ -2,9 +2,10 @@ package data
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
-	"testing"
 )
 
 func TestMap_GetValue(t *testing.T) {
@@ -182,8 +183,6 @@ func TestMap_SetValue(t *testing.T) {
 
 func Test_Expand(t *testing.T) {
 
-
-
 	state := NewMap()
 	state.Put("name", "etly")
 	build := NewMap()
@@ -198,10 +197,8 @@ func Test_Expand(t *testing.T) {
 	var txt2 = state.ExpandAsText("${nested${tag}one}")
 	assert.Equal(t, "juice", txt2)
 
-
-
 	text = "docker build -t $registryUsername/site_profile_backup:0.1.4 /site_profile_backup:0.1.4   /tmp/site_profile_backup/release/"
-	state  =NewMap()
+	state = NewMap()
 	state.Put("registryUsername", "$registryUsername")
 	expanded := state.Expand(text)
 	assert.Equal(t, text, expanded)
@@ -250,58 +247,66 @@ func Test_Udf(t *testing.T) {
 	state.Put("b", "2")
 	state.Put("Dob", dateOfBirth)
 
-	{
-		var text = "$Dob([11,2,2,\"yyyy\"])"
-		expanded := state.Expand(text)
-		assert.EqualValues(t, "2007", expanded)
+	/*	{
+			var text = "$Dob([11,2,2,\"yyyy\"])"
+			expanded := state.Expand(text)
+			assert.EqualValues(t, "2007", expanded)
 
-	}
+		}
+		{
+			state.Put("args", []interface{}{11, 2, 2, "yyyy"})
+
+			var text = "$Dob($args)"
+			expanded := state.Expand(text)
+			assert.EqualValues(t, "2007", expanded)
+
+		}
+
+		{
+			var text = "$xyz($name)"
+			expanded := state.Expand(text)
+			assert.EqualValues(t, "$xyz(endly)", expanded)
+
+		}
+
+		{
+			var text = "$xyz(hello $name $abc)"
+			expanded := state.Expand(text)
+			assert.EqualValues(t, "$xyz(hello endly $abc)", expanded)
+
+		}
+
+		{
+			var text = "$test(hello $abc)"
+			expanded := state.Expand(text)
+			assert.EqualValues(t, "$test(hello $abc)", expanded)
+		}
+
+		{
+			var text = "$test(hello $name $abc)"
+			expanded := state.Expand(text)
+			assert.EqualValues(t, "$test(hello endly $abc)", expanded)
+		}
+
+		{
+			var text = "$test(hello $name)"
+			expanded := state.Expand(text)
+			assert.EqualValues(t, "hello endly", expanded)
+		}
+
+		{
+			var text = "zz $a ${b}a"
+			expanded := state.Expand(text)
+			assert.EqualValues(t, "zz 1 2a", expanded)
+
+		}*/
+
 	{
+		//Chaining UDFs together
 		state.Put("args", []interface{}{11, 2, 2, "yyyy"})
-
-		var text = "$Dob($args)"
+		var text = "$test($Dob($args $ere))"
 		expanded := state.Expand(text)
 		assert.EqualValues(t, "2007", expanded)
-
-	}
-
-	{
-		var text = "$xyz($name)"
-		expanded := state.Expand(text)
-		assert.EqualValues(t, "$xyz(endly)", expanded)
-
-	}
-
-	{
-		var text = "$xyz(hello $name $abc)"
-		expanded := state.Expand(text)
-		assert.EqualValues(t, "$xyz(hello endly $abc)", expanded)
-
-	}
-
-	{
-		var text = "$test(hello $abc)"
-		expanded := state.Expand(text)
-		assert.EqualValues(t, "$test(hello $abc)", expanded)
-	}
-
-	{
-		var text = "$test(hello $name $abc)"
-		expanded := state.Expand(text)
-		assert.EqualValues(t, "$test(hello endly $abc)", expanded)
-	}
-
-	{
-		var text = "$test(hello $name)"
-		expanded := state.Expand(text)
-		assert.EqualValues(t, "hello endly", expanded)
-	}
-
-	{
-		var text = "zz $a ${b}a"
-		expanded := state.Expand(text)
-		assert.EqualValues(t, "zz 1 2a", expanded)
-
 	}
 
 }
