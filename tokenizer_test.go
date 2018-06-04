@@ -26,10 +26,15 @@ func TestNewTokenizer(t *testing.T) {
 }
 
 func Test_NewCustomIdMatcher(t *testing.T) {
-	matcher := toolbox.NewCustomIdMatcher("$")
-	assert.Equal(t, 5, matcher.Match("Z $Abcf", 2))
-	assert.Equal(t, 1, matcher.Match("Z Abcf", 0))
-	assert.Equal(t, 0, matcher.Match("### ##", 0))
+	{
+		matcher := toolbox.NewCustomIdMatcher("$")
+		assert.Equal(t, 5, matcher.Match("Z $Abcf", 2))
+		assert.Equal(t, 1, matcher.Match("Z Abcf", 0))
+		assert.Equal(t, 0, matcher.Match("### ##", 0))
+	}
+	matcher := toolbox.NewCustomIdMatcher("_", "(", ")")
+	assert.Equal(t, 1, matcher.Match(" v_sc()", 6))
+
 }
 
 func Test_NewSequenceMatcher(t *testing.T) {
@@ -86,6 +91,13 @@ func TestBodyMatcher(t *testing.T) {
 	{
 		matcher := toolbox.BodyMatcher{Begin: "{", End: "}"}
 		var text = " {    {  \n}     }  "
-		assert.Equal(t, 16, matcher.Match(text, 1))
+		pos := matcher.Match(text, 1)
+		assert.Equal(t, 16, pos)
+	}
+	{
+		matcher := toolbox.BodyMatcher{Begin: "begin", End: "end"}
+		var text = " begin  {  \n}     end  "
+		pos := matcher.Match(text, 1)
+		assert.Equal(t, 20, pos)
 	}
 }
