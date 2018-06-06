@@ -6,7 +6,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
-
 )
 
 func TestIndexSlice(t *testing.T) {
@@ -436,41 +435,39 @@ func TestTrueValueProvider(t *testing.T) {
 	assert.True(t, toolbox.TrueValueProvider(1))
 }
 
-
 func Test_DeleteEmptyKeys(t *testing.T) {
-	aMap := map[string]interface{} {
-		"k1":[]int{},
+	aMap := map[string]interface{}{
+		"k1": []int{},
 		"k2": []int{1},
-		"k3":"",
+		"k3": "",
 		"k40": map[interface{}]interface{}{
-			"k1":nil,
-			1:2,
-			"k31":[]map[string]interface{} {},
-			"k41":[]map[string]interface{} {
+			"k1":  nil,
+			1:     2,
+			"k31": []map[string]interface{}{},
+			"k41": []map[string]interface{}{
 				{
-					"z":1,
+					"z": 1,
 				},
 			},
 		},
 		"k5": map[string]interface{}{
-			"k1":"",
-			"10":20,
+			"k1": "",
+			"10": 20,
 		},
 	}
 	cloned := toolbox.DeleteEmptyKeys(aMap)
-	assert.Equal(t,  map[string]interface{} {
+	assert.Equal(t, map[string]interface{}{
 		"k2": []interface{}{1},
 		"k40": map[interface{}]interface{}{
-			1:2,
-			"k41":[]interface{} {
+			1: 2,
+			"k41": []interface{}{
 				map[string]interface{}{
-					"z":1,
+					"z": 1,
 				},
 			},
 		},
 		"k5": map[string]interface{}{
-			"10":20,
+			"10": 20,
 		},
-
 	}, cloned)
 }

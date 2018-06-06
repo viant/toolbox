@@ -13,8 +13,8 @@ func Dump(data interface{}) {
 //DumpIndent prints passed in data as indented JSON
 func DumpIndent(data interface{}, removeEmptyKeys bool) error {
 	if IsMap(data) || IsStruct(data) {
-		var aMap= map[string]interface{}{}
-		if err := DefaultConverter.AssignConverted(&aMap, data);err != nil {
+		var aMap = map[string]interface{}{}
+		if err := DefaultConverter.AssignConverted(&aMap, data); err != nil {
 			return err
 		}
 		data = aMap
@@ -23,7 +23,7 @@ func DumpIndent(data interface{}, removeEmptyKeys bool) error {
 		}
 	}
 
-	text, err := AsIndentJSONText(data);
+	text, err := AsIndentJSONText(data)
 	if err != nil {
 		return err
 	}
