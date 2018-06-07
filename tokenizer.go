@@ -48,7 +48,7 @@ func (t *Tokenizer) Next(candidate int) *Token {
 		matchedSize := matcher.Match(t.Input, offset)
 		if matchedSize > 0 {
 			t.Index = t.Index + matchedSize
-			return &Token{candidate, t.Input[offset: offset+matchedSize]}
+			return &Token{candidate, t.Input[offset : offset+matchedSize]}
 		}
 
 	} else {
@@ -78,7 +78,7 @@ func (m CharactersMatcher) Match(input string, offset int) (matched int) {
 	var result = 0
 outer:
 	for i := 0; i < len(input)-offset; i++ {
-		aChar := input[offset+i: offset+i+1]
+		aChar := input[offset+i : offset+i+1]
 		for j := 0; j < len(m.Chars); j++ {
 			if aChar == m.Chars[j:j+1] {
 				result++
@@ -115,12 +115,12 @@ type IntMatcher struct{}
 
 //Match matches a literal in the input, it returns number of character matched.
 func (m IntMatcher) Match(input string, offset int) (matched int) {
-	if !isDigit(input[offset: offset+1]) {
+	if !isDigit(input[offset : offset+1]) {
 		return 0
 	}
 	var i = 1
 	for ; i < len(input)-offset; i++ {
-		aChar := input[offset+i: offset+i+1]
+		aChar := input[offset+i : offset+i+1]
 		if !isDigit(aChar) {
 			break
 		}
@@ -133,12 +133,12 @@ type LiteralMatcher struct{}
 
 //Match matches a literal in the input, it returns number of character matched.
 func (m LiteralMatcher) Match(input string, offset int) (matched int) {
-	if !isLetter(input[offset: offset+1]) {
+	if !isLetter(input[offset : offset+1]) {
 		return 0
 	}
 	var i = 1
 	for ; i < len(input)-offset; i++ {
-		aChar := input[offset+i: offset+i+1]
+		aChar := input[offset+i : offset+i+1]
 		if !((isLetter(aChar)) || isDigit(aChar) || aChar == "_" || aChar == ".") {
 			break
 		}
@@ -156,7 +156,7 @@ func (m IdMatcher) Match(input string, offset int) (matched int) {
 	}
 	var i = 1
 	for ; i < len(input)-offset; i++ {
-		aChar := input[offset+i: offset+i+1]
+		aChar := input[offset+i : offset+i+1]
 		if !((isLetter(aChar)) || isDigit(aChar) || aChar == "_" || aChar == ".") {
 			break
 		}
@@ -227,12 +227,12 @@ func (m *customIdMatcher) isValid(aChar string) bool {
 //Match matches a literal in the input, it returns number of character matched.
 func (m *customIdMatcher) Match(input string, offset int) (matched int) {
 
-	if !m.isValid(input[offset: offset+1]) {
+	if !m.isValid(input[offset : offset+1]) {
 		return 0
 	}
 	var i = 1
 	for ; i < len(input)-offset; i++ {
-		aChar := input[offset+i: offset+i+1]
+		aChar := input[offset+i : offset+i+1]
 		if !m.isValid(aChar) {
 			break
 		}
@@ -246,7 +246,7 @@ func NewCustomIdMatcher(allowedChars ...string) Matcher {
 		Allowed: make(map[string]bool),
 	}
 
-	if len(allowedChars)==1 && len(allowedChars[0]) > 0 {
+	if len(allowedChars) == 1 && len(allowedChars[0]) > 0 {
 		for _, allowed := range allowedChars[0] {
 			result.Allowed[string(allowed)] = true
 		}
@@ -281,10 +281,10 @@ func (m *BodyMatcher) Match(input string, offset int) (matched int) {
 	for ; i < len(input)-offset; i++ {
 
 		canCheckEnd := offset+i+endLen <= len(input)
-		if ! canCheckEnd {
+		if !canCheckEnd {
 			return 0
 		}
-		if ! uniEclosed {
+		if !uniEclosed {
 			canCheckBegin := offset+i+beginLen <= len(input)
 			if canCheckBegin {
 				if string(input[offset+i:offset+i+beginLen]) == m.Begin {
@@ -296,7 +296,7 @@ func (m *BodyMatcher) Match(input string, offset int) (matched int) {
 			depth--
 		}
 		if depth == 0 {
-			i+=endLen
+			i += endLen
 			break
 		}
 	}
