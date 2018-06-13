@@ -245,6 +245,12 @@ func NewCustomIdMatcher(allowedChars ...string) Matcher {
 	var result = &customIdMatcher{
 		Allowed: make(map[string]bool),
 	}
+
+	if len(allowedChars) == 1 && len(allowedChars[0]) > 0 {
+		for _, allowed := range allowedChars[0] {
+			result.Allowed[string(allowed)] = true
+		}
+	}
 	for _, allowed := range allowedChars {
 		result.Allowed[allowed] = true
 	}
@@ -258,27 +264,39 @@ type BodyMatcher struct {
 }
 
 //Match matches a literal in the input, it returns number of character matched.
-func (m BodyMatcher) Match(input string, offset int) (matched int) {
-	if input[offset:offset+1] != m.Begin {
+func (m *BodyMatcher) Match(input string, offset int) (matched int) {
+	beginLen := len(m.Begin)
+	endLen := len(m.End)
+	uniEclosed := m.Begin == m.End
+
+	if offset+beginLen >= len(input) {
 		return 0
 	}
+	if input[offset:offset+beginLen] != m.Begin {
+		return 0
+	}
+
 	var depth = 1
 	var i = 1
 	for ; i < len(input)-offset; i++ {
-		aChar := input[offset+i : offset+i+1]
-		switch aChar {
-		case m.Begin:
-			if m.Begin != m.End {
-				depth++
-				break
-			}
-			fallthrough
-		case m.End:
-			depth--
 
+		canCheckEnd := offset+i+endLen <= len(input)
+		if !canCheckEnd {
+			return 0
+		}
+		if !uniEclosed {
+			canCheckBegin := offset+i+beginLen <= len(input)
+			if canCheckBegin {
+				if string(input[offset+i:offset+i+beginLen]) == m.Begin {
+					depth++
+				}
+			}
+		}
+		if string(input[offset+i:offset+i+endLen]) == m.End {
+			depth--
 		}
 		if depth == 0 {
-			i++
+			i += endLen
 			break
 		}
 	}

@@ -674,7 +674,7 @@ func CopyNonEmptyMapEntries(input, output interface{}) (err error) {
 			if err != nil {
 				return false
 			}
-			if  isNilOrEmpty(transformed) {
+			if isNilOrEmpty(transformed) {
 				return true
 			}
 			v = transformed
@@ -717,7 +717,7 @@ func CopyNonEmptyMapEntries(input, output interface{}) (err error) {
 //DeleteEmptyKeys removes empty keys from map result
 func DeleteEmptyKeys(input interface{}) map[string]interface{} {
 	result := map[string]interface{}{}
-	err := CopyNonEmptyMapEntries(input, result);
+	err := CopyNonEmptyMapEntries(input, result)
 	if err == nil {
 		return result
 	}

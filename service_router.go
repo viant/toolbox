@@ -50,13 +50,11 @@ var DefaultEncoderFactory = NewJSONEncoderFactory()
 //DefaultDecoderFactory - NewJSONDecoderFactory
 var DefaultDecoderFactory = NewJSONDecoderFactory()
 
-
 //YamlDefaultEncoderFactory  - NewYamlEncoderFactory
 var YamlDefaultEncoderFactory = NewYamlEncoderFactory()
 
 //YamlDefaultDecoderFactory - NewYamlDecoderFactory
-var YamlDefaultDecoderFactory = NewYamlDecoderFactory()
-
+var YamlDefaultDecoderFactory = NewFlexYamlDecoderFactory()
 
 //ServiceRouting represents a simple web services routing rule, which is matched with http request
 type ServiceRouting struct {
@@ -104,7 +102,7 @@ func (sr ServiceRouting) extractParameterFromBody(parameterName string, targetTy
 
 	decoder := decoderFactory.Create(bytes.NewReader(body))
 
-	if ! strings.Contains(parameterName, ":") {
+	if !strings.Contains(parameterName, ":") {
 		err := decoder.Decode(targetValuePointer.Interface())
 		if err != nil {
 			return nil, fmt.Errorf("unable to extract %T due to: %v, body: !%s!", targetValuePointer.Interface(), err, body)

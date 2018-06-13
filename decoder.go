@@ -214,3 +214,80 @@ func (d *yamlDecoder) Decode(target interface{}) error {
 func NewYamlDecoderFactory() DecoderFactory {
 	return &yamlDecoderFactory{}
 }
+
+type flexYamlDecoderFactory struct{}
+
+func (e flexYamlDecoderFactory) Create(reader io.Reader) Decoder {
+	return &flexYamlDecoder{reader}
+}
+
+type flexYamlDecoder struct {
+	io.Reader
+}
+
+//normalizeMap normalizes keyValuePairs from map or slice (map with preserved key order)
+func (d *flexYamlDecoder) normalizeMap(keyValuePairs interface{}, deep bool) (map[string]interface{}, error) {
+	var result = make(map[string]interface{})
+	if keyValuePairs == nil {
+		return result, nil
+	}
+	err := ProcessMap(keyValuePairs, func(k, value interface{}) bool {
+		var key = AsString(k)
+
+		//inline map key
+		result[key] = value
+		if deep {
+			if value == nil {
+				return true
+			}
+			if IsMap(value) {
+				if normalized, err := d.normalizeMap(value, deep); err == nil {
+					result[key] = normalized
+				}
+			} else if IsSlice(value) { //yaml style map conversion if applicable
+				aSlice := AsSlice(value)
+				if len(aSlice) == 0 {
+					return true
+				}
+				if IsMap(aSlice[0]) || IsStruct(aSlice[0]) {
+					normalized, err := d.normalizeMap(value, deep)
+					if err == nil {
+						result[key] = normalized
+					}
+				} else if IsSlice(aSlice[0]) {
+					for i, item := range aSlice {
+						itemMap, err := d.normalizeMap(item, deep)
+						if err != nil {
+							return true
+						}
+						aSlice[i] = itemMap
+					}
+					result[key] = aSlice
+				}
+				return true
+			}
+		}
+		return true
+	})
+	return result, err
+}
+
+func (d *flexYamlDecoder) Decode(target interface{}) error {
+	var data, err = ioutil.ReadAll(d.Reader)
+	if err != nil {
+		return fmt.Errorf("failed to read data: %T %v", d.Reader, err)
+	}
+	aMap := map[string]interface{}{}
+	if err := yaml.Unmarshal(data, &aMap); err != nil {
+		return err
+	}
+	if normalized, err := d.normalizeMap(aMap, true); err == nil {
+		aMap = normalized
+	}
+	return DefaultConverter.AssignConverted(target, aMap)
+}
+
+//NewFlexYamlDecoderFactory create a new yaml decoder factory
+func NewFlexYamlDecoderFactory() DecoderFactory {
+	return &flexYamlDecoderFactory{}
+}
