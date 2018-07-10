@@ -237,7 +237,10 @@ func textToTime(value, dateLayout string) (*time.Time, error) {
 			value = string(value[:len(dateLayout)])
 		}
 		timeValue, err = ParseTime(value, dateLayout)
-		if err != nil {
+		if err != nil {//JSON default time format fallback
+			if timeValue, err = ParseTime(value, time.RFC3339);err == nil {
+				return &timeValue, err
+			}
 			return nil, err
 		}
 	}
@@ -524,7 +527,7 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 				}
 				c.DateLayout = previousLayout
 
-			} else {
+			} else  {
 				err := c.AssignConverted(field.Addr().Interface(), value)
 				if err != nil {
 					return fmt.Errorf("failed to convert %v to %v due to %v", value, field, err)
