@@ -7,6 +7,9 @@ import (
 	"net/url"
 	"strings"
 
+	"io/ioutil"
+	"time"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -14,8 +17,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
-	"io/ioutil"
-	"time"
 )
 
 var defaultTime = time.Time{}
@@ -188,6 +189,21 @@ func (s *service) Delete(object storage.Object) error {
 	if err != nil {
 		return err
 	}
+
+	if object.IsFolder() {
+		var objects = []storage.Object{}
+		objects, err = s.List(object.URL())
+		if err != nil {
+			return err
+		}
+		for _, object := range objects {
+			if err := s.Delete(object); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
 	target := &s3.Object{}
 	object.Unwrap(&target)
 	request := &s3.DeleteObjectInput{

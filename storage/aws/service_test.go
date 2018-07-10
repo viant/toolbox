@@ -1,37 +1,32 @@
 package aws_test
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestService_List(t *testing.T) {
 
-	//fmt.Print("Has service\n")
-	//config := &aws.Config{
-	//	Region: "",
-	//	Key:    "",
-	//	Secret: "",
-	//	Token:  "",
-	//}
-	//
-	//service := aws.NewService(config)
-	//assert.NotNil(t, service)
-	//
-	//result, err := service.List("s3://biucket/")
-	//assert.Nil(t, err)
-	//
-	//for _, o := range result {
-	//	fmt.Printf("R: %v\n", o.URL())
-	//
-	//}
-	//
-	//byteReader, err := service.Download(result[0])
-	//assert.Nil(t, err)
-	//reader, err := gzip.NewReader(byteReader)
-	//assert.Nil(t, err)
-	//logBytes, err := ioutil.ReadAll(reader)
-	//lines := strings.Split(string(logBytes), "\n")
-	//
-	//fmt.Printf("%v", strings.Join(lines[0:10], "\n"))
+	/*	fmt.Print("Has service\n")
+		config := &aws.Config{
+			Region: "",
+			Key:    "",
+			Secret: "",
+		}
 
-	//	assert.True(t, false)
+		service := aws.NewService(config)
+		assert.NotNil(t, service)
 
+		result, err := service.List("<S3 bucket>")
+		assert.Nil(t, err)
+
+		for _, o := range result {
+			fmt.Printf("R: %v\n", o.URL())
+
+		}
+
+		obj, err := service.StorageObject("<S3 bucket>")
+		assert.Nil(t, err)
+		assert.NotNil(t, obj)
+
+		assert.Nil(t, service.Delete(obj))*/
 }
