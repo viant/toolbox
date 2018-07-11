@@ -20,11 +20,11 @@ type CompactedSlice struct {
 	fieldNames       map[string]*field
 	fields           []*field
 	data             [][]interface{}
-	size             uint64
+	size             int64
 }
 
 func (s *CompactedSlice) Size() int {
-	return int(atomic.LoadUint64(&s.size))
+	return int(atomic.LoadInt64(&s.size))
 }
 
 func (s *CompactedSlice) index(fieldName string) int {
@@ -39,7 +39,6 @@ func (s *CompactedSlice) index(fieldName string) int {
 	defer s.lock.Unlock()
 	s.fieldNames[fieldName] = f
 	s.fields = append(s.fields, f)
-	atomic.StoreUint64(&s.size, 0)
 	return f.Index
 }
 
@@ -98,6 +97,7 @@ func (s *CompactedSlice) Add(data map[string]interface{}) {
 	if initSize < len(data) {
 		initSize = len(data)
 	}
+	atomic.AddInt64(&s.size, 1)
 	var record = make([]interface{}, initSize)
 	for k, v := range data {
 		i := s.index(k)
@@ -105,7 +105,6 @@ func (s *CompactedSlice) Add(data map[string]interface{}) {
 			record = expandIfNeeded(i+1, record)
 		}
 		record[i] = v
-		atomic.AddUint64(&s.size, 1)
 	}
 	if s.optimizedStorage {
 		record = s.compressStorage(record)
@@ -122,7 +121,7 @@ func (s *CompactedSlice) Range(handler func(item interface{}) (bool, error)) err
 
 	var record = make([]interface{}, len(s.fields))
 	for _, item := range data {
-
+		atomic.AddInt64(&s.size, -1)
 		if s.optimizedStorage {
 			s.uncompressStorage(item, record)
 		} else {
