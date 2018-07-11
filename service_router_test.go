@@ -73,6 +73,30 @@ func StartServer(port string, t *testing.T) {
 			Parameters:     []string{"ids"},
 			HandlerInvoker: ReverseInvoker,
 		},
+		toolbox.ServiceRouting{
+			HTTPMethod:     "GET",
+			URI:            "/v1/tasks",
+			Parameters:     []string{"status"},
+			Handler: 		func(status string) (map[string]interface{}) {
+				var result = map[string]interface{}{
+					"STATUS": status,
+					"ABc":    101,
+				}
+				return result
+			},
+		},
+		toolbox.ServiceRouting{
+			HTTPMethod:     "GET",
+			URI:            "/v1/tasks/{ids}",
+			Parameters:     []string{"ids"},
+			Handler: 		func(ids ... string) (map[string]interface{}) {
+				var result = map[string]interface{}{
+					"STATUS": ids,
+					"ABc":    102,
+				}
+				return result
+			},
+		},
 	)
 
 	http.HandleFunc("/v1/", func(writer http.ResponseWriter, reader *http.Request) {
@@ -90,7 +114,43 @@ func TestServiceRouter(t *testing.T) {
 	}()
 
 	time.Sleep(2 * time.Second)
+
+
+	{
+
+		var result = map[string]interface{}{}
+		err := toolbox.RouteToService("get", "http://127.0.0.1:8082/v1/tasks/1,2,3", nil, &result)
+		if err != nil {
+			t.Errorf("failed to send get request  %v", err)
+		}
+
+		toolbox.DumpIndent(result, true)
+//		assert.EqualValues(t, "testme", result["STATUS"])
+
+	}
+
+//
+	{
+
+		var result = map[string]interface{}{}
+		err := toolbox.RouteToService("get", "http://127.0.0.1:8082/v1/tasks?status=OK", nil, &result)
+		if err != nil {
+			t.Errorf("failed to send get request  %v", err)
+		}
+
+		toolbox.DumpIndent(result, true)
+//		assert.EqualValues(t, "testme", result["STATUS"])
+
+	}
+
+	if 1 ==1 {
+		return
+	}
+
+
 	var result = make([]int, 0)
+
+
 	{
 
 		err := toolbox.RouteToService("get", "http://127.0.0.1:8082/v1/reverse/1,7,3", nil, &result)

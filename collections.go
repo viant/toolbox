@@ -134,9 +134,19 @@ func ProcessSliceWithIndex(slice interface{}, handler func(index int, item inter
 	}
 }
 
-//AsSlice converts underlying slice as []interface{}
+//AsSlice converts underlying slice or Ranger as []interface{}
 func AsSlice(sourceSlice interface{}) []interface{} {
-	var result, ok = sourceSlice.([]interface{})
+	var result []interface{}
+	ranger, ok := sourceSlice.(Ranger);
+	if ok {
+		result = []interface{}{}
+		_ = ranger.Range(func(item interface{}) (bool, error) {
+			result = append(result, item)
+			return true, nil
+		})
+		return result
+	}
+	result, ok = sourceSlice.([]interface{})
 	if ok {
 		return result
 	}
@@ -147,6 +157,7 @@ func AsSlice(sourceSlice interface{}) []interface{} {
 	CopySliceElements(sourceSlice, &result)
 	return result
 }
+
 
 //IndexSlice reads passed in slice and applies function that takes a slice item as argument to return a key value.
 //passed in resulting map needs to match key type return by a key function, and accept slice item type as argument.
