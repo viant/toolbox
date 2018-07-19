@@ -6,34 +6,29 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"io/ioutil"
 )
 
 //Service represents abstract way to accessing local or remote storage
 type Service interface {
 	//List returns a list of object for supplied url
 	List(URL string) ([]Object, error)
-
 	//Exists returns true if resource exists
 	Exists(URL string) (bool, error)
-
 	//Object returns a Object for supplied url
 	StorageObject(URL string) (Object, error)
-
 	//Download returns reader for downloaded storage object
 	Download(object Object) (io.ReadCloser, error)
-
 	//Upload uploads provided reader content for supplied storage object.
 	Upload(URL string, reader io.Reader) error
-
 	//Delete removes passed in storage object
 	Delete(object Object) error
-
 	//Register register schema with provided service
 	Register(schema string, service Service) error
-
 	//Closes storage service
 	Close() error
 }
+
 
 type storageService struct {
 	registry map[string]Service
@@ -158,4 +153,27 @@ func NewServiceForURL(URL, credentials string) (Service, error) {
 		return nil, fmt.Errorf("unsupported scheme %v", URL)
 	}
 	return service, nil
+}
+
+//Download returns a download reader for supplied URL
+func Download(service Service, URL string) (io.ReadCloser, error) {
+	object, err := service.StorageObject(URL)
+	if err != nil {
+		return nil, err
+	}
+	return service.Download(object)
+}
+
+//DownloadText returns a text for supplied URL
+func DownloadText(service Service, URL string) (string, error) {
+	reader, err := Download(service, URL)
+	if err != nil {
+		return "", err
+	}
+	defer reader.Close()
+	content, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return "", err
+	}
+	return string(content), nil
 }
