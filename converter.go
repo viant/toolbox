@@ -1056,6 +1056,13 @@ func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sou
 		if value == nil {
 			return nil
 		}
+		if timeVal, ok := value.(time.Time);ok {
+			value = timeVal.Format(time.RFC3339)
+		}
+		if timeVal, ok := value.(*time.Time);ok {
+			value = timeVal.Format(time.RFC3339)
+		}
+
 		var fieldTarget interface{}
 		if IsStruct(value) {
 			aMap := make(map[string]interface{})

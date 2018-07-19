@@ -87,6 +87,8 @@ func (s *LogStream) Log(message *LogMessage) error {
 	return nil
 }
 
+
+
 func (s *LogStream) write(message string) error {
 	atomic.StoreUint64(&s.LastWriteTime, uint64(time.Now().UnixNano()))
 	_, err := s.File.WriteString(message)

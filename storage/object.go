@@ -14,24 +14,19 @@ const (
 type Object interface {
 	//URL return storage url
 	URL() string
-
-	//Type returns storage type  StorageObjectFolderType or StorageObjectContentType
+	//Type returns storage type either folder or file
 	Type() int
-
 	//IsFolder returns true if object is a folder
 	IsFolder() bool
-
 	//IsContent returns true if object is a file
 	IsContent() bool
-
 	//Wrap wraps source storage object
 	Wrap(source interface{})
-
 	//Unwrap unwraps source storage object into provided target.
 	Unwrap(target interface{}) error
-
 	FileInfo() os.FileInfo
 }
+
 
 //AbstractObject represents abstract storage object
 type AbstractObject struct {

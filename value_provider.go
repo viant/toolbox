@@ -16,6 +16,8 @@ type ValueProvider interface {
 	Get(context Context, arguments ...interface{}) (interface{}, error)
 }
 
+
+
 //ValueProviderRegistry registry of value providers
 type ValueProviderRegistry interface {
 	Register(name string, valueProvider ValueProvider)

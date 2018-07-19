@@ -256,6 +256,7 @@ func AsListeningTripHandler(handler http.Handler) *ListeningTripHandler {
 	return nil
 }
 
+//HttpRequest represents JSON serializable http request
 type HttpRequest struct {
 	Method string      `json:",omitempty"`
 	URL    string      `json:",omitempty"`
@@ -263,6 +264,18 @@ type HttpRequest struct {
 	Body   string      `json:",omitempty"`
 }
 
+//NewHTTPRequest create a new instance of http request
+func NewHTTPRequest(method, url, body string, header http.Header) *HttpRequest {
+	return &HttpRequest{
+		Method:method,
+		URL:url,
+		Body:body,
+		Header:header,
+	}
+}
+
+
+//HttpResponse represents JSON serializable http response
 type HttpResponse struct {
 	Code   int
 	Header http.Header `json:",omitempty"`
@@ -270,7 +283,6 @@ type HttpResponse struct {
 }
 
 func ReaderAsText(reader io.Reader) string {
-
 	if reader == nil {
 		return ""
 	}
