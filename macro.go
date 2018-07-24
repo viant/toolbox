@@ -45,6 +45,7 @@ func (e *MacroEvaluator) expandArguments(context Context, arguments *[]interface
 func (e *MacroEvaluator) decodeArguments(context Context, decodedArguments string, macro string) ([]interface{}, error) {
 	var arguments = make([]interface{}, 0)
 	if len(decodedArguments) > 0 {
+		decodedArguments = strings.Replace(decodedArguments, `\"`, `"`, len(decodedArguments))
 		decoder := json.NewDecoder(strings.NewReader(decodedArguments))
 		err := decoder.Decode(&arguments)
 		if err != nil && err != io.EOF {
@@ -110,7 +111,6 @@ func (e *MacroEvaluator) Expand(context Context, input string) (interface{}, err
 	if !success {
 		return input, nil
 	}
-
 	valueProviderRegistry := e.ValueProviderRegistry
 	if !valueProviderRegistry.Contains(macroName) {
 		return nil, fmt.Errorf("failed to lookup macro: '%v' while processing: %v", macroName, input)
@@ -119,7 +119,6 @@ func (e *MacroEvaluator) Expand(context Context, input string) (interface{}, err
 	if err != nil {
 		return nil, fmt.Errorf("failed expand macro: %v due to %v", macro, err.Error())
 	}
-
 	valueProvider := valueProviderRegistry.Get(macroName)
 	value, err := valueProvider.Get(context, arguments...)
 	if err != nil {
