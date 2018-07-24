@@ -9,7 +9,7 @@ import (
 
 func TestWithinPredicate(t *testing.T) {
 	targetTime := time.Unix(1465009041, 0)
-	predicate := toolbox.NewWithinPredicate(targetTime, -2, "")
+	predicate := toolbox.NewWithinPredicate(targetTime, 2, "")
 	timeValue := time.Unix(1465009042, 0)
 	assert.True(t, predicate.Apply(timeValue))
 
