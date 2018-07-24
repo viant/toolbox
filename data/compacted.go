@@ -15,12 +15,13 @@ type nilGroup int
 
 //CompactedSlice represented a compacted slice to represent object collection
 type CompactedSlice struct {
-	optimizedStorage bool
-	lock             *sync.RWMutex
-	fieldNames       map[string]*field
-	fields           []*field
-	data             [][]interface{}
-	size             int64
+	omitEmpty    bool
+	compressNils bool
+	lock         *sync.RWMutex
+	fieldNames   map[string]*field
+	fields       []*field
+	data         [][]interface{}
+	size         int64
 }
 
 func (s *CompactedSlice) Size() int {
@@ -51,7 +52,7 @@ func expandIfNeeded(size int, data []interface{}) []interface{} {
 	return data
 }
 
-func (s *CompactedSlice) compressStorage(data []interface{}) []interface{} {
+func (s *CompactedSlice) compress(data []interface{}) []interface{} {
 	var compressed = make([]interface{}, 0)
 	var nilCount = 0
 	for _, item := range data {
@@ -72,7 +73,7 @@ func (s *CompactedSlice) compressStorage(data []interface{}) []interface{} {
 	return compressed
 }
 
-func (s *CompactedSlice) uncompressStorage(in, out []interface{}) {
+func (s *CompactedSlice) uncompress(in, out []interface{}) {
 	var index = 0
 	for i := 0; i < len(in); i++ {
 		var item = in[i]
@@ -104,10 +105,25 @@ func (s *CompactedSlice) Add(data map[string]interface{}) {
 		if ! (i < len(record)) {
 			record = expandIfNeeded(i+1, record)
 		}
+		if s.omitEmpty {
+			if toolbox.IsString(v) {
+				if toolbox.AsString(v) == "" {
+					v = nil
+				}
+			} else if toolbox.IsInt(v) {
+				if toolbox.AsInt(v) == 0 {
+					v = nil
+				}
+			} else if toolbox.IsFloat(v) {
+				if toolbox.AsFloat(v) == 0.0 {
+					v = nil
+				}
+			}
+		}
 		record[i] = v
 	}
-	if s.optimizedStorage {
-		record = s.compressStorage(record)
+	if s.compressNils {
+		record = s.compress(record)
 	}
 	s.data = append(s.data, record)
 }
@@ -122,8 +138,8 @@ func (s *CompactedSlice) Range(handler func(item interface{}) (bool, error)) err
 	var record = make([]interface{}, len(s.fields))
 	for _, item := range data {
 		atomic.AddInt64(&s.size, -1)
-		if s.optimizedStorage {
-			s.uncompressStorage(item, record)
+		if s.compressNils {
+			s.uncompress(item, record)
 		} else {
 			record = item
 		}
@@ -135,19 +151,6 @@ func (s *CompactedSlice) Range(handler func(item interface{}) (bool, error)) err
 			if value == nil {
 				continue
 			}
-			if toolbox.IsString(value) {
-				if toolbox.AsString(value) == "" {
-					continue
-				}
-			} else if toolbox.IsInt(value) {
-				if toolbox.AsInt(value) == 0 {
-					continue
-				}
-			} else if toolbox.IsFloat(value) {
-				if toolbox.AsFloat(value) == 0.0 {
-					continue
-				}
-			}
 			aMap[field.Name] = value
 		}
 		if next, err := handler(aMap); ! next || err != nil {
@@ -157,12 +160,14 @@ func (s *CompactedSlice) Range(handler func(item interface{}) (bool, error)) err
 	return nil
 }
 
-func NewCompactedSlice(optimizedStorage bool) *CompactedSlice {
+//NewCompactedSlice create new compacted slice
+func NewCompactedSlice(omitEmpty, compressNils bool) *CompactedSlice {
 	return &CompactedSlice{
-		optimizedStorage: optimizedStorage,
-		fields:           make([]*field, 0),
-		fieldNames:       make(map[string]*field),
-		data:             make([][]interface{}, 0),
-		lock:             &sync.RWMutex{},
+		omitEmpty:    omitEmpty,
+		compressNils: compressNils,
+		fields:       make([]*field, 0),
+		fieldNames:   make(map[string]*field),
+		data:         make([][]interface{}, 0),
+		lock:         &sync.RWMutex{},
 	}
 }

@@ -6,9 +6,24 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"fmt"
 )
 
 func TestTimeFormat(t *testing.T) {
+
+	{
+		dateLaout := toolbox.DateFormatToLayout("yyyy-MM-ddTHH:mm:sszz:zz")
+		fmt.Printf("%v\n", dateLaout)
+
+		timeValue, err := time.Parse(dateLaout, "2018-07-19T13:05:36.388468-07:00")
+		//"2006-01-02T15:04:05Z07:00"
+		assert.Nil(t, err)
+		fmt.Printf("%v\n", timeValue)
+		return
+	}
+
+	//
+
 
 	{
 		dateLaout := toolbox.DateFormatToLayout("yyyy-MM-dd HH:mm:ss z")
@@ -33,7 +48,15 @@ func TestTimeFormat(t *testing.T) {
 	}
 
 	{
-		dateLaout := toolbox.DateFormatToLayout("yyyy-MM-dd HH:mm:ss.SSS ZZ")
+		dateLaout := toolbox.DateFormatToLayout("yyyy-MM-dd HH:mm:ss.SSSZ")
+		timeValue, err := time.Parse(dateLaout, "2022-11-10 10:32:28.984-08")
+		assert.Nil(t, err)
+		assert.Equal(t, int64(1668105148), timeValue.Unix())
+	}
+
+
+	{
+		dateLaout := toolbox.DateFormatToLayout("yyyy-MM-dd HH:mm:ss.SSSz")
 		timeValue, err := time.Parse(dateLaout, "2017-11-04 22:29:33.363 +0000")
 		assert.Nil(t, err)
 

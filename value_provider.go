@@ -321,7 +321,6 @@ func (p *withinSecPredicateValueProvider) Get(context Context, arguments ...inte
 	if len(arguments) != 3 {
 		return nil, fmt.Errorf("expected 3 arguments <ds:within_sec [timestamp, delta, dateFormat]>  predicate, but had %v", len(arguments))
 	}
-
 	if arguments[0] == "now" {
 		arguments[0] = time.Now()
 	}

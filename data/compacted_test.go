@@ -13,7 +13,8 @@ import (
 
 
 func TestNewCollection(t *testing.T) {
-	collection := NewCompactedSlice(true)
+	collection := NewCompactedSlice(true, true)
+
 	collection.Add(map[string]interface{}{
 		"f1":1,
 		"f12":1,
@@ -61,10 +62,10 @@ func Test_optimizedStorage(t *testing.T) {
 	collection := NewCompactedSlice(true)
 	var data = []interface{}{nil, nil, nil, "123", nil, nil, "abc", 12, nil, nil, nil, "a"}
 	var compressed = []interface{}{nilGroup(3), "123",  nilGroup(2), "abc", 12, nilGroup(3), "a"}
-	var optimized = collection.compressStorage(data)
+	var optimized = collection.compress(data)
 	assert.EqualValues(t, compressed, optimized)
 	collection.fields = make([]*field, 12)
 	var uncompressed = make([]interface{}, len(collection.fields))
-	collection.uncompressStorage(compressed, uncompressed)
+	collection.uncompress(compressed, uncompressed)
 	assert.EqualValues(t, data, uncompressed)
 }
