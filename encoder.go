@@ -50,7 +50,7 @@ type marshalerEncoder struct {
 func (e *marshalerEncoder) Encode(v interface{}) error {
 	result, casted := v.(Marshaler)
 	if !casted {
-		return fmt.Errorf("failed to decode - unable cast %T to %s", v, (*Marshaler)(nil))
+		return fmt.Errorf("failed to decode - unable cast %T to %s", v, result)
 	}
 	bytes, err := result.Marshal()
 	if err != nil {
