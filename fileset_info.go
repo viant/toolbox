@@ -16,6 +16,7 @@ import (
 type FieldInfo struct {
 	Name          string
 	TypeName      string
+	ComponentType string
 	KeyTypeName   string
 	ValueTypeName string
 	TypePackage   string
@@ -34,12 +35,19 @@ func NewFieldInfo(field *ast.Field) *FieldInfo {
 		Name:     "",
 		TypeName: types.ExprString(field.Type),
 	}
-
 	if len(field.Names) > 0 {
 		result.Name = field.Names[0].Name
 	}
 	_, result.IsMap = field.Type.(*ast.MapType)
-	_, result.IsSlice = field.Type.(*ast.ArrayType)
+	var arrayType *ast.ArrayType
+	if arrayType, result.IsSlice = field.Type.(*ast.ArrayType); result.IsSlice {
+		if ident, ok := arrayType.Elt.(*ast.Ident);ok {
+			result.ComponentType = ident.Name
+		}
+	}
+
+
+
 	_, result.IsPointer = field.Type.(*ast.StarExpr)
 	_, result.IsChannel = field.Type.(*ast.ChanType)
 	if selector, ok := field.Type.(*ast.SelectorExpr); ok {
@@ -54,7 +62,9 @@ func NewFieldInfo(field *ast.Field) *FieldInfo {
 				if reflect.TypeOf(identExpr.Obj).Elem().Kind() == reflect.Struct {
 					result.IsStruct = true
 				}
-
+				if reflect.TypeOf(identExpr.Obj).Elem().Kind() == reflect.Slice {
+					result.IsSlice = true
+				}
 			}
 		}
 	}
@@ -62,7 +72,6 @@ func NewFieldInfo(field *ast.Field) *FieldInfo {
 	if field.Tag != nil {
 		result.Tag = field.Tag.Value
 	}
-
 	if mapType, ok := field.Type.(*ast.MapType); ok {
 		result.KeyTypeName = types.ExprString(mapType.Key)
 		result.ValueTypeName = types.ExprString(mapType.Value)
@@ -102,12 +111,17 @@ func NewFunctionInfo(funcDeclaration *ast.FuncDecl) *FunctionInfo {
 	return result
 }
 
-//StructInfo represents a struct info
-type StructInfo struct {
+//TypeInfo represents a struct info
+type TypeInfo struct {
 	Name            string
 	Package         string
 	FileName        string
 	Comment         string
+	IsArray         bool
+	IsStruct        bool
+	IsDerived       bool
+	ComponentType   string
+	Derived         string
 	Settings        map[string]string
 	fields          []*FieldInfo
 	indexedField    map[string]*FieldInfo
@@ -116,7 +130,7 @@ type StructInfo struct {
 }
 
 //AddFields appends fileds to structinfo
-func (s *StructInfo) AddFields(fields ...*FieldInfo) {
+func (s *TypeInfo) AddFields(fields ...*FieldInfo) {
 	s.fields = append(s.fields, fields...)
 	for _, field := range fields {
 		s.indexedField[field.Name] = field
@@ -124,73 +138,73 @@ func (s *StructInfo) AddFields(fields ...*FieldInfo) {
 }
 
 //Field returns filedinfo for supplied file name
-func (s *StructInfo) Field(name string) *FieldInfo {
+func (s *TypeInfo) Field(name string) *FieldInfo {
 	return s.indexedField[name]
 }
 
 //Fields returns all fields
-func (s *StructInfo) Fields() []*FieldInfo {
+func (s *TypeInfo) Fields() []*FieldInfo {
 	return s.fields
 }
 
 //HasField returns true if struct has passed in field.
-func (s *StructInfo) HasField(name string) bool {
+func (s *TypeInfo) HasField(name string) bool {
 	_, found := s.indexedField[name]
 	return found
 }
 
 //Receivers returns struct functions
-func (s *StructInfo) Receivers() []*FunctionInfo {
+func (s *TypeInfo) Receivers() []*FunctionInfo {
 	return s.receivers
 }
 
 //Receiver returns receiver for passed in name
-func (s *StructInfo) Receiver(name string) *FunctionInfo {
+func (s *TypeInfo) Receiver(name string) *FunctionInfo {
 	return s.indexedReceiver[name]
 }
 
 //HasReceiver returns true if receiver is defined for struct
-func (s *StructInfo) HasReceiver(name string) bool {
+func (s *TypeInfo) HasReceiver(name string) bool {
 	_, found := s.indexedReceiver[name]
 	return found
 }
 
 //AddReceivers adds receiver for the struct
-func (s *StructInfo) AddReceivers(receivers ...*FunctionInfo) {
+func (s *TypeInfo) AddReceivers(receivers ...*FunctionInfo) {
 	s.receivers = append(s.receivers, receivers...)
 	for _, receiver := range receivers {
 		s.indexedReceiver[receiver.Name] = receiver
 	}
 }
 
-//NewStructInfo creates a new struct info
-func NewStructInfo(name string) *StructInfo {
-	return &StructInfo{Name: name,
-		fields:          make([]*FieldInfo, 0),
-		receivers:       make([]*FunctionInfo, 0),
+//NewTypeInfo creates a new struct info
+func NewTypeInfo(name string) *TypeInfo {
+	return &TypeInfo{Name: name,
+		fields: make([]*FieldInfo, 0),
+		receivers: make([]*FunctionInfo, 0),
 		indexedReceiver: make(map[string]*FunctionInfo),
-		indexedField:    make(map[string]*FieldInfo),
-		Settings:        make(map[string]string)}
+		indexedField: make(map[string]*FieldInfo),
+		Settings: make(map[string]string)}
 }
 
-//FileInfo represent hold definition about all defined structs and its receivers in a file
+//FileInfo represent hold definition about all defined types and its receivers in a file
 type FileInfo struct {
 	basePath            string
 	filename            string
-	structs             map[string]*StructInfo
+	types               map[string]*TypeInfo
 	functions           map[string][]*FunctionInfo
 	packageName         string
-	currentStructInfo   *StructInfo
+	currentTypInfo      *TypeInfo
 	fileSet             *token.FileSet
 	currentFunctionInfo *FunctionInfo
 }
 
-//Struct returns a struct info for passed in name
-func (f *FileInfo) Struct(name string) *StructInfo {
-	return f.structs[name]
+//Type returns a type info for passed in name
+func (f *FileInfo) Type(name string) *TypeInfo {
+	return f.types[name]
 }
 
-//Struct returns a struct info for passed in name
+//Type returns a struct info for passed in name
 func (f *FileInfo) addFunction(funcion *FunctionInfo) {
 	functions, found := f.functions[funcion.ReceiverTypeName]
 	if !found {
@@ -200,18 +214,18 @@ func (f *FileInfo) addFunction(funcion *FunctionInfo) {
 	f.functions[funcion.ReceiverTypeName] = append(f.functions[funcion.ReceiverTypeName], funcion)
 }
 
-//Struct returns all struct info
-func (f *FileInfo) Structs() []*StructInfo {
-	var result = make([]*StructInfo, 0)
-	for _, v := range f.structs {
+//Type returns all struct info
+func (f *FileInfo) Types() []*TypeInfo {
+	var result = make([]*TypeInfo, 0)
+	for _, v := range f.types {
 		result = append(result, v)
 	}
 	return result
 }
 
-//HasStructInfo returns truc if struct info is defined in a file
-func (f *FileInfo) HasStructInfo(name string) bool {
-	_, found := f.structs[name]
+//HasType returns truc if struct info is defined in a file
+func (f *FileInfo) HasType(name string) bool {
+	_, found := f.types[name]
 	return found
 }
 
@@ -250,14 +264,26 @@ func (v *FileInfo) Visit(node ast.Node) ast.Visitor {
 		switch value := node.(type) {
 		case *ast.TypeSpec:
 			typeName := value.Name.Name
-			structInfo := NewStructInfo(typeName)
-			structInfo.Package = v.packageName
-			structInfo.FileName = v.filename
-			v.currentStructInfo = structInfo
-			v.structs[typeName] = structInfo
+			typeInfo := NewTypeInfo(typeName)
+			typeInfo.Package = v.packageName
+			typeInfo.FileName = v.filename
+			switch typeValue := value.Type.(type) {
+			case *ast.ArrayType:
+				typeInfo.IsArray = true
+				if ident, ok := typeValue.Elt.(*ast.Ident); ok {
+					typeInfo.ComponentType = ident.Name
+				}
+			case *ast.StructType:
+				typeInfo.IsStruct = true
+			case *ast.Ident:
+				typeInfo.Derived = typeValue.Name
+				typeInfo.IsDerived = true
+			}
+			v.currentTypInfo = typeInfo
+			v.types[typeName] = typeInfo
 		case *ast.StructType:
-			v.currentStructInfo.Comment = v.readComment(value.Pos())
-			v.currentStructInfo.AddFields(toFieldInfoSlice(value.Fields)...)
+			v.currentTypInfo.Comment = v.readComment(value.Pos())
+			v.currentTypInfo.AddFields(toFieldInfoSlice(value.Fields)...)
 
 		case *ast.FuncDecl:
 			functionInfo := NewFunctionInfo(value)
@@ -265,6 +291,7 @@ func (v *FileInfo) Visit(node ast.Node) ast.Visitor {
 			if len(functionInfo.ReceiverTypeName) > 0 {
 				v.addFunction(functionInfo)
 			}
+
 		case *ast.FuncType:
 
 			if v.currentFunctionInfo != nil {
@@ -287,7 +314,7 @@ func NewFileInfo(basePath, packageName, filename string, fileSet *token.FileSet)
 		basePath:    basePath,
 		filename:    filename,
 		packageName: packageName,
-		structs:     make(map[string]*StructInfo),
+		types:       make(map[string]*TypeInfo),
 		functions:   make(map[string][]*FunctionInfo),
 		fileSet:     fileSet}
 	return result
@@ -308,11 +335,11 @@ func (f *FileSetInfo) FilesInfo() map[string]*FileInfo {
 	return f.files
 }
 
-//StructInfo returns struct info for passed in struct name.
-func (f *FileSetInfo) Struct(name string) *StructInfo {
+//TypeInfo returns type info for passed in type  name.
+func (f *FileSetInfo) Type(name string) *TypeInfo {
 	for _, v := range f.files {
-		if v.HasStructInfo(name) {
-			return v.Struct(name)
+		if v.HasType(name) {
+			return v.Type(name)
 		}
 	}
 	return nil
@@ -341,9 +368,9 @@ func NewFileSetInfo(baseDir string) (*FileSetInfo, error) {
 	for _, fileInfo := range result.files {
 
 		for k, functionsInfo := range fileInfo.functions {
-			structInfo := result.Struct(k)
-			if structInfo != nil {
-				structInfo.AddReceivers(functionsInfo...)
+			typeInfo := result.Type(k)
+			if typeInfo != nil && typeInfo.IsStruct {
+				typeInfo.AddReceivers(functionsInfo...)
 			}
 		}
 

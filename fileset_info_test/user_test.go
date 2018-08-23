@@ -5,20 +5,27 @@ import (
 	"time"
 )
 
+type Addresses []Address
+type Ints []int
+type Z string
 //Address represents a test struct
 type Address struct {
 	City string
 }
 
+type A Address
+
 //User represents a test struct
-type User struct { //my comments
+type User struct {//my comments
 	///abc comment
 	ID             *int //  comment1 type
 	Name           string
 	DateOfBirth    time.Time `foo="bar"`
 	Address        Address
 	AddressPointer *Address
+	Addresses      Addresses
 	Ints           []int
+	Ints2          Ints
 	M              map[string][]string
 	C              chan *bool
 }

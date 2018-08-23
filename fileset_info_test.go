@@ -16,25 +16,37 @@ func TestNewFileSetInfoInfo(t *testing.T) {
 
 	fileInfo := fileSetInfo.FileInfo("user_test.go")
 	assert.NotNil(t, fileInfo)
-	assert.False(t, fileInfo.HasStructInfo("F"))
-	assert.True(t, fileInfo.HasStructInfo("User"))
 
-	assert.Equal(t, 2, len(fileInfo.Structs()))
 
-	address := fileSetInfo.Struct("Address")
+	addresses := fileSetInfo.Type("Addresses")
+	assert.NotNil(t, addresses)
+
+
+
+
+	assert.False(t, fileInfo.HasType("F"))
+	assert.True(t, fileInfo.HasType("User"))
+
+	assert.Equal(t, 6, len(fileInfo.Types()))
+
+	address := fileSetInfo.Type("Address")
 	assert.NotNil(t, address)
 
-	address2 := fileSetInfo.Struct("Address2")
+	z := fileSetInfo.Type("Z")
+	assert.NotNil(t, z)
+
+
+	address2 := fileSetInfo.Type("Address2")
 	assert.Nil(t, address2)
 
-	userInfo := fileInfo.Struct("User")
+	userInfo := fileInfo.Type("User")
 	assert.NotNil(t, userInfo)
 
 	assert.True(t, userInfo.HasField("ID"))
 	assert.True(t, userInfo.HasField("Name"))
 	assert.False(t, userInfo.HasField("FF"))
 
-	assert.Equal(t, 8, len(userInfo.Fields()))
+	assert.Equal(t, 10, len(userInfo.Fields()))
 
 	idInfo := userInfo.Field("ID")
 	assert.True(t, idInfo.IsPointer)
