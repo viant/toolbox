@@ -8,25 +8,25 @@ import (
 	"go/types"
 	"io/ioutil"
 	"path"
-	"reflect"
 	"strings"
 )
 
 //FieldInfo represents a filed info
 type FieldInfo struct {
-	Name          string
-	TypeName      string
-	ComponentType string
-	KeyTypeName   string
-	ValueTypeName string
-	TypePackage   string
-	IsMap         bool
-	IsChannel     bool
-	IsSlice       bool
-	IsStruct      bool
-	IsPointer     bool
-	Tag           string
-	Comment       string
+	Name               string
+	TypeName           string
+	ComponentType      string
+	IsPointerComponent bool
+	KeyTypeName        string
+	ValueTypeName      string
+	TypePackage        string
+	IsAnonymous        bool
+	IsMap              bool
+	IsChannel          bool
+	IsSlice            bool
+	IsPointer          bool
+	Tag                string
+	Comment            string
 }
 
 //NewFieldInfo creates a new field info.
@@ -35,38 +35,38 @@ func NewFieldInfo(field *ast.Field) *FieldInfo {
 		Name:     "",
 		TypeName: types.ExprString(field.Type),
 	}
+
 	if len(field.Names) > 0 {
 		result.Name = field.Names[0].Name
+	} else {
+		result.Name = strings.Replace(strings.Replace(result.TypeName, "[]", "", len(result.TypeName)), "*", "", len(result.TypeName))
+		result.IsAnonymous = true
 	}
 	_, result.IsMap = field.Type.(*ast.MapType)
 	var arrayType *ast.ArrayType
 	if arrayType, result.IsSlice = field.Type.(*ast.ArrayType); result.IsSlice {
-		if ident, ok := arrayType.Elt.(*ast.Ident);ok {
+		if ident, ok := arrayType.Elt.(*ast.Ident); ok {
 			result.ComponentType = ident.Name
+		} else if startExpr, ok := arrayType.Elt.(*ast.StarExpr); ok {
+			if ident, ok := startExpr.X.(*ast.Ident); ok {
+				result.ComponentType = ident.Name
+			}
+			result.IsPointerComponent = true
 		}
 	}
-
-
-
 	_, result.IsPointer = field.Type.(*ast.StarExpr)
 	_, result.IsChannel = field.Type.(*ast.ChanType)
 	if selector, ok := field.Type.(*ast.SelectorExpr); ok {
 		result.TypePackage = types.ExprString(selector.X)
-		result.IsStruct = true
 	}
-
 	if result.IsPointer {
 		if pointerExpr, casted := field.Type.(*ast.StarExpr); casted {
 			if identExpr, ok := pointerExpr.X.(*ast.Ident); ok {
 				result.TypeName = identExpr.Name
-				if reflect.TypeOf(identExpr.Obj).Elem().Kind() == reflect.Struct {
-					result.IsStruct = true
-				}
-				if reflect.TypeOf(identExpr.Obj).Elem().Kind() == reflect.Slice {
-					result.IsSlice = true
-				}
 			}
 		}
+	} else if identExpr, ok := field.Type.(*ast.Ident); ok {
+		result.TypeName = identExpr.Name
 	}
 
 	if field.Tag != nil {
@@ -78,6 +78,7 @@ func NewFieldInfo(field *ast.Field) *FieldInfo {
 	}
 	return result
 }
+
 
 //FunctionInfo represents a function info
 type FunctionInfo struct {
@@ -113,20 +114,21 @@ func NewFunctionInfo(funcDeclaration *ast.FuncDecl) *FunctionInfo {
 
 //TypeInfo represents a struct info
 type TypeInfo struct {
-	Name            string
-	Package         string
-	FileName        string
-	Comment         string
-	IsArray         bool
-	IsStruct        bool
-	IsDerived       bool
-	ComponentType   string
-	Derived         string
-	Settings        map[string]string
-	fields          []*FieldInfo
-	indexedField    map[string]*FieldInfo
-	receivers       []*FunctionInfo
-	indexedReceiver map[string]*FunctionInfo
+	Name                   string
+	Package                string
+	FileName               string
+	Comment                string
+	IsSlice                bool
+	IsStruct               bool
+	IsDerived              bool
+	ComponentType          string
+	IsPointerComponentType bool
+	Derived                string
+	Settings               map[string]string
+	fields                 []*FieldInfo
+	indexedField           map[string]*FieldInfo
+	receivers              []*FunctionInfo
+	indexedReceiver        map[string]*FunctionInfo
 }
 
 //AddFields appends fileds to structinfo
@@ -251,8 +253,9 @@ func toFieldInfoSlice(source *ast.FieldList) []*FieldInfo {
 	if source == nil || len(source.List) == 0 {
 		return result
 	}
-	for _, fields := range source.List {
-		result = append(result, NewFieldInfo(fields))
+	for _, field := range source.List {
+
+		result = append(result, NewFieldInfo(field))
 	}
 	return result
 }
@@ -260,6 +263,7 @@ func toFieldInfoSlice(source *ast.FieldList) []*FieldInfo {
 //Visit visits ast node to extract struct details from the passed file
 func (v *FileInfo) Visit(node ast.Node) ast.Visitor {
 	if node != nil {
+
 		//	fmt.Printf("visit %v %T\n", node, node)
 		switch value := node.(type) {
 		case *ast.TypeSpec:
@@ -267,11 +271,17 @@ func (v *FileInfo) Visit(node ast.Node) ast.Visitor {
 			typeInfo := NewTypeInfo(typeName)
 			typeInfo.Package = v.packageName
 			typeInfo.FileName = v.filename
+
 			switch typeValue := value.Type.(type) {
 			case *ast.ArrayType:
-				typeInfo.IsArray = true
+				typeInfo.IsSlice = true
 				if ident, ok := typeValue.Elt.(*ast.Ident); ok {
 					typeInfo.ComponentType = ident.Name
+				} else if startExpr, ok := typeValue.Elt.(*ast.StarExpr); ok {
+					if ident, ok := startExpr.X.(*ast.Ident); ok {
+						typeInfo.ComponentType = ident.Name
+					}
+					typeInfo.IsPointerComponentType = true
 				}
 			case *ast.StructType:
 				typeInfo.IsStruct = true
@@ -337,6 +347,9 @@ func (f *FileSetInfo) FilesInfo() map[string]*FileInfo {
 
 //TypeInfo returns type info for passed in type  name.
 func (f *FileSetInfo) Type(name string) *TypeInfo {
+	if pointerIndex := strings.LastIndex(name, "*"); pointerIndex != -1 {
+		name = name[pointerIndex+1:]
+	}
 	for _, v := range f.files {
 		if v.HasType(name) {
 			return v.Type(name)

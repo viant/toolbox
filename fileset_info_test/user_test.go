@@ -8,8 +8,16 @@ import (
 type Addresses []Address
 type Ints []int
 type Z string
+
+type Country struct {
+	Code string
+	Name string
+
+}
+
 //Address represents a test struct
 type Address struct {
+	Country
 	City string
 }
 
