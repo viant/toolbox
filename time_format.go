@@ -26,6 +26,8 @@ func DateFormatToLayout(dateFormat string) string {
 	dateFormat = strings.Replace(dateFormat, "mm", "04", 1)
 	dateFormat = strings.Replace(dateFormat, "m", "4", 1)
 
+
+
 	dateFormat = strings.Replace(dateFormat, "ss", "05", 1)
 	dateFormat = strings.Replace(dateFormat, "s", "5", 1)
 
@@ -46,7 +48,6 @@ func DateFormatToLayout(dateFormat string) string {
 	dateFormat = strings.Replace(dateFormat, "ZZ", "-0700", 1)
 
 	dateFormat = strings.Replace(dateFormat, "Z", "-07", 1)
-
 
 	dateFormat = strings.Replace(dateFormat, "zz:zz", "Z07:00", 1)
 	dateFormat = strings.Replace(dateFormat, "zzzz", "Z0700", 1)

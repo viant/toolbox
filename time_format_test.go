@@ -6,35 +6,23 @@ import (
 	"strings"
 	"testing"
 	"time"
-	"fmt"
 )
 
 func TestTimeFormat(t *testing.T) {
 
-	{
-		dateLaout := toolbox.DateFormatToLayout("yyyy-MM-ddTHH:mm:sszz:zz")
-		fmt.Printf("%v\n", dateLaout)
-
-		timeValue, err := time.Parse(dateLaout, "2018-07-19T13:05:36.388468-07:00")
-		//"2006-01-02T15:04:05Z07:00"
-		assert.Nil(t, err)
-		fmt.Printf("%v\n", timeValue)
-		return
-	}
-
-	//
 
 
 	{
-		dateLaout := toolbox.DateFormatToLayout("yyyy-MM-dd HH:mm:ss z")
-		timeValue, err := time.Parse(dateLaout, "2018-01-15 08:02:23 UTC")
+		timeLayout := toolbox.DateFormatToLayout("yyyy-MM-dd HH:mm:ss z")
+
+		timeValue, err := time.Parse(timeLayout, "2018-01-15 08:02:23 UTC")
 		assert.Nil(t, err)
 		assert.EqualValues(t, 23, timeValue.Second())
 	}
 
 	{
-		dateLaout := toolbox.DateFormatToLayout("yyyy-MM-dd HH:mm:ss")
-		timeValue, err := time.Parse(dateLaout, "2016-03-01 03:10:11")
+		timeLayout := toolbox.DateFormatToLayout("yyyy-MM-dd HH:mm:ss")
+		timeValue, err := time.Parse(timeLayout, "2016-03-01 03:10:11")
 		assert.Nil(t, err)
 		assert.EqualValues(t, 11, timeValue.Second())
 	}
@@ -56,8 +44,8 @@ func TestTimeFormat(t *testing.T) {
 
 
 	{
-		dateLaout := toolbox.DateFormatToLayout("yyyy-MM-dd HH:mm:ss.SSSz")
-		timeValue, err := time.Parse(dateLaout, "2017-11-04 22:29:33.363 +0000")
+		dateLaout := toolbox.DateFormatToLayout("yyyy-MM-dd HH:mm:ss.SSS")
+		timeValue, err := time.Parse(dateLaout, "2017-11-04 22:29:33.363")
 		assert.Nil(t, err)
 
 		assert.Equal(t, 2017, timeValue.Year())
