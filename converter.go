@@ -1059,7 +1059,7 @@ func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sou
 		if timeVal, ok := value.(time.Time);ok {
 			value = timeVal.Format(time.RFC3339)
 		}
-		if timeVal, ok := value.(*time.Time);ok {
+		if timeVal, ok := value.(*time.Time);ok && timeVal != nil {
 			value = timeVal.Format(time.RFC3339)
 		}
 
