@@ -36,6 +36,22 @@ func AsString(input interface{}) string {
 		return sourceValue
 	case []byte:
 		return string(sourceValue)
+	case []interface{}:
+		if len(sourceValue) == 0 {
+			return ""
+		}
+		if _, isByte := sourceValue[0].(byte); isByte {
+			var bytes = make([]byte, len(sourceValue))
+			for i, v := range sourceValue {
+				bytes[i] = v.(byte)
+			}
+			return string(bytes)
+		}
+		var result = ""
+		for  v := range sourceValue {
+			result+=AsString(v)
+		}
+		return result
 	}
 
 	reflectValue := reflect.ValueOf(input)
