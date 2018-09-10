@@ -82,7 +82,7 @@ func (r *Resource) DirectoryPath() string {
 	if path.Ext(name) != "" {
 		result = parent
 	}
-	if strings.HasSuffix(result, "/") {
+		if strings.HasSuffix(result, "/") {
 		result = string(result[:len(result)-1])
 	}
 	return result
@@ -177,6 +177,11 @@ func (r *Resource) DecodeWith(target interface{}, decoderFactory toolbox.Decoder
 //Rename renames URI name of this resource
 func (r *Resource) Rename(name string) (err error) {
 	var _, currentName = toolbox.URLSplit(r.URL)
+	if currentName == "" && strings.HasSuffix(r.URL, "/") {
+		_, currentName = toolbox.URLSplit(r.URL[:len(r.URL)-1])
+		currentName+="/"
+	}
+
 	r.URL = strings.Replace(r.URL, currentName, name, 1)
 	r.ParsedURL, err = url.Parse(r.URL)
 	return err
