@@ -140,6 +140,9 @@ func NewServiceForURL(URL, credentials string) (Service, error) {
 	if provider != nil {
 		if len(credentials) > 0 {
 			credentials = strings.Replace(credentials, "${env.HOME}", os.Getenv("HOME"), 1)
+			if strings.HasPrefix(credentials, "~") {
+				credentials = strings.Replace(credentials, "~", os.Getenv("HOME"), 1)
+			}
 		}
 		serviceForScheme, err := provider(credentials)
 		if err != nil {
