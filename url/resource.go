@@ -171,7 +171,12 @@ func (r *Resource) DecodeWith(target interface{}, decoderFactory toolbox.Decoder
 	if err != nil {
 		return err
 	}
-	return decoderFactory.Create(bytes.NewReader(content)).Decode(target)
+	err  =  decoderFactory.Create(bytes.NewReader(content)).Decode(target)
+	if err != nil {
+		return  fmt.Errorf("failed to decode: %v, payload: %s", err, content)
+	}
+
+	return err
 }
 
 //Rename renames URI name of this resource
