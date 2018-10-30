@@ -3,8 +3,8 @@ package toolbox_test
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
-	"testing"
 	"github.com/viant/toolbox/url"
+	"testing"
 )
 
 func TestExtractURIParameters(t *testing.T) {
@@ -82,7 +82,6 @@ func TestURLSplit(t *testing.T) {
 		assert.Equal(t, "rds", resource)
 	}
 
-
 }
 
 func TestURLStripPath(t *testing.T) {
@@ -96,7 +95,6 @@ func TestURLStripPath(t *testing.T) {
 	}
 }
 
-
 func TestURL_Rename(t *testing.T) {
 	{
 		URL := "http://github.com/abc/"
@@ -107,7 +105,6 @@ func TestURL_Rename(t *testing.T) {
 	}
 
 }
-
 
 func TestURLPathJoin(t *testing.T) {
 

@@ -10,8 +10,6 @@ import (
 
 func TestTimeFormat(t *testing.T) {
 
-
-
 	{
 		timeLayout := toolbox.DateFormatToLayout("yyyy-MM-dd HH:mm:ss z")
 
@@ -41,7 +39,6 @@ func TestTimeFormat(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, int64(1668105148), timeValue.Unix())
 	}
-
 
 	{
 		dateLaout := toolbox.DateFormatToLayout("yyyy-MM-dd HH:mm:ss.SSS")

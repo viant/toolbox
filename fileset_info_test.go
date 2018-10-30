@@ -6,8 +6,6 @@ import (
 	"testing"
 )
 
-
-
 func TestNewFileSetInfoInfo(t *testing.T) {
 
 	fileSetInfo, err := toolbox.NewFileSetInfo("./fileset_info_test/")
@@ -19,12 +17,8 @@ func TestNewFileSetInfoInfo(t *testing.T) {
 	fileInfo := fileSetInfo.FileInfo("user_test.go")
 	assert.NotNil(t, fileInfo)
 
-
 	addresses := fileSetInfo.Type("Addresses")
 	assert.NotNil(t, addresses)
-
-
-
 
 	assert.False(t, fileInfo.HasType("F"))
 	assert.True(t, fileInfo.HasType("User"))
@@ -34,7 +28,6 @@ func TestNewFileSetInfoInfo(t *testing.T) {
 	address := fileSetInfo.Type("Address")
 	assert.NotNil(t, address)
 
-
 	assert.Equal(t, 2, len(address.Fields()))
 	country := address.Field("Country")
 	assert.NotNil(t, country)
@@ -42,7 +35,6 @@ func TestNewFileSetInfoInfo(t *testing.T) {
 
 	z := fileSetInfo.Type("Z")
 	assert.NotNil(t, z)
-
 
 	address2 := fileSetInfo.Type("Address2")
 	assert.Nil(t, address2)

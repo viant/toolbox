@@ -137,7 +137,7 @@ func ProcessSliceWithIndex(slice interface{}, handler func(index int, item inter
 //AsSlice converts underlying slice or Ranger as []interface{}
 func AsSlice(sourceSlice interface{}) []interface{} {
 	var result []interface{}
-	ranger, ok := sourceSlice.(Ranger);
+	ranger, ok := sourceSlice.(Ranger)
 	if ok {
 		result = []interface{}{}
 		_ = ranger.Range(func(item interface{}) (bool, error) {
@@ -157,7 +157,6 @@ func AsSlice(sourceSlice interface{}) []interface{} {
 	CopySliceElements(sourceSlice, &result)
 	return result
 }
-
 
 //IndexSlice reads passed in slice and applies function that takes a slice item as argument to return a key value.
 //passed in resulting map needs to match key type return by a key function, and accept slice item type as argument.
@@ -651,7 +650,6 @@ func isNilOrEmpty(v interface{}) bool {
 
 //CloneNonEmptyMap removes empty keys from map result
 func CopyNonEmptyMapEntries(input, output interface{}) (err error) {
-
 	var mutator func(k, v interface{})
 	if aMap, ok := output.(map[interface{}]interface{}); ok {
 		mutator = func(k, v interface{}) {

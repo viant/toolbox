@@ -17,9 +17,7 @@ func TestNewHttpStorageService(t *testing.T) {
 
 		objects, err := service.List("https://github.com/viant/")
 		assert.True(t, len(objects) > 0)
-
 		reader, err := service.Download(objects[0])
-
 		if assert.Nil(t, err) {
 			defer reader.Close()
 		}

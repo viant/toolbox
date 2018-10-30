@@ -79,7 +79,6 @@ func NewFieldInfo(field *ast.Field) *FieldInfo {
 	return result
 }
 
-
 //FunctionInfo represents a function info
 type FunctionInfo struct {
 	Name             string
@@ -182,11 +181,11 @@ func (s *TypeInfo) AddReceivers(receivers ...*FunctionInfo) {
 //NewTypeInfo creates a new struct info
 func NewTypeInfo(name string) *TypeInfo {
 	return &TypeInfo{Name: name,
-		fields: make([]*FieldInfo, 0),
-		receivers: make([]*FunctionInfo, 0),
+		fields:          make([]*FieldInfo, 0),
+		receivers:       make([]*FunctionInfo, 0),
 		indexedReceiver: make(map[string]*FunctionInfo),
-		indexedField: make(map[string]*FieldInfo),
-		Settings: make(map[string]string)}
+		indexedField:    make(map[string]*FieldInfo),
+		Settings:        make(map[string]string)}
 }
 
 //FileInfo represent hold definition about all defined types and its receivers in a file

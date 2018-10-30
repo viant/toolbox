@@ -48,8 +48,8 @@ func AsString(input interface{}) string {
 			return string(bytes)
 		}
 		var result = ""
-		for  v := range sourceValue {
-			result+=AsString(v)
+		for v := range sourceValue {
+			result += AsString(v)
 		}
 		return result
 	}
@@ -215,6 +215,7 @@ func ToInt(value interface{}) (int, error) {
 		}
 		return 0, nil
 	}
+
 	valueAsString := AsString(value)
 	if strings.Contains(valueAsString, ".") {
 		floatValue, err := strconv.ParseFloat(valueAsString, intBitSize)
@@ -253,8 +254,8 @@ func textToTime(value, dateLayout string) (*time.Time, error) {
 			value = string(value[:len(dateLayout)])
 		}
 		timeValue, err = ParseTime(value, dateLayout)
-		if err != nil {//JSON default time format fallback
-			if timeValue, err = ParseTime(value, time.RFC3339);err == nil {
+		if err != nil { //JSON default time format fallback
+			if timeValue, err = ParseTime(value, time.RFC3339); err == nil {
 				return &timeValue, err
 			}
 			return nil, err
@@ -543,7 +544,7 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 				}
 				c.DateLayout = previousLayout
 
-			} else  {
+			} else {
 				err := c.AssignConverted(field.Addr().Interface(), value)
 				if err != nil {
 					return fmt.Errorf("failed to convert %v to %v due to %v", value, field, err)
@@ -1072,10 +1073,10 @@ func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sou
 		if value == nil {
 			return nil
 		}
-		if timeVal, ok := value.(time.Time);ok {
+		if timeVal, ok := value.(time.Time); ok {
 			value = timeVal.Format(time.RFC3339)
 		}
-		if timeVal, ok := value.(*time.Time);ok && timeVal != nil {
+		if timeVal, ok := value.(*time.Time); ok && timeVal != nil {
 			value = timeVal.Format(time.RFC3339)
 		}
 

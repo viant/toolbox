@@ -12,18 +12,16 @@ var TrueProvider = func(input interface{}) bool {
 }
 
 type withinSecPredicate struct {
-	baseTime       time.Time
-	deltaInSeconds int
-	dateLayout     string
-	elapsed time.Duration
+	baseTime        time.Time
+	deltaInSeconds  int
+	dateLayout      string
+	elapsed         time.Duration
 	maxAllowedDelay time.Duration
 }
-
 
 func (p *withinSecPredicate) String() string {
 	return fmt.Sprintf("(elapsed: %v, max allowed delay: %v)", p.elapsed, p.maxAllowedDelay)
 }
-
 
 //Apply returns true if passed in time is within deltaInSeconds from baseTime
 func (p *withinSecPredicate) Apply(value interface{}) bool {
@@ -34,17 +32,16 @@ func (p *withinSecPredicate) Apply(value interface{}) bool {
 
 	elapsed := timeValue.Sub(p.baseTime)
 	if elapsed < 0 {
-		elapsed *=-1
+		elapsed *= -1
 	}
 	var maxAllowedDelay = time.Duration(p.deltaInSeconds) * time.Second
 	var passed = maxAllowedDelay >= elapsed
-	if ! passed {
+	if !passed {
 		p.elapsed = elapsed
 		p.maxAllowedDelay = maxAllowedDelay
 	}
 	return passed
 }
-
 
 func (p *withinSecPredicate) ToString() string {
 	return fmt.Sprintf(" %v within %v s", p.baseTime, p.deltaInSeconds)

@@ -15,13 +15,16 @@ func IsCompleteJSON(candidate string) bool {
 	if candidate == "" {
 		return false
 	}
+
 	curlyStart := strings.Count(candidate, "{")
 	curlyEnd := strings.Count(candidate, "}")
+
 	squareStart := strings.Count(candidate, "[")
 	squareEnd := strings.Count(candidate, "]")
 	if !(curlyStart == curlyEnd && squareStart == squareEnd) {
 		return false
 	}
+
 	var err error
 	if strings.HasPrefix(candidate, "{") {
 		_, err = JSONToMap(candidate)

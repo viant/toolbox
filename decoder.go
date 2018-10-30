@@ -68,7 +68,7 @@ func (d *unMarshalerDecoder) Decode(v interface{}) error {
 	}
 	result, casted := v.(UnMarshaler)
 	if !casted {
-		return fmt.Errorf("failed to decode - unable cast %T to %s", v,result)
+		return fmt.Errorf("failed to decode - unable cast %T to %s", v, result)
 	}
 	return result.Unmarshal(bytes)
 }

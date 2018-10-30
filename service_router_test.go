@@ -74,10 +74,10 @@ func StartServer(port string, t *testing.T) {
 			HandlerInvoker: ReverseInvoker,
 		},
 		toolbox.ServiceRouting{
-			HTTPMethod:     "GET",
-			URI:            "/v1/tasks",
-			Parameters:     []string{"status"},
-			Handler: 		func(status string) (map[string]interface{}) {
+			HTTPMethod: "GET",
+			URI:        "/v1/tasks",
+			Parameters: []string{"status"},
+			Handler: func(status string) map[string]interface{} {
 				var result = map[string]interface{}{
 					"STATUS": status,
 					"ABc":    101,
@@ -86,10 +86,10 @@ func StartServer(port string, t *testing.T) {
 			},
 		},
 		toolbox.ServiceRouting{
-			HTTPMethod:     "GET",
-			URI:            "/v1/tasks/{ids}",
-			Parameters:     []string{"ids"},
-			Handler: 		func(ids ... string) (map[string]interface{}) {
+			HTTPMethod: "GET",
+			URI:        "/v1/tasks/{ids}",
+			Parameters: []string{"ids"},
+			Handler: func(ids ...string) map[string]interface{} {
 				var result = map[string]interface{}{
 					"STATUS": ids,
 					"ABc":    102,
@@ -115,7 +115,6 @@ func TestServiceRouter(t *testing.T) {
 
 	time.Sleep(2 * time.Second)
 
-
 	{
 
 		var result = map[string]interface{}{}
@@ -125,11 +124,11 @@ func TestServiceRouter(t *testing.T) {
 		}
 
 		toolbox.DumpIndent(result, true)
-//		assert.EqualValues(t, "testme", result["STATUS"])
+		//		assert.EqualValues(t, "testme", result["STATUS"])
 
 	}
 
-//
+	//
 	{
 
 		var result = map[string]interface{}{}
@@ -139,17 +138,15 @@ func TestServiceRouter(t *testing.T) {
 		}
 
 		toolbox.DumpIndent(result, true)
-//		assert.EqualValues(t, "testme", result["STATUS"])
+		//		assert.EqualValues(t, "testme", result["STATUS"])
 
 	}
 
-	if 1 ==1 {
+	if 1 == 1 {
 		return
 	}
 
-
 	var result = make([]int, 0)
-
 
 	{
 
