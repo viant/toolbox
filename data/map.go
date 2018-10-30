@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	expectVariableStart            = iota
+	expectVariableStart = iota
 	expectVariableName
 	expectFunctionCallEnd
 	expectVariableNameEnclosureEnd
@@ -27,11 +27,55 @@ func (s *Map) Put(key string, value interface{}) {
 	(*s)[key] = value
 }
 
-//Delete removes the supplied keys
+//Delete removes the supplied keys, it supports key of path expression with dot i.e. request.method
 func (s *Map) Delete(keys ...string) {
 	for _, key := range keys {
-		delete(*s, key)
+		if !strings.Contains(key, ".") {
+			delete(*s, key)
+			continue
+		}
+		keyParts := strings.Split(key, ".")
+		var temp = *s
+		for i, part := range keyParts {
+			if temp == nil {
+				break
+			}
+			isLasPart := i+1 == len(keyParts)
+			if isLasPart {
+				delete(temp, part)
+			} else if temp[part] != nil && toolbox.IsMap(temp[part]) {
+				subMap := toolbox.AsMap(temp[part])
+				temp = Map(subMap)
+			} else {
+				break
+			}
+		}
 	}
+}
+
+//Replace replaces supplied key/path with corresponding value
+func (s *Map) Replace(key, val string) {
+	if !strings.Contains(key, ".") {
+		(*s)[key] = val
+		return
+	}
+	keyParts := strings.Split(key, ".")
+	var temp = *s
+	for i, part := range keyParts {
+		if temp == nil {
+			break
+		}
+		isLasPart := i+1 == len(keyParts)
+		if isLasPart {
+			temp[part] = val
+		} else if temp[part] != nil && toolbox.IsMap(temp[part]) {
+			subMap := toolbox.AsMap(temp[part])
+			temp = Map(subMap)
+		} else {
+			break
+		}
+	}
+
 }
 
 //Has returns true if the provided key is present
@@ -87,7 +131,7 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 
 	state := *s
 	if string(expr[0:1]) == "{" {
-		expr = expr[1: len(expr)-1]
+		expr = expr[1 : len(expr)-1]
 	}
 
 	if strings.Contains(expr, ".") || strings.HasSuffix(expr, "]") {
@@ -98,7 +142,7 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 			if arrayIndexPosition != -1 {
 				arrayEndPosition := strings.Index(fragment, "]")
 				if arrayEndPosition > arrayIndexPosition && arrayEndPosition < len(fragment) {
-					arrayIndex := toolbox.AsInt(string(fragment[arrayIndexPosition+1: arrayEndPosition]))
+					arrayIndex := toolbox.AsInt(string(fragment[arrayIndexPosition+1 : arrayEndPosition]))
 					index = &arrayIndex
 					fragment = string(fragment[:arrayIndexPosition])
 				}
@@ -207,7 +251,7 @@ func (s *Map) SetValue(expr string, value interface{}) {
 		expr = string(expr[2:])
 	}
 	if len(expr) > 2 && string(expr[0:1]) == "{" {
-		expr = expr[1: len(expr)-1]
+		expr = expr[1 : len(expr)-1]
 	}
 	if strings.Contains(expr, ".") {
 		fragments := strings.Split(expr, ".")
@@ -491,7 +535,7 @@ func (s *Map) ExpandAsText(text string) string {
 			return buf.String()
 		}
 	}
-	if text, ok := result.(string);ok || result == nil {
+	if text, ok := result.(string); ok || result == nil {
 		return text
 	}
 	return toolbox.AsString(result)
@@ -509,10 +553,10 @@ func (s *Map) parseExpression(text string, handler func(expression string, isUDF
 	var expectEnclosure bool
 
 	for i, r := range text {
-		aChar := string(text[i: i+1])
+		aChar := string(text[i : i+1])
 		var isLast = i+1 == len(text)
-		if  aChar == "{"  && expectEnclosure {
-				enclosingDeepth++
+		if aChar == "{" && expectEnclosure {
+			enclosingDeepth++
 		}
 
 		if aChar == "}" && enclosingDeepth > 0 {
@@ -525,7 +569,7 @@ func (s *Map) parseExpression(text string, handler func(expression string, isUDF
 				expectEnclosure = true
 				variableName += aChar
 				if i+1 < len(text) {
-					nextChar := string(text[i+1: i+2])
+					nextChar := string(text[i+1 : i+2])
 					if nextChar == "{" {
 						expectToken = expectVariableNameEnclosureEnd
 						continue
@@ -638,7 +682,7 @@ func (s *Map) evaluateUDF(candidate interface{}, argument string) (interface{}, 
 
 	var expandable = strings.TrimSpace(argument)
 	if toolbox.IsCompleteJSON(argument) {
-		expandable = string(argument[1: len(argument)-1])
+		expandable = string(argument[1 : len(argument)-1])
 	}
 
 	s.parseExpression(expandable, func(expression string, udf bool, argument string) (interface{}, bool) {
@@ -733,7 +777,7 @@ func (s *Map) expandExpressions(text string) interface{} {
 				if value != nil && (toolbox.IsMap(value) || toolbox.IsSlice(value)) {
 					return s.Expand(value), true
 				}
-				if text, ok := value.(string);ok {
+				if text, ok := value.(string); ok {
 					return text, true
 				}
 				if value != nil {

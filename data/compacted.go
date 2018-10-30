@@ -1,8 +1,8 @@
 package data
 
 import (
-	"sync"
 	"github.com/viant/toolbox"
+	"sync"
 	"sync/atomic"
 )
 
@@ -78,7 +78,7 @@ func (s *CompactedSlice) uncompress(in, out []interface{}) {
 	for i := 0; i < len(in); i++ {
 		var item = in[i]
 		nilGroup, ok := item.(nilGroup)
-		if ! ok {
+		if !ok {
 			out[index] = item
 			index++
 			continue
@@ -88,7 +88,7 @@ func (s *CompactedSlice) uncompress(in, out []interface{}) {
 			index++
 		}
 	}
-	for i := index; i<len(out);i++ {
+	for i := index; i < len(out); i++ {
 		out[i] = nil
 	}
 }
@@ -102,7 +102,7 @@ func (s *CompactedSlice) Add(data map[string]interface{}) {
 	var record = make([]interface{}, initSize)
 	for k, v := range data {
 		i := s.index(k)
-		if ! (i < len(record)) {
+		if !(i < len(record)) {
 			record = expandIfNeeded(i+1, record)
 		}
 		if s.omitEmpty {
@@ -153,7 +153,7 @@ func (s *CompactedSlice) Range(handler func(item interface{}) (bool, error)) err
 			}
 			aMap[field.Name] = value
 		}
-		if next, err := handler(aMap); ! next || err != nil {
+		if next, err := handler(aMap); !next || err != nil {
 			return err
 		}
 	}

@@ -247,66 +247,88 @@ func Test_Udf(t *testing.T) {
 	state.Put("b", "2")
 	state.Put("Dob", dateOfBirth)
 
-	/*	{
-			var text = "$Dob([11,2,2,\"yyyy\"])"
-			expanded := state.Expand(text)
-			assert.EqualValues(t, "2007", expanded)
+	{
+		var text = "$Dob([11,2,2,\"yyyy\"])"
+		expanded := state.Expand(text)
+		assert.EqualValues(t, "2007", expanded)
 
-		}
-		{
-			state.Put("args", []interface{}{11, 2, 2, "yyyy"})
+	}
+	{
+		state.Put("args", []interface{}{11, 2, 2, "yyyy"})
 
-			var text = "$Dob($args)"
-			expanded := state.Expand(text)
-			assert.EqualValues(t, "2007", expanded)
+		var text = "$Dob($args)"
+		expanded := state.Expand(text)
+		assert.EqualValues(t, "2007", expanded)
 
-		}
+	}
 
-		{
-			var text = "$xyz($name)"
-			expanded := state.Expand(text)
-			assert.EqualValues(t, "$xyz(endly)", expanded)
+	{
+		var text = "$xyz($name)"
+		expanded := state.Expand(text)
+		assert.EqualValues(t, "$xyz(endly)", expanded)
 
-		}
+	}
 
-		{
-			var text = "$xyz(hello $name $abc)"
-			expanded := state.Expand(text)
-			assert.EqualValues(t, "$xyz(hello endly $abc)", expanded)
+	{
+		var text = "$xyz(hello $name $abc)"
+		expanded := state.Expand(text)
+		assert.EqualValues(t, "$xyz(hello endly $abc)", expanded)
 
-		}
+	}
 
-		{
-			var text = "$test(hello $abc)"
-			expanded := state.Expand(text)
-			assert.EqualValues(t, "$test(hello $abc)", expanded)
-		}
+	{
+		var text = "$test(hello $abc)"
+		expanded := state.Expand(text)
+		assert.EqualValues(t, "$test(hello $abc)", expanded)
+	}
 
-		{
-			var text = "$test(hello $name $abc)"
-			expanded := state.Expand(text)
-			assert.EqualValues(t, "$test(hello endly $abc)", expanded)
-		}
+	{
+		var text = "$test(hello $name $abc)"
+		expanded := state.Expand(text)
+		assert.EqualValues(t, "$test(hello endly $abc)", expanded)
+	}
 
-		{
-			var text = "$test(hello $name)"
-			expanded := state.Expand(text)
-			assert.EqualValues(t, "hello endly", expanded)
-		}
+	{
+		var text = "$test(hello $name)"
+		expanded := state.Expand(text)
+		assert.EqualValues(t, "hello endly", expanded)
+	}
 
-		{
-			var text = "zz $a ${b}a"
-			expanded := state.Expand(text)
-			assert.EqualValues(t, "zz 1 2a", expanded)
-
-		}*/
+	{
+		var text = "zz $a ${b}a"
+		expanded := state.Expand(text)
+		assert.EqualValues(t, "zz 1 2a", expanded)
+	}
 
 	{
 		//Chaining UDFs together
 		state.Put("args", []interface{}{11, 2, 2, "yyyy"})
-		var text = "$test($Dob($args $ere))"
+		var text = "$test($Dob($args))"
 		expanded := state.Expand(text)
 		assert.EqualValues(t, "2007", expanded)
 	}
+
+}
+
+func Test_Delete(t *testing.T) {
+	var state = NewMap()
+	state.SetValue("k1.v1", 1)
+	state.SetValue("k1.v2", 1)
+	state.Put("k2", 1)
+	state.Delete("k1.v1", "k2")
+	assert.EqualValues(t, 1, len(state))
+	assert.EqualValues(t, 1, len(state.GetMap("k1")))
+
+}
+
+func Test_Replace(t *testing.T) {
+	var state = NewMap()
+	state.SetValue("k1.v1", 1)
+	state.SetValue("k1.v2", 1)
+	state.Put("k2", 1)
+	state.Replace("k1.v1", "v100")
+	state.Replace("k2", "v200")
+	assert.EqualValues(t, "v100", state.Expand("$k1.v1"))
+	assert.EqualValues(t, "v200", state.Get("k2"))
 
 }
