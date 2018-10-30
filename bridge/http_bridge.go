@@ -297,9 +297,10 @@ func ReaderAsText(reader io.Reader) string {
 		encoder.Close()
 		return fmt.Sprintf("base64:%v", string(buf.Bytes()))
 
-	} else {
+	} else if len(body) > 0 {
 		return fmt.Sprintf("text:%v", string(body))
 	}
+	return ""
 }
 
 func isBinary(input []byte) bool {
