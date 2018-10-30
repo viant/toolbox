@@ -6,7 +6,6 @@ import (
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
 	_ "github.com/viant/toolbox/storage/scp"
-	"log"
 	"os"
 	"path"
 	"strings"
