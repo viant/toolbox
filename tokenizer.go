@@ -44,11 +44,15 @@ func (t *Tokenizer) Next(candidate int) *Token {
 	if !(offset < len(t.Input)) {
 		return &Token{t.EndOfFileToken, ""}
 	}
+
+	if candidate == t.EndOfFileToken {
+		return &Token{t.InvalidToken, ""}
+	}
 	if matcher, ok := t.matchers[candidate]; ok {
 		matchedSize := matcher.Match(t.Input, offset)
 		if matchedSize > 0 {
 			t.Index = t.Index + matchedSize
-			return &Token{candidate, t.Input[offset : offset+matchedSize]}
+			return &Token{candidate, t.Input[offset: offset+matchedSize]}
 		}
 
 	} else {
@@ -78,7 +82,7 @@ func (m CharactersMatcher) Match(input string, offset int) (matched int) {
 	var result = 0
 outer:
 	for i := 0; i < len(input)-offset; i++ {
-		aChar := input[offset+i : offset+i+1]
+		aChar := input[offset+i: offset+i+1]
 		for j := 0; j < len(m.Chars); j++ {
 			if aChar == m.Chars[j:j+1] {
 				result++
@@ -115,12 +119,12 @@ type IntMatcher struct{}
 
 //Match matches a literal in the input, it returns number of character matched.
 func (m IntMatcher) Match(input string, offset int) (matched int) {
-	if !isDigit(input[offset : offset+1]) {
+	if !isDigit(input[offset: offset+1]) {
 		return 0
 	}
 	var i = 1
 	for ; i < len(input)-offset; i++ {
-		aChar := input[offset+i : offset+i+1]
+		aChar := input[offset+i: offset+i+1]
 		if !isDigit(aChar) {
 			break
 		}
@@ -128,17 +132,22 @@ func (m IntMatcher) Match(input string, offset int) (matched int) {
 	return i
 }
 
+//NewIntMatcher returns a new integer matcher
+func NewIntMatcher() Matcher {
+	return &IntMatcher{}
+}
+
 //LiteralMatcher represents a matcher that finds any literals in the input
 type LiteralMatcher struct{}
 
 //Match matches a literal in the input, it returns number of character matched.
 func (m LiteralMatcher) Match(input string, offset int) (matched int) {
-	if !isLetter(input[offset : offset+1]) {
+	if !isLetter(input[offset: offset+1]) {
 		return 0
 	}
 	var i = 1
 	for ; i < len(input)-offset; i++ {
-		aChar := input[offset+i : offset+i+1]
+		aChar := input[offset+i: offset+i+1]
 		if !((isLetter(aChar)) || isDigit(aChar) || aChar == "_" || aChar == ".") {
 			break
 		}
@@ -156,7 +165,7 @@ func (m IdMatcher) Match(input string, offset int) (matched int) {
 	}
 	var i = 1
 	for ; i < len(input)-offset; i++ {
-		aChar := input[offset+i : offset+i+1]
+		aChar := input[offset+i: offset+i+1]
 		if !((isLetter(aChar)) || isDigit(aChar) || aChar == "_" || aChar == ".") {
 			break
 		}
@@ -209,6 +218,22 @@ func NewSequenceMatcher(terminators ...string) Matcher {
 	}
 }
 
+
+
+//remainingSequenceMatcher represents a matcher that matches all reamining input
+type remainingSequenceMatcher struct {}
+
+//Match matches a literal in the input, it returns number of character matched.
+func (m *remainingSequenceMatcher) Match(input string, offset int) (matched int) {
+	return len(input)-offset
+}
+
+
+//Creates a matcher that matches all remaining input
+func NewRemainingSequenceMatcher() Matcher {
+	return &remainingSequenceMatcher{}
+}
+
 //CustomIdMatcher represents a matcher that finds any literals with additional custom set of characters in the input
 type customIdMatcher struct {
 	Allowed map[string]bool
@@ -227,12 +252,12 @@ func (m *customIdMatcher) isValid(aChar string) bool {
 //Match matches a literal in the input, it returns number of character matched.
 func (m *customIdMatcher) Match(input string, offset int) (matched int) {
 
-	if !m.isValid(input[offset : offset+1]) {
+	if !m.isValid(input[offset: offset+1]) {
 		return 0
 	}
 	var i = 1
 	for ; i < len(input)-offset; i++ {
-		aChar := input[offset+i : offset+i+1]
+		aChar := input[offset+i: offset+i+1]
 		if !m.isValid(aChar) {
 			break
 		}
@@ -350,4 +375,47 @@ func (m KeywordsMatcher) Match(input string, offset int) (matched int) {
 		}
 	}
 	return 0
+}
+
+//NewKeywordsMatcher returns a matcher for supplied keywords
+func NewKeywordsMatcher(caseSensitive bool, keywords ... string) Matcher {
+	return &KeywordsMatcher{CaseSensitive: caseSensitive, Keywords: keywords}
+}
+
+//IllegalTokenError represents illegal token error
+type IllegalTokenError struct {
+	Illegal  *Token
+	Message  string
+	Expected []int
+	Position int
+}
+
+func (e *IllegalTokenError) Error() string {
+	return fmt.Sprintf("%v; illegal token at %v [%v], expected %v, but had: %v", e.Message, e.Position, e.Illegal.Matched, e.Expected, e.Illegal.Token)
+}
+
+//NewIllegalTokenError create a new illegal token error
+func NewIllegalTokenError(message string, expected []int, position int, found *Token) error {
+	return &IllegalTokenError{
+		Message:  message,
+		Illegal:  found,
+		Expected: expected,
+		Position: position,
+	}
+}
+
+//ExpectTokenOptionallyFollowedBy returns second matched token or error if first and second group was not matched
+func ExpectTokenOptionallyFollowedBy(tokenizer *Tokenizer, first int, errorMessage string, second ... int) (*Token, error) {
+	_, _ = ExpectToken(tokenizer, "", first)
+	return ExpectToken(tokenizer, errorMessage, second...)
+}
+
+//ExpectToken returns the matched token or error
+func ExpectToken(tokenizer *Tokenizer, errorMessage string, candidates ... int) (*Token, error) {
+	token := tokenizer.Nexts(candidates...)
+	hasMatch := HasSliceAnyElements(candidates, token.Token)
+	if ! hasMatch {
+		return nil, NewIllegalTokenError(errorMessage, candidates, tokenizer.Index, token)
+	}
+	return token, nil
 }
