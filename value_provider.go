@@ -164,31 +164,23 @@ func (p timeDiffProvider) Get(context Context, arguments ...interface{}) (interf
 
 	var resultTime time.Time
 	var durationDelta time.Duration
-
+	var err error
 	if len(arguments) >= 1 {
-		if strings.ToLower(AsString(arguments[0])) == "now" {
-			resultTime = time.Now()
-		} else {
-			extractedTime := AsTime(arguments[0], "")
-			if extractedTime != nil {
-				resultTime = *extractedTime
+		var timeValue *time.Time
+		var timeLiteral = AsString(arguments[0])
+		if timeValue, err  = TimeAt(timeLiteral);err != nil {
+			if timeValue, err  = ToTime(arguments[0], "");err != nil {
+				return nil, err
 			}
 		}
+		resultTime = *timeValue
 	}
-
 	if len(arguments) >= 3 {
-		var amount = AsInt(arguments[1])
-		switch strings.ToLower(AsString(arguments[2])) {
-		case "day":
-			durationDelta = time.Duration(amount*24) * time.Hour
-		case "week":
-			durationDelta = time.Duration(amount*24*7) * time.Hour
-		case "hour":
-			durationDelta = time.Duration(amount) * time.Hour
-		case "min":
-			durationDelta = time.Duration(amount) * time.Minute
-		case "sec":
-			durationDelta = time.Duration(amount) * time.Second
+		var val = AsInt(arguments[1])
+		var timeUnit = strings.ToLower(AsString(arguments[2]))
+		durationDelta, err = NewDuration(val, timeUnit)
+		if err  != nil {
+			return nil, err
 		}
 	}
 	var format = ""
@@ -216,6 +208,9 @@ func NewTimeDiffProvider() ValueProvider {
 	var result ValueProvider = &timeDiffProvider{}
 	return result
 }
+
+
+
 
 type weekdayProvider struct{}
 
