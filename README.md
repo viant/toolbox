@@ -282,8 +282,8 @@ Java date format style to go date layout conversion.
 
 
 ```go	
-        dateLaout := toolbox.DateFormatToLayout("yyyy-MM-dd hh:mm:ss z")
-		timeValue, err := time.Parse(dateLaout, "2016-02-22 12:32:01 UTC")
+    dateLaout := toolbox.DateFormatToLayout("yyyy-MM-dd hh:mm:ss z")
+    timeValue, err := time.Parse(dateLaout, "2016-02-22 12:32:01 UTC")
 ```
 
 **TimeAt** 
