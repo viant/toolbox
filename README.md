@@ -286,6 +286,19 @@ Java date format style to go date layout conversion.
 		timeValue, err := time.Parse(dateLaout, "2016-02-22 12:32:01 UTC")
 ```
 
+**TimeAt** 
+
+Provide dynamic semantic for creating time object
+
+```go
+    
+    tomorrow, err = TimeAt("tomorrow")//tomorrow in local timezone
+    timeInUTC, err := TimeAt("2 days ago in UTC") //or 2DayAgoInUTC
+    yesterdayUTC, err := TimeAt("yesterdayInUTC")//yesterday in UTC
+    hoursAhead, err := TimeAt("50 hours ahead")
+
+```
+
 
 
 
