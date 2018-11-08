@@ -15,21 +15,21 @@ type withinSecPredicate struct {
 	baseTime        time.Time
 	deltaInSeconds  int
 	dateLayout      string
+	actual          string
 	elapsed         time.Duration
 	maxAllowedDelay time.Duration
 }
 
 func (p *withinSecPredicate) String() string {
-	return fmt.Sprintf("(elapsed: %v, max allowed delay: %v)", p.elapsed, p.maxAllowedDelay)
+	return fmt.Sprintf("(elapsed: %d, max allowed delay: %d)\n", int(p.elapsed), int(p.maxAllowedDelay))
 }
 
 //Apply returns true if passed in time is within deltaInSeconds from baseTime
 func (p *withinSecPredicate) Apply(value interface{}) bool {
-	timeValue, _ := ToTime(value, p.dateLayout)
-	if timeValue == nil {
+	timeValue, err := ToTime(value, p.dateLayout)
+	if err != nil {
 		return false
 	}
-
 	elapsed := timeValue.Sub(p.baseTime)
 	if elapsed < 0 {
 		elapsed *= -1
