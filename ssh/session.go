@@ -20,10 +20,11 @@ var ErrTerminated = errors.New("terminate")
 const defaultShell = "/bin/bash"
 
 const (
-	drainTimeoutMs       = 10
-	defaultTimeoutMs     = 20000
-	initTimeoutMs        = 300
-	defaultTickFrequency = 100
+	drainTimeoutMs         = 10
+	defaultTimeoutMs       = 20000
+	stdoutFlashFrequencyMs = 3000
+	initTimeoutMs          = 300
+	defaultTickFrequency   = 100
 )
 
 //Listener represent command listener (it will send stdout fragments as thier being available on stdout)
@@ -257,11 +258,8 @@ func (s *multiCommandSession) readResponse(timeoutMs int, listener Listener, ter
 	if timeoutMs == 0 {
 		timeoutMs = defaultTimeoutMs
 	}
-	defer func() {
-		if listener != nil {
-			listener("", false)
-		}
-	}()
+	notification := newNotificationWindow(listener, stdoutFlashFrequencyMs)
+	defer notification.flush()
 
 	var done int32
 	defer atomic.StoreInt32(&done, 1)
@@ -281,11 +279,9 @@ outer:
 	for {
 		select {
 		case o := <-s.stdOutput:
+			waitTimeMs = 0
 			if len(o) > 0 {
-				waitTimeMs = 0
-				if listener != nil {
-					listener(s.removePromptIfNeeded(o), true)
-				}
+				notification.notify(s.removePromptIfNeeded(o))
 			}
 			out += o
 			hasPrompt = s.hasPrompt(out)
@@ -295,9 +291,7 @@ outer:
 			}
 		case e := <-s.stdError:
 			errOut += e
-			if listener != nil {
-				listener(s.removePromptIfNeeded(e), true)
-			}
+			notification.notify(s.removePromptIfNeeded(e))
 			hasPrompt = s.hasPrompt(errOut)
 			hasTerminator = s.hasTerminator(errOut, terminators...)
 			if (hasPrompt || hasTerminator) && len(s.stdOutput) == 0 {
@@ -372,7 +366,7 @@ func (s *multiCommandSession) shellInit() (err error) {
 	_, err = s.Run("", listener, initTimeoutMs)
 	waitTimeout(waitGroup, 60*time.Second)
 	s.drainStdout()
-	_, err = s.Run(s.promptSequence,  nil, defaultTimeoutMs)
+	_, err = s.Run(s.promptSequence, nil, defaultTimeoutMs)
 	if s.closeIfError(err) {
 		return err
 	}
@@ -437,4 +431,47 @@ func newMultiCommandSession(service *service, config *SessionConfig, replayComma
 		replayCommands: replayCommands,
 	}
 	return result, result.init()
+}
+
+type notificationWindow struct {
+	checkpoint  *time.Time
+	listener    Listener
+	elapsedMs   int
+	stdout      string
+	frequencyMs int
+}
+
+func (t *notificationWindow) flush() {
+	if t.listener == nil {
+		return
+	}
+	if t.stdout != "" {
+		t.listener(t.stdout, true)
+	}
+
+	t.listener("", false)
+}
+
+func (t *notificationWindow) notify(stdout string) {
+	var now = time.Now()
+	if t.listener == nil {
+		return
+	}
+	t.stdout += stdout
+	t.elapsedMs += int(now.Sub(*t.checkpoint) / time.Millisecond)
+	t.checkpoint = &now
+	if (t.elapsedMs > t.frequencyMs) {
+		t.listener(t.stdout, true)
+		t.stdout = ""
+		t.elapsedMs = 0
+	}
+}
+
+func newNotificationWindow(listener Listener, frequencyMs int) *notificationWindow {
+	var now = time.Now()
+	return &notificationWindow{
+		checkpoint:  &now,
+		listener:    listener,
+		frequencyMs: frequencyMs,
+	}
 }
