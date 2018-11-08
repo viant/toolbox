@@ -20,6 +20,11 @@ var folderMode, _ = NewFileMode("drwxrwxrwx")
 //MemoryRoot represents memory root storage
 var MemoryRoot = newMemoryFolder("mem:///", NewFileInfo("/", 102, folderMode, time.Now(), true))
 
+//ResetMemory reset memory root storage
+func ResetMemory() {
+	MemoryRoot = newMemoryFolder("mem:///", NewFileInfo("/", 102, folderMode, time.Now(), true))
+}
+
 //Service represents memory storage service intended for testing
 type memoryStorageService struct {
 	root *MemoryFolder

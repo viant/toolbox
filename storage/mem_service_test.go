@@ -10,6 +10,7 @@ import (
 )
 
 func Test_NewMemoryService(t *testing.T) {
+	storage.ResetMemory()
 	service := storage.NewMemoryService()
 
 	var files = map[string]string{
