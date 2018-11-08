@@ -164,8 +164,8 @@ func (r *Resource) DecodeWith(target interface{}, decoderFactory toolbox.Decoder
 	if r == nil {
 		return fmt.Errorf("fail to %T decode on empty resource", decoderFactory)
 	}
-	if r == nil {
-		return fmt.Errorf("fail to decode %v,  decoderFactory was empty", r.URL, decoderFactory)
+	if decoderFactory == nil {
+		return fmt.Errorf("fail to decode %v, decoderFactory was empty", r.URL)
 	}
 	var content, err = r.Download()
 	if err != nil {
