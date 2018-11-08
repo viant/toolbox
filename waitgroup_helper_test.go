@@ -10,7 +10,6 @@ import (
 
 func TestWaitTimeout_TimeoutTriggered(t *testing.T) {
 	var wg sync.WaitGroup
-
 	//Sleep for 3 seconds
 	go sleep(&wg)
 
