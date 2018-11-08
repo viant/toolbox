@@ -10,6 +10,7 @@ import (
 	"github.com/viant/toolbox/storage"
 	"testing"
 	"time"
+	"github.com/viant/assertly"
 )
 
 func setupData(baseDirectory string, data map[string]*cred.Config) error {
@@ -128,7 +129,11 @@ func TestService_Expand(t *testing.T) {
 			Credentials: map[SecretKey]Secret{
 				"key": "10.3.3.12.json",
 			},
-			Expended: "{\"Key1\":\"abc\"}",
+			Expended: `{
+	"Data":{
+		"Key1":"abc"
+	}
+}`,
 		},
 
 		{
@@ -161,7 +166,7 @@ func TestService_Expand(t *testing.T) {
 			continue
 		}
 		if assert.Nil(t, err, useCase.Description) {
-			assert.EqualValues(t, useCase.Expended, expaned, useCase.Description)
+			assertly.AssertValues(t, useCase.Expended, expaned, useCase.Description)
 		}
 	}
 }
