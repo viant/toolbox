@@ -94,7 +94,7 @@ func TimeAt(offsetExpression string) (*time.Time, error) {
 
 //TimeDiff returns time for supplied base time and literal, the supported literal now, yesterday, tomorrow, or the following template:
 // 	- [timeValueToken]  durationToken past_or_future_modifier [IN tz]
-// where time modifier can be any of the following:  "onward", "ahead", "after", "later", "+" or "past", "ago", "before", "earlier", "-")
+// where time modifier can be any of the following:  "onward", "ahead", "after", "later", or "past", "ago", "before", "earlier", "in the future", "in the past") )
 func TimeDiff(base time.Time, expression string) (*time.Time, error) {
 	if expression == "" {
 		return nil, fmt.Errorf("expression was empty")
@@ -126,7 +126,7 @@ func TimeDiff(base time.Time, expression string) (*time.Time, error) {
 		if err != nil {
 			return nil, err
 		}
-		delta, _ = NewDuration(val, token.Matched)
+		delta, _ = NewDuration(val, strings.ToLower(token.Matched))
 		ExpectToken(tokenizer, "", durationPluralToken);
 		token, err = ExpectTokenOptionallyFollowedBy(tokenizer, whitespacesToken, "expected time modifier", positiveModifierToken, negativeModifierToken)
 		if err != nil {
