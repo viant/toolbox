@@ -304,8 +304,9 @@ Provide dynamic semantic for creating time object
 Provide dynamic semantic for creating time object based on time dif
 
 ```go
-	lastyear, _ := time.Parse(DateFormatToLayout("yyy-MM-dd"), "2017-01-01")
-	ts1, e := TimeDiff(lastyear, "50 hours earlier")
+
+    lastyear, _ := time.Parse(DateFormatToLayout("yyy-MM-dd"), "2017-01-01")
+    ts1, e := TimeDiff(lastyear, "50 hours earlier")
     ts2, e := TimeDiff(lastyear, "3 days before in Poland")
 	
 ```
