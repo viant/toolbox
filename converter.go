@@ -1201,10 +1201,14 @@ func DereferenceType(value interface{}) reflect.Type {
 	if value == nil {
 		return nil
 	}
-	reflectType, ok := value.(reflect.Type)
-	if !ok {
+	var reflectType reflect.Type
+	reflectValue, ok := value.(reflect.Value);
+	if ok {
+		reflectType = reflectValue.Type()
+	} else if reflectType, ok = value.(reflect.Type) ; !ok {
 		reflectType = reflect.TypeOf(value)
 	}
+
 	for {
 		if reflectType.Kind() != reflect.Ptr {
 			break

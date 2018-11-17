@@ -38,12 +38,12 @@ func ProcessStruct(aStruct interface{}, handler func(fieldType reflect.StructFie
 		}
 		field := structValue.Field(i)
 		if !IsStruct(field) {
+			fields[fieldType.Name] = &fieldStruct{Type: fieldType, Value: field}
 			continue
 		}
 		var aStruct interface{}
 		if fieldType.Type.Kind() == reflect.Ptr {
 			if field.IsNil() {
-
 				if !field.CanSet() {
 					continue
 				}
@@ -56,7 +56,6 @@ func ProcessStruct(aStruct interface{}, handler func(fieldType reflect.StructFie
 			}
 			aStruct = field.Addr().Interface()
 		}
-
 		if err := ProcessStruct(aStruct, func(fieldType reflect.StructField, field reflect.Value) error {
 			fields[fieldType.Name] = &fieldStruct{Type: fieldType, Value: field}
 			return nil
