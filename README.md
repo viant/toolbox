@@ -202,7 +202,7 @@ Example:
 		1: Foo{1, "A"},
 		2: Foo{2, "B"},
 	}
-	var target = make(map[int]Foo)
+	var target = make   (map[int]Foo)
 
 	toolbox.CopyMapEntries(source, target)
 ```

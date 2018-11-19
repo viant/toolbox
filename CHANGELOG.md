@@ -1,3 +1,6 @@
+## Nov 8 2018 - v0.2.1
+ - Enhance SSH termination error
+
 ## Nov 8 2018 - v0.2.0
 
  - Added TimeAt utility method for creating dynamically semantic based time.
