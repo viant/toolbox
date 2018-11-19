@@ -14,8 +14,16 @@ import (
 	"time"
 )
 
+type TerminatedError struct {
+	Err error
+}
+
+func (t *TerminatedError) Error() string {
+	return fmt.Sprintf("terminated due to %v", t.Err)
+}
+
 //ErrTerminated - command session terminated
-var ErrTerminated = errors.New("terminate")
+var ErrTerminated = &TerminatedError{}
 
 const defaultShell = "/bin/bash"
 
@@ -101,6 +109,7 @@ func (s *multiCommandSession) Close() {
 
 func (s *multiCommandSession) closeIfError(err error) bool {
 	if err != nil {
+		ErrTerminated.Err = err
 		s.Close()
 		return true
 	}
