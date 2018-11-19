@@ -1,7 +1,5 @@
 ## Nov 19 2018 - v0.2.2
- - Added error check for opening shel in ssh Session
-
-## Nov 8 2018 - v0.2.1
+ - Added error check for opening shell in ssh Session
  - Enhance SSH termination error
 
 ## Nov 8 2018 - v0.2.0
