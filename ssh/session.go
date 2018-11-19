@@ -28,13 +28,12 @@ var ErrTerminated = &TerminatedError{}
 const defaultShell = "/bin/bash"
 
 const (
-	drainTimeoutMs         = 10
+	drainTimeoutMs         = 20
 	defaultTimeoutMs       = 20000
 	stdoutFlashFrequencyMs = 3000
 	initTimeoutMs          = 300
 	defaultTickFrequency   = 100
 )
-
 
 //Listener represent command listener (it will send stdout fragments as thier being available on stdout)
 type Listener func(stdout string, hasMore bool)
@@ -110,7 +109,9 @@ func (s *multiCommandSession) Close() {
 
 func (s *multiCommandSession) closeIfError(err error) bool {
 	if err != nil {
-		ErrTerminated.Err = err
+		if err != ErrTerminated {
+			ErrTerminated.Err = err
+		}
 		s.Close()
 		return true
 	}
@@ -147,7 +148,7 @@ func (s *multiCommandSession) start(shell string) (output string, err error) {
 	if err != nil {
 		return "", err
 	}
-	output, _, err = s.readResponse(drainTimeoutMs, nil)
+	output, _, err = s.readResponse(defaultTimeoutMs, nil)
 	return output, err
 }
 
@@ -203,11 +204,9 @@ func (s *multiCommandSession) Reconnect() (err error) {
 			s.service.client.Close()
 		}
 	}()
-
 	if err != nil {
 		return err
 	}
-
 	return s.init()
 }
 
@@ -364,15 +363,19 @@ func (s *multiCommandSession) shellInit() (err error) {
 	var waitGroup = &sync.WaitGroup{}
 	waitGroup.Add(1)
 
-	s.promptSequence = "PS1=\"" + ts + "\\$\""
-	s.shellPrompt = ts + "$"
-	s.escapedShellPrompt = escapeInput(s.shellPrompt)
+	if s.config.Shell == defaultShell {
+		s.promptSequence = "PS1=\"" + ts + "\\$\""
+		s.shellPrompt = ts + "$"
+		s.escapedShellPrompt = escapeInput(s.shellPrompt)
+	}
+
 	var listener Listener
 	listener = func(stdout string, hasMore bool) {
-		if ! hasMore {
+		if !hasMore {
 			waitGroup.Done()
 		}
 	}
+
 	_, err = s.Run("", listener, initTimeoutMs)
 	waitTimeout(waitGroup, 60*time.Second)
 	s.drainStdout()
@@ -419,12 +422,22 @@ func (s *multiCommandSession) init() (err error) {
 	if s.stdInput, err = s.session.StdinPipe(); err != nil {
 		return err
 	}
-
-	_, err = s.start(s.config.Shell)
+	stardOutput, err := s.start(s.config.Shell)
 	if s.closeIfError(err) {
 		return err
 	}
+	stdout, _, _ := s.readResponse(stdoutFlashFrequencyMs, nil)
+	if err = checkNotFound(stardOutput + "\n" + stdout); err != nil {
+		return fmt.Errorf("failed to open %v shell, %v", s.config.Shell, err)
+	}
 	return s.shellInit()
+}
+
+func checkNotFound(output string) error {
+	if strings.Contains(output, "not found") {
+		return fmt.Errorf("failed run %s", output)
+	}
+	return nil
 }
 
 func newMultiCommandSession(service *service, config *SessionConfig, replayCommands *ReplayCommands, recordSession bool) (MultiCommandSession, error) {
@@ -470,7 +483,7 @@ func (t *notificationWindow) notify(stdout string) {
 	t.stdout += stdout
 	t.elapsedMs += int(now.Sub(*t.checkpoint) / time.Millisecond)
 	t.checkpoint = &now
-	if (t.elapsedMs > t.frequencyMs) {
+	if t.elapsedMs > t.frequencyMs {
 		t.listener(t.stdout, true)
 		t.stdout = ""
 		t.elapsedMs = 0
