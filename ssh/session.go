@@ -12,6 +12,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"path"
 )
 
 type TerminatedError struct {
@@ -28,9 +29,9 @@ var ErrTerminated = &TerminatedError{}
 const defaultShell = "/bin/bash"
 
 const (
-	drainTimeoutMs         = 20
+	drainTimeoutMs         = 10
 	defaultTimeoutMs       = 20000
-	stdoutFlashFrequencyMs = 3000
+	stdoutFlashFrequencyMs = 2000
 	initTimeoutMs          = 300
 	defaultTickFrequency   = 100
 )
@@ -67,6 +68,7 @@ type multiCommandSession struct {
 	escapedShellPrompt string
 	system             string
 	running            int32
+	stdin              string
 }
 
 func (s *multiCommandSession) Run(command string, listener Listener, timeoutMs int, terminators ...string) (string, error) {
@@ -75,6 +77,7 @@ func (s *multiCommandSession) Run(command string, listener Listener, timeoutMs i
 	}
 	s.drainStdout()
 	var stdin = command + "\n"
+	s.stdin = stdin
 	_, err := s.stdInput.Write([]byte(stdin))
 	if err != nil {
 		return "", fmt.Errorf("failed to execute command: %v, err: %v", command, err)
@@ -144,11 +147,13 @@ func (s *multiCommandSession) start(shell string) (output string, err error) {
 		shell = defaultShell
 	}
 	waitGroup.Wait()
+	s.stdin = shell
 	err = s.session.Start(shell)
 	if err != nil {
 		return "", err
 	}
-	output, _, err = s.readResponse(defaultTimeoutMs, nil)
+	_, name := path.Split(shell)
+	output, _, err = s.readResponse(defaultTimeoutMs, nil,  name)
 	return output, err
 }
 
@@ -264,6 +269,7 @@ func (s *multiCommandSession) removePromptIfNeeded(stdout string) string {
 }
 
 func (s *multiCommandSession) readResponse(timeoutMs int, listener Listener, terminators ...string) (out string, has bool, err error) {
+	var hasPrompt, hasTerminator bool
 	if timeoutMs == 0 {
 		timeoutMs = defaultTimeoutMs
 	}
@@ -281,8 +287,6 @@ func (s *multiCommandSession) readResponse(timeoutMs int, listener Listener, ter
 		tickFrequencyMs = timeoutMs
 	}
 	var timeoutDuration = time.Duration(tickFrequencyMs) * time.Millisecond
-
-	var hasPrompt, hasTerminator bool
 
 outer:
 	for {
@@ -313,6 +317,9 @@ outer:
 			}
 		}
 	}
+
+
+
 	if hasTerminator {
 		s.drainStdout()
 	}
@@ -354,7 +361,7 @@ func waitTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
 
 func (s *multiCommandSession) shellInit() (err error) {
 	if s.promptSequence != "" {
-		if _, err = s.Run(s.promptSequence, nil, initTimeoutMs); err != nil {
+		if _, err = s.Run(s.promptSequence, nil, initTimeoutMs, ); err != nil {
 			return err
 		}
 	}
@@ -376,10 +383,11 @@ func (s *multiCommandSession) shellInit() (err error) {
 		}
 	}
 
-	_, err = s.Run("", listener, initTimeoutMs)
+	_, err = s.Run("", listener, initTimeoutMs, "$")
+
 	waitTimeout(waitGroup, 60*time.Second)
 	s.drainStdout()
-	_, err = s.Run(s.promptSequence, nil, defaultTimeoutMs)
+	_, err = s.Run(s.promptSequence, nil, defaultTimeoutMs, "$")
 	if s.closeIfError(err) {
 		return err
 	}
@@ -422,12 +430,12 @@ func (s *multiCommandSession) init() (err error) {
 	if s.stdInput, err = s.session.StdinPipe(); err != nil {
 		return err
 	}
-	stardOutput, err := s.start(s.config.Shell)
+
+	stdout, err := s.start(s.config.Shell)
 	if s.closeIfError(err) {
 		return err
 	}
-	stdout, _, _ := s.readResponse(stdoutFlashFrequencyMs, nil)
-	if err = checkNotFound(stardOutput + "\n" + stdout); err != nil {
+	if err = checkNotFound(stdout); err != nil {
 		return fmt.Errorf("failed to open %v shell, %v", s.config.Shell, err)
 	}
 	return s.shellInit()
