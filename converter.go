@@ -92,6 +92,9 @@ func AsFloat(value interface{}) float64 {
 
 //ToFloat converts an input to float or error
 func ToFloat(value interface{}) (float64, error) {
+	if value == nil {
+		return 0, nil
+	}
 	switch actualValue := value.(type) {
 	case float64:
 		return actualValue, nil
@@ -107,10 +110,12 @@ func ToFloat(value interface{}) (float64, error) {
 		return float64(actualValue), nil
 	case uint32:
 		return float64(actualValue), nil
-
 	case float32:
 		return float64(actualValue), nil
 	case *float64:
+		if actualValue == nil {
+			return 0, nil
+		}
 		return *actualValue, nil
 	case bool:
 		if actualValue {
@@ -122,16 +127,25 @@ func ToFloat(value interface{}) (float64, error) {
 	return strconv.ParseFloat(valueAsString, 64)
 }
 
-//AsBoolean converts an input to bool.
-func AsBoolean(value interface{}) bool {
+
+
+//ToBoolean converts an input to bool.
+func ToBoolean(value interface{}) (bool, error) {
 	if boolValue, ok := value.(bool); ok {
-		return boolValue
+		return boolValue, nil
 	}
 	valueAsString := AsString(value)
-	if result, err := strconv.ParseBool(valueAsString); err == nil {
-		return result
+	return strconv.ParseBool(valueAsString)
+}
+
+
+//AsBoolean converts an input to bool.
+func AsBoolean(value interface{}) bool {
+	result, err := ToBoolean(value)
+	if err != nil {
+		return false
 	}
-	return false
+	return result
 }
 
 //CanConvertToInt returns true if an input can be converted to int value.
@@ -159,7 +173,9 @@ func AsInt(value interface{}) int {
 
 //ToInt converts input value to int or error
 func ToInt(value interface{}) (int, error) {
-
+	if value == nil {
+		return 0, nil
+	}
 	switch actual := value.(type) {
 	case int:
 		return actual, nil
@@ -186,6 +202,9 @@ func ToInt(value interface{}) (int, error) {
 	case float64:
 		return int(actual), nil
 	case *int:
+		if actual == nil {
+			return 0, nil
+		}
 		return *actual, nil
 	case *int8:
 		return int(*actual), nil
