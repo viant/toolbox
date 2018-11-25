@@ -1,7 +1,7 @@
-## Nov 19 2018 - v0.2.3
+## Nov 24 2018 - v0.2.3
  - Added ToBoolean
  - Streamline ssh Session init
- 
+     
 ## Nov 19 2018 - v0.2.2
  - Added error check for opening shell in ssh Session
  - Enhance SSH termination error
