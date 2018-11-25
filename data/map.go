@@ -325,9 +325,9 @@ func (s *Map) GetBoolean(key string) bool {
 //GetCollection returns value for provided key as collection pointer.
 func (s *Map) GetCollection(key string) *Collection {
 	if result, found := (*s)[key]; found {
-		collectionPoiner, ok := result.(*Collection)
+		collectionPointer, ok := result.(*Collection)
 		if ok {
-			return collectionPoiner
+			return collectionPointer
 		}
 
 		aSlice, ok := result.([]interface{})
