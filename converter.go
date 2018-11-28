@@ -10,6 +10,12 @@ import (
 	"time"
 )
 
+
+
+
+
+
+
 //DefaultDateLayout is set to 2006-01-02 15:04:05.000
 var DefaultDateLayout = "2006-01-02 15:04:05.000"
 var numericTypes = []reflect.Type{
@@ -93,7 +99,7 @@ func AsFloat(value interface{}) float64 {
 //ToFloat converts an input to float or error
 func ToFloat(value interface{}) (float64, error) {
 	if value == nil {
-		return 0, nil
+		return 0,  NewNilPointerError("float value was nil")
 	}
 	switch actualValue := value.(type) {
 	case float64:
@@ -112,16 +118,14 @@ func ToFloat(value interface{}) (float64, error) {
 		return float64(actualValue), nil
 	case float32:
 		return float64(actualValue), nil
-	case *float64:
-		if actualValue == nil {
-			return 0, nil
-		}
-		return *actualValue, nil
 	case bool:
 		if actualValue {
 			return 1.0, nil
 		}
 		return 0.0, nil
+	}
+	if reflect.TypeOf(value).Kind() == reflect.Ptr {
+		return ToFloat(DereferenceValue(value))
 	}
 	valueAsString := AsString(DereferenceValue(value))
 	return strconv.ParseFloat(valueAsString, 64)
@@ -174,7 +178,7 @@ func AsInt(value interface{}) int {
 //ToInt converts input value to int or error
 func ToInt(value interface{}) (int, error) {
 	if value == nil {
-		return 0, nil
+		return 0, NewNilPointerError("float value was nil")
 	}
 	switch actual := value.(type) {
 	case int:
@@ -201,40 +205,15 @@ func ToInt(value interface{}) (int, error) {
 		return int(actual), nil
 	case float64:
 		return int(actual), nil
-	case *int:
-		if actual == nil {
-			return 0, nil
-		}
-		return *actual, nil
-	case *int8:
-		return int(*actual), nil
-	case *int16:
-		return int(*actual), nil
-	case *int32:
-		return int(*actual), nil
-	case *int64:
-		return int(*actual), nil
-	case *uint:
-		return int(*actual), nil
-	case *uint8:
-		return int(*actual), nil
-	case *uint16:
-		return int(*actual), nil
-	case *uint32:
-		return int(*actual), nil
-	case *uint64:
-		return int(*actual), nil
-	case *float32:
-		return int(*actual), nil
-	case *float64:
-		return int(*actual), nil
 	case bool:
 		if actual {
 			return 1, nil
 		}
 		return 0, nil
 	}
-
+	if reflect.TypeOf(value).Kind() == reflect.Ptr {
+		return ToInt(DereferenceValue(value))
+	}
 	valueAsString := AsString(value)
 	if strings.Contains(valueAsString, ".") {
 		floatValue, err := strconv.ParseFloat(valueAsString, intBitSize)
@@ -786,7 +765,7 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 	case *uint, *uint8, *uint16, *uint32, *uint64:
 		directValue := reflect.Indirect(reflect.ValueOf(targetValuePointer))
 		value, err := ToInt(DereferenceValue(source))
-		if err != nil {
+		if !IsNilPointerError(err) && err != nil {
 			return err
 		}
 		directValue.SetUint(uint64(value))
@@ -794,7 +773,7 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 	case **uint, **uint8, **uint16, **uint32, **uint64:
 		directType := reflect.TypeOf(targetValuePointer).Elem().Elem()
 		value, err := ToInt(DereferenceValue(source))
-		if err != nil {
+		if ! IsNilPointerError(err) && err != nil {
 			return err
 		}
 		switch directType.Kind() {
