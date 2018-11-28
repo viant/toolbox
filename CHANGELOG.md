@@ -1,3 +1,6 @@
+## Nov 28 2018 - v0.2.4
+    * Patched int, float conversion with nil pointer
+
 ## Nov 24 2018 - v0.2.3
  - Added ToBoolean
  - Streamline ssh Session init
