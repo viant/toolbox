@@ -10,12 +10,6 @@ import (
 	"time"
 )
 
-
-
-
-
-
-
 //DefaultDateLayout is set to 2006-01-02 15:04:05.000
 var DefaultDateLayout = "2006-01-02 15:04:05.000"
 var numericTypes = []reflect.Type{
@@ -99,7 +93,7 @@ func AsFloat(value interface{}) float64 {
 //ToFloat converts an input to float or error
 func ToFloat(value interface{}) (float64, error) {
 	if value == nil {
-		return 0,  NewNilPointerError("float value was nil")
+		return 0, NewNilPointerError("float value was nil")
 	}
 	switch actualValue := value.(type) {
 	case float64:
@@ -131,8 +125,6 @@ func ToFloat(value interface{}) (float64, error) {
 	return strconv.ParseFloat(valueAsString, 64)
 }
 
-
-
 //ToBoolean converts an input to bool.
 func ToBoolean(value interface{}) (bool, error) {
 	if boolValue, ok := value.(bool); ok {
@@ -141,7 +133,6 @@ func ToBoolean(value interface{}) (bool, error) {
 	valueAsString := AsString(value)
 	return strconv.ParseBool(valueAsString)
 }
-
 
 //AsBoolean converts an input to bool.
 func AsBoolean(value interface{}) bool {
@@ -773,7 +764,7 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 	case **uint, **uint8, **uint16, **uint32, **uint64:
 		directType := reflect.TypeOf(targetValuePointer).Elem().Elem()
 		value, err := ToInt(DereferenceValue(source))
-		if ! IsNilPointerError(err) && err != nil {
+		if !IsNilPointerError(err) && err != nil {
 			return err
 		}
 		switch directType.Kind() {
@@ -1200,10 +1191,10 @@ func DereferenceType(value interface{}) reflect.Type {
 		return nil
 	}
 	var reflectType reflect.Type
-	reflectValue, ok := value.(reflect.Value);
+	reflectValue, ok := value.(reflect.Value)
 	if ok {
 		reflectType = reflectValue.Type()
-	} else if reflectType, ok = value.(reflect.Type) ; !ok {
+	} else if reflectType, ok = value.(reflect.Type); !ok {
 		reflectType = reflect.TypeOf(value)
 	}
 

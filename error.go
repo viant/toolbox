@@ -1,7 +1,7 @@
 package toolbox
 
 //NilPointerError represents nil pointer error
-type NilPointerError struct{
+type NilPointerError struct {
 	message string
 }
 
@@ -10,13 +10,13 @@ func (e *NilPointerError) Error() string {
 	if e.message == "" {
 		return "NilPointerError"
 	}
-	return  e.message
+	return e.message
 }
 
 //NewNilPointerError creates a new nil pointer error
 func NewNilPointerError(message string) error {
 	return &NilPointerError{
-		message:message,
+		message: message,
 	}
 }
 
