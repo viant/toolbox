@@ -1,9 +1,9 @@
 package toolbox
 
 import (
-	"time"
 	"fmt"
 	"strings"
+	"time"
 )
 
 const (
@@ -57,8 +57,8 @@ func NewDuration(value int, unit string) (time.Duration, error) {
 }
 
 const (
-	eofToken              = -1
-	invalidToken          = iota
+	eofToken     = -1
+	invalidToken = iota
 	timeValueToken
 	nowToken
 	yesterdayToken
@@ -102,10 +102,10 @@ func TimeDiff(base time.Time, expression string) (*time.Time, error) {
 	var delta time.Duration
 	var isNegative = false
 
-	tokenizer := NewTokenizer(expression, invalidToken, eofToken, timeAtExpressionMatchers);
+	tokenizer := NewTokenizer(expression, invalidToken, eofToken, timeAtExpressionMatchers)
 	var val = 1
 	var isTimeExtracted = false
-	token, err := ExpectToken(tokenizer, "", timeValueToken, nowToken, yesterdayToken, tomorrowToken);
+	token, err := ExpectToken(tokenizer, "", timeValueToken, nowToken, yesterdayToken, tomorrowToken)
 	if err == nil {
 		switch token.Token {
 		case timeValueToken:
@@ -117,17 +117,17 @@ func TimeDiff(base time.Time, expression string) (*time.Time, error) {
 			delta, _ = NewDuration(1, DurationDay)
 			fallthrough
 		case nowToken:
-			isTimeExtracted = true;
+			isTimeExtracted = true
 		}
 	}
 
-	if ! isTimeExtracted {
+	if !isTimeExtracted {
 		token, err = ExpectTokenOptionallyFollowedBy(tokenizer, whitespacesToken, "expected time unit", durationToken)
 		if err != nil {
 			return nil, err
 		}
 		delta, _ = NewDuration(val, strings.ToLower(token.Matched))
-		ExpectToken(tokenizer, "", durationPluralToken);
+		ExpectToken(tokenizer, "", durationPluralToken)
 		token, err = ExpectTokenOptionallyFollowedBy(tokenizer, whitespacesToken, "expected time modifier", positiveModifierToken, negativeModifierToken)
 		if err != nil {
 			return nil, err
@@ -143,7 +143,7 @@ func TimeDiff(base time.Time, expression string) (*time.Time, error) {
 			return nil, err
 		}
 		tz := strings.TrimSpace(token.Matched)
-		tzLocation, err := time.LoadLocation(tz);
+		tzLocation, err := time.LoadLocation(tz)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load timezone tzLocation: %v, %v", tz, err)
 		}
@@ -153,7 +153,7 @@ func TimeDiff(base time.Time, expression string) (*time.Time, error) {
 	if err != nil {
 		return nil, err
 	}
-	if (isNegative) {
+	if isNegative {
 		delta *= -1
 	}
 	base = base.Add(delta)

@@ -1,9 +1,9 @@
 package toolbox
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestNewDuration(t *testing.T) {
@@ -74,12 +74,11 @@ func TestIdMatcher_Match(t *testing.T) {
 		assert.Nil(t, err)
 		assert.EqualValues(t, ts.Unix()-1, time.Now().Unix())
 	}
-	{//invalid duration unit
+	{ //invalid duration unit
 		_, err := TimeAt("1 d ahead")
 		assert.NotNil(t, err)
 	}
 }
-
 
 func TestTimeDiff(t *testing.T) {
 	var useCases = []struct {

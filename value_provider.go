@@ -168,8 +168,8 @@ func (p timeDiffProvider) Get(context Context, arguments ...interface{}) (interf
 	if len(arguments) >= 1 {
 		var timeValue *time.Time
 		var timeLiteral = AsString(arguments[0])
-		if timeValue, err  = TimeAt(timeLiteral);err != nil {
-			if timeValue, err  = ToTime(arguments[0], "");err != nil {
+		if timeValue, err = TimeAt(timeLiteral); err != nil {
+			if timeValue, err = ToTime(arguments[0], ""); err != nil {
 				return nil, err
 			}
 		}
@@ -179,7 +179,7 @@ func (p timeDiffProvider) Get(context Context, arguments ...interface{}) (interf
 		var val = AsInt(arguments[1])
 		var timeUnit = strings.ToLower(AsString(arguments[2]))
 		durationDelta, err = NewDuration(val, timeUnit)
-		if err  != nil {
+		if err != nil {
 			return nil, err
 		}
 	}
@@ -208,9 +208,6 @@ func NewTimeDiffProvider() ValueProvider {
 	var result ValueProvider = &timeDiffProvider{}
 	return result
 }
-
-
-
 
 type weekdayProvider struct{}
 
