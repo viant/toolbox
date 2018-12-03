@@ -12,7 +12,6 @@ type Z string
 type Country struct {
 	Code string
 	Name string
-
 }
 
 //Address represents a test struct
@@ -24,7 +23,7 @@ type Address struct {
 type A Address
 
 //User represents a test struct
-type User struct {//my comments
+type User struct { //my comments
 	///abc comment
 	ID             *int //  comment1 type
 	Name           string

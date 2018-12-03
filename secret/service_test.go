@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/assertly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/storage"
 	"testing"
 	"time"
-	"github.com/viant/assertly"
 )
 
 func setupData(baseDirectory string, data map[string]*cred.Config) error {

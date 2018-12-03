@@ -3,10 +3,10 @@ package storage
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/url"
 	"os"
 	"strings"
-	"io/ioutil"
 )
 
 //Service represents abstract way to accessing local or remote storage
@@ -28,7 +28,6 @@ type Service interface {
 	//Closes storage service
 	Close() error
 }
-
 
 type storageService struct {
 	registry map[string]Service

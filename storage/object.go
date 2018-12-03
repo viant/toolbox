@@ -27,7 +27,6 @@ type Object interface {
 	FileInfo() os.FileInfo
 }
 
-
 //AbstractObject represents abstract storage object
 type AbstractObject struct {
 	Object
