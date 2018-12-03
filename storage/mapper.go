@@ -97,7 +97,7 @@ func (t *templateWriter) WriteStorageContent(URL string, content []byte, useText
 		}
 	}
 	var contentReader = fmt.Sprintf("bytes.NewReader([]byte(`%s`))", content)
-	if !toolbox.IsASCIIText(contentReader) && ! useText {
+	if !toolbox.IsASCIIText(contentReader) && !useText {
 		var byteArray = make([]string, 0)
 		for _, b := range content {
 			byteArray = append(byteArray, fmt.Sprintf("%d", b))
