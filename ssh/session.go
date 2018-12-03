@@ -8,11 +8,11 @@ import (
 	"github.com/viant/toolbox"
 	"golang.org/x/crypto/ssh"
 	"io"
+	"path"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
-	"path"
 )
 
 type TerminatedError struct {
@@ -153,7 +153,7 @@ func (s *multiCommandSession) start(shell string) (output string, err error) {
 		return "", err
 	}
 	_, name := path.Split(shell)
-	output, _, err = s.readResponse(defaultTimeoutMs, nil,  name)
+	output, _, err = s.readResponse(defaultTimeoutMs, nil, name)
 	return output, err
 }
 
@@ -318,8 +318,6 @@ outer:
 		}
 	}
 
-
-
 	if hasTerminator {
 		s.drainStdout()
 	}
@@ -361,7 +359,7 @@ func waitTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
 
 func (s *multiCommandSession) shellInit() (err error) {
 	if s.promptSequence != "" {
-		if _, err = s.Run(s.promptSequence, nil, initTimeoutMs, ); err != nil {
+		if _, err = s.Run(s.promptSequence, nil, initTimeoutMs); err != nil {
 			return err
 		}
 	}
