@@ -54,7 +54,7 @@ func extractLinks(body string) []*hRef {
 		if linkEndPosition == -1 {
 			continue
 		}
-		linkHref :=string(linkContent[:linkEndPosition] )
+		linkHref := string(linkContent[:linkEndPosition])
 		var content = ""
 		contentStartPosition := strings.Index(linkContent, ">")
 		if contentStartPosition != 1 {
@@ -101,7 +101,7 @@ func (s *httpStorageService) List(URL string) ([]Object, error) {
 	}
 
 	isGitUrl := strings.Contains(URL, "github.")
-	isPublicGit  := strings.Contains(URL, "github.com")
+	isPublicGit := strings.Contains(URL, "github.com")
 	if strings.Contains(contentType, "text/html") {
 
 		links := extractLinks(string(body))
@@ -121,7 +121,7 @@ func (s *httpStorageService) List(URL string) ([]Object, error) {
 				baseURL := toolbox.URLBase(URL)
 
 				objectURL := link.URL
-				if ! strings.Contains(objectURL, baseURL) {
+				if !strings.Contains(objectURL, baseURL) {
 					objectURL = toolbox.URLPathJoin(baseURL, link.URL)
 				}
 
@@ -133,14 +133,14 @@ func (s *httpStorageService) List(URL string) ([]Object, error) {
 						objectURL = strings.Replace(objectURL, ".com/", ".com/raw/", 1)
 					}
 				}
-				if linkType ==  StorageObjectContentType && !strings.Contains(objectURL, "raw") {
+				if linkType == StorageObjectContentType && !strings.Contains(objectURL, "raw") {
 					continue
 				}
-				if _, ok:= indexedLinks[objectURL];ok {
+				if _, ok := indexedLinks[objectURL]; ok {
 					continue
 				}
 				storageObject := newHttpFileObject(objectURL, linkType, nil, now, 1)
-				indexedLinks[objectURL]=true
+				indexedLinks[objectURL] = true
 				result = append(result, storageObject)
 			}
 
