@@ -1,5 +1,7 @@
 package toolbox
 
+import "io"
+
 //NilPointerError represents nil pointer error
 type NilPointerError struct {
 	message string
@@ -27,4 +29,12 @@ func IsNilPointerError(err error) bool {
 	}
 	_, ok := err.(*NilPointerError)
 	return ok
+}
+
+//IsEOFError returns true if io.EOF
+func IsEOFError(err error) bool {
+	if err == nil {
+		return false
+	}
+	return err == io.EOF
 }
