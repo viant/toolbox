@@ -82,7 +82,7 @@ func (r *Resource) DirectoryPath() string {
 	if path.Ext(name) != "" {
 		result = parent
 	}
-		if strings.HasSuffix(result, "/") {
+	if strings.HasSuffix(result, "/") {
 		result = string(result[:len(result)-1])
 	}
 	return result
@@ -171,9 +171,9 @@ func (r *Resource) DecodeWith(target interface{}, decoderFactory toolbox.Decoder
 	if err != nil {
 		return err
 	}
-	err  =  decoderFactory.Create(bytes.NewReader(content)).Decode(target)
+	err = decoderFactory.Create(bytes.NewReader(content)).Decode(target)
 	if err != nil {
-		return  fmt.Errorf("failed to decode: %v, payload: %s", err, content)
+		return fmt.Errorf("failed to decode: %v, payload: %s", err, content)
 	}
 
 	return err
@@ -184,7 +184,7 @@ func (r *Resource) Rename(name string) (err error) {
 	var _, currentName = toolbox.URLSplit(r.URL)
 	if currentName == "" && strings.HasSuffix(r.URL, "/") {
 		_, currentName = toolbox.URLSplit(r.URL[:len(r.URL)-1])
-		currentName+="/"
+		currentName += "/"
 	}
 
 	r.URL = strings.Replace(r.URL, currentName, name, 1)
@@ -299,9 +299,6 @@ func normalizeURL(URL string) string {
 	}
 	if !strings.HasPrefix(URL, "/") {
 		currentDirectory, _ := os.Getwd()
-
-
-
 
 		if strings.Contains(URL, "..") {
 			fragments := strings.Split(URL, "/")
