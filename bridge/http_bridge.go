@@ -267,13 +267,12 @@ type HttpRequest struct {
 //NewHTTPRequest create a new instance of http request
 func NewHTTPRequest(method, url, body string, header http.Header) *HttpRequest {
 	return &HttpRequest{
-		Method:method,
-		URL:url,
-		Body:body,
-		Header:header,
+		Method: method,
+		URL:    url,
+		Body:   body,
+		Header: header,
 	}
 }
-
 
 //HttpResponse represents JSON serializable http response
 type HttpResponse struct {
