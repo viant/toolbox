@@ -3,6 +3,7 @@ package toolbox
 import (
 	"fmt"
 	"strings"
+	"unicode"
 )
 
 //Matcher represents a matcher, that matches input from offset position, it returns number of characters matched.
@@ -78,28 +79,27 @@ type CharactersMatcher struct {
 }
 
 //Match matches any characters defined in Chars in the input, returns 1 if character has been matched
-func (m CharactersMatcher) Match(input string, offset int) (matched int) {
-	var result = 0
+func (m CharactersMatcher) Match(input string, offset int) int {
+	var matched = 0
+	if offset >= len(input) {
+		return matched
+	}
 outer:
-	for i := 0; i < len(input)-offset; i++ {
-		aChar := input[offset+i : offset+i+1]
-		for j := 0; j < len(m.Chars); j++ {
-			if aChar == m.Chars[j:j+1] {
-				result++
+	for _, r := range input[offset:] {
+		for _, candidate := range m.Chars {
+			if candidate == r {
+				matched++
 				continue outer
 			}
 		}
 		break
 	}
-	return result
+	return matched
 }
 
-func isLetter(aChar string) bool {
-	return (aChar >= "a" && aChar <= "z") || (aChar >= "A" && aChar <= "Z")
-}
-
-func isDigit(aChar string) bool {
-	return (aChar >= "0" && aChar <= "9")
+//NewCharactersMatcher creates a new character matcher
+func NewCharactersMatcher(chars string) Matcher {
+	return &CharactersMatcher{Chars: chars}
 }
 
 //EOFMatcher represents end of input matcher
@@ -107,7 +107,7 @@ type EOFMatcher struct {
 }
 
 //Match returns 1 if end of input has been reached otherwise 0
-func (m EOFMatcher) Match(input string, offset int) (matched int) {
+func (m EOFMatcher) Match(input string, offset int) int {
 	if offset+1 == len(input) {
 		return 1
 	}
@@ -118,18 +118,18 @@ func (m EOFMatcher) Match(input string, offset int) (matched int) {
 type IntMatcher struct{}
 
 //Match matches a literal in the input, it returns number of character matched.
-func (m IntMatcher) Match(input string, offset int) (matched int) {
-	if !isDigit(input[offset : offset+1]) {
-		return 0
+func (m IntMatcher) Match(input string, offset int) int {
+	var matched = 0
+	if offset >= len(input) {
+		return matched
 	}
-	var i = 1
-	for ; i < len(input)-offset; i++ {
-		aChar := input[offset+i : offset+i+1]
-		if !isDigit(aChar) {
+	for _, r := range input[offset:] {
+		if !unicode.IsDigit(r) {
 			break
 		}
+		matched++
 	}
-	return i
+	return matched
 }
 
 //NewIntMatcher returns a new integer matcher
@@ -137,46 +137,59 @@ func NewIntMatcher() Matcher {
 	return &IntMatcher{}
 }
 
+var dotRune = rune('.')
+var underscoreRune = rune('_')
+
 //LiteralMatcher represents a matcher that finds any literals in the input
 type LiteralMatcher struct{}
 
 //Match matches a literal in the input, it returns number of character matched.
-func (m LiteralMatcher) Match(input string, offset int) (matched int) {
-	if !isLetter(input[offset : offset+1]) {
-		return 0
+func (m LiteralMatcher) Match(input string, offset int) int {
+	var matched = 0
+	if offset >= len(input) {
+		return matched
 	}
-	var i = 1
-	for ; i < len(input)-offset; i++ {
-		aChar := input[offset+i : offset+i+1]
-		if !((isLetter(aChar)) || isDigit(aChar) || aChar == "_" || aChar == ".") {
+	for i, r := range input[offset:] {
+		if i == 0 {
+			if !unicode.IsLetter(r) {
+				break
+			}
+		} else if !(unicode.IsLetter(r) || unicode.IsDigit(r) || r == dotRune || r == underscoreRune) {
 			break
 		}
+		matched++
 	}
-	return i
+	return matched
 }
 
 //LiteralMatcher represents a matcher that finds any literals in the input
 type IdMatcher struct{}
 
 //Match matches a literal in the input, it returns number of character matched.
-func (m IdMatcher) Match(input string, offset int) (matched int) {
-	if !isLetter(input[offset:offset+1]) && !isDigit(input[offset:offset+1]) {
-		return 0
+func (m IdMatcher) Match(input string, offset int) int {
+	var matched = 0
+	if offset >= len(input) {
+		return matched
 	}
-	var i = 1
-	for ; i < len(input)-offset; i++ {
-		aChar := input[offset+i : offset+i+1]
-		if !((isLetter(aChar)) || isDigit(aChar) || aChar == "_" || aChar == ".") {
+	for i, r := range input[offset:] {
+		if i == 0 {
+			if !(unicode.IsLetter(r) || unicode.IsDigit(r)) {
+				break
+			}
+		} else if !(unicode.IsLetter(r) || unicode.IsDigit(r) || r == dotRune || r == underscoreRune) {
 			break
 		}
+		matched++
 	}
-	return i
+	return matched
 }
 
 //SequenceMatcher represents a matcher that finds any sequence until find provided terminators
 type SequenceMatcher struct {
-	Terminators   []string
-	CaseSensitive bool
+	Terminators            []string
+	CaseSensitive          bool
+	matchAllIfNoTerminator bool
+	runeTerminators        []rune
 }
 
 func (m *SequenceMatcher) hasTerminator(candidate string) bool {
@@ -186,13 +199,11 @@ func (m *SequenceMatcher) hasTerminator(candidate string) bool {
 		if len(terminator) > candidateLength {
 			continue
 		}
-
 		if !m.CaseSensitive {
 			if strings.ToLower(terminator) == strings.ToLower(string(candidate[:terminatorLength])) {
 				return true
 			}
 		}
-
 		if terminator == string(candidate[:terminatorLength]) {
 			return true
 		}
@@ -201,21 +212,84 @@ func (m *SequenceMatcher) hasTerminator(candidate string) bool {
 }
 
 //Match matches a literal in the input, it returns number of character matched.
-func (m *SequenceMatcher) Match(input string, offset int) (matched int) {
+func (m *SequenceMatcher) Match(input string, offset int) int {
+	var matched = 0
+	hasTerminator := false
+	if offset >= len(input) {
+		return matched
+	}
+	if len(m.runeTerminators) > 0 {
+		return m.matchSingleTerminator(input, offset)
+	}
 	var i = 0
 	for ; i < len(input)-offset; i++ {
 		if m.hasTerminator(string(input[offset+i:])) {
+			hasTerminator = true
 			break
 		}
+	}
+	if !hasTerminator && !m.matchAllIfNoTerminator {
+		return 0
 	}
 	return i
 }
 
-//NewSequenceMatcher creates a new matcher that finds any sequence until find provided terminators
-func NewSequenceMatcher(terminators ...string) Matcher {
-	return &SequenceMatcher{
-		Terminators: terminators,
+func (m *SequenceMatcher) matchSingleTerminator(input string, offset int) int {
+	matched := 0
+	hasTerminator := false
+outer:
+	for i, r := range input[offset:] {
+		for _, terminator := range m.runeTerminators {
+			terminator = unicode.ToLower(terminator)
+			if m.CaseSensitive {
+				r = unicode.ToLower(r)
+				terminator = unicode.ToLower(terminator)
+			}
+			if r == terminator {
+				hasTerminator = true
+				matched = i
+				break outer
+			}
+		}
+
 	}
+	if !hasTerminator && !m.matchAllIfNoTerminator {
+		return 0
+	}
+	return matched
+}
+
+//NewSequenceMatcher creates a new matcher that finds all sequence until find at least one of the provided terminators
+func NewSequenceMatcher(terminators ...string) Matcher {
+	result := &SequenceMatcher{
+		matchAllIfNoTerminator: true,
+		Terminators:            terminators,
+		runeTerminators:        []rune{},
+	}
+	for _, terminator := range terminators {
+		if len(terminator) != 1 {
+			result.runeTerminators = []rune{}
+			break
+		}
+		result.runeTerminators = append(result.runeTerminators, rune(terminator[0]))
+	}
+	return result
+}
+
+//NewTerminatorMatcher creates a new matcher that finds any sequence until find at least one of the provided terminators
+func NewTerminatorMatcher(terminators ...string) Matcher {
+	result := &SequenceMatcher{
+		Terminators:     terminators,
+		runeTerminators: []rune{},
+	}
+	for _, terminator := range terminators {
+		if len(terminator) != 1 {
+			result.runeTerminators = []rune{}
+			break
+		}
+		result.runeTerminators = append(result.runeTerminators, rune(terminator[0]))
+	}
+	return result
 }
 
 //remainingSequenceMatcher represents a matcher that matches all reamining input
@@ -233,48 +307,43 @@ func NewRemainingSequenceMatcher() Matcher {
 
 //CustomIdMatcher represents a matcher that finds any literals with additional custom set of characters in the input
 type customIdMatcher struct {
-	Allowed map[string]bool
+	Allowed map[rune]bool
 }
 
-func (m *customIdMatcher) isValid(aChar string) bool {
-	if isLetter(aChar) {
+func (m *customIdMatcher) isValid(r rune) bool {
+	if unicode.IsLetter(r) || unicode.IsDigit(r) {
 		return true
 	}
-	if isDigit(aChar) {
-		return true
-	}
-	return m.Allowed[aChar]
+	return m.Allowed[r]
 }
 
 //Match matches a literal in the input, it returns number of character matched.
-func (m *customIdMatcher) Match(input string, offset int) (matched int) {
-
-	if !m.isValid(input[offset : offset+1]) {
-		return 0
+func (m *customIdMatcher) Match(input string, offset int) int {
+	var matched = 0
+	if offset >= len(input) {
+		return matched
 	}
-	var i = 1
-	for ; i < len(input)-offset; i++ {
-		aChar := input[offset+i : offset+i+1]
-		if !m.isValid(aChar) {
+	for _, r := range input[offset:] {
+		if !m.isValid(r) {
 			break
 		}
+		matched++
 	}
-	return i
+	return matched
 }
 
 //NewCustomIdMatcher creates new custom matcher
 func NewCustomIdMatcher(allowedChars ...string) Matcher {
 	var result = &customIdMatcher{
-		Allowed: make(map[string]bool),
+		Allowed: make(map[rune]bool),
 	}
-
 	if len(allowedChars) == 1 && len(allowedChars[0]) > 0 {
 		for _, allowed := range allowedChars[0] {
-			result.Allowed[string(allowed)] = true
+			result.Allowed[rune(allowed)] = true
 		}
 	}
 	for _, allowed := range allowedChars {
-		result.Allowed[allowed] = true
+		result.Allowed[rune(allowed[0])] = true
 	}
 	return result
 }
@@ -289,7 +358,7 @@ type BodyMatcher struct {
 func (m *BodyMatcher) Match(input string, offset int) (matched int) {
 	beginLen := len(m.Begin)
 	endLen := len(m.End)
-	uniEclosed := m.Begin == m.End
+	uniEnclosed := m.Begin == m.End
 
 	if offset+beginLen >= len(input) {
 		return 0
@@ -297,16 +366,16 @@ func (m *BodyMatcher) Match(input string, offset int) (matched int) {
 	if input[offset:offset+beginLen] != m.Begin {
 		return 0
 	}
-
 	var depth = 1
 	var i = 1
+
 	for ; i < len(input)-offset; i++ {
 
 		canCheckEnd := offset+i+endLen <= len(input)
 		if !canCheckEnd {
 			return 0
 		}
-		if !uniEclosed {
+		if !uniEnclosed {
 			canCheckBegin := offset+i+beginLen <= len(input)
 			if canCheckBegin {
 				if string(input[offset+i:offset+i+beginLen]) == m.Begin {
@@ -325,6 +394,11 @@ func (m *BodyMatcher) Match(input string, offset int) (matched int) {
 	return i
 }
 
+//NewBodyMatcher creates a new body matcher
+func NewBodyMatcher(begin, end string) Matcher {
+	return &BodyMatcher{Begin: begin, End: end}
+}
+
 //KeywordMatcher represents a keyword matcher
 type KeywordMatcher struct {
 	Keyword       string
@@ -336,7 +410,6 @@ func (m KeywordMatcher) Match(input string, offset int) (matched int) {
 	if !(offset+len(m.Keyword)-1 < len(input)) {
 		return 0
 	}
-
 	if m.CaseSensitive {
 		if input[offset:offset+len(m.Keyword)] == m.Keyword {
 			return len(m.Keyword)

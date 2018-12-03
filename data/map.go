@@ -6,14 +6,6 @@ import (
 	"log"
 	"strings"
 	"time"
-	"unicode"
-)
-
-const (
-	expectVariableStart = iota
-	expectVariableName
-	expectFunctionCallEnd
-	expectVariableNameEnclosureEnd
 )
 
 //Map types is an alias type to map[string]interface{} with extended behaviours
@@ -105,6 +97,10 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 	if expr == "" {
 		return nil, false
 	}
+	if strings.HasPrefix(expr, "{") && strings.HasSuffix(expr, "}") {
+		expr = expr[1 : len(expr)-1]
+	}
+
 	isShiftOperation := strings.HasPrefix(expr, "<-")
 	if isShiftOperation {
 		expr = string(expr[2:])
@@ -130,9 +126,6 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 	}
 
 	state := *s
-	if string(expr[0:1]) == "{" {
-		expr = expr[1 : len(expr)-1]
-	}
 
 	if strings.Contains(expr, ".") || strings.HasSuffix(expr, "]") {
 		fragments := strings.Split(expr, ".")
@@ -250,9 +243,10 @@ func (s *Map) SetValue(expr string, value interface{}) {
 	if isPushOperation {
 		expr = string(expr[2:])
 	}
-	if len(expr) > 2 && string(expr[0:1]) == "{" {
+	if strings.HasPrefix(expr, "{") && strings.HasSuffix(expr, "}") {
 		expr = expr[1 : len(expr)-1]
 	}
+
 	if strings.Contains(expr, ".") {
 		fragments := strings.Split(expr, ".")
 		for i, fragment := range fragments {
@@ -466,6 +460,7 @@ func (s *Map) Expand(source interface{}) interface{} {
 		for k, v := range value {
 			var key = s.ExpandAsText(k)
 			var expanded = s.Expand(v)
+
 			if key == "..." {
 				if expanded != nil && toolbox.IsMap(expanded) {
 					for key, value := range toolbox.AsMap(expanded) {
@@ -541,156 +536,15 @@ func (s *Map) ExpandAsText(text string) string {
 	return toolbox.AsString(result)
 }
 
-//parseExpression parses text for $ expression
-func (s *Map) parseExpression(text string, handler func(expression string, isUDF bool, argument string) (interface{}, bool)) interface{} {
-	var callArguments = ""
-	var callNesting = 0
-	var variableName = ""
-	var expectToken = expectVariableStart
-	var result = ""
-	var expectIndexEnd = false
-	var enclosingDeepth = 0
-	var expectEnclosure bool
-
-	for i, r := range text {
-		aChar := string(text[i : i+1])
-		var isLast = i+1 == len(text)
-		if aChar == "{" && expectEnclosure {
-			enclosingDeepth++
-		}
-
-		if aChar == "}" && enclosingDeepth > 0 {
-			enclosingDeepth--
-		}
-
-		switch expectToken {
-		case expectVariableStart:
-			if aChar == "$" {
-				expectEnclosure = true
-				variableName += aChar
-				if i+1 < len(text) {
-					nextChar := string(text[i+1 : i+2])
-					if nextChar == "{" {
-						expectToken = expectVariableNameEnclosureEnd
-						continue
-					}
-				}
-				expectToken = expectVariableName
-				continue
-			}
-			result += aChar
-		case expectVariableNameEnclosureEnd:
-			variableName += aChar
-			if aChar != "}" || enclosingDeepth > 0 {
-				continue
-			}
-			expectEnclosure = false
-			var normalizedVariable = strings.Trim(string(variableName[1:]), "{}")
-			if strings.Contains(normalizedVariable, "$") {
-				expanded := s.parseExpression(normalizedVariable, handler)
-				if text, ok := expanded.(string); ok && text != normalizedVariable {
-					variableName = "${" + text + "}"
-				}
-			}
-			expanded, ok := handler(variableName, false, "")
-			if !ok {
-				result += "${" + variableName + "}"
-				variableName = ""
-				expectToken = expectVariableStart
-				continue
-			}
-
-			if isLast && result == "" {
-				return expanded
-			}
-			result += asExpandedText(expanded)
-			variableName = ""
-			expectToken = expectVariableStart
-
-		case expectFunctionCallEnd:
-			if aChar == ")" {
-				if callNesting == 0 {
-					expanded, ok := handler(variableName, true, callArguments)
-					variableName = ""
-					if !ok {
-						continue
-					}
-					if isLast && result == "" {
-						return expanded
-					}
-					result += asExpandedText(expanded)
-					callArguments = ""
-					expectToken = expectVariableStart
-					continue
-				}
-				callNesting--
-			}
-			callArguments += aChar
-			if aChar == "(" {
-				callNesting++
-			}
-
-		case expectVariableName:
-			if aChar == "(" {
-				expectToken = expectFunctionCallEnd
-				continue
-			}
-
-			if unicode.IsLetter(r) || unicode.IsDigit(r) || aChar == "[" || (expectIndexEnd && aChar == "]") || aChar == "." || aChar == "_" || aChar == "+" || aChar == "<" || aChar == "-" {
-				if aChar == "[" {
-					expectIndexEnd = true
-				} else if aChar == "]" {
-					expectIndexEnd = false
-				}
-				variableName += aChar
-				continue
-			}
-
-			expanded, ok := handler(variableName, false, "")
-			if !ok {
-				result += "${" + variableName + "}"
-				variableName = ""
-				expectToken = expectVariableStart
-				continue
-			}
-			if isLast && result == "" {
-				return expanded
-			}
-			result += asExpandedText(expanded)
-			result += aChar
-			variableName = ""
-			expectToken = expectVariableStart
-			expectEnclosure = false
-
-		}
-	}
-	if len(variableName) > 0 {
-		expanded, ok := handler(variableName, false, "")
-		if !ok {
-			return nil
-		}
-		if result == "" {
-			return expanded
-		}
-		result += asExpandedText(expanded)
-	}
-	return result
-}
-
 func (s *Map) evaluateUDF(candidate interface{}, argument string) (interface{}, bool) {
 	var canExpandAll = true
 
 	var expandable = strings.TrimSpace(argument)
-	if toolbox.IsCompleteJSON(argument) {
-		expandable = string(argument[1 : len(argument)-1])
-	}
 
-	s.parseExpression(expandable, func(expression string, udf bool, argument string) (interface{}, bool) {
-
+	Parse(expandable, func(expression string, udf bool, argument string) (interface{}, bool) {
 		if _, has := s.GetValue(string(expression[1:])); !has {
 			canExpandAll = false
 		}
-
 		return nil, false
 	})
 
@@ -701,8 +555,12 @@ func (s *Map) evaluateUDF(candidate interface{}, argument string) (interface{}, 
 	if !ok {
 		return nil, false
 	}
-
 	expandedArgument := s.expandExpressions(argument)
+	if toolbox.IsString(expandedArgument) {
+		if evaluated, err := toolbox.JSONToInterface(toolbox.AsString(expandedArgument)); err == nil {
+			expandedArgument = evaluated
+		}
+	}
 	if toolbox.IsString(expandedArgument) {
 		var expandedTextArgument = toolbox.AsString(expandedArgument)
 		if toolbox.IsCompleteJSON(expandedTextArgument) {
@@ -760,9 +618,9 @@ func (s *Map) expandExpressions(text string) interface{} {
 	if strings.Index(text, "$") == -1 {
 		return text
 	}
+
 	var expandVariable = func(expression string, isUDF bool, argument string) (interface{}, bool) {
 		value, hasExpValue := s.GetValue(string(expression[1:]))
-
 		if hasExpValue {
 			if s.hasCycle(value, expression) {
 				log.Printf("detected data cycle on %v", expression)
@@ -797,18 +655,7 @@ func (s *Map) expandExpressions(text string) interface{} {
 		return expression, true
 	}
 
-	return s.parseExpression(text, expandVariable)
-}
-
-func asExpandedText(source interface{}) string {
-	if toolbox.IsSlice(source) || toolbox.IsMap(source) {
-		buf := new(bytes.Buffer)
-		err := toolbox.NewJSONEncoderFactory().Create(buf).Encode(source)
-		if err == nil {
-			return buf.String()
-		}
-	}
-	return toolbox.AsString(source)
+	return Parse(text, expandVariable)
 }
 
 //NewMap creates a new instance of a map.

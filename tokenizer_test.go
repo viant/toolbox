@@ -41,6 +41,12 @@ func Test_NewSequenceMatcher(t *testing.T) {
 	matcher := toolbox.NewSequenceMatcher("&&", "||")
 	assert.Equal(t, 2, matcher.Match("123", 1))
 	assert.Equal(t, 4, matcher.Match("123 && 123", 0))
+}
+
+func Test_NewSingleSequenceMatcher(t *testing.T) {
+	matcher := toolbox.NewSequenceMatcher("&")
+	assert.Equal(t, 0, matcher.Match("123", 1))
+	assert.Equal(t, 5, matcher.Match("12345&3", 0))
 
 }
 
