@@ -1,9 +1,11 @@
 package toolbox
 
 import (
+	"bytes"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"strings"
@@ -107,75 +109,37 @@ type delimiterDecoder struct {
 func (d *delimiterDecoder) Decode(target interface{}) error {
 	delimitedRecord, ok := target.(*DelimitedRecord)
 	if !ok {
-		return fmt.Errorf("Invalid target type, expected %T but had %T", &DelimitedRecord{}, target)
+		return fmt.Errorf("invalid target type, expected %T but had %T", &DelimitedRecord{}, target)
 	}
 	if delimitedRecord.Record == nil {
 		delimitedRecord.Record = make(map[string]interface{})
 	}
-
-	var isInDoubleQuote = false
-	var index = 0
-	var value = ""
 	var delimiter = delimitedRecord.Delimiter
+
 	payload, err := ioutil.ReadAll(d.reader)
 	if err != nil {
 		return err
 	}
-	encoded := string(payload)
+	reader := csv.NewReader(bytes.NewReader(payload))
+	reader.Comma = rune(delimiter[0])
 	hasColumns := len(delimitedRecord.Columns) > 0
 	if !hasColumns {
 		delimitedRecord.Columns = make([]string, 0)
 	}
-	for i := 0; i < len(encoded); i++ {
-		aChar := string(encoded[i : i+1])
-		nextChar := ""
-		if i+2 < len(encoded) {
-			nextChar = encoded[i+1 : i+2]
-		}
-		if isInDoubleQuote && ((aChar == "\\" || aChar == "\"") && i+2 < len(encoded)) {
-			if nextChar == "\"" {
-				if i+3 < len(encoded) {
-					nextAfterNext := encoded[i+2 : i+3]
-					if nextAfterNext == "\"" {
-						value = value + aChar + nextChar
-						i += 2
-						continue
-					}
-				}
-				i++
-				value = value + nextChar
-				continue
-			}
-		}
-		//allow unescaped " be inside text if the whole text is not enclosed in "s
-		if aChar == "\"" && (len(value) == 0 || isInDoubleQuote) {
-			isInDoubleQuote = !isInDoubleQuote
-			continue
-		}
-
-		if encoded[i:i+1] == delimiter && !isInDoubleQuote {
-			if !hasColumns {
-				delimitedRecord.Columns = append(delimitedRecord.Columns, strings.TrimSpace(value))
-			} else {
-				var columnName = delimitedRecord.Columns[index]
-				delimitedRecord.Record[columnName] = value
-			}
-
-			value = ""
-			index++
-			continue
-		}
-		value = value + aChar
+	record, err := reader.Read()
+	if IsEOFError(err) {
+		return nil
 	}
-	if len(value) > 0 {
-		if !hasColumns {
-			delimitedRecord.Columns = append(delimitedRecord.Columns, strings.TrimSpace(value))
-		} else {
-			if index >= len(delimitedRecord.Columns) {
-				return fmt.Errorf("index %v out of bound: columns: %v, values:%v", index, delimitedRecord.Columns, encoded)
-			}
-			var columnName = delimitedRecord.Columns[index]
-			delimitedRecord.Record[columnName] = value
+	if err != nil {
+		return err
+	}
+	if len(delimitedRecord.Columns) == 0 {
+		for _, field := range record {
+			delimitedRecord.Columns = append(delimitedRecord.Columns, strings.TrimSpace(field))
+		}
+	} else {
+		for i, field := range record {
+			delimitedRecord.Record[delimitedRecord.Columns[i]] = field
 		}
 	}
 	return nil
