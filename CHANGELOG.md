@@ -1,5 +1,6 @@
-## Dec 2 2018 - v0.3.0
+## Dec 3 2018 - v0.3.0
  - Refactor data/map expression parser, added basic arithmetic support
+ - Refactor tokenizer matchers 
 
 ## Nov 28 2018 - v0.2.4
  - Patched ToInt, ToFloat conversion with nil pointer
