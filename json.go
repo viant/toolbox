@@ -21,17 +21,13 @@ func IsCompleteJSON(candidate string) bool {
 
 	squareStart := strings.Count(candidate, "[")
 	squareEnd := strings.Count(candidate, "]")
-	if !(curlyStart == curlyEnd && squareStart == squareEnd) {
+	if !(curlyStart == curlyEnd && squareStart == squareEnd) || (curlyStart+squareStart == 0) {
 		return false
 	}
-
-	var err error
-	if strings.HasPrefix(candidate, "{") {
-		_, err = JSONToMap(candidate)
-	} else {
-		_, err = JSONToSlice(candidate)
+	if !(strings.HasPrefix(candidate, "{") && strings.HasSuffix(candidate, "}") || strings.HasPrefix(candidate, "[") && strings.HasSuffix(candidate, "]")) {
+		return false
 	}
-	return err == nil
+	return json.Valid([]byte(candidate))
 }
 
 //NewLineDelimitedJSON returns JSON for supplied multi line JSON
