@@ -412,7 +412,7 @@ func asEncodableValue(v interface{}) interface{} {
 	} else if toolbox.IsSlice(v) {
 		var targetSlice = make([]interface{}, 0)
 		var sourceSlice = toolbox.AsSlice(v)
-		for _, item := range sourceSlice  {
+		for _, item := range sourceSlice {
 			targetSlice = append(targetSlice, asEncodableValue(item))
 		}
 		value = targetSlice
@@ -495,8 +495,6 @@ func (s *Map) Expand(source interface{}) interface{} {
 		}
 		return resultSlice
 	default:
-
-
 
 		if source == nil {
 			return nil
