@@ -105,10 +105,13 @@ func Parse(expression string, handler func(expression string, isUDF bool, argume
 				fallthrough
 
 			case idToken:
+
+
 				variable += match.Matched
 				variable = expandVariable(tokenizer, variable, handler)
-				match = tokenizer.Nexts(callToken, beforeVarToken, unmatchedToken, eofToken)
+				match = tokenizer.Nexts(callToken, incToken, decrementToken, beforeVarToken, unmatchedToken, eofToken)
 				switch match.Token {
+
 				case callToken:
 					arguments := string(match.Matched[1 : len(match.Matched)-1])
 					if value, ok = handler(variable, true, arguments); !ok {
@@ -116,6 +119,11 @@ func Parse(expression string, handler func(expression string, isUDF bool, argume
 					}
 					result.Append(value)
 					continue
+				case  incToken, decrementToken:
+					variable += match.Matched
+					match.Matched = ""
+					fallthrough
+
 				case beforeVarToken, unmatchedToken, eofToken, invalidToken:
 					if value, ok = handler(variable, false, ""); !ok {
 						value = variable

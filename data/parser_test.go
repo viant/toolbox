@@ -358,8 +358,32 @@ func TestParseExpression(t *testing.T) {
 		}`,
 			expected: "{\n\t\t  \"DAILY_CAP\": \"100\"\n\t\t}",
 		},
-	}
 
+
+
+		{
+			description: "post increment",
+			aMap: map[string]interface{}{
+				"i":0,
+				"z":3,
+			},
+			expression: "$i++ $i  $z++ $z",
+			expected:"0 1  3 4",
+
+		},
+
+		{
+			description: "pre increment",
+			aMap: map[string]interface{}{
+				"i":10,
+				"z":20,
+			},
+			expression: "$++i $i  $++z $z",
+			expected:"11 11  21 21",
+
+		},
+
+	}
 	for _, useCase := range useCases {
 		var expandHandler = func(expression string, isUDF bool, argument string) (interface{}, bool) {
 			result, has := useCase.aMap.GetValue(string(expression[1:]))
