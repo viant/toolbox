@@ -402,8 +402,7 @@ func asEncodableValue(v interface{}) interface{} {
 	if v == nil {
 		return nil
 	}
-	var value interface{} = v
-
+	value := v
 	if toolbox.IsFunc(v) {
 		return "func()"
 	}
@@ -411,11 +410,12 @@ func asEncodableValue(v interface{}) interface{} {
 		var aMap = Map(toolbox.AsMap(v))
 		value = aMap.AsEncodableMap()
 	} else if toolbox.IsSlice(v) {
-		var aSlice = make([]interface{}, 0)
-		for _, item := range toolbox.AsSlice(aSlice) {
-			aSlice = append(aSlice, asEncodableValue(item))
+		var targetSlice = make([]interface{}, 0)
+		var sourceSlice = toolbox.AsSlice(v)
+		for _, item := range sourceSlice  {
+			targetSlice = append(targetSlice, asEncodableValue(item))
 		}
-		value = aSlice
+		value = targetSlice
 	} else if toolbox.IsString(v) || toolbox.IsInt(v) || toolbox.IsFloat(v) {
 		value = v
 	} else {
@@ -495,6 +495,9 @@ func (s *Map) Expand(source interface{}) interface{} {
 		}
 		return resultSlice
 	default:
+
+
+
 		if source == nil {
 			return nil
 		}
@@ -512,7 +515,8 @@ func (s *Map) Expand(source interface{}) interface{} {
 		} else if toolbox.IsSlice(source) {
 			return s.Expand(toolbox.AsSlice(value))
 		} else if toolbox.IsStruct(value) {
-			return value
+			aMap := toolbox.AsMap(value)
+			return s.Expand(aMap)
 		} else if value != nil {
 			return s.Expand(toolbox.AsString(value))
 		}
@@ -622,8 +626,8 @@ func (s *Map) expandExpressions(text string) interface{} {
 	var expandVariable = func(expression string, isUDF bool, argument string) (interface{}, bool) {
 		value, hasExpValue := s.GetValue(string(expression[1:]))
 		if hasExpValue {
-			if s.hasCycle(value, expression) {
-				log.Printf("detected data cycle on %v", expression)
+			if value != expression && s.hasCycle(value, expression) {
+				log.Printf("detected data cycle on %v in value: %v", expression, value)
 				return expression, true
 			}
 
