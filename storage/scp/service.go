@@ -107,7 +107,6 @@ func (s *service) List(URL string) ([]storage.Object, error) {
 			stdout = vtclean.Clean(string(output), false)
 		}
 	}
-
 	if strings.Contains(stdout, unrecognizedOption) {
 		return  nil, fmt.Errorf("unable to list files with: %v, %v", lsCommand, stdout)
 	}

@@ -188,7 +188,6 @@ func (p *Parser) extractObjectFromIsoBasedTimeCommand(parsedURL *url.URL, line s
 		}
 		continue
 	}
-
 	timeLen := len(modTime)
 	if timeLen > 12 {
 		modTime = string(modTime[:12])
@@ -200,7 +199,7 @@ func (p *Parser) extractObjectFromIsoBasedTimeCommand(parsedURL *url.URL, line s
 	}
 	modificationTime, err := time.Parse(layout, dateTime)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse line for lineinfo: %v, unable to extract time: %v", line, err)
+		return nil, fmt.Errorf("failed to scrape file info from stdout: %v, err: %v", line, err)
 	}
 	return p.newObject(parsedURL, name, permission, line, size, modificationTime, isURLDirectory)
 }
