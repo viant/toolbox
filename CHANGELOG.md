@@ -1,4 +1,10 @@
-## Dec 3 2018 - v0.3.0
+## Dec 5 2018 - v0.3.4
+ - Patched scp service with additional fallback for file scraping
+ - Refactor data/map expression parser, added basic arithmetic support
+ - Added expansion of struct datatype, patched asEncodableValue
+ 
+ 
+## Dec 3 2018 - v0.3.1
  - Refactor data/map expression parser, added basic arithmetic support
  - Refactor tokenizer matchers 
 
