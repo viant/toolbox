@@ -41,7 +41,12 @@ func (s *service) runCommand(session ssh.MultiCommandSession, URL string, comman
 }
 
 func (s *service) stdout(output string) string {
-	return vtclean.Clean(string(output), false)
+	var result = make([]string, 0)
+	lines := strings.Split(output, "\n")
+	for _, line := range lines {
+		result = append(result, vtclean.Clean(line, false))
+	}
+	return strings.Join(result, "\n")
 }
 
 func (s *service) getMultiSession(parsedURL *url.URL) ssh.MultiCommandSession {
@@ -93,6 +98,8 @@ func (s *service) List(URL string) ([]storage.Object, error) {
 	var URLPath = parsedURL.Path
 	var result = make([]storage.Object, 0)
 	var lsCommand = ""
+
+
 	if canListWithTimeStyle {
 		lsCommand += "ls -dltr --time-style=full-iso " + URLPath
 	} else {
@@ -107,6 +114,8 @@ func (s *service) List(URL string) ([]storage.Object, error) {
 			stdout = vtclean.Clean(string(output), false)
 		}
 	}
+
+
 	if strings.Contains(stdout, unrecognizedOption) {
 		return  nil, fmt.Errorf("unable to list files with: %v, %v", lsCommand, stdout)
 	}
@@ -169,7 +178,7 @@ func (s *service) StorageObject(URL string) (storage.Object, error) {
 //Download returns reader for downloaded storage object
 func (s *service) Download(object storage.Object) (io.ReadCloser, error) {
 	if object == nil {
-		return nil, fmt.Errorf("Object was nil")
+		return nil, fmt.Errorf("object was nil")
 	}
 	parsedURL, err := url.Parse(object.URL())
 	if err != nil {
@@ -187,7 +196,6 @@ func (s *service) Download(object storage.Object) (io.ReadCloser, error) {
 	if port == 0 {
 		port = defaultSSHPort
 	}
-
 	service, err := s.getService(parsedURL)
 	if err != nil {
 		return nil, err
