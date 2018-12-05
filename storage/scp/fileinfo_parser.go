@@ -51,9 +51,7 @@ func (p *Parser) Parse(parsedURL *url.URL, stdout string, isURLDir bool) ([]stor
 		if line == "" {
 			continue
 		}
-		line := strings.Replace(vtclean.Clean(line, false), "\r", "", 1)
 		var object storage.Object
-
 		if p.IsoTimeStyle {
 			object, err = p.extractObjectFromIsoBasedTimeCommand(parsedURL, line, isURLDir)
 		} else {
@@ -113,6 +111,9 @@ func (p *Parser) extractObjectFromNonIsoBaseTimeCommand(parsedURL *url.URL, line
 			}
 			continue
 		}
+
+
+
 		aChar := string(aRune)
 		switch tokenIndex {
 		case fileInfoPermission:
@@ -143,7 +144,7 @@ func (p *Parser) extractObjectFromNonIsoBaseTimeCommand(parsedURL *url.URL, line
 	layout := toolbox.DateFormatToLayout("yyyy MMM ddd HH:mm:s")
 	modificationTime, err := time.Parse(layout, dateTime)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse line for lineinfo: %v, unable to extract time: %v", line, err)
+		return nil, fmt.Errorf("failed to scrape file info from stdout: %v, err: %v", line, err)
 	}
 
 	return p.newObject(parsedURL, name, permission, line, size, modificationTime, isURLDirectory)
@@ -157,6 +158,8 @@ func (p *Parser) extractObjectFromIsoBasedTimeCommand(parsedURL *url.URL, line s
 		return nil, nil
 	}
 	var owner, name, permission, group, timezone, date, modTime, size string
+	line = vtclean.Clean(line, false)
+
 	for i, aRune := range line {
 		if unicode.IsSpace(aRune) {
 			if p.HasNextTokenInout(i+1, line) {
@@ -192,6 +195,9 @@ func (p *Parser) extractObjectFromIsoBasedTimeCommand(parsedURL *url.URL, line s
 	}
 	dateTime := date + " " + modTime + " " + timezone
 	layout := toolbox.DateFormatToLayout("yyyy-MM-dd HH:mm:ss.SSS ZZ")
+	if len(date + " " + modTime) <= len("yyyy-MM-dd HH:mm:ss") {
+		layout = toolbox.DateFormatToLayout("yyyy-MM-dd HH:mm:ss ZZ")
+	}
 	modificationTime, err := time.Parse(layout, dateTime)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse line for lineinfo: %v, unable to extract time: %v", line, err)

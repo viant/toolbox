@@ -21,7 +21,8 @@ const defaultSSHPort = 22
 const verificationSizeThreshold = 1024 * 1024
 
 //NoSuchFileOrDirectoryError represents no such file or directory error
-var NoSuchFileOrDirectoryError = errors.New("No Such File Or Directory")
+var NoSuchFileOrDirectoryError = errors.New("No such file or directory")
+const unrecognizedOption ="unrecognized option"
 
 type service struct {
 	fileService   storage.Service
@@ -91,14 +92,26 @@ func (s *service) List(URL string) ([]storage.Object, error) {
 	var parser = &Parser{IsoTimeStyle: canListWithTimeStyle}
 	var URLPath = parsedURL.Path
 	var result = make([]storage.Object, 0)
-	var lsCommand = "ls -dltr"
+	var lsCommand = ""
 	if canListWithTimeStyle {
-		lsCommand += " --time-style=full-iso"
+		lsCommand += "ls -dltr --time-style=full-iso " + URLPath
 	} else {
-		lsCommand += "T"
+		lsCommand += "ls -dltrT " + URLPath
 	}
-	output, _ := s.runCommand(commandSession, URL, lsCommand+" "+URLPath)
+	output, _ := s.runCommand(commandSession, URL, lsCommand)
 	var stdout = vtclean.Clean(string(output), false)
+	if strings.Contains(stdout, "unrecognized option") {
+		if canListWithTimeStyle {
+			lsCommand = "ls -dltr --full-time " + URLPath
+			output, _ = s.runCommand(commandSession, URL, lsCommand)
+			stdout = vtclean.Clean(string(output), false)
+		}
+	}
+
+	if strings.Contains(stdout, unrecognizedOption) {
+		return  nil, fmt.Errorf("unable to list files with: %v, %v", lsCommand, stdout)
+	}
+
 	if strings.Contains(stdout, "No such file or directory") {
 		return result, NoSuchFileOrDirectoryError
 	}
