@@ -1,4 +1,5 @@
-## Dec 5 2018 - v0.3.4
+## Dec 6 2018 - v0.3.8
+ - Patched udf arguments conversion glitch
  - Patched scp service with additional fallback for file scraping
  - Refactor data/map expression parser, added basic arithmetic support
  - Added expansion of struct datatype, patched asEncodableValue
