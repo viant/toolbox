@@ -106,7 +106,6 @@ func Parse(expression string, handler func(expression string, isUDF bool, argume
 
 			case idToken:
 
-
 				variable += match.Matched
 				variable = expandVariable(tokenizer, variable, handler)
 				match = tokenizer.Nexts(callToken, incToken, decrementToken, beforeVarToken, unmatchedToken, eofToken)
@@ -119,7 +118,7 @@ func Parse(expression string, handler func(expression string, isUDF bool, argume
 					}
 					result.Append(value)
 					continue
-				case  incToken, decrementToken:
+				case incToken, decrementToken:
 					variable += match.Matched
 					match.Matched = ""
 					fallthrough

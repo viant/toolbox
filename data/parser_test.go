@@ -359,38 +359,45 @@ func TestParseExpression(t *testing.T) {
 			expected: "{\n\t\t  \"DAILY_CAP\": \"100\"\n\t\t}",
 		},
 
-
-
 		{
 			description: "post increment",
 			aMap: map[string]interface{}{
-				"i":0,
-				"z":3,
+				"i": 0,
+				"z": 3,
 			},
 			expression: "$i++ $i  $z++ $z",
-			expected:"0 1  3 4",
-
+			expected:   "0 1  3 4",
 		},
 
 		{
 			description: "pre increment",
 			aMap: map[string]interface{}{
-				"i":10,
-				"z":20,
+				"i": 10,
+				"z": 20,
 			},
 			expression: "$++i $i  $++z $z",
-			expected:"11 11  21 21",
-
+			expected:   "11 11  21 21",
 		},
 
+		{
+			description: "arguments as text glitch",
+			aMap: map[string]interface{}{
+				"f": func(source interface{}, state Map) (interface{}, error) {
+					return source, nil
+				},
+			},
+			expression: "#$f(554257_popularmechanics.com)#",
+			expected:   "#554257_popularmechanics.com#",
+		},
 	}
+
 	for _, useCase := range useCases {
 		var expandHandler = func(expression string, isUDF bool, argument string) (interface{}, bool) {
 			result, has := useCase.aMap.GetValue(string(expression[1:]))
 			if isUDF {
 				if udf, ok := result.(func(interface{}, Map) (interface{}, error)); ok {
 					expandedArgs := useCase.aMap.expandExpressions(argument)
-					if toolbox.IsString(expandedArgs) {
+					if toolbox.IsString(expandedArgs) && toolbox.IsCompleteJSON(toolbox.AsString(expandedArgs)) {
 						if evaluated, err := toolbox.JSONToInterface(toolbox.AsString(expandedArgs)); err == nil {
 							expandedArgs = evaluated
 						}
