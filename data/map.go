@@ -559,8 +559,11 @@ func (s *Map) evaluateUDF(candidate interface{}, argument string) (interface{}, 
 	}
 	expandedArgument := s.expandExpressions(argument)
 	if toolbox.IsString(expandedArgument) {
-		if evaluated, err := toolbox.JSONToInterface(toolbox.AsString(expandedArgument)); err == nil {
-			expandedArgument = evaluated
+		expandedText:= toolbox.AsString(expandedArgument)
+		if toolbox.IsCompleteJSON(expandedText) {
+			if evaluated, err := toolbox.JSONToInterface(expandedText); err == nil {
+				expandedArgument = evaluated
+			}
 		}
 	}
 	if toolbox.IsString(expandedArgument) {

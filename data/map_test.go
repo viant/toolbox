@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	"log"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -183,6 +184,8 @@ func TestMap_SetValue(t *testing.T) {
 
 func Test_Expand(t *testing.T) {
 
+
+
 	state := NewMap()
 	state.Put("name", "etly")
 	build := NewMap()
@@ -331,4 +334,40 @@ func Test_Replace(t *testing.T) {
 	assert.EqualValues(t, "v100", state.Expand("$k1.v1"))
 	assert.EqualValues(t, "v200", state.Get("k2"))
 
+}
+
+func TestNestedDataExpansion(t *testing.T) {
+
+	var nestedDAa = `{
+	"udfs": [
+		[
+			{
+				"Key": "id",
+				"Value": "myLogReader"
+			},
+			{
+				"Key": "provider",
+				"Value": "CsvReader"
+			},
+			{
+				"Key": "params",
+				"Value": "$schema"
+			}
+		]
+	]
+}
+`
+
+
+	nestedData, err := toolbox.JSONToInterface(nestedDAa)
+	if ! assert.Nil(t, err) {
+		log.Fatal(err)
+	}
+	var aMap = NewMap()
+	aMap.SetValue("schema", []interface{}{"f1", "f2"})
+
+	expanded := aMap.Expand(nestedData)
+	err = toolbox.DumpIndent(expanded, false)
+	assert.Nil(t, err)
+	assert.True(t, false)
 }
