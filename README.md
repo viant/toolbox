@@ -311,6 +311,29 @@ Provide dynamic semantic for creating time object based on time dif
 	
 ```
 
+**DayElapsed** 
+```go
+
+    t0, _ := time.Parse(DateFormatToLayout("yyyy-MM-dd hh:mm:ss"), "2017-01-01 12:00:00")
+    dayElapsedInT0, err := ElapsedDay(t0) //0.5
+	
+```
+
+**ElapsedToday**
+```go
+
+    elapscedInLocalTz, err := ElapsedTodayInPct("")  
+    elapscedInUTC, err := ElapsedToday("UTC")
+	
+```
+ 
+**RemainingToday**
+```go
+
+    elapscedInLocalTz, err := RemainingTodayInPct("")
+    elapscedInUTC, err := RemainingToday("UTC")
+	
+```
 
 
 <a name="storage"></a>

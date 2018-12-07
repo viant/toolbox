@@ -1,3 +1,6 @@
+## Dec 7 2018 - v0.4.0
+ - Added elapsed/remaining day helper functions: ElapsedDay, ElapsedToday, RemainingToday
+
 ## Dec 6 2018 - v0.3.8
  - Patched udf arguments conversion glitch
  - Patched scp service with additional fallback for file scraping

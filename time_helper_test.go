@@ -2,6 +2,7 @@ package toolbox
 
 import (
 	"github.com/stretchr/testify/assert"
+	"math"
 	"testing"
 	"time"
 )
@@ -190,5 +191,22 @@ func TestTimeDiff(t *testing.T) {
 		assert.EqualValues(t, expected.Unix(), actual.Unix(), useCase.description)
 
 	}
+
+}
+
+func TestDayElapsedInPct(t *testing.T) {
+
+	t0, _ := time.Parse(DateFormatToLayout("yyyy-MM-dd hh:mm:ss"), "2017-01-01 12:00:00")
+	elapsedPct := ElapsedDay(t0)
+	assert.EqualValues(t, 50, math.Round(100*elapsedPct))
+
+	elapsed, err := ElapsedToday("")
+	assert.Nil(t, err)
+	assert.True(t, elapsed > 0)
+
+	remaining, err := RemainingToday("")
+	assert.Nil(t, err)
+	assert.True(t, remaining > 0)
+	assert.EqualValues(t, int(remaining+elapsed), 1)
 
 }

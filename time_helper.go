@@ -159,3 +159,31 @@ func TimeDiff(base time.Time, expression string) (*time.Time, error) {
 	base = base.Add(delta)
 	return &base, nil
 }
+
+//ElapsedToday returns elapsed today time percent, it takes optionally timezone
+func ElapsedToday(tz string) (float64, error) {
+	if tz != "" {
+		tz = "In" + tz
+	}
+	now, err := TimeAt("now" + tz)
+	if err != nil {
+		return 0, err
+	}
+	return ElapsedDay(*now), nil
+}
+
+//ElapsedDay returns elapsed pct for passed in day (second elapsed that day over 24 hours)
+func ElapsedDay(dateTime time.Time) float64 {
+	elapsedToday := time.Duration(dateTime.Hour())*time.Hour + time.Duration(dateTime.Minute())*time.Minute + time.Duration(dateTime.Second()) + time.Second
+	elapsedTodayPct := float64(elapsedToday) / float64((24 * time.Hour))
+	return elapsedTodayPct
+}
+
+//RemainingToday returns remaining today time percent, it takes optionally timezone
+func RemainingToday(tz string) (float64, error) {
+	elapsedToday, err := ElapsedToday(tz)
+	if err != nil {
+		return 0, err
+	}
+	return 1.0 - elapsedToday, nil
+}
