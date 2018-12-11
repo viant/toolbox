@@ -1,3 +1,8 @@
+## Dec 7 2018 - v0.4.1
+ - Enhanced UDF multi arguments calls
+ - Added [] sub map key expression support
+ - Patched name with sub references in Map.SetValue
+
 ## Dec 7 2018 - v0.4.0
  - Added elapsed/remaining day helper functions: ElapsedDay, ElapsedToday, RemainingToday
 
