@@ -231,14 +231,11 @@ func (s *Map) SetValue(expr string, value interface{}) {
 	if value == nil {
 		return
 	}
-	state := *s
-	isReference := strings.HasPrefix(expr, "$")
-	if isReference {
-		expr = string(expr[1:])
-		expr = s.GetString(expr)
-		s.Put(expr, value)
+	if strings.Index(expr, "$") != -1 {
+		expr = s.ExpandAsText(expr)
 	}
 
+	state := *s
 	isPushOperation := strings.HasPrefix(expr, "->")
 	if isPushOperation {
 		expr = string(expr[2:])
@@ -557,7 +554,7 @@ func (s *Map) evaluateUDF(candidate interface{}, argument string) (interface{}, 
 	if !ok {
 		return nil, false
 	}
-	expandedArgument := s.expandExpressions(argument)
+	expandedArgument := s.expandArgumentsExpressions(argument)
 	if toolbox.IsString(expandedArgument) {
 		expandedText := toolbox.AsString(expandedArgument)
 		if toolbox.IsCompleteJSON(expandedText) {
@@ -569,6 +566,7 @@ func (s *Map) evaluateUDF(candidate interface{}, argument string) (interface{}, 
 		}
 	}
 	evaluated, err := udf(expandedArgument, *s)
+
 	if err == nil {
 		return evaluated, true
 	}
@@ -654,6 +652,56 @@ func (s *Map) expandExpressions(text string) interface{} {
 	}
 
 	return Parse(text, expandVariable)
+}
+
+//expandExpressions will check provided text with any expression starting with dollar sign ($) to substitute it with key in the map if it is present.
+//The result can be an expanded text or type of key referenced by the expression.
+func (s *Map) expandArgumentsExpressions(text string) interface{} {
+	if toolbox.IsCompleteJSON(text) {
+		return s.expandExpressions(text)
+	}
+	var expandVariable = func(expression string, isUDF bool, argument string) (interface{}, bool) {
+		value, hasExpValue := s.GetValue(string(expression[1:]))
+		if hasExpValue {
+			if value != expression && s.hasCycle(value, expression) {
+				log.Printf("detected data cycle on %v in value: %v", expression, value)
+				return expression, true
+			}
+			if isUDF {
+				if evaluated, ok := s.evaluateUDF(value, argument); ok {
+					return evaluated, true
+				}
+			} else {
+				if value != nil && (toolbox.IsMap(value) || toolbox.IsSlice(value)) {
+					return s.Expand(value), true
+				}
+				if text, ok := value.(string); ok {
+					return text, true
+				}
+				if value != nil {
+					return toolbox.DereferenceValue(value), true
+				}
+				return value, true
+			}
+		}
+		if isUDF {
+			expandedArgument := s.expandExpressions(argument)
+			if !toolbox.IsMap(expandedArgument) && !toolbox.IsSlice(expandedArgument) {
+				argument = toolbox.AsString(expandedArgument)
+			}
+			return expression + "(" + argument + ")", true
+		}
+		return expression, true
+	}
+	arguments := strings.Split(text, ",")
+	if len(arguments) == 1 {
+		return Parse(text, expandVariable)
+	}
+	var result = make([]interface{}, 0)
+	for _, arg := range arguments {
+		result = append(result, Parse(strings.TrimSpace(arg), expandVariable))
+	}
+	return result
 }
 
 //NewMap creates a new instance of a map.

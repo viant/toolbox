@@ -9,6 +9,25 @@ import (
 	"testing"
 )
 
+func IndexOf(source interface{}, state Map) (interface{}, error) {
+	if !toolbox.IsSlice(source) {
+		return nil, fmt.Errorf("expected arguments but had: %T", source)
+	}
+	args := toolbox.AsSlice(source)
+	if len(args) != 2 {
+		return nil, fmt.Errorf("expected 2 arguments but had: %v", len(args))
+	}
+
+	collection := toolbox.AsSlice(args[0])
+	for i, candidate := range collection {
+		fmt.Printf("candidate: %v %v\n", candidate, args[1])
+		if candidate == args[1] || toolbox.AsString(candidate) == toolbox.AsString(args[1]) {
+			return i, nil
+		}
+	}
+	return -1, nil
+}
+
 func TestParseExpression(t *testing.T) {
 	var useCases = []struct {
 		description string
@@ -389,6 +408,27 @@ func TestParseExpression(t *testing.T) {
 			expression: "#$f(554257_popularmechanics.com)#",
 			expected:   "#554257_popularmechanics.com#",
 		},
+
+		{
+			description: "embedded UDF expression",
+			aMap: map[string]interface{}{
+				"IndexOf":    IndexOf,
+				"collection": []interface{}{"abc", "xtz"},
+				"key":        "abc",
+			},
+			expression: `$IndexOf($collection, $key)`,
+			expected:   0,
+		},
+		{
+			description: "embedded UDF expression with literal",
+			aMap: map[string]interface{}{
+				"IndexOf":    IndexOf,
+				"collection": []interface{}{"abc", "xtz"},
+				"key":        "abc",
+			},
+			expression: `$IndexOf($collection, xtz)`,
+			expected:   1,
+		},
 	}
 
 	for _, useCase := range useCases {
@@ -396,7 +436,7 @@ func TestParseExpression(t *testing.T) {
 			result, has := useCase.aMap.GetValue(string(expression[1:]))
 			if isUDF {
 				if udf, ok := result.(func(interface{}, Map) (interface{}, error)); ok {
-					expandedArgs := useCase.aMap.expandExpressions(argument)
+					expandedArgs := useCase.aMap.expandArgumentsExpressions(argument)
 					if toolbox.IsString(expandedArgs) && toolbox.IsCompleteJSON(toolbox.AsString(expandedArgs)) {
 						if evaluated, err := toolbox.JSONToInterface(toolbox.AsString(expandedArgs)); err == nil {
 							expandedArgs = evaluated
