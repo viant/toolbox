@@ -130,13 +130,13 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 	if strings.Contains(expr, ".") || strings.HasSuffix(expr, "]") {
 		fragments := strings.Split(expr, ".")
 		for i, fragment := range fragments {
-			var index *int
+			var index interface{}
 			arrayIndexPosition := strings.Index(fragment, "[")
 			if arrayIndexPosition != -1 {
 				arrayEndPosition := strings.Index(fragment, "]")
 				if arrayEndPosition > arrayIndexPosition && arrayEndPosition < len(fragment) {
-					arrayIndex := toolbox.AsInt(string(fragment[arrayIndexPosition+1 : arrayEndPosition]))
-					index = &arrayIndex
+					arrayIndex :=string(fragment[arrayIndexPosition+1 : arrayEndPosition])
+					index = arrayIndex
 					fragment = string(fragment[:arrayIndexPosition])
 				}
 			}
@@ -154,18 +154,32 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 
 			if index != nil {
 
-				if !toolbox.IsSlice(candidate) {
-					return nil, false
-				}
-				var aSlice = toolbox.AsSlice(candidate)
-				if *index >= len(aSlice) {
-					return nil, false
-				}
-				if (*index) < len(aSlice) {
-					candidate = aSlice[*index]
+
+				if intIndex, err := toolbox.ToInt(index);err == nil {
+					if !toolbox.IsSlice(candidate) {
+						return nil, false
+					}
+					var aSlice= toolbox.AsSlice(candidate)
+					if intIndex >= len(aSlice) {
+						return nil, false
+					}
+					if intIndex < len(aSlice) {
+						candidate = aSlice[intIndex]
+					} else {
+						candidate = nil
+					}
+				} else if textIndex, ok := index.(string);ok {
+					if !toolbox.IsMap(candidate) {
+						return nil, false
+					}
+					aMap := toolbox.AsMap(candidate)
+					if candidate, ok = aMap[textIndex];!ok {
+						return nil, false
+					}
 				} else {
-					candidate = nil
+					return nil, false
 				}
+
 				if isLast {
 					return candidate, true
 				}

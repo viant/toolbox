@@ -17,10 +17,26 @@ func TestMap_GetValue(t *testing.T) {
 		subCollection.Push("item1")
 		subCollection.Push("item2")
 		aMap.Put("cc", subCollection)
+		subMap := NewMap()
+		subMap.Put("k1", 1)
+		subMap.Put("k2", 1)
+		aMap.Put("cc", subCollection)
+		aMap.Put("keys", subMap)
 
-		value, has := aMap.GetValue("cc[0]")
-		assert.True(t, has)
-		assert.Equal(t, "item1", value)
+		{
+			value, has := aMap.GetValue("cc[0]")
+			assert.True(t, has)
+			assert.Equal(t, "item1", value)
+		}
+		{
+			value, has := aMap.GetValue("keys[k1]")
+			assert.True(t, has)
+			assert.Equal(t, 1, value)
+		}
+		{
+			_, has := aMap.GetValue("keys[k10]")
+			assert.False(t, has)
+		}
 	}
 
 	{
