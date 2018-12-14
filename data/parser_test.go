@@ -429,10 +429,23 @@ func TestParseExpression(t *testing.T) {
 			expression: `$IndexOf($collection, xtz)`,
 			expected:   1,
 		},
+
+		{
+			description: "multi udf neating",
+			aMap: map[string]interface{}{
+				"IndexOf":    IndexOf,
+				"collection": []interface{}{"abc", "xtz"},
+				"key":        "abc",
+			},
+			expression: `$IndexOf($collection, xtz)`,
+			expected:   1,
+		},
 	}
 
+	//$Join($AsCollection($Cat($env.APP_HOME/app-config/schema/go/3.json)), “,”)
+
 	for _, useCase := range useCases {
-		var expandHandler = func(expression string, isUDF bool, argument string) (interface{}, bool) {
+		var expandHandler = func(expression string, isUDF bool, argument interface{}) (interface{}, bool) {
 			result, has := useCase.aMap.GetValue(string(expression[1:]))
 			if isUDF {
 				if udf, ok := result.(func(interface{}, Map) (interface{}, error)); ok {

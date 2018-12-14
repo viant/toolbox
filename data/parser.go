@@ -22,29 +22,33 @@ const (
 	unmatchedToken
 	keyIndexToken
 	whitespace
-	grouping
-	operator
+	groupingToken
+	operatorTojeb
+	doubleQuoteEnclosedToken
+	comaToken
 )
 
 var matchers = map[int]toolbox.Matcher{
-	beforeVarToken:   toolbox.NewTerminatorMatcher("$"),
-	varToken:         toolbox.NewCharactersMatcher("$"),
-	idToken:          toolbox.NewCustomIdMatcher("_"),
-	incToken:         toolbox.NewKeywordsMatcher(true, "++"),
-	decrementToken:   toolbox.NewKeywordsMatcher(true, "--"),
-	shiftToken:       toolbox.NewKeywordsMatcher(true, "<-"),
-	arrayIndexToken:  toolbox.NewBodyMatcher("[", "]"),
-	callToken:        toolbox.NewBodyMatcher("(", ")"),
-	enclosedVarToken: toolbox.NewBodyMatcher("{", "}"),
-	keyIndexToken:    toolbox.NewCustomIdMatcher("."),
-	unmatchedToken:   toolbox.NewRemainingSequenceMatcher(),
-	grouping:         toolbox.NewBodyMatcher("(", ")"),
-	operator:         toolbox.NewTerminatorMatcher("+", "-", "*", "/", "^", "%"),
-	whitespace:       toolbox.NewCharactersMatcher(" \t\n\r"),
+	beforeVarToken:           toolbox.NewTerminatorMatcher("$"),
+	varToken:                 toolbox.NewCharactersMatcher("$"),
+	comaToken:                toolbox.NewTerminatorMatcher(","),
+	idToken:                  toolbox.NewCustomIdMatcher("_"),
+	incToken:                 toolbox.NewKeywordsMatcher(true, "++"),
+	decrementToken:           toolbox.NewKeywordsMatcher(true, "--"),
+	shiftToken:               toolbox.NewKeywordsMatcher(true, "<-"),
+	arrayIndexToken:          toolbox.NewBodyMatcher("[", "]"),
+	callToken:                toolbox.NewBodyMatcher("(", ")"),
+	enclosedVarToken:         toolbox.NewBodyMatcher("{", "}"),
+	doubleQuoteEnclosedToken: toolbox.NewBodyMatcher(`"`, `"`),
+	keyIndexToken:            toolbox.NewCustomIdMatcher("."),
+	unmatchedToken:           toolbox.NewRemainingSequenceMatcher(),
+	groupingToken:            toolbox.NewBodyMatcher("(", ")"),
+	operatorTojeb:            toolbox.NewTerminatorMatcher("+", "-", "*", "/", "^", "%"),
+	whitespace:               toolbox.NewCharactersMatcher(" \t\n\r"),
 }
 
 //Parse parses expression
-func Parse(expression string, handler func(expression string, isUDF bool, argument string) (interface{}, bool)) interface{} {
+func Parse(expression string, handler func(expression string, isUDF bool, argument interface{}) (interface{}, bool)) interface{} {
 	tokenizer := toolbox.NewTokenizer(expression, invalidToken, eofToken, matchers)
 	var value interface{}
 	var result = fragments{}
@@ -140,7 +144,7 @@ func Parse(expression string, handler func(expression string, isUDF bool, argume
 	return result.Get()
 }
 
-func expandVariable(tokenizer *toolbox.Tokenizer, variable string, handler func(expression string, isUDF bool, argument string) (interface{}, bool)) string {
+func expandVariable(tokenizer *toolbox.Tokenizer, variable string, handler func(expression string, isUDF bool, argument interface{}) (interface{}, bool)) string {
 	match := tokenizer.Nexts(keyIndexToken, arrayIndexToken)
 	switch match.Token {
 	case keyIndexToken:
@@ -151,7 +155,7 @@ func expandVariable(tokenizer *toolbox.Tokenizer, variable string, handler func(
 	return variable
 }
 
-func expandIndex(variable string, match *toolbox.Token, handler func(expression string, isUDF bool, argument string) (interface{}, bool), tokenizer *toolbox.Tokenizer) string {
+func expandIndex(variable string, match *toolbox.Token, handler func(expression string, isUDF bool, argument interface{}) (interface{}, bool), tokenizer *toolbox.Tokenizer) string {
 	variable += toolbox.AsString(Parse(match.Matched, handler))
 	match = tokenizer.Nexts(arrayIndexToken, keyIndexToken)
 	switch match.Token {
@@ -163,7 +167,7 @@ func expandIndex(variable string, match *toolbox.Token, handler func(expression 
 	return variable
 }
 
-func expandSubKey(variable string, match *toolbox.Token, tokenizer *toolbox.Tokenizer, handler func(expression string, isUDF bool, argument string) (interface{}, bool)) string {
+func expandSubKey(variable string, match *toolbox.Token, tokenizer *toolbox.Tokenizer, handler func(expression string, isUDF bool, argument interface{}) (interface{}, bool)) string {
 	variable += match.Matched
 	match = tokenizer.Nexts(idToken, enclosedVarToken, arrayIndexToken)
 	switch match.Token {
@@ -179,18 +183,18 @@ func expandSubKey(variable string, match *toolbox.Token, tokenizer *toolbox.Toke
 	return variable
 }
 
-func expandEnclosed(expr string, handler func(expression string, isUDF bool, argument string) (interface{}, bool)) interface{} {
+func expandEnclosed(expr string, handler func(expression string, isUDF bool, argument interface{}) (interface{}, bool)) interface{} {
 	if strings.HasPrefix(expr, "{") && strings.HasSuffix(expr, "}") {
 		expr = string(expr[1 : len(expr)-1])
 
 	}
 	tokenizer := toolbox.NewTokenizer(expr, invalidToken, eofToken, matchers)
-	match, err := toolbox.ExpectTokenOptionallyFollowedBy(tokenizer, whitespace, "expected operator", grouping, operator)
+	match, err := toolbox.ExpectTokenOptionallyFollowedBy(tokenizer, whitespace, "expected operatorTojeb", groupingToken, operatorTojeb)
 	if err != nil {
 		return Parse(expr, handler)
 	}
 	switch match.Token {
-	case grouping:
+	case groupingToken:
 		groupExpr := string(match.Matched[1 : len(match.Matched)-1])
 		result := expandEnclosed(groupExpr, handler)
 		if !(toolbox.IsInt(result) || toolbox.IsFloat(result)) {
@@ -198,7 +202,7 @@ func expandEnclosed(expr string, handler func(expression string, isUDF bool, arg
 		}
 		expandedGroup := toolbox.AsString(result) + string(expr[tokenizer.Index:])
 		return expandEnclosed(expandedGroup, handler)
-	case operator:
+	case operatorTojeb:
 		leftOperand, leftOk := tryNumericOperand(match.Matched, handler).(float64)
 		operator := string(expr[tokenizer.Index : tokenizer.Index+1])
 		rightOperand, rightOk := tryNumericOperand(string(expr[tokenizer.Index+1:]), handler).(float64)
@@ -234,7 +238,7 @@ func expandEnclosed(expr string, handler func(expression string, isUDF bool, arg
 	return Parse(expr, handler)
 }
 
-func tryNumericOperand(expression string, handler func(expression string, isUDF bool, argument string) (interface{}, bool)) interface{} {
+func tryNumericOperand(expression string, handler func(expression string, isUDF bool, argument interface{}) (interface{}, bool)) interface{} {
 	expression = strings.TrimSpace(expression)
 	if result, err := toolbox.ToFloat(expression); err == nil {
 		return result

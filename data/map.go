@@ -549,17 +549,18 @@ func (s *Map) ExpandAsText(text string) string {
 	return toolbox.AsString(result)
 }
 
-func (s *Map) evaluateUDF(candidate interface{}, argument string) (interface{}, bool) {
+func (s *Map) evaluateUDF(candidate interface{}, argument interface{}) (interface{}, bool) {
 	var canExpandAll = true
 
-	var expandable = strings.TrimSpace(argument)
-
-	Parse(expandable, func(expression string, udf bool, argument string) (interface{}, bool) {
-		if _, has := s.GetValue(string(expression[1:])); !has {
-			canExpandAll = false
-		}
-		return nil, false
-	})
+	if toolbox.IsString(argument) {
+		var expandable= strings.TrimSpace(toolbox.AsString(argument))
+		Parse(expandable, func(expression string, udf bool, argument interface{}) (interface{}, bool) {
+			if _, has := s.GetValue(string(expression[1:])); !has {
+				canExpandAll = false
+			}
+			return nil, false
+		})
+	}
 
 	if !canExpandAll {
 		return nil, false
@@ -568,6 +569,7 @@ func (s *Map) evaluateUDF(candidate interface{}, argument string) (interface{}, 
 	if !ok {
 		return nil, false
 	}
+
 	expandedArgument := s.expandArgumentsExpressions(argument)
 	if toolbox.IsString(expandedArgument) {
 		expandedText := toolbox.AsString(expandedArgument)
@@ -580,7 +582,6 @@ func (s *Map) evaluateUDF(candidate interface{}, argument string) (interface{}, 
 		}
 	}
 	evaluated, err := udf(expandedArgument, *s)
-
 	if err == nil {
 		return evaluated, true
 	}
@@ -628,8 +629,7 @@ func (s *Map) expandExpressions(text string) interface{} {
 	if strings.Index(text, "$") == -1 {
 		return text
 	}
-
-	var expandVariable = func(expression string, isUDF bool, argument string) (interface{}, bool) {
+	var expandVariable = func(expression string, isUDF bool, argument interface{}) (interface{}, bool) {
 		value, hasExpValue := s.GetValue(string(expression[1:]))
 		if hasExpValue {
 			if value != expression && s.hasCycle(value, expression) {
@@ -656,11 +656,11 @@ func (s *Map) expandExpressions(text string) interface{} {
 		}
 
 		if isUDF {
-			expandedArgument := s.expandExpressions(argument)
+			expandedArgument := s.expandArgumentsExpressions(argument)
 			if !toolbox.IsMap(expandedArgument) && !toolbox.IsSlice(expandedArgument) {
 				argument = toolbox.AsString(expandedArgument)
 			}
-			return expression + "(" + argument + ")", true
+			return expression + "(" + toolbox.AsString(argument) + ")", true
 		}
 		return expression, true
 	}
@@ -670,11 +670,20 @@ func (s *Map) expandExpressions(text string) interface{} {
 
 //expandExpressions will check provided text with any expression starting with dollar sign ($) to substitute it with key in the map if it is present.
 //The result can be an expanded text or type of key referenced by the expression.
-func (s *Map) expandArgumentsExpressions(text string) interface{} {
-	if toolbox.IsCompleteJSON(text) {
-		return s.expandExpressions(text)
+func (s *Map) expandArgumentsExpressions(argument interface{}) interface{} {
+
+	if argument  == nil || ! toolbox.IsString(argument)  {
+		return argument
 	}
-	var expandVariable = func(expression string, isUDF bool, argument string) (interface{}, bool) {
+
+	argumentLiteral, ok:= argument.(string);
+	if ok {
+		if toolbox.IsCompleteJSON(argumentLiteral) {
+			return s.expandExpressions(argumentLiteral)
+		}
+	}
+
+	var expandVariable = func(expression string, isUDF bool, argument interface{}) (interface{}, bool) {
 		value, hasExpValue := s.GetValue(string(expression[1:]))
 		if hasExpValue {
 			if value != expression && s.hasCycle(value, expression) {
@@ -699,21 +708,41 @@ func (s *Map) expandArgumentsExpressions(text string) interface{} {
 			}
 		}
 		if isUDF {
-			expandedArgument := s.expandExpressions(argument)
+			expandedArgument := s.expandArgumentsExpressions(argument)
 			if !toolbox.IsMap(expandedArgument) && !toolbox.IsSlice(expandedArgument) {
 				argument = toolbox.AsString(expandedArgument)
 			}
-			return expression + "(" + argument + ")", true
+			return expression + "(" + toolbox.AsString(argument) + ")", true
 		}
 		return expression, true
 	}
-	arguments := strings.Split(text, ",")
-	if len(arguments) == 1 {
-		return Parse(text, expandVariable)
-	}
+
+
+	tokenizer := toolbox.NewTokenizer(argumentLiteral, invalidToken, eofToken, matchers)
 	var result = make([]interface{}, 0)
-	for _, arg := range arguments {
-		result = append(result, Parse(strings.TrimSpace(arg), expandVariable))
+	for ;tokenizer.Index < len(argumentLiteral); {
+		match, err := toolbox.ExpectTokenOptionallyFollowedBy(tokenizer, whitespace, "expected argument", doubleQuoteEnclosedToken, comaToken, unmatchedToken, eofToken)
+		if err != nil {
+			return Parse(argumentLiteral, expandVariable)
+		}
+		switch match.Token {
+			case doubleQuoteEnclosedToken:
+				result = append(result, strings.Trim(match.Matched, `"`))
+			case comaToken:
+				result = append(result, match.Matched)
+				tokenizer.Index++
+		case unmatchedToken:
+			result = append(result, match.Matched)
+		}
+	}
+	for i, arg := range result {
+		if ! toolbox.IsString(arg) {
+			continue
+		}
+		result[i] = Parse(toolbox.AsString(arg), expandVariable)
+	}
+	if len(result) == 1 {
+		return result[0]
 	}
 	return result
 }

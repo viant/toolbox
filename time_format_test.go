@@ -1,6 +1,7 @@
 package toolbox_test
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
 	"strings"
@@ -12,7 +13,7 @@ func TestTimeFormat(t *testing.T) {
 
 	{
 		timeLayout := toolbox.DateFormatToLayout("yyyy-MM-dd HH:mm:ss z")
-
+		fmt.Printf("!!%v\n", timeLayout)
 		timeValue, err := time.Parse(timeLayout, "2018-01-15 08:02:23 UTC")
 		assert.Nil(t, err)
 		assert.EqualValues(t, 23, timeValue.Second())
@@ -26,6 +27,7 @@ func TestTimeFormat(t *testing.T) {
 	}
 
 	{
+
 		dateLaout := toolbox.DateFormatToLayout("yyyy-MM-dd HH:mm:ss.SSSZ")
 		timeValue, err := time.Parse(dateLaout, "2022-11-10 10:32:28.984-08")
 		assert.Nil(t, err)
