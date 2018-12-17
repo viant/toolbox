@@ -169,16 +169,26 @@ func IsValueOfKind(input interface{}, kind reflect.Kind) bool {
 
 //DiscoverTypeByKind returns unwrapped input type that matches expected kind, or panic if this is not possible
 func DiscoverTypeByKind(input interface{}, expected reflect.Kind) reflect.Type {
+	result, err := TryDiscoverTypeByKind(input, expected)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
+
+//TryDiscoverTypeByKind returns unwrapped input type that matches expected kind, or error
+func TryDiscoverTypeByKind(input interface{}, expected reflect.Kind) (reflect.Type, error) {
 	value, ok := input.(reflect.Type)
 	if !ok {
 		value = reflect.TypeOf(input)
 	}
 	if value.Kind() == expected {
-		return value
+		return value, nil
 	} else if value.Kind() == reflect.Ptr || value.Kind() == reflect.Slice {
-		return DiscoverTypeByKind(value.Elem(), expected)
+		return TryDiscoverTypeByKind(value.Elem(), expected)
 	}
-	panic(fmt.Sprintf("failed to discover type by kind %v, on %v:", expected.String(), value))
+	return  nil, fmt.Errorf("failed to discover type by kind %v, on %v:", expected.String(), value)
 }
 
 //DiscoverComponentType returns type unwrapped from pointer, slice or map
