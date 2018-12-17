@@ -397,7 +397,7 @@ func (c *Converter) assignConvertedMap(target, input interface{}, targetIndirect
 	newMap.Set(reflect.MakeMap(mapType))
 	var err error
 
-	ProcessMap(input, func(key, value interface{}) bool {
+	err = ProcessMap(input, func(key, value interface{}) bool {
 		if value == nil {
 			return true
 		}
@@ -434,7 +434,9 @@ func (c *Converter) assignConvertedMap(target, input interface{}, targetIndirect
 		newMap.SetMapIndex(elementKey, elementValue)
 		return true
 	})
-
+	if err != nil {
+		return err
+	}
 	if targetIndirectPointerType.Kind() == reflect.Map {
 		if targetIndirectValue.Type().AssignableTo(mapPointer.Type()) {
 			targetIndirectValue.Set(mapPointer)
@@ -854,6 +856,9 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 			sourceValue = sourceValue.Elem()
 		}
 		if sourceValue.Kind() == reflect.Slice {
+			if targetIndirectValue.Kind() == reflect.Map {
+				return c.assignConvertedMap(target, source, targetIndirectValue, targetIndirectPointerType)
+			}
 			return c.assignConvertedSlice(target, source, targetIndirectValue, targetIndirectPointerType)
 		}
 	}
