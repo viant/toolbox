@@ -440,6 +440,12 @@ func TestParseExpression(t *testing.T) {
 			expression: `$IndexOf($collection, xtz)`,
 			expected:   1,
 		},
+
+		//default: &default
+		//  Name: Jack
+		//person:
+		//  <<: *default
+		//  Name: Bob
 	}
 
 	//$Join($AsCollection($Cat($env.APP_HOME/app-config/schema/go/3.json)), “,”)

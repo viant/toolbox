@@ -348,3 +348,35 @@ func Test_Replace(t *testing.T) {
 	assert.EqualValues(t, "v200", state.Get("k2"))
 
 }
+
+func Test_ExpandAsText(t *testing.T) {
+	aMap := Map(map[string]interface{}{
+		"key1": 1,
+		"key2": map[string]interface{}{
+			"subKey1": 10,
+			"subKey2": 20,
+		},
+		"key3": "subKey2",
+		"array": []interface{}{
+			111, 222, 333,
+		},
+		"slice": []interface{}{
+			map[string]interface{}{
+				"attr1": 111,
+				"attr2": 222,
+			},
+		},
+	})
+	expandedText := aMap.ExpandAsText(`1: $key1, 
+2: ${array[2]}  
+3: $key2.subKey1 
+4: $key2[$key3] ${slice[0].attr1}  
+5: ${(key1 + 1) * 3} `)
+	fmt.Printf(expandedText)
+	assert.Equal(t, `1: 1, 
+2: 333  
+3: 10 
+4: 20 111  
+5: 6 `, expandedText)
+
+}
