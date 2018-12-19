@@ -372,7 +372,6 @@ func Test_ExpandAsText(t *testing.T) {
 3: $key2.subKey1 
 4: $key2[$key3] ${slice[0].attr1}  
 5: ${(key1 + 1) * 3} `)
-	fmt.Printf(expandedText)
 	assert.Equal(t, `1: 1, 
 2: 333  
 3: 10 
