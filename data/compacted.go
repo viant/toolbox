@@ -128,6 +128,7 @@ func (s *CompactedSlice) Add(data map[string]interface{}) {
 	s.data = append(s.data, record)
 }
 
+//Range iterate over slice
 func (s *CompactedSlice) Range(handler func(item interface{}) (bool, error)) error {
 	s.lock.Lock()
 	fields := s.fields
