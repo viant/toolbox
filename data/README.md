@@ -12,7 +12,9 @@ Data substitution expression starts with $ sign, you can use path where dot or [
 
 ### ExpandAsText
 
-Expand as text expand 
+ExpandAsText expands any expression that has satisfied dependencies, meaning only expression that path is present
+can be expanded, otherwise expression is left unchanged.
+In case when UDF is used, expression is expanded if UDF does not return an error.
 
 **Usage:**
 
@@ -38,7 +40,10 @@ Expand as text expand
 2: ${array[2]}  
 3: $key2.subKey1 
 4: $key2[$key3] ${slice[0].attr1}  
-5: ${(key1 + 1) * 3} `)
+5: ${(key1 + 1) * 3} 
+6: $abc
+7: end
+`)
 	
 	
 /* expands to 
@@ -47,6 +52,8 @@ Expand as text expand
 3: 10 
 4: 20 111  
 5: 6 
+6: $abc
+7: end
 */
 ```
 
