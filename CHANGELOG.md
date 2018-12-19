@@ -1,3 +1,8 @@
+## Dec 18 2018 - v0.5.0
+ - NormalizeKVPairs - to converts slice of KV paris into a map, and map[interface{}]interface{} to map[string]interface{} 
+ - Moved stand expandable UDF from neatly project
+ - Added data and data/udf documentation
+
 ## Dec 7 2018 - v0.4.1
  - Enhanced UDF multi arguments calls
  - Added [] sub map key expression support

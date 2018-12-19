@@ -14,6 +14,7 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 - [Function Utilities](#Function-Utilities)
 - [Time Utilities](#TimeUtilities)
 - [Storage API](#storage)
+- [Data substitution](data/)
 - [Macro](#Macro)
 - [ServiceRouter](#ServiceRouter)
 - [Decoder and Encoder](#DecoderandEncoder)
