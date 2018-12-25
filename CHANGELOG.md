@@ -1,3 +1,8 @@
+## Dec 24 2018 - v0.5.1
+ - Patched KV conversion where value was nil
+ - Updated secret service location lookup order
+ - Minor patches
+
 ## Dec 18 2018 - v0.5.0
  - NormalizeKVPairs - to converts slice of KV paris into a map, and map[interface{}]interface{} to map[string]interface{} 
  - Moved stand expandable UDF from neatly project
