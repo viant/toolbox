@@ -985,7 +985,7 @@ func (c *Converter) assignConvertedStructSliceToMap(target, source interface{}) 
 
 //entryMapToKeyValue converts entry map into map
 func entryMapToKeyValue(entryMap map[string]interface{}) (key string, value interface{}, err error) {
-	if len(entryMap) != 2 {
+	if len(entryMap) > 2 {
 		return key, value, fmt.Errorf("map entry needs to have 2 elements but had: %v, %v", len(entryMap), entryMap)
 	}
 	for k, v := range entryMap {
@@ -998,9 +998,6 @@ func entryMapToKeyValue(entryMap map[string]interface{}) (key string, value inte
 	}
 	if key == "" {
 		return key, value, fmt.Errorf("key is required in entryMap %v", entryMap)
-	}
-	if value == nil {
-		return key, value, fmt.Errorf("value is required in entryMap %v", entryMap)
 	}
 	return key, value, nil
 }
