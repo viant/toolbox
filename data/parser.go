@@ -256,7 +256,7 @@ func tryNumericOperand(expression string, handler func(expression string, isUDF 
 }
 
 func asExpandedText(source interface{}) string {
-	if toolbox.IsSlice(source) || toolbox.IsMap(source) {
+	if source != nil && (toolbox.IsSlice(source) || toolbox.IsMap(source)) {
 		buf := new(bytes.Buffer)
 		err := toolbox.NewJSONEncoderFactory().Create(buf).Encode(source)
 		if err == nil {
