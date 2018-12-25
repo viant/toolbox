@@ -26,21 +26,20 @@ func (s *Service) CredentialsLocation(secret string) (string, error) {
 	if secret == "" {
 		return "", errors.New("secretLocation was empty")
 	}
+	if path.Ext(secret) == "" {
+		secret += ".json"
+	}
+
 	if strings.HasPrefix(secret, "~") {
 		secret = strings.Replace(secret, "~", os.Getenv("HOME"), 1)
 	}
-	secretLocation := secret
-	if !strings.Contains(secret, "/") {
-		secretLocation = toolbox.URLPathJoin(s.baseDirectory, secret)
-	} else if !(strings.Contains(secret, "://") || strings.HasPrefix(secret, "/")) {
-		if currentDirectory, err := os.Getwd(); err == nil {
-			secretLocation = toolbox.URLPathJoin(currentDirectory, secret)
+	currentDirectory, _ := os.Getwd()
+	for _, candidate := range []string{secret, toolbox.URLPathJoin(currentDirectory, secret)} {
+		if toolbox.FileExists(candidate) {
+			return candidate, nil
 		}
 	}
-	if path.Ext(secretLocation) == "" {
-		secretLocation += ".json"
-	}
-	return secretLocation, nil
+	return toolbox.URLPathJoin(s.baseDirectory, secret), nil
 }
 
 //Credentials returns credential config for supplied location.
@@ -92,8 +91,8 @@ func (s *Service) GetCredentials(secret string) (*cred.Config, error) {
 	if !Secret(secret).IsLocation() {
 		var result = &cred.Config{Data: string(secret)}
 		//try to load credential
-		result.LoadFromReader(strings.NewReader(string(secret)), "")
-		return result, nil
+		err := result.LoadFromReader(strings.NewReader(string(secret)), "")
+		return result, err
 	}
 	return s.CredentialsFromLocation(secret)
 }
