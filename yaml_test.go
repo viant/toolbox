@@ -10,7 +10,7 @@ import (
 
 func TestNormalizeKVPairs(t *testing.T) {
 
-	{//yaml case
+	{ //yaml case
 		YAML := `- Requests:
     - URL: http://localhost:5000
       Method: GET
@@ -32,7 +32,7 @@ func TestNormalizeKVPairs(t *testing.T) {
           RawExpires: Sat, 16 Dec 2023 20:17:38 GMT`
 
 		var data interface{}
-		err := yaml.NewDecoder(strings.NewReader(YAML)).Decode(&data);
+		err := yaml.NewDecoder(strings.NewReader(YAML)).Decode(&data)
 		assert.Nil(t, err)
 		normalized, err := NormalizeKVPairs(data)
 		assert.Nil(t, err)
@@ -43,7 +43,7 @@ func TestNormalizeKVPairs(t *testing.T) {
 		assert.Equal(t, []interface{}{"v1", "v2"}, header["aHeader"])
 	}
 	{
-		JSON :=`[
+		JSON := `[
 {"Key":"k1", "Value":"v1"},
 {"Key":"k2", "Value":"v2"},
 {"Key":"k3", "Value":[

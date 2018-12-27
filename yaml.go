@@ -46,7 +46,7 @@ func NormalizeKVPairs(source interface{}) (interface{}, error) {
 			if len(aSlice) == 0 {
 				return source, nil
 			}
-			if IsMap(aSlice[0]) || IsStruct(aSlice[0]) {
+			if len(aSlice) == 1 && (IsMap(aSlice[0]) || IsStruct(aSlice[0])) {
 				if item, err := NormalizeKVPairs(aSlice[0]); err == nil {
 					return []interface{}{item}, nil
 				}
