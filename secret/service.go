@@ -39,6 +39,9 @@ func (s *Service) CredentialsLocation(secret string) (string, error) {
 			return candidate, nil
 		}
 	}
+	if strings.Contains(secret, ":/") {
+		return secret, nil
+	}
 	return toolbox.URLPathJoin(s.baseDirectory, secret), nil
 }
 
