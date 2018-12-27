@@ -1,3 +1,7 @@
+## Dec 24 2018 - v0.5.2
+ - Patched KV nested slice conversion 
+ - Minor patches
+
 ## Dec 24 2018 - v0.5.1
  - Patched KV conversion where value was nil
  - Updated secret service location lookup order
