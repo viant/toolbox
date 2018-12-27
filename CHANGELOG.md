@@ -1,5 +1,6 @@
 ## Dec 24 2018 - v0.5.2
  - Patched KV nested slice conversion 
+ - Patched handling unexported fields 
  - Minor patches
 
 ## Dec 24 2018 - v0.5.1
