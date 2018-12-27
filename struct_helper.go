@@ -104,6 +104,9 @@ func BuildTagMapping(structTemplatePointer interface{}, mappedKeyTag string, res
 			}
 			continue
 		}
+		if isExported := field.PkgPath == ""; !isExported {
+			continue
+		}
 		isTransient := strings.EqualFold(field.Tag.Get(resultExclusionTag), "true")
 		if isTransient {
 			continue
