@@ -159,6 +159,17 @@ func (r *Resource) Decode(target interface{}) (err error) {
 	return err
 }
 
+//DecoderFactory returns new decoder factory for resource
+func (r *Resource) DecoderFactory() toolbox.DecoderFactory {
+	ext := path.Ext(r.ParsedURL.Path)
+	switch ext {
+	case ".yaml", ".yml":
+		return toolbox.NewYamlDecoderFactory()
+	default:
+		return toolbox.NewJSONDecoderFactory()
+	}
+}
+
 //Decode decodes url's data into target, it takes decoderFactory which decodes data into target
 func (r *Resource) DecodeWith(target interface{}, decoderFactory toolbox.DecoderFactory) error {
 	if r == nil {
@@ -203,6 +214,7 @@ func (r *Resource) YAMLDecode(target interface{}) error {
 	if err := r.DecodeWith(&mapSlice, toolbox.NewYamlDecoderFactory()); err != nil {
 		return err
 	}
+
 	if !toolbox.IsMap(target) {
 		converter := toolbox.NewColumnConverter(toolbox.DefaultDateLayout)
 		return converter.AssignConverted(target, mapSlice)

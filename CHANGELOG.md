@@ -1,4 +1,8 @@
-## Dec 24 2018 - v0.5.2
+## Dec 27 2018 - v0.5.3
+ - Added DecoderFactory method to url.Resource 
+ - Patched secret location with URL scheme 
+
+## Dec 26 2018 - v0.5.2
  - Patched KV nested slice conversion 
  - Patched handling unexported fields 
  - Minor patches

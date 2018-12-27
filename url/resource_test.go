@@ -126,3 +126,16 @@ func TestResource_JsonDecode(t *testing.T) {
 	assert.EqualValues(t, resourceData["b"], "123")
 
 }
+
+func TestResource_DecoderFactory(t *testing.T) {
+	{
+		resource := url.NewResource("abc.yaml")
+		factory := resource.DecoderFactory()
+		assert.NotNil(t, factory)
+	}
+	{
+		resource := url.NewResource("abc.json")
+		factory := resource.DecoderFactory()
+		assert.NotNil(t, factory)
+	}
+}
