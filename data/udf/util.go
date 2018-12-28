@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
+	"net/url"
 	"strings"
 )
 
@@ -94,4 +95,11 @@ func IndexOf(source interface{}, state data.Map) (interface{}, error) {
 		}
 	}
 	return -1, nil
+}
+
+
+//QueryEscape returns url escaped text
+func QueryEscape(source interface{}, state data.Map) (interface{}, error) {
+	text := toolbox.AsString(source)
+	return url.QueryEscape(text), nil
 }

@@ -18,5 +18,5 @@ func Register(aMap data.Map) {
 	aMap.Put("Len", Length)
 	aMap.Put("IndexOf", IndexOf)
 	aMap.Put("FormatTime", FormatTime)
-
+	aMap.Put("QueryEscape", QueryEscape)
 }
