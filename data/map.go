@@ -738,6 +738,9 @@ func (s *Map) expandArgumentsExpressions(argument interface{}) interface{} {
 			continue
 		}
 		result[i] = Parse(toolbox.AsString(arg), expandVariable)
+		if text, ok := result[i].(string); ok {
+			result[i] = strings.Trim(text, "'")
+		}
 	}
 	if len(result) == 1 {
 		return result[0]
