@@ -1,3 +1,7 @@
+## Dec 28 2018 - v0.5.4
+ - Added QueryEscape udf
+ - Updated handling udf with single quoted literals 
+
 ## Dec 27 2018 - v0.5.3
  - Added DecoderFactory method to url.Resource 
  - Patched secret location with URL scheme 
