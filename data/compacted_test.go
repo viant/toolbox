@@ -4,11 +4,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
 	"testing"
+	"time"
 )
 
 func TestNewCollection(t *testing.T) {
-	collection := NewCompactedSlice(true, true)
 
+	collection := NewCompactedSlice(true, true)
 	collection.Add(map[string]interface{}{
 		"f1":  1,
 		"f12": 1,
@@ -30,10 +31,11 @@ func TestNewCollection(t *testing.T) {
 	})
 
 	var actual = []map[string]interface{}{}
-	collection.Range(func(data interface{}) (bool, error) {
+	err := collection.Range(func(data interface{}) (bool, error) {
 		actual = append(actual, toolbox.AsMap(data))
 		return true, nil
 	})
+	assert.Nil(t, err)
 	assert.Equal(t, 2, len(actual))
 	assert.Equal(t, map[string]interface{}{
 		"f1":  1,
@@ -60,4 +62,400 @@ func Test_optimizedStorage(t *testing.T) {
 	var uncompressed = make([]interface{}, len(collection.fields))
 	collection.uncompress(compressed, uncompressed)
 	assert.EqualValues(t, data, uncompressed)
+}
+
+func TestCompactedSlice_SortedRange(t *testing.T) {
+	var useCases = []struct {
+		description string
+		data        []map[string]interface{}
+		expected    []interface{}
+		indexBy     []string
+		hasError    bool
+	}{
+		{
+			description: "int sorting",
+			indexBy:     []string{"id"},
+			data: []map[string]interface{}{
+				{
+					"id":   10,
+					"name": "name 10",
+				},
+				{
+					"id":   3,
+					"name": "name 3",
+				},
+				{
+					"id":   1,
+					"name": "name 1",
+				},
+				{
+					"id":   2,
+					"name": "name 2",
+				},
+			},
+			expected: []interface{}{
+				1, 2, 3, 10,
+			},
+		},
+		{
+			description: "float sorting",
+			indexBy:     []string{"id"},
+			data: []map[string]interface{}{
+				{
+					"id":   10.0,
+					"name": "name 10",
+				},
+				{
+					"id":   3.1,
+					"name": "name 3",
+				},
+				{
+					"id":   1.2,
+					"name": "name 1",
+				},
+				{
+					"id":   2.2,
+					"name": "name 2",
+				},
+			},
+			expected: []interface{}{
+				1.2, 2.2, 3.1, 10.0,
+			},
+		},
+		{
+			description: "string sorting",
+			indexBy:     []string{"id"},
+			data: []map[string]interface{}{
+				{
+					"id":   "010",
+					"name": "name 10",
+				},
+				{
+					"id":   "003",
+					"name": "name 3",
+				},
+				{
+					"id":   "001",
+					"name": "name 1",
+				},
+				{
+					"id":   "022",
+					"name": "name 2",
+				},
+			},
+			expected: []interface{}{
+				"001", "003", "010", "022",
+			},
+		},
+		{
+			description: "combined index sorting",
+			indexBy:     []string{"id"},
+			data: []map[string]interface{}{
+				{
+					"id":   1,
+					"u":    1,
+					"name": "name 10",
+				},
+				{
+					"id":   3,
+					"u":    2,
+					"name": "name 3",
+				},
+				{
+					"id":   2,
+					"u":    2,
+					"name": "name 1",
+				},
+				{
+					"id":   4,
+					"u":    6,
+					"name": "name 2",
+				},
+			},
+			expected: []interface{}{
+				1, 2, 3, 4,
+			},
+		},
+		{
+			description: "missing field",
+			indexBy:     []string{"field1"},
+			data: []map[string]interface{}{
+				{
+					"id":   1,
+					"u":    1,
+					"name": "name 10",
+				},
+			},
+			hasError: true,
+		},
+		{
+			description: "unsupported index type field",
+			indexBy:     []string{"id"},
+			data: []map[string]interface{}{
+				{
+					"id":   time.Now(),
+					"u":    1,
+					"name": "name 10",
+				},
+			},
+			hasError: true,
+		},
+	}
+
+	for _, useCase := range useCases {
+		collection := NewCompactedSlice(true, true)
+		var actual = make([]interface{}, 0)
+		for _, item := range useCase.data {
+			collection.Add(item)
+		}
+		err := collection.SortedRange(useCase.indexBy, func(item interface{}) (b bool, e error) {
+			record := toolbox.AsMap(item)
+			actual = append(actual, record[useCase.indexBy[0]])
+			return true, nil
+		})
+		if useCase.hasError {
+			assert.NotNil(t, err, useCase.description)
+			continue
+		}
+		if !assert.Nil(t, err, useCase.description) {
+			continue
+		}
+		assert.EqualValues(t, useCase.expected, actual, useCase.description)
+	}
+
+}
+
+func TestCompactedSlice_SortedIterator(t *testing.T) {
+	var useCases = []struct {
+		description string
+		data        []map[string]interface{}
+		expected    []interface{}
+		indexBy     []string
+		hasError    bool
+	}{
+		{
+			description: "int sorting",
+			indexBy:     []string{"id"},
+			data: []map[string]interface{}{
+				{
+					"id":   10,
+					"name": "name 10",
+				},
+				{
+					"id":   3,
+					"name": "name 3",
+				},
+				{
+					"id":   1,
+					"name": "name 1",
+				},
+				{
+					"id":   2,
+					"name": "name 2",
+				},
+			},
+			expected: []interface{}{
+				1, 2, 3, 10,
+			},
+		},
+		{
+			description: "float sorting",
+			indexBy:     []string{"id"},
+			data: []map[string]interface{}{
+				{
+					"id":   10.0,
+					"name": "name 10",
+				},
+				{
+					"id":   3.1,
+					"name": "name 3",
+				},
+				{
+					"id":   1.2,
+					"name": "name 1",
+				},
+				{
+					"id":   2.2,
+					"name": "name 2",
+				},
+			},
+			expected: []interface{}{
+				1.2, 2.2, 3.1, 10.0,
+			},
+		},
+		{
+			description: "string sorting",
+			indexBy:     []string{"id"},
+			data: []map[string]interface{}{
+				{
+					"id":   "010",
+					"name": "name 10",
+				},
+				{
+					"id":   "003",
+					"name": "name 3",
+				},
+				{
+					"id":   "001",
+					"name": "name 1",
+				},
+				{
+					"id":   "022",
+					"name": "name 2",
+				},
+			},
+			expected: []interface{}{
+				"001", "003", "010", "022",
+			},
+		},
+		{
+			description: "combined index sorting",
+			indexBy:     []string{"id"},
+			data: []map[string]interface{}{
+				{
+					"id":   1,
+					"u":    1,
+					"name": "name 10",
+				},
+				{
+					"id":   3,
+					"u":    2,
+					"name": "name 3",
+				},
+				{
+					"id":   2,
+					"u":    2,
+					"name": "name 1",
+				},
+				{
+					"id":   4,
+					"u":    6,
+					"name": "name 2",
+				},
+			},
+			expected: []interface{}{
+				1, 2, 3, 4,
+			},
+		},
+		{
+			description: "missing field",
+			indexBy:     []string{"field1"},
+			data: []map[string]interface{}{
+				{
+					"id":   1,
+					"u":    1,
+					"name": "name 10",
+				},
+			},
+			hasError: true,
+		},
+		{
+			description: "unsupported index type field",
+			indexBy:     []string{"id"},
+			data: []map[string]interface{}{
+				{
+					"id":   time.Now(),
+					"u":    1,
+					"name": "name 10",
+				},
+			},
+			hasError: true,
+		},
+	}
+
+	for _, useCase := range useCases {
+		collection := NewCompactedSlice(true, true)
+		var actual = make([]interface{}, 0)
+		for _, item := range useCase.data {
+			collection.Add(item)
+		}
+		iterator, err := collection.SortedIterator(useCase.indexBy)
+		if useCase.hasError {
+			assert.NotNil(t, err, useCase.description)
+			continue
+		}
+		if !assert.Nil(t, err, useCase.description) {
+			continue
+		}
+
+		var record map[string]interface{}
+		for iterator.HasNext() {
+			err = iterator.Next(&record)
+			assert.Nil(t, err)
+			actual = append(actual, record[useCase.indexBy[0]])
+		}
+		assert.EqualValues(t, useCase.expected, actual, useCase.description)
+	}
+
+}
+
+func TestCompactedSlice_Iterator(t *testing.T) {
+	var useCases = []struct {
+		description string
+		data        []map[string]interface{}
+		expected    []interface{}
+		indexBy     []string
+		hasError    bool
+	}{
+		{
+			description: "int sorting",
+			indexBy:     []string{"id"},
+			data: []map[string]interface{}{
+				{
+					"id":   10,
+					"name": "name 10",
+				},
+				{
+					"id":   3,
+					"name": "name 3",
+				},
+				{
+					"id":   1,
+					"name": "name 1",
+				},
+			},
+			expected: []interface{}{
+				10, 3, 1,
+			},
+		},
+		{
+			description: "float sorting",
+			indexBy:     []string{"id"},
+			data: []map[string]interface{}{
+				{
+					"id":   10.0,
+					"name": "name 10",
+				},
+				{
+					"id":   3.1,
+					"name": "name 3",
+				},
+				{
+					"id":   2.2,
+					"name": "name 2",
+				},
+			},
+			expected: []interface{}{
+				10.0, 3.1, 2.2,
+			},
+		},
+	}
+
+	for _, useCase := range useCases {
+		collection := NewCompactedSlice(true, true)
+		var actual = make([]interface{}, 0)
+		for _, item := range useCase.data {
+			collection.Add(item)
+		}
+		iterator := collection.Iterator()
+
+		var record map[string]interface{}
+		for iterator.HasNext() {
+			err := iterator.Next(&record)
+			assert.Nil(t, err)
+			actual = append(actual, record[useCase.indexBy[0]])
+		}
+		assert.EqualValues(t, useCase.expected, actual, useCase.description)
+	}
+
 }

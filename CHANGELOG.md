@@ -1,3 +1,6 @@
+## Dec 29 2018 - v0.6.0
+ - Added SortedRange, Iterator, SortedIterator to compacted slice
+ 
 ## Dec 28 2018 - v0.5.4
  - Added QueryEscape udf
  - Updated handling udf with single quoted literals 

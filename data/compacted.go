@@ -1,6 +1,7 @@
 package data
 
 import (
+	"fmt"
 	"github.com/viant/toolbox"
 	"sync"
 	"sync/atomic"
@@ -24,6 +25,7 @@ type CompactedSlice struct {
 	size         int64
 }
 
+//Size returns size of collection
 func (s *CompactedSlice) Size() int {
 	return int(atomic.LoadInt64(&s.size))
 }
@@ -93,6 +95,7 @@ func (s *CompactedSlice) uncompress(in, out []interface{}) {
 	}
 }
 
+//Add adds data to a collection
 func (s *CompactedSlice) Add(data map[string]interface{}) {
 	var initSize = len(s.fieldNames)
 	if initSize < len(data) {
@@ -128,6 +131,120 @@ func (s *CompactedSlice) Add(data map[string]interface{}) {
 	s.data = append(s.data, record)
 }
 
+func (s *CompactedSlice) mapNamesToFieldPositions(names []string) ([]int, error) {
+	var result = make([]int, 0)
+	for _, name := range names {
+		field, ok := s.fieldNames[name]
+		if !ok {
+			return nil, fmt.Errorf("failed to lookup field: %v", name)
+		}
+		result = append(result, field.Index)
+	}
+	return result, nil
+}
+
+//SortedRange sort collection by supplied index and then call for each item supplied handler callback
+func (s *CompactedSlice) SortedRange(indexBy []string, handler func(item interface{}) (bool, error)) error {
+	s.lock.Lock()
+	fields := s.fields
+	data := s.data
+	s.data = [][]interface{}{}
+	s.lock.Unlock()
+	indexByPositions, err := s.mapNamesToFieldPositions(indexBy)
+	if err != nil {
+		return err
+	}
+
+	var indexedRecords = make(map[interface{}][]interface{})
+	var record = make([]interface{}, len(s.fields))
+	var key interface{}
+	for _, item := range data {
+		atomic.AddInt64(&s.size, -1)
+		if s.compressNils {
+			s.uncompress(item, record)
+		} else {
+			record = item
+		}
+		key = indexValue(indexByPositions, item)
+		indexedRecords[key] = item
+	}
+
+	keys, err := sortKeys(key, indexedRecords)
+	if err != nil {
+		return err
+	}
+	for _, key := range keys {
+		item := indexedRecords[key]
+		if s.compressNils {
+			s.uncompress(item, record)
+		} else {
+			record = item
+		}
+
+		var aMap = map[string]interface{}{}
+		recordToMap(fields, record, aMap)
+		if next, err := handler(aMap); !next || err != nil {
+			return err
+		}
+
+	}
+	return nil
+}
+
+//SortedIterator returns sorted iterator
+func (s *CompactedSlice) SortedIterator(indexBy []string) (toolbox.Iterator, error) {
+	s.lock.Lock()
+	fields := s.fields
+	data := s.data
+	s.data = [][]interface{}{}
+	s.lock.Unlock()
+	if len(indexBy) == 0 {
+		return nil, fmt.Errorf("indexBy was empty")
+	}
+	indexByPositions, err := s.mapNamesToFieldPositions(indexBy)
+	if err != nil {
+		return nil, err
+	}
+	var record = make([]interface{}, len(fields))
+	var indexedRecords = make(map[interface{}][]interface{})
+	var key interface{}
+	for _, item := range data {
+		atomic.AddInt64(&s.size, -1)
+		if s.compressNils {
+			s.uncompress(item, record)
+		} else {
+			record = item
+		}
+		key = indexValue(indexByPositions, item)
+		indexedRecords[key] = item
+	}
+
+	data = nil
+	keys, err := sortKeys(key, indexedRecords)
+	if err != nil {
+		return nil, err
+	}
+	atomic.AddInt64(&s.size, int64(-len(data)))
+	return &iterator{
+		size: len(indexedRecords),
+		provider: func(index int) (map[string]interface{}, error) {
+			if index >= len(indexedRecords) {
+				return nil, fmt.Errorf("index: %d out bounds:%d", index, len(data))
+			}
+			key := keys[index]
+			item := indexedRecords[key]
+			if s.compressNils {
+				s.uncompress(item, record)
+			} else {
+				record = item
+			}
+			var aMap = map[string]interface{}{}
+			recordToMap(fields, record, aMap)
+			return aMap, nil
+		},
+	}, nil
+}
+
 //Range iterate over slice
 func (s *CompactedSlice) Range(handler func(item interface{}) (bool, error)) error {
 	s.lock.Lock()
@@ -144,20 +261,70 @@ func (s *CompactedSlice) Range(handler func(item interface{}) (bool, error)) err
 		} else {
 			record = item
 		}
-
 		var aMap = map[string]interface{}{}
-		for _, field := range fields {
-			index := field.Index
-			var value = record[index]
-			if value == nil {
-				continue
-			}
-			aMap[field.Name] = value
-		}
+		recordToMap(fields, record, aMap)
 		if next, err := handler(aMap); !next || err != nil {
 			return err
 		}
 	}
+	return nil
+}
+
+//Iterator returns a slice iterator
+func (s *CompactedSlice) Iterator() toolbox.Iterator {
+	s.lock.Lock()
+	fields := s.fields
+	data := s.data
+	s.data = [][]interface{}{}
+	s.lock.Unlock()
+	atomic.AddInt64(&s.size, int64(-len(data)))
+
+	var record = make([]interface{}, len(fields))
+	return &iterator{
+		size: len(data),
+		provider: func(index int) (map[string]interface{}, error) {
+			if index >= len(data) {
+				return nil, fmt.Errorf("index: %d out bounds:%d", index, len(data))
+			}
+			item := data[index]
+			if s.compressNils {
+				s.uncompress(item, record)
+			} else {
+				record = item
+			}
+			var aMap = map[string]interface{}{}
+			recordToMap(fields, record, aMap)
+			return aMap, nil
+		},
+	}
+}
+
+type iterator struct {
+	size     int
+	provider func(index int) (map[string]interface{}, error)
+	index    int
+}
+
+//HasNext returns true if iterator has next element.
+func (i *iterator) HasNext() bool {
+	return i.index < i.size
+}
+
+//Next sets item pointer with next element.
+func (i *iterator) Next(itemPointer interface{}) error {
+	record, err := i.provider(i.index)
+	if err != nil {
+		return err
+	}
+	switch pointer := itemPointer.(type) {
+	case *map[string]interface{}:
+		*pointer = record
+	case *interface{}:
+		*pointer = record
+	default:
+		return fmt.Errorf("unsupported type: %T, expected *map[string]interface{}", itemPointer)
+	}
+	i.index++
 	return nil
 }
 
