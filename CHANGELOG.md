@@ -1,3 +1,7 @@
+## Jan 1 2019 - v0.6.1
+ - Patched SortedIterator
+ - Patched embeded non pointer struct conversion
+
 ## Dec 29 2018 - v0.6.0
  - Added SortedRange, Iterator, SortedIterator to compacted slice
  

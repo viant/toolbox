@@ -520,7 +520,7 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 			var field reflect.Value
 			fieldName := mapping[fieldNameKey]
 			if fieldIndex, ok := mapping[fieldIndexKey]; ok {
-				var structPointer= anonymousValueMap[fieldIndex]
+				var structPointer = anonymousValueMap[fieldIndex]
 				if anonymousFields[fieldIndex].CanAddr() {
 					anonymousFields[fieldIndex].Set(structPointer)
 				}
