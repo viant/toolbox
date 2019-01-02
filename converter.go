@@ -502,9 +502,14 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 				anonymousFields = make(map[string]reflect.Value)
 			}
 			field := newStruct.Field(AsInt(index))
-			fieldStruct := reflect.New(field.Type().Elem())
-			anonymousValueMap[index] = fieldStruct
-			anonymousFields[index] = field
+			if field.Type().Kind() == reflect.Ptr {
+				fieldStruct := reflect.New(field.Type().Elem())
+				anonymousValueMap[index] = fieldStruct
+				anonymousFields[index] = field
+			} else {
+				anonymousValueMap[index] = field.Addr()
+				anonymousFields[index] = field.Addr()
+			}
 		}
 	}
 
@@ -514,10 +519,11 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 		if found {
 			var field reflect.Value
 			fieldName := mapping[fieldNameKey]
-
 			if fieldIndex, ok := mapping[fieldIndexKey]; ok {
-				var structPointer = anonymousValueMap[fieldIndex]
-				anonymousFields[fieldIndex].Set(structPointer)
+				var structPointer= anonymousValueMap[fieldIndex]
+				if anonymousFields[fieldIndex].CanAddr() {
+					anonymousFields[fieldIndex].Set(structPointer)
+				}
 				aStruct = structPointer.Elem()
 				initAnonymousStruct(structPointer.Interface())
 			}
