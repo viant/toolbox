@@ -215,7 +215,7 @@ func (s *CompactedSlice) SortedIterator(indexBy []string) (toolbox.Iterator, err
 		} else {
 			record = item
 		}
-		key = indexValue(indexByPositions, item)
+		key = indexValue(indexByPositions, record)
 		indexedRecords[key] = item
 	}
 
