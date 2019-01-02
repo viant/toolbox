@@ -198,25 +198,25 @@ func Test_NewDateOfBirthValueProvider(t *testing.T) {
 	{
 		result, err := provider.Get(toolbox.NewContext(), 3, 6, 3)
 		assert.Nil(t, err)
-		assert.EqualValues(t, "2015-06-03", toolbox.AsString(result))
+		assert.EqualValues(t, "2016-06-03", toolbox.AsString(result))
 	}
 
 	{
 		result, err := provider.Get(toolbox.NewContext(), 3, 6, 3, "yyyy-MM-dd")
 		assert.Nil(t, err)
-		assert.EqualValues(t, "2015-06-03", toolbox.AsString(result))
+		assert.EqualValues(t, "2016-06-03", toolbox.AsString(result))
 	}
 
 	{
 		result, err := provider.Get(toolbox.NewContext(), 3, 6, 3, "yyyy")
 		assert.Nil(t, err)
-		assert.EqualValues(t, "2015", toolbox.AsString(result))
+		assert.EqualValues(t, "2016", toolbox.AsString(result))
 	}
 
 	{
 		result, err := provider.Get(toolbox.NewContext(), 3, 9, 2, "yyyy-MM")
 		assert.Nil(t, err)
-		assert.EqualValues(t, "2015-09", toolbox.AsString(result))
+		assert.EqualValues(t, "2016-09", toolbox.AsString(result))
 	}
 
 	{

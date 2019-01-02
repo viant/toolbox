@@ -326,7 +326,7 @@ func NewHttpClient(options ...*HttpOptions) (*http.Client, error) {
 		DualStack             = true
 		MaxIdleConnsPerHost   = http.DefaultMaxIdleConnsPerHost
 		MaxIdleConns          = 100
-
+		FollowRedirects		  = true
 		ResponseHeaderTimeoutMs time.Duration
 		TimeoutMs               time.Duration
 	)
@@ -345,6 +345,10 @@ func NewHttpClient(options ...*HttpOptions) (*http.Client, error) {
 			ResponseHeaderTimeoutMs = time.Duration(AsInt(option.Value)) * time.Millisecond
 		case "MaxIdleConns":
 			MaxIdleConns = AsInt(option.Value)
+		case "DualStack":
+			DualStack = AsBoolean(option.Value)
+		case "FollowRedirects":
+			FollowRedirects = AsBoolean(option.Value)
 		default:
 			return nil, fmt.Errorf("Invalid option: %v", option.Key)
 
@@ -352,11 +356,11 @@ func NewHttpClient(options ...*HttpOptions) (*http.Client, error) {
 	}
 	roundTripper := http.Transport{
 		Proxy: http.ProxyFromEnvironment,
-		Dial: (&net.Dialer{
+		DialContext: (&net.Dialer{
 			Timeout:   RequestTimeoutMs,
 			KeepAlive: KeepAliveTimeMs,
 			DualStack: DualStack,
-		}).Dial,
+		}).DialContext,
 		MaxIdleConns:          MaxIdleConns,
 		ExpectContinueTimeout: ExpectContinueTimeout,
 		IdleConnTimeout:       IdleConnTimeout,
@@ -365,11 +369,17 @@ func NewHttpClient(options ...*HttpOptions) (*http.Client, error) {
 		ResponseHeaderTimeout: ResponseHeaderTimeoutMs,
 	}
 
-	return &http.Client{
+	client := &http.Client{
 		Transport: &roundTripper,
 		Timeout:   TimeoutMs,
-	}, nil
+	}
 
+	if ! FollowRedirects {
+		client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		}
+	}
+	return client, nil
 }
 
 // ToolboxHTTPClient contains preconfigured http client

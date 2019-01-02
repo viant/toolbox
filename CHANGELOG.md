@@ -1,6 +1,9 @@
+## Jan 2 2019 - v0.6.2
+ - Added FollowRedirects option to http client
+
 ## Jan 1 2019 - v0.6.1
  - Patched SortedIterator
- - Patched embeded non pointer struct conversion
+ - Patched embedded non pointer struct conversion
 
 ## Dec 29 2018 - v0.6.0
  - Added SortedRange, Iterator, SortedIterator to compacted slice

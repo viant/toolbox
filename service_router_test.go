@@ -123,8 +123,8 @@ func TestServiceRouter(t *testing.T) {
 			t.Errorf("failed to send get request  %v", err)
 		}
 
-		toolbox.DumpIndent(result, true)
-		//		assert.EqualValues(t, "testme", result["STATUS"])
+
+				assert.EqualValues(t, []interface{}{"1","2","3"}, result["STATUS"])
 
 	}
 
@@ -137,13 +137,9 @@ func TestServiceRouter(t *testing.T) {
 			t.Errorf("failed to send get request  %v", err)
 		}
 
-		toolbox.DumpIndent(result, true)
-		//		assert.EqualValues(t, "testme", result["STATUS"])
 
-	}
+				assert.EqualValues(t, "OK", result["STATUS"])
 
-	if 1 == 1 {
-		return
 	}
 
 	var result = make([]int, 0)
