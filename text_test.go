@@ -1,7 +1,9 @@
 package toolbox
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
+	"strings"
 	"testing"
 )
 
@@ -109,5 +111,54 @@ func TestIsPrintText(t *testing.T) {
 
 	for _, useCase := range useCases {
 		assert.EqualValues(t, useCase.Expected, IsPrintText(useCase.Candidate), useCase.Description)
+	}
+}
+
+func TestTerminatedSplitN(t *testing.T) {
+	var data = make([]byte, 0)
+	for i := 0; i < 9; i++ {
+		data = append(data, []byte(fmt.Sprintf("%v %v\n", strings.Repeat("x", 32), i))...)
+	}
+	text := string(data)
+
+	useCases := []struct {
+		description           string
+		fragmentCount         int
+		expectedFragmentSizes []int
+	}{
+		{
+			description:           "one fragment case",
+			fragmentCount:         1,
+			expectedFragmentSizes: []int{len(data)},
+		},
+		{
+			description:           "two fragments case",
+			fragmentCount:         2,
+			expectedFragmentSizes: []int{175, 140},
+		},
+		{
+			description:           "3 fragments case",
+			fragmentCount:         3,
+			expectedFragmentSizes: []int{140, 140, 35},
+		},
+		{
+			description:           "7 fragments case",
+			fragmentCount:         7,
+			expectedFragmentSizes: []int{70, 70, 70, 70, 35},
+		},
+		{
+			description:           "10 fragments case", //no more fragments then lines, so only 9 fragments here
+			fragmentCount:         10,
+			expectedFragmentSizes: []int{35, 35, 35, 35, 35, 35, 35, 35, 35},
+		},
+	}
+
+	for _, useCase := range useCases {
+		fragments := TerminatedSplitN(text, useCase.fragmentCount, "\n")
+		var actualFragmentSizes = make([]int, len(fragments))
+		for i, fragment := range fragments {
+			actualFragmentSizes[i] = len(fragment)
+		}
+		assert.EqualValues(t, useCase.expectedFragmentSizes, actualFragmentSizes, useCase.description)
 	}
 }

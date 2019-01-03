@@ -27,3 +27,23 @@ func IsPrintText(candidate string) bool {
 	}
 	return true
 }
+
+//TerminatedSplitN split supplied text into n fragmentCount, each terminated with supplied terminator
+func TerminatedSplitN(text string, fragmentCount int, terminator string) []string {
+	var result = make([]string, 0)
+	if fragmentCount == 0 {
+		fragmentCount = 1
+	}
+	fragmentSize := len(text) / fragmentCount
+	lowerBound := 0
+	for i := fragmentSize - 1; i < len(text); i++ {
+		isLast := i+1 == len(text)
+		isAtLeastOfFragementSize := i-lowerBound >= fragmentSize
+		isNewLine := string(text[i:i+len(terminator)]) == terminator
+		if (isAtLeastOfFragementSize && isNewLine) || isLast {
+			result = append(result, string(text[lowerBound:i+1]))
+			lowerBound = i + 1
+		}
+	}
+	return result
+}
