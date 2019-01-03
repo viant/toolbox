@@ -1,3 +1,9 @@
+## Jan 3 2019 - v0.6.3
+ - Added NotFound error with helper functions
+ - Updated handling not found on upload logic
+ - Added Base64Encode, Base64Decode data udf
+ - Added TerminatedSplitN text util function
+
 ## Jan 2 2019 - v0.6.2
  - Added FollowRedirects option to http client
 
