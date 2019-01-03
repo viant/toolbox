@@ -1,6 +1,10 @@
 package toolbox
 
-import "io"
+import (
+	"fmt"
+	"io"
+	"strings"
+)
 
 //NilPointerError represents nil pointer error
 type NilPointerError struct {
@@ -37,4 +41,33 @@ func IsEOFError(err error) bool {
 		return false
 	}
 	return err == io.EOF
+}
+
+//NotFoundError represents not found error
+type NotFoundError struct {
+	URL string
+}
+
+func (e *NotFoundError) Error() string {
+	return fmt.Sprintf("not found: %v", e.URL)
+}
+
+//IsNotFoundError checks is supplied error is NotFoundError type
+func IsNotFoundError(err error) bool {
+	if err == nil {
+		return false
+	}
+	_, ok := err.(*NotFoundError)
+	return ok
+}
+
+//ReclassifyNotFoundIfMatched reclassify error if not found
+func ReclassifyNotFoundIfMatched(err error, URL string) error {
+	if err == nil {
+		return nil
+	}
+	if strings.Contains(err.Error(), "doesn't exist") || strings.Contains(err.Error(), "no such file or directory") || strings.Contains(err.Error(), "Error 404: Not Found") {
+		return &NotFoundError{URL: URL}
+	}
+	return err
 }
