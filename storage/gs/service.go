@@ -20,7 +20,8 @@ import (
 )
 
 type service struct {
-	options []option.ClientOption
+	projectID string
+	options   []option.ClientOption
 }
 
 func (s *service) NewClient() (*storage.Client, context.Context, error) {
@@ -109,7 +110,7 @@ func (s *service) Download(object tstorage.Object) (io.ReadCloser, error) {
 
 //Upload uploads provided reader content for supplied url.
 func (s *service) Upload(URL string, reader io.Reader) error {
-	parsedUrl, err := url.Parse(URL)
+	parserURL, err := url.Parse(URL)
 	if err != nil {
 		return fmt.Errorf("failed to parse URL for uploading: %v, %v", URL, err)
 	}
@@ -118,15 +119,32 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 		return err
 	}
 	defer client.Close()
-	name := parsedUrl.Path
-	if len(parsedUrl.Path) > 0 {
-		name = parsedUrl.Path[1:]
+	name := parserURL.Path
+	if len(parserURL.Path) > 0 {
+		name = parserURL.Path[1:]
 	}
-	writer := client.Bucket(parsedUrl.Host).
+
+	err = s.uploadContent(ctx, client, parserURL, name, reader)
+	if toolbox.IsNotFoundError(err) {
+		err := client.Bucket(parserURL.Host).Create(ctx, s.projectID, &storage.BucketAttrs{})
+		if err != nil {
+			return fmt.Errorf("failed to create bucket: %v, %v", parserURL.Host, err)
+		}
+		//_, _ = client.Bucket(parserURL.Host).DefaultObjectACL().List(ctx)
+		return s.uploadContent(ctx, client, parserURL, name, reader)
+	}
+	if err != nil {
+		return fmt.Errorf("unable upload: %v", err)
+	}
+	return nil
+}
+
+func (s *service) uploadContent(ctx context.Context, client *storage.Client, parserURL *url.URL, name string, reader io.Reader) error {
+	writer := client.Bucket(parserURL.Host).
 		Object(name).
 		NewWriter(ctx)
 
-	expiry := parsedUrl.Query().Get("expiry")
+	expiry := parserURL.Query().Get("expiry")
 	if expiry != "" {
 		writer.Metadata = map[string]string{
 			"Cache-Control": "private, max-age=" + expiry,
@@ -138,17 +156,17 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 	}
 	contentReader := bytes.NewBuffer(content)
 
-	if parsedUrl.Query().Get("disableMD5") == "" {
+	if parserURL.Query().Get("disableMD5") == "" {
 		hashReader := bytes.NewBuffer(content)
 		h := md5.New()
-		io.Copy(h, hashReader)
+		_, _ = io.Copy(h, hashReader)
 		writer.MD5 = h.Sum(nil)
 	}
 
-	if parsedUrl.Query().Get("disableCRC32") == "" {
+	if parserURL.Query().Get("disableCRC32") == "" {
 		crc32HashReader := bytes.NewBuffer(content)
 		crc32Hash := crc32.New(crc32.MakeTable(crc32.Castagnoli))
-		io.Copy(crc32Hash, crc32HashReader)
+		_, _ = io.Copy(crc32Hash, crc32HashReader)
 		writer.CRC32C = crc32Hash.Sum32()
 	}
 
@@ -156,9 +174,9 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 		return fmt.Errorf("failed to copy to writer during upload:%v", err)
 	}
 	if err = writer.Close(); err != nil {
-		return fmt.Errorf("failed to close writer during upload:%v", err)
+		return toolbox.ReclassifyNotFoundIfMatched(err, parserURL.String())
 	}
-	return err
+	return nil
 }
 
 func (s *service) Register(schema string, service tstorage.Service) error {
@@ -169,10 +187,8 @@ func (s *service) Close() error {
 	return nil
 }
 
-
-
 func (s *service) listAll(URL string, result *[]tstorage.Object) error {
-	if ! strings.HasSuffix(URL, "/") {
+	if !strings.HasSuffix(URL, "/") {
 		URL += "/"
 	}
 	objects, err := s.List(URL)
@@ -180,11 +196,11 @@ func (s *service) listAll(URL string, result *[]tstorage.Object) error {
 		return err
 	}
 	for _, object := range objects {
-		if ! object.IsFolder() {
+		if !object.IsFolder() {
 			*result = append(*result, object)
 			continue
 		}
-		if err = s.listAll(object.URL(), result);err != nil {
+		if err = s.listAll(object.URL(), result); err != nil {
 			return err
 		}
 	}
@@ -204,7 +220,7 @@ func (s *service) Delete(object tstorage.Object) error {
 		return err
 	}
 	if object.IsFolder() {
-		var objects= []tstorage.Object{}
+		var objects = []tstorage.Object{}
 		err := s.listAll(object.URL(), &objects)
 		if err != nil {
 			return err
@@ -220,10 +236,10 @@ func (s *service) Delete(object tstorage.Object) error {
 		Object(objectInfo.Name).Delete(ctx)
 }
 
-
 //NewService create a new gc storage service
-func NewService(options ...option.ClientOption) *service {
+func NewService(projectId string, options ...option.ClientOption) *service {
 	return &service{
-		options: options,
+		projectID: projectId,
+		options:   options,
 	}
 }

@@ -112,8 +112,6 @@ func (p *Parser) extractObjectFromNonIsoBaseTimeCommand(parsedURL *url.URL, line
 			continue
 		}
 
-
-
 		aChar := string(aRune)
 		switch tokenIndex {
 		case fileInfoPermission:
@@ -194,7 +192,7 @@ func (p *Parser) extractObjectFromIsoBasedTimeCommand(parsedURL *url.URL, line s
 	}
 	dateTime := date + " " + modTime + " " + timezone
 	layout := toolbox.DateFormatToLayout("yyyy-MM-dd HH:mm:ss.SSS ZZ")
-	if len(date + " " + modTime) <= len("yyyy-MM-dd HH:mm:ss") {
+	if len(date+" "+modTime) <= len("yyyy-MM-dd HH:mm:ss") {
 		layout = toolbox.DateFormatToLayout("yyyy-MM-dd HH:mm:ss ZZ")
 	}
 	modificationTime, err := time.Parse(layout, dateTime)

@@ -22,7 +22,8 @@ const verificationSizeThreshold = 1024 * 1024
 
 //NoSuchFileOrDirectoryError represents no such file or directory error
 var NoSuchFileOrDirectoryError = errors.New("No such file or directory")
-const unrecognizedOption ="unrecognized option"
+
+const unrecognizedOption = "unrecognized option"
 
 type service struct {
 	fileService   storage.Service
@@ -99,7 +100,6 @@ func (s *service) List(URL string) ([]storage.Object, error) {
 	var result = make([]storage.Object, 0)
 	var lsCommand = ""
 
-
 	if canListWithTimeStyle {
 		lsCommand += "ls -dltr --time-style=full-iso " + URLPath
 	} else {
@@ -115,9 +115,8 @@ func (s *service) List(URL string) ([]storage.Object, error) {
 		}
 	}
 
-
 	if strings.Contains(stdout, unrecognizedOption) {
-		return  nil, fmt.Errorf("unable to list files with: %v, %v", lsCommand, stdout)
+		return nil, fmt.Errorf("unable to list files with: %v, %v", lsCommand, stdout)
 	}
 
 	if strings.Contains(stdout, "No such file or directory") {
