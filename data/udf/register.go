@@ -19,4 +19,6 @@ func Register(aMap data.Map) {
 	aMap.Put("IndexOf", IndexOf)
 	aMap.Put("FormatTime", FormatTime)
 	aMap.Put("QueryEscape", QueryEscape)
+	aMap.Put("Base64Encode", Base64Encode)
+	aMap.Put("Base64Decode", Base64Decode)
 }

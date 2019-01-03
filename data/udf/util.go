@@ -1,6 +1,7 @@
 package udf
 
 import (
+	"encoding/base64"
 	"fmt"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
@@ -97,6 +98,35 @@ func IndexOf(source interface{}, state data.Map) (interface{}, error) {
 	return -1, nil
 }
 
+//Base64Decode encodes source using base64.StdEncoding
+func Base64Encode(source interface{}, state data.Map) (interface{}, error) {
+	if source == nil {
+		return "", nil
+	}
+	switch value := source.(type) {
+	case string:
+		return base64.StdEncoding.EncodeToString([]byte(value)), nil
+	case []byte:
+		return base64.StdEncoding.EncodeToString(value), nil
+	default:
+		return nil, fmt.Errorf("unsupported type: %T", source)
+	}
+}
+
+//Base64Decode decodes source using base64.StdEncoding
+func Base64Decode(source interface{}, state data.Map) (interface{}, error) {
+	if source == nil {
+		return "", nil
+	}
+	switch value := source.(type) {
+	case string:
+		return base64.StdEncoding.DecodeString(value)
+	case []byte:
+		return base64.StdEncoding.DecodeString(string(value))
+	default:
+		return nil, fmt.Errorf("unsupported type: %T", source)
+	}
+}
 
 //QueryEscape returns url escaped text
 func QueryEscape(source interface{}, state data.Map) (interface{}, error) {
