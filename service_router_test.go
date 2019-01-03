@@ -123,8 +123,7 @@ func TestServiceRouter(t *testing.T) {
 			t.Errorf("failed to send get request  %v", err)
 		}
 
-
-				assert.EqualValues(t, []interface{}{"1","2","3"}, result["STATUS"])
+		assert.EqualValues(t, []interface{}{"1", "2", "3"}, result["STATUS"])
 
 	}
 
@@ -137,8 +136,7 @@ func TestServiceRouter(t *testing.T) {
 			t.Errorf("failed to send get request  %v", err)
 		}
 
-
-				assert.EqualValues(t, "OK", result["STATUS"])
+		assert.EqualValues(t, "OK", result["STATUS"])
 
 	}
 

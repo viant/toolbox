@@ -318,15 +318,15 @@ func NewHttpClient(options ...*HttpOptions) (*http.Client, error) {
 
 	var (
 		// Default values matching DefaultHttpClient
-		RequestTimeoutMs      = 30 * time.Second
-		KeepAliveTimeMs       = 30 * time.Second
-		TLSHandshakeTimeoutMs = 10 * time.Second
-		ExpectContinueTimeout = 1 * time.Second
-		IdleConnTimeout       = 90 * time.Second
-		DualStack             = true
-		MaxIdleConnsPerHost   = http.DefaultMaxIdleConnsPerHost
-		MaxIdleConns          = 100
-		FollowRedirects		  = true
+		RequestTimeoutMs        = 30 * time.Second
+		KeepAliveTimeMs         = 30 * time.Second
+		TLSHandshakeTimeoutMs   = 10 * time.Second
+		ExpectContinueTimeout   = 1 * time.Second
+		IdleConnTimeout         = 90 * time.Second
+		DualStack               = true
+		MaxIdleConnsPerHost     = http.DefaultMaxIdleConnsPerHost
+		MaxIdleConns            = 100
+		FollowRedirects         = true
 		ResponseHeaderTimeoutMs time.Duration
 		TimeoutMs               time.Duration
 	)
@@ -374,7 +374,7 @@ func NewHttpClient(options ...*HttpOptions) (*http.Client, error) {
 		Timeout:   TimeoutMs,
 	}
 
-	if ! FollowRedirects {
+	if !FollowRedirects {
 		client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		}
