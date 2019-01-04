@@ -20,7 +20,7 @@ type Resource struct {
 	Credentials     string   `description:"credentials file"`                                          //name of credential file or credential key depending on implementation
 	ParsedURL       *url.URL `json:"-"`                                                                //parsed URL resource
 	Cache           string   `description:"local cache path"`                                          //Cache path for the resource, if specified resource will be cached in the specified path
-	CacheExpiryMs   int      //CacheExpiryMs expiry time in ms
+	CacheExpiryMs   int                                                                                //CacheExpiryMs expiry time in ms
 	modificationTag int64
 	init            bool
 }
@@ -186,7 +186,6 @@ func (r *Resource) DecodeWith(target interface{}, decoderFactory toolbox.Decoder
 	if err != nil {
 		return fmt.Errorf("failed to decode: %v, payload: %s", err, content)
 	}
-
 	return err
 }
 
@@ -210,15 +209,22 @@ func (r *Resource) JSONDecode(target interface{}) error {
 
 //JSONDecode decodes yaml resource into target
 func (r *Resource) YAMLDecode(target interface{}) error {
+	if interfacePrt, ok := target.(*interface{}); ok {
+		var data interface{}
+		if err := r.DecodeWith(&data, toolbox.NewYamlDecoderFactory()); err != nil {
+			return err
+		}
+		if toolbox.IsSlice(data) {
+			*interfacePrt = data
+			return nil
+		}
+	}
 	var mapSlice = yaml.MapSlice{}
 	if err := r.DecodeWith(&mapSlice, toolbox.NewYamlDecoderFactory()); err != nil {
 		return err
 	}
-
 	if !toolbox.IsMap(target) {
-		converter := toolbox.NewColumnConverter(toolbox.DefaultDateLayout)
-		return converter.AssignConverted(target, mapSlice)
-
+		return toolbox.DefaultConverter.AssignConverted(target, mapSlice)
 	}
 	resultMap := toolbox.AsMap(target)
 	for _, v := range mapSlice {
