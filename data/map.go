@@ -257,22 +257,33 @@ func (s *Map) SetValue(expr string, value interface{}) {
 		expr = expr[1 : len(expr)-1]
 	}
 
+
+
 	if strings.Contains(expr, ".") {
 		fragments := strings.Split(expr, ".")
-		for i, fragment := range fragments {
-			isLast := i+1 == len(fragments)
-			if isLast {
-				expr = fragment
-			} else {
-				subState := state.GetMap(fragment)
-				if subState == nil {
-					subState = NewMap()
-					state.Put(fragment, subState)
+		nodePath := strings.Join(fragments[:len(fragments)-1], ".")
+		if node, ok := s.GetValue(nodePath); ok && toolbox.IsMap(node) {
+			expr = fragments[len(fragments)-1]
+			state = Map(toolbox.AsMap(node))
+		} else {
+			for i, fragment := range fragments {
+				isLast := i+1 == len(fragments)
+				if isLast {
+					expr = fragment
+				} else {
+					subState := state.GetMap(fragment)
+					if subState == nil {
+						subState = NewMap()
+						state.Put(fragment, subState)
+					}
+					state = subState
 				}
-				state = subState
 			}
 		}
 	}
+
+
+
 
 	if isPushOperation {
 		collection := state.GetCollection(expr)

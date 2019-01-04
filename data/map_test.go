@@ -195,6 +195,24 @@ func TestMap_SetValue(t *testing.T) {
 		assert.Equal(t, []interface{}{1, 2}, toolbox.AsSlice(aCollection))
 	}
 
+	{
+		//test mutated nested array
+		collection := NewCollection()
+		item := map[string]interface{} {
+			"key":1,
+			"attr":2,
+		}
+		collection.Push(item)
+		aMap.Put("col", collection)
+		aMap.SetValue("col[0].x", 20)
+		aMap.SetValue("col[0].attr", 30)
+		assert.EqualValues(t,  map[string]interface{} {
+			"key":1,
+			"attr":30,
+			"x": 20,
+		}, item)
+	}
+
 }
 
 func Test_Expand(t *testing.T) {
