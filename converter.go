@@ -456,9 +456,10 @@ func (c *Converter) assignConvertedSlice(target, source interface{}, targetIndir
 	slice := slicePointer.Elem()
 	componentType := DiscoverComponentType(target)
 	var err error
+
+
 	ProcessSlice(source, func(item interface{}) bool {
 		var targetComponentPointer = reflect.New(componentType)
-
 		if componentType.Kind() == reflect.Map {
 			targetComponent := reflect.MakeMap(componentType)
 			targetComponentPointer.Elem().Set(targetComponent)
@@ -861,6 +862,7 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		if sourceValue.Kind() == reflect.Ptr && sourceValue.Elem().Kind() == reflect.Slice {
 			sourceValue = sourceValue.Elem()
 		}
+
 		if sourceValue.Kind() == reflect.Slice {
 			if targetIndirectValue.Kind() == reflect.Map {
 				return c.assignConvertedMap(target, source, targetIndirectValue, targetIndirectPointerType)
@@ -994,16 +996,22 @@ func entryMapToKeyValue(entryMap map[string]interface{}) (key string, value inte
 	if len(entryMap) > 2 {
 		return key, value, fmt.Errorf("map entry needs to have 2 elements but had: %v, %v", len(entryMap), entryMap)
 	}
+
+	hasValue := false
 	for k, v := range entryMap {
 		if strings.ToLower(k) == "key" {
 			key = AsString(v)
 			continue
 		} else if strings.ToLower(k) == "value" {
+			hasValue = true
 			value = v
 		}
 	}
 	if key == "" {
 		return key, value, fmt.Errorf("key is required in entryMap %v", entryMap)
+	}
+	if ! hasValue && len(entryMap) == 2 {
+		return key, value, fmt.Errorf("map entry needs to have key, value pair but had:  %v", entryMap)
 	}
 	return key, value, nil
 }
