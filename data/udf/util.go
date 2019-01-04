@@ -78,7 +78,7 @@ func Values(source interface{}, state data.Map) (interface{}, error) {
 
 //IndexOf returns index of the matched slice elements or -1
 func IndexOf(source interface{}, state data.Map) (interface{}, error) {
-	if toolbox.IsSlice(source) {
+	if ! toolbox.IsSlice(source) {
 		return nil, fmt.Errorf("expected arguments but had: %T", source)
 	}
 	args := toolbox.AsSlice(source)
@@ -86,6 +86,9 @@ func IndexOf(source interface{}, state data.Map) (interface{}, error) {
 		return nil, fmt.Errorf("expected 2 arguments but had: %v", len(args))
 	}
 
+	if toolbox.IsString(args[0]) {
+		return strings.Index(toolbox.AsString(args[0]), toolbox.AsString(args[1])), nil
+	}
 	collection, err := AsCollection(args[0], state)
 	if err != nil {
 		return nil, err

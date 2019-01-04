@@ -71,3 +71,14 @@ func Test_Join(t *testing.T) {
 		assert.EqualValues(t, "1,2,3", joined)
 	}
 }
+
+func Test_IndexOf(t *testing.T) {
+	{
+		index, _ := IndexOf([]interface{}{"this is test", "is"}, nil)
+		assert.EqualValues(t, 2, index)
+	}
+	{
+		index, _ := IndexOf([]interface{}{[]string{"this", "is","test"}, "is"}, nil)
+		assert.EqualValues(t, 1, index)
+	}
+}
