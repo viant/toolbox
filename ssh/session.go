@@ -76,8 +76,8 @@ func (s *multiCommandSession) Run(command string, listener Listener, timeoutMs i
 		return "", ErrTerminated
 	}
 	s.drainStdout()
-	if ! strings.HasSuffix(command, "\n") {
-		command  += "\n"
+	if !strings.HasSuffix(command, "\n") {
+		command += "\n"
 	}
 	var stdin = command
 	s.stdin = stdin
@@ -254,7 +254,6 @@ func (s *multiCommandSession) hasTerminator(input string, terminators ...string)
 	}
 	return false
 }
-
 
 func (s *multiCommandSession) removePromptIfNeeded(stdout string) string {
 	if strings.Contains(stdout, s.shellPrompt) {
