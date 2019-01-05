@@ -31,7 +31,7 @@ const defaultShell = "/bin/bash"
 const (
 	drainTimeoutMs         = 10
 	defaultTimeoutMs       = 20000
-	stdoutFlashFrequencyMs = 2000
+	stdoutFlashFrequencyMs = 1000
 	initTimeoutMs          = 300
 	defaultTickFrequency   = 100
 )
@@ -76,7 +76,10 @@ func (s *multiCommandSession) Run(command string, listener Listener, timeoutMs i
 		return "", ErrTerminated
 	}
 	s.drainStdout()
-	var stdin = command + "\n"
+	if ! strings.HasSuffix(command, "\n") {
+		command  += "\n"
+	}
+	var stdin = command
 	s.stdin = stdin
 	_, err := s.stdInput.Write([]byte(stdin))
 	if err != nil {
@@ -252,10 +255,10 @@ func (s *multiCommandSession) hasTerminator(input string, terminators ...string)
 	return false
 }
 
+
 func (s *multiCommandSession) removePromptIfNeeded(stdout string) string {
 	if strings.Contains(stdout, s.shellPrompt) {
 		stdout = strings.Replace(stdout, s.shellPrompt, "", 1)
-		stdout = strings.Replace(stdout, "\r", "", len(stdout))
 		var lines = []string{}
 		for _, line := range strings.Split(stdout, "\n") {
 			if strings.TrimSpace(line) == "" {
@@ -263,7 +266,7 @@ func (s *multiCommandSession) removePromptIfNeeded(stdout string) string {
 			}
 			lines = append(lines, line)
 		}
-		stdout = strings.Join(lines, "\r\n")
+		stdout = strings.Join(lines, "\n")
 	}
 	return stdout
 }
