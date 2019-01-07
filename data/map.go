@@ -263,6 +263,10 @@ func (s *Map) SetValue(expr string, value interface{}) {
 		fragments := strings.Split(expr, ".")
 		nodePath := strings.Join(fragments[:len(fragments)-1], ".")
 		if node, ok := s.GetValue(nodePath); ok && toolbox.IsMap(node) {
+			if _, writable := node.(map[string]interface{}); ! writable {
+				node = Map(toolbox.AsMap(node))
+				s.SetValue(nodePath, node)
+			}
 			expr = fragments[len(fragments)-1]
 			state = Map(toolbox.AsMap(node))
 		} else {

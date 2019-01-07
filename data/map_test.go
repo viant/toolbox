@@ -284,7 +284,7 @@ func Test_Udf(t *testing.T) {
 	{
 		var text = "$Dob([11,2,2,\"yyyy\"])"
 		expanded := state.Expand(text)
-		assert.EqualValues(t, "2007", expanded)
+		assert.EqualValues(t, "2008", expanded)
 
 	}
 	{
@@ -292,7 +292,7 @@ func Test_Udf(t *testing.T) {
 
 		var text = "$Dob($args)"
 		expanded := state.Expand(text)
-		assert.EqualValues(t, "2007", expanded)
+		assert.EqualValues(t, "2008", expanded)
 
 	}
 
@@ -339,7 +339,7 @@ func Test_Udf(t *testing.T) {
 		state.Put("args", []interface{}{11, 2, 2, "yyyy"})
 		var text = "$test($Dob($args))"
 		expanded := state.Expand(text)
-		assert.EqualValues(t, "2007", expanded)
+		assert.EqualValues(t, "2008", expanded)
 	}
 
 }
@@ -395,5 +395,29 @@ func Test_ExpandAsText(t *testing.T) {
 3: 10 
 4: 20 111  
 5: 6 `, expandedText)
+
+}
+
+
+func Test_SubState(t *testing.T) {
+
+	state := NewMap()
+	state.Put("meta", map[string]int{
+		"TABLE":1,
+	})
+
+	value, ok := state.GetValue("meta.TABLE")
+	if ! assert.True(t, ok) {
+		return
+	}
+	state.SetValue("meta.TABLE", toolbox.AsInt(value)+1)
+	value, ok = state.GetValue("meta.TABLE")
+	if ! assert.True(t, ok) {
+		return
+	}
+	assert.EqualValues(t, 2, value)
+
+
+
 
 }

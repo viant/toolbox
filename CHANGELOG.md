@@ -1,3 +1,6 @@
+## Jan 7 2019 - v0.6.5
+ - Patched non writable map data type mutation
+
 ## Jan 6 2019 - v0.6.4
  - Added nested array mutation in data.Map
  - Patched url.resource yaml loading with array structure
