@@ -1,3 +1,9 @@
+## Jan 6 2019 - v0.6.4
+ - Added nested array mutation in data.Map
+ - Patched url.resource yaml loading with array structure
+ - Patched IndexOf
+ - Minor patched
+ 
 ## Jan 3 2019 - v0.6.3
  - Added NotFound error with helper functions
  - Updated handling not found on upload logic
