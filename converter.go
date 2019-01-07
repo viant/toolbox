@@ -627,13 +627,20 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 			*targetValuePointer = *sourceValue
 			return nil
 		default:
-			var stingItems = make([]string, 0)
-			ProcessSlice(source, func(item interface{}) bool {
-				stingItems = append(stingItems, AsString(item))
-				return true
-			})
-			*targetValuePointer = stingItems
-			return nil
+			if IsSlice(source) {
+				var stingItems= make([]string, 0)
+				ProcessSlice(source, func(item interface{}) bool {
+					stingItems = append(stingItems, AsString(item))
+					return true
+				})
+				*targetValuePointer = stingItems
+				return nil
+			} else if IsMap(source) {
+				if len(AsMap(source)) == 0 {
+					return nil
+				}
+			}
+			return fmt.Errorf("expected []string but had: %T", source)
 		}
 
 	case *bool:

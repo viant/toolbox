@@ -91,6 +91,7 @@ func ProcessSlice(slice interface{}, handler func(item interface{}) bool) {
 		}
 		return
 	}
+
 	sliceValue := DiscoverValueByKind(reflect.ValueOf(slice), reflect.Slice)
 	for i := 0; i < sliceValue.Len(); i++ {
 		if !handler(sliceValue.Index(i).Interface()) {
