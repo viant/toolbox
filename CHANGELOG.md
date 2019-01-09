@@ -1,3 +1,6 @@
+## Jan 8 2019 - v0.6.5
+ - Updated struct to map conversion with honoring tag name
+
 ## Jan 7 2019 - v0.6.5
  - Patched non writable map data type mutation
 
