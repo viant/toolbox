@@ -667,3 +667,20 @@ func TestConverter_AsInt(t *testing.T) {
 	assert.True(t, intValue > 0)
 
 }
+
+func TestConvertedMapFromStruct(t *testing.T) {
+	var aStruct = struct {
+		ID int `json:"id"`
+		Name string `json:"name"`
+		Description string
+	}{1, "test", "desc"}
+	converter := toolbox.NewConverter("", "json")
+	var target = make(map[string]interface{})
+	err := converter.AssignConverted(&target, aStruct)
+	assert.Nil(t, err)
+	assert.EqualValues(t, map[string]interface{} {
+		"id":1,
+		"name":"test",
+		"Description":"desc",
+	}, target)
+}
