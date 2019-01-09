@@ -457,7 +457,6 @@ func (c *Converter) assignConvertedSlice(target, source interface{}, targetIndir
 	componentType := DiscoverComponentType(target)
 	var err error
 
-
 	ProcessSlice(source, func(item interface{}) bool {
 		var targetComponentPointer = reflect.New(componentType)
 		if componentType.Kind() == reflect.Map {
@@ -628,7 +627,7 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 			return nil
 		default:
 			if IsSlice(source) {
-				var stingItems= make([]string, 0)
+				var stingItems = make([]string, 0)
 				ProcessSlice(source, func(item interface{}) bool {
 					stingItems = append(stingItems, AsString(item))
 					return true
@@ -865,11 +864,9 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 	}
 
 	if targetIndirectValue.Kind() == reflect.Slice || targetIndirectPointerType.Kind() == reflect.Slice {
-
 		if sourceValue.Kind() == reflect.Ptr && sourceValue.Elem().Kind() == reflect.Slice {
 			sourceValue = sourceValue.Elem()
 		}
-
 		if sourceValue.Kind() == reflect.Slice {
 			if targetIndirectValue.Kind() == reflect.Map {
 				return c.assignConvertedMap(target, source, targetIndirectValue, targetIndirectPointerType)
@@ -1017,7 +1014,7 @@ func entryMapToKeyValue(entryMap map[string]interface{}) (key string, value inte
 	if key == "" {
 		return key, value, fmt.Errorf("key is required in entryMap %v", entryMap)
 	}
-	if ! hasValue && len(entryMap) == 2 {
+	if !hasValue && len(entryMap) == 2 {
 		return key, value, fmt.Errorf("map entry needs to have key, value pair but had:  %v", entryMap)
 	}
 	return key, value, nil
@@ -1080,7 +1077,7 @@ func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sou
 	if targetMap == nil {
 		return fmt.Errorf("target %T is not a map", target)
 	}
-	ProcessStruct(source, func(fieldType reflect.StructField, field reflect.Value) error {
+	return ProcessStruct(source, func(fieldType reflect.StructField, field reflect.Value) error {
 		value := field.Interface()
 		if value == nil {
 			return nil
@@ -1091,7 +1088,6 @@ func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sou
 		if timeVal, ok := value.(*time.Time); ok && timeVal != nil {
 			value = timeVal.Format(time.RFC3339)
 		}
-
 		var fieldTarget interface{}
 		if IsStruct(value) {
 			aMap := make(map[string]interface{})
@@ -1102,7 +1098,6 @@ func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sou
 
 		} else if IsSlice(value) {
 			var componentType = DereferenceType(DiscoverComponentType(value))
-
 			if componentType.Kind() == reflect.Struct {
 				var slice = make([]map[string]interface{}, 0)
 				if err := c.AssignConverted(&slice, value); err != nil {
@@ -1115,17 +1110,23 @@ func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sou
 					return err
 				}
 				fieldTarget = slice
-
 			}
-		} else {
-			if err := c.AssignConverted(&fieldTarget, value); err != nil {
-				return err
+		} else if err := c.AssignConverted(&fieldTarget, value); err != nil {
+			return err
+		}
+		fieldName := fieldType.Name
+		keyTag := strings.Trim(fieldType.Tag.Get(c.MappedKeyTag), `"`)
+		if keyTag != "" {
+			key := strings.Split(keyTag, ",")[0]
+			if key == "-" {
+				return nil
+			} else {
+				fieldName = key
 			}
 		}
-		targetMap[fieldType.Name] = fieldTarget
+		targetMap[fieldName] = fieldTarget
 		return nil
 	})
-	return nil
 }
 
 //NewColumnConverter create a new converter, that has ability to convert map to struct using column mapping

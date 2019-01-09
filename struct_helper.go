@@ -239,7 +239,7 @@ func initStruct(source interface{}, dataTypes map[string]bool) {
 	if sourceValue.Type().Kind() == reflect.Ptr && !sourceValue.Elem().IsValid() {
 		return
 	}
-	ProcessStruct(source, func(fieldType reflect.StructField, fieldValue reflect.Value) error {
+	_ = ProcessStruct(source, func(fieldType reflect.StructField, fieldValue reflect.Value) error {
 		if !fieldValue.CanInterface() {
 			return nil
 		}
@@ -309,7 +309,7 @@ func getStructMeta(source interface{}, meta *StructMeta, trackedTypes map[string
 	trackedTypes[structType] = true
 	meta.Fields = make([]*StructFieldMeta, 0)
 	meta.Dependencies = make([]*StructMeta, 0)
-	ProcessStruct(source, func(fieldType reflect.StructField, field reflect.Value) error {
+	_ = ProcessStruct(source, func(fieldType reflect.StructField, field reflect.Value) error {
 		fieldMeta := &StructFieldMeta{}
 		if strings.Contains(string(fieldType.Tag), "json:\"-") {
 			return nil
