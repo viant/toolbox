@@ -32,6 +32,7 @@ type Config struct {
 	Key    string `json:",omitempty"`
 	Secret string `json:",omitempty"`
 	Region string `json:",omitempty"`
+	AccountID string `json:"-"`
 
 	//google cloud credential
 	ClientEmail  string `json:"client_email,omitempty"`
