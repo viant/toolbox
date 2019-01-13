@@ -137,18 +137,27 @@ func AssertTypeKind(dataType reflect.Type, kind reflect.Kind, name string) {
 
 //DiscoverValueByKind returns unwrapped input that matches expected kind, or panic if this is not possible
 func DiscoverValueByKind(input interface{}, expected reflect.Kind) reflect.Value {
+	result, err := TryDiscoverValueByKind(input, expected)
+	if err == nil {
+		return result
+	}
+	panic(err)
+}
+
+//TryDiscoverValueByKind returns unwrapped input that matches expected kind, or panic if this is not possible
+func TryDiscoverValueByKind(input interface{}, expected reflect.Kind) (reflect.Value, error) {
 	value, ok := input.(reflect.Value)
 	if !ok {
 		value = reflect.ValueOf(input)
 	}
 	if value.Kind() == expected {
-		return value
+		return value, nil
 	} else if value.Kind() == reflect.Ptr {
-		return DiscoverValueByKind(value.Elem(), expected)
+		return TryDiscoverValueByKind(value.Elem(), expected)
 	} else if value.Kind() == reflect.Interface {
-		return DiscoverValueByKind(value.Elem(), expected)
+		return TryDiscoverValueByKind(value.Elem(), expected)
 	}
-	panic(fmt.Sprintf("failed to discover value by kind expected: %v, actual:%v   on %v:", expected.String(), value.Type(), value))
+	return value, fmt.Errorf("failed to discover value by kind expected: %v, actual:%T   on %v:", expected.String(), value.Type(), value)
 }
 
 //IsValueOfKind returns true if passed in input is of supplied kind.
