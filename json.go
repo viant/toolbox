@@ -151,3 +151,20 @@ func AsIndentJSONText(source interface{}) (string, error) {
 	}
 	return "", fmt.Errorf("unsupported type: %T", source)
 }
+
+type AnyJSONType string
+
+func (s *AnyJSONType) UnmarshalJSON(b []byte) error {
+	*s = AnyJSONType(b)
+	return nil
+}
+
+func (s *AnyJSONType) MarshalJSON() ([]byte, error) {
+	return []byte(*s), nil
+}
+
+//Value returns string or string slice value
+func (s AnyJSONType) Value() (interface{}, error) {
+	var result interface{}
+	return result, json.Unmarshal([]byte(s), &result)
+}

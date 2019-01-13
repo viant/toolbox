@@ -1,6 +1,7 @@
 package toolbox_test
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -138,4 +139,54 @@ func Test_JSONToInterface(t *testing.T) {
 			assert.EqualValues(t, []interface{}{1.0, 2.0}, aSlice)
 		}
 	}
+}
+
+func TestAnyJSONType_Value(t *testing.T) {
+
+	var useCases = []struct {
+		description string
+		source      string
+		target      map[string]toolbox.AnyJSONType
+		key         string
+		expect      interface{}
+	}{
+
+		{
+			description: "string any type",
+			source:      `{"k":"abc"}`,
+			key:         "k",
+			expect:      "abc",
+		},
+
+		{
+			description: "numeric any type",
+			source:      `{"k":123}`,
+			key:         "k",
+			expect:      123,
+		},
+		{
+			description: "slice any type",
+			source:      `{"k":[1,2,3]}`,
+			key:         "k",
+			expect:      []interface{}{1.0, 2.0, 3.0},
+		},
+	}
+
+	for _, useCase := range useCases {
+		err := json.Unmarshal([]byte(useCase.source), &useCase.target)
+		if !assert.Nil(t, err, useCase.description) {
+			continue
+		}
+		actual, ok := useCase.target[useCase.key]
+		if !assert.True(t, ok, useCase.description) {
+			continue
+		}
+		actualValue, err := actual.Value()
+		if !assert.Nil(t, err, useCase.description) {
+			continue
+		}
+		assert.EqualValues(t, useCase.expect, actualValue, useCase.description)
+
+	}
+
 }
