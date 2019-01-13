@@ -31,29 +31,29 @@ var numericTypes = []reflect.Type{
 
 //AsString converts an input to string.
 func AsString(input interface{}) string {
-	switch sourceValue := input.(type) {
+	switch value := input.(type) {
 	case string:
-		return sourceValue
+		return value
 	case []byte:
-		return string(sourceValue)
+		return string(value)
 	case []interface{}:
-		if len(sourceValue) == 0 {
+		if len(value) == 0 {
 			return ""
 		}
-		if _, isByte := sourceValue[0].(byte); isByte {
-			var bytes = make([]byte, len(sourceValue))
-			for i, v := range sourceValue {
-				bytes[i] = v.(byte)
+		if _, isByte := value[0].(byte); isByte {
+			var stringBytes = make([]byte, len(value))
+			for i, v := range value {
+				stringBytes[i] = v.(byte)
 			}
-			return string(bytes)
+			return string(stringBytes)
 		}
+
 		var result = ""
-		for v := range sourceValue {
+		for v := range value {
 			result += AsString(v)
 		}
 		return result
 	}
-
 	reflectValue := reflect.ValueOf(input)
 	if reflectValue.Kind() == reflect.Ptr {
 		reflectValue = reflectValue.Elem()
@@ -1105,11 +1105,15 @@ func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sou
 				}
 				fieldTarget = slice
 			} else {
-				var slice = make([]interface{}, 0)
-				if err := c.AssignConverted(&slice, value); err != nil {
-					return err
+				if _, isByteArray := value.([]byte); isByteArray {
+					fieldTarget = value
+				} else {
+					var slice = make([]interface{}, 0)
+					if err := c.AssignConverted(&slice, value); err != nil {
+						return err
+					}
+					fieldTarget = slice
 				}
-				fieldTarget = slice
 			}
 		} else if err := c.AssignConverted(&fieldTarget, value); err != nil {
 			return err

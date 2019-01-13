@@ -535,6 +535,44 @@ func TestAsString(t *testing.T) {
 	}
 	assert.Equal(t, "&{1}", toolbox.AsString(&S{1}))
 
+	{
+		var bytes = []uint8{
+			34,
+			72,
+			101,
+			108,
+			108,
+			111,
+			32,
+			87,
+			111,
+			114,
+			108,
+			100,
+			34,
+		}
+		assert.EqualValues(t, `"Hello World"`, toolbox.AsString(bytes))
+	}
+
+	{
+		var bytes = []interface{}{
+			uint8(34),
+			uint8(72),
+			uint8(101),
+			uint8(108),
+			uint8(108),
+			uint8(111),
+			uint8(32),
+			uint8(87),
+			uint8(111),
+			uint8(114),
+			uint8(108),
+			uint8(100),
+			uint8(34),
+		}
+		assert.EqualValues(t, `"Hello World"`, toolbox.AsString(bytes))
+	}
+
 }
 
 func TestAsFloat(t *testing.T) {
@@ -670,17 +708,17 @@ func TestConverter_AsInt(t *testing.T) {
 
 func TestConvertedMapFromStruct(t *testing.T) {
 	var aStruct = struct {
-		ID int `json:"id"`
-		Name string `json:"name"`
+		ID          int    `json:"id"`
+		Name        string `json:"name"`
 		Description string
 	}{1, "test", "desc"}
 	converter := toolbox.NewConverter("", "json")
 	var target = make(map[string]interface{})
 	err := converter.AssignConverted(&target, aStruct)
 	assert.Nil(t, err)
-	assert.EqualValues(t, map[string]interface{} {
-		"id":1,
-		"name":"test",
-		"Description":"desc",
+	assert.EqualValues(t, map[string]interface{}{
+		"id":          1,
+		"name":        "test",
+		"Description": "desc",
 	}, target)
 }
