@@ -15,9 +15,71 @@ const (
 
 var columnMapping = []string{"column", "dateLayout", "dateFormat", "autoincrement", "primaryKey", "sequence", "valueMap", defaultKey, anonymousKey}
 
+//ScanStructFunc scan supplied struct methods
+func ScanStructMethods(structOrItsType interface{}, depth int, handler func(method reflect.Method) error) error {
+	var scanned = make(map[reflect.Type]bool)
+	return scanStructMethods(structOrItsType, scanned, depth, handler)
+}
+
+func scanStructMethods(structOrItsType interface{}, scanned map[reflect.Type]bool, depth int, handler func(method reflect.Method) error) error {
+	if depth < 0 {
+		return nil
+	}
+	structValue, err := TryDiscoverValueByKind(reflect.ValueOf(structOrItsType), reflect.Struct)
+	if err != nil {
+		return err
+	}
+	structType := structValue.Type()
+	if _, hasScan := scanned[structType]; hasScan {
+		return nil
+	}
+
+	scanned[structType] = true
+
+	for i := 0; i < structValue.NumField(); i++ {
+		fieldType := structType.Field(i)
+		if isExported := fieldType.PkgPath == ""; !isExported {
+			continue
+		}
+		if !fieldType.Anonymous {
+			continue
+		}
+		if !IsStruct(fieldType) {
+			continue
+		}
+
+		if fieldStructType, err := TryDiscoverTypeByKind(fieldType, reflect.Struct); err == nil {
+			fieldStruct := reflect.New(fieldStructType).Interface()
+			if err = scanStructMethods(fieldStruct, scanned, depth-1, handler); err != nil {
+				return err
+			}
+		}
+	}
+
+	structPtr, err := TryDiscoverValueByKind(reflect.ValueOf(structOrItsType), reflect.Ptr)
+	if err != nil {
+		return err
+	}
+
+	structTypePtr := structPtr.Type()
+	for i := 0; i < structTypePtr.NumMethod(); i++ {
+		method := structTypePtr.Method(i)
+		if isExported := method.PkgPath == ""; !isExported {
+			continue
+		}
+		if err := handler(method); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 //ProcessStruct reads passed in struct fields and values to pass it to provided handler
 func ProcessStruct(aStruct interface{}, handler func(fieldType reflect.StructField, field reflect.Value) error) error {
-	structValue := DiscoverValueByKind(reflect.ValueOf(aStruct), reflect.Struct)
+	structValue, err := TryDiscoverValueByKind(reflect.ValueOf(aStruct), reflect.Struct)
+	if err != nil {
+		return err
+	}
 	structType := structValue.Type()
 	var isPrivate = func(candidate string) bool {
 		if candidate == "" {
