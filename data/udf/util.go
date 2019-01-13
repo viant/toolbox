@@ -131,6 +131,16 @@ func Base64Decode(source interface{}, state data.Map) (interface{}, error) {
 	}
 }
 
+//Base64DecodeText decodes source using base64.StdEncoding to string
+func Base64DecodeText(source interface{}, state data.Map) (interface{}, error) {
+	decoded, err := Base64Decode(source, state)
+	if err !=nil {
+		return nil, err
+	}
+	return toolbox.AsString(decoded), nil
+}
+
+
 //QueryEscape returns url escaped text
 func QueryEscape(source interface{}, state data.Map) (interface{}, error) {
 	text := toolbox.AsString(source)

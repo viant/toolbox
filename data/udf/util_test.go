@@ -82,3 +82,10 @@ func Test_IndexOf(t *testing.T) {
 		assert.EqualValues(t, 1, index)
 	}
 }
+
+
+func Test_Base64Decode(t *testing.T) {
+	decoded, _ := Base64DecodeText("IkhlbGxvIFdvcmxkIg==", nil)
+	assert.EqualValues(t, `"Hello World"`, decoded)
+
+}

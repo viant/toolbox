@@ -566,6 +566,7 @@ func (s *Map) ExpandAsText(text string) string {
 func (s *Map) evaluateUDF(candidate interface{}, argument interface{}) (interface{}, bool) {
 	var canExpandAll = true
 
+
 	if toolbox.IsString(argument) {
 		var expandable = strings.TrimSpace(toolbox.AsString(argument))
 		Parse(expandable, func(expression string, udf bool, argument interface{}) (interface{}, bool) {
@@ -650,7 +651,6 @@ func (s *Map) expandExpressions(text string) interface{} {
 				log.Printf("detected data cycle on %v in value: %v", expression, value)
 				return expression, true
 			}
-
 			if isUDF {
 				if evaluated, ok := s.evaluateUDF(value, argument); ok {
 					return evaluated, true
@@ -671,7 +671,8 @@ func (s *Map) expandExpressions(text string) interface{} {
 
 		if isUDF {
 			expandedArgument := s.expandArgumentsExpressions(argument)
-			if !toolbox.IsMap(expandedArgument) && !toolbox.IsSlice(expandedArgument) {
+			_, isByteArray := expandedArgument.([]byte)
+			if !toolbox.IsMap(expandedArgument) && !toolbox.IsSlice(expandedArgument) || isByteArray {
 				argument = toolbox.AsString(expandedArgument)
 			}
 			return expression + "(" + toolbox.AsString(argument) + ")", true
@@ -685,12 +686,12 @@ func (s *Map) expandExpressions(text string) interface{} {
 //expandExpressions will check provided text with any expression starting with dollar sign ($) to substitute it with key in the map if it is present.
 //The result can be an expanded text or type of key referenced by the expression.
 func (s *Map) expandArgumentsExpressions(argument interface{}) interface{} {
-
 	if argument == nil || !toolbox.IsString(argument) {
 		return argument
 	}
 
 	argumentLiteral, ok := argument.(string)
+
 	if ok {
 		if toolbox.IsCompleteJSON(argumentLiteral) {
 			return s.expandExpressions(argumentLiteral)
@@ -723,10 +724,12 @@ func (s *Map) expandArgumentsExpressions(argument interface{}) interface{} {
 		}
 		if isUDF {
 			expandedArgument := s.expandArgumentsExpressions(argument)
-			if !toolbox.IsMap(expandedArgument) && !toolbox.IsSlice(expandedArgument) {
+			_, isByteArray := expandedArgument.([]byte)
+			if !toolbox.IsMap(expandedArgument) && !toolbox.IsSlice(expandedArgument) || isByteArray {
 				argument = toolbox.AsString(expandedArgument)
 			}
-			return expression + "(" + toolbox.AsString(argument) + ")", true
+			expression = expression + "(" + toolbox.AsString(argument) + ")"
+			return expression, true
 		}
 		return expression, true
 	}
@@ -748,14 +751,15 @@ func (s *Map) expandArgumentsExpressions(argument interface{}) interface{} {
 			result = append(result, match.Matched)
 		}
 	}
+
 	for i, arg := range result {
-		if !toolbox.IsString(arg) {
+		textArg, ok := arg.(string)
+		if !ok {
 			continue
 		}
-		result[i] = Parse(toolbox.AsString(arg), expandVariable)
-		if text, ok := result[i].(string); ok {
-			result[i] = strings.Trim(text, "'")
-		}
+		textArg = strings.Trim(textArg, "'")
+		result[i] = Parse(textArg, expandVariable)
+
 	}
 	if len(result) == 1 {
 		return result[0]

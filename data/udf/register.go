@@ -11,6 +11,8 @@ func Register(aMap data.Map) {
 	aMap.Put("AsMap", AsMap)
 	aMap.Put("AsData", AsData)
 	aMap.Put("AsCollection", AsCollection)
+	aMap.Put("AsJSON", AsJSON)
+	aMap.Put("Type", Type)
 	aMap.Put("Join", Join)
 	aMap.Put("Keys", Keys)
 	aMap.Put("Values", Values)
@@ -21,4 +23,5 @@ func Register(aMap data.Map) {
 	aMap.Put("QueryEscape", QueryEscape)
 	aMap.Put("Base64Encode", Base64Encode)
 	aMap.Put("Base64Decode", Base64Decode)
+	aMap.Put("Base64DecodeText", Base64DecodeText)
 }

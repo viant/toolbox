@@ -418,6 +418,27 @@ func Test_SubState(t *testing.T) {
 	assert.EqualValues(t, 2, value)
 
 
+	payload := []uint8 {34,
+		72,
+		101,
+		108,
+		108,
+		111,
+		32,
+		87,
+		111,
+		114,
+		108,
+		100,
+		34,}
 
+	aMap := Map(map[string]interface{}{
+	"Payload": &payload,
+	"AsString": func(source interface{}, state Map) (interface{}, error) {
+		return toolbox.AsString(source), nil
+	}})
+
+	expanded := aMap.Expand("$AsString($Payload)")
+	assert.EqualValues(t, `"Hello World"`, expanded)
 
 }

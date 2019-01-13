@@ -15,7 +15,13 @@ func AsInt(source interface{}, state data.Map) (interface{}, error) {
 
 //AsInt converts source into int
 func AsString(source interface{}, state data.Map) (interface{}, error) {
-	if toolbox.IsSlice(source) || toolbox.IsMap(source) || toolbox.IsStruct(source) {
+	isNonByteSlice := toolbox.IsSlice(source)
+	if isNonByteSlice {
+		if _, isByteArray := source.([]byte);isByteArray {
+			isNonByteSlice =false
+		}
+	}
+	if isNonByteSlice || toolbox.IsMap(source) || toolbox.IsStruct(source) {
 		text, err := toolbox.AsJSONText(source)
 		if err == nil {
 			return text, nil
@@ -109,4 +115,16 @@ func convertToTextIfNeeded(data interface{}) interface{} {
 		return string(bs)
 	}
 	return data
+}
+
+
+//AsJSON converts source to JSON
+func AsJSON(source interface{}, state data.Map) (interface{}, error) {
+	return toolbox.AsIndentJSONText(source)
+}
+
+
+//Type returns source type
+func Type(source interface{}, state data.Map) (interface{}, error) {
+	return fmt.Printf("%T", source)
 }

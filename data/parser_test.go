@@ -20,7 +20,6 @@ func IndexOf(source interface{}, state Map) (interface{}, error) {
 
 	collection := toolbox.AsSlice(args[0])
 	for i, candidate := range collection {
-		fmt.Printf("candidate: %v %v\n", candidate, args[1])
 		if candidate == args[1] || toolbox.AsString(candidate) == toolbox.AsString(args[1]) {
 			return i, nil
 		}
@@ -440,12 +439,50 @@ func TestParseExpression(t *testing.T) {
 			expression: `$IndexOf($collection, xtz)`,
 			expected:   1,
 		},
+		{
+			description: "unresolved expression",
+			aMap: map[string]interface{}{
+				"IndexOf":    IndexOf,
+				"collection": []interface{}{"abc", "xtz"},
+				"key":        "abc",
+			},
+			expression: `${$appPath}/hello/main.zip`,
+			expected:   `${$appPath}/hello/main.zip`,
+		},
+		{
+			description: "resolved  expression",
+			aMap: map[string]interface{}{
+				"appPath": "/abc/a",
+			},
+			expression: `${appPath}/hello/main.zip`,
+			expected:   `/abc/a/hello/main.zip`,
+		},
 
-		//default: &default
-		//  Name: Jack
-		//person:
-		//  <<: *default
-		//  Name: Bob
+		{
+			description: "byte extraction",
+			aMap: map[string]interface{}{
+				"Payload": []byte{
+					34,
+					72,
+					101,
+					108,
+					108,
+					111,
+					32,
+					87,
+					111,
+					114,
+					108,
+					100,
+					34,
+				},
+				"AsString": func(source interface{}, state Map) (interface{}, error) {
+					return toolbox.AsString(source), nil
+				},
+			},
+			expression: `$AsString($Payload)`,
+			expected:   `"Hello World"`,
+		},
 	}
 
 	//$Join($AsCollection($Cat($env.APP_HOME/app-config/schema/go/3.json)), “,”)
