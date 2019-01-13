@@ -1,3 +1,12 @@
+## Jan 13 2019 - v0.7.0
+  - Added ScanStructMethods method
+  - Added TryDiscoverValueByKind method
+  - Patched AsString UDF
+  - Added Base64DecodeText udf
+  - Added AnyJSONType for generic interface{} types
+  - Added AccountID to cred/config
+  - Patched []uint data substitution parsing
+    
 ## Jan 8 2019 - v0.6.5
  - Updated struct to map conversion with honoring tag name
 
