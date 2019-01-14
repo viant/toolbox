@@ -1,6 +1,7 @@
-package aws
+package s3
 
 import (
+	"github.com/viant/toolbox/cred"
 	"os"
 	"path"
 	"path/filepath"
@@ -21,7 +22,7 @@ func serviceProvider(credentialFile string) (storage.Service, error) {
 		dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
 		credentialFile = path.Join(dir, credentialFile)
 	}
-	s3config := &Config{}
+	s3config := &cred.Config{}
 	resource := url.NewResource(credentialFile)
 	err := resource.Decode(s3config)
 	if err != nil {
@@ -36,7 +37,7 @@ func SetDefaultProvider() {
 }
 
 //SetProvider set s3 provider with supplied config
-func SetProvider(config *Config) {
+func SetProvider(config *cred.Config) {
 	storage.NewStorageProvider().Registry[ProviderScheme] = func(string) (storage.Service, error) {
 		return NewService(config), nil
 	}

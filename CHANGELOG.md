@@ -1,3 +1,7 @@
+## Jan 13 2019 - v0.8.0
+  - Moved storage/aws to storage/s3 
+
+
 ## Jan 13 2019 - v0.7.0
   - Added ScanStructMethods method
   - Added TryDiscoverValueByKind method

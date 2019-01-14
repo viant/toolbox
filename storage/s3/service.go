@@ -1,8 +1,9 @@
-package aws
+package s3
 
 import (
 	"bytes"
 	"fmt"
+	"github.com/viant/toolbox/cred"
 	"io"
 	"net/url"
 	"strings"
@@ -20,8 +21,9 @@ import (
 )
 
 var defaultTime = time.Time{}
+
 type service struct {
-	config *Config
+	config *cred.Config
 }
 
 func listFolders(client *s3.S3, url *url.URL, result *[]storage.Object) error {
@@ -226,17 +228,8 @@ func (s *service) Close() error {
 	return nil
 }
 
-
-//deprecated - use s3 package
-func NewService(config *Config) storage.Service {
+//NewService creates a new aws storage service
+func NewService(config *cred.Config) storage.Service {
 	return &service{config: config}
 }
 
-//deprecated - use s3 package
-func NewServiceWithCredential(credentials string) (storage.Service, error) {
-	config, err := NewConfig("file://" + credentials)
-	if err != nil {
-		return nil, err
-	}
-	return NewService(config), nil
-}

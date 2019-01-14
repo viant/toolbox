@@ -29,10 +29,11 @@ type Config struct {
 	PrivateKeyPath    string `json:",omitempty"`
 
 	//amazon cloud credential
-	Key    string `json:",omitempty"`
-	Secret string `json:",omitempty"`
-	Region string `json:",omitempty"`
+	Key       string `json:",omitempty"`
+	Secret    string `json:",omitempty"`
+	Region    string `json:",omitempty"`
 	AccountID string `json:"-"`
+	Token     string `json:"-"`
 
 	//google cloud credential
 	ClientEmail  string `json:"client_email,omitempty"`
