@@ -198,18 +198,18 @@ func TestMap_SetValue(t *testing.T) {
 	{
 		//test mutated nested array
 		collection := NewCollection()
-		item := map[string]interface{} {
-			"key":1,
-			"attr":2,
+		item := map[string]interface{}{
+			"key":  1,
+			"attr": 2,
 		}
 		collection.Push(item)
 		aMap.Put("col", collection)
 		aMap.SetValue("col[0].x", 20)
 		aMap.SetValue("col[0].attr", 30)
-		assert.EqualValues(t,  map[string]interface{} {
-			"key":1,
-			"attr":30,
-			"x": 20,
+		assert.EqualValues(t, map[string]interface{}{
+			"key":  1,
+			"attr": 30,
+			"x":    20,
 		}, item)
 	}
 
@@ -398,27 +398,25 @@ func Test_ExpandAsText(t *testing.T) {
 
 }
 
-
 func Test_SubState(t *testing.T) {
 
 	state := NewMap()
 	state.Put("meta", map[string]int{
-		"TABLE":1,
+		"TABLE": 1,
 	})
 
 	value, ok := state.GetValue("meta.TABLE")
-	if ! assert.True(t, ok) {
+	if !assert.True(t, ok) {
 		return
 	}
 	state.SetValue("meta.TABLE", toolbox.AsInt(value)+1)
 	value, ok = state.GetValue("meta.TABLE")
-	if ! assert.True(t, ok) {
+	if !assert.True(t, ok) {
 		return
 	}
 	assert.EqualValues(t, 2, value)
 
-
-	payload := []uint8 {34,
+	payload := []uint8{34,
 		72,
 		101,
 		108,
@@ -430,13 +428,13 @@ func Test_SubState(t *testing.T) {
 		114,
 		108,
 		100,
-		34,}
+		34}
 
 	aMap := Map(map[string]interface{}{
-	"Payload": &payload,
-	"AsString": func(source interface{}, state Map) (interface{}, error) {
-		return toolbox.AsString(source), nil
-	}})
+		"Payload": &payload,
+		"AsString": func(source interface{}, state Map) (interface{}, error) {
+			return toolbox.AsString(source), nil
+		}})
 
 	expanded := aMap.Expand("$AsString($Payload)")
 	assert.EqualValues(t, `"Hello World"`, expanded)

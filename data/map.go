@@ -257,13 +257,11 @@ func (s *Map) SetValue(expr string, value interface{}) {
 		expr = expr[1 : len(expr)-1]
 	}
 
-
-
 	if strings.Contains(expr, ".") {
 		fragments := strings.Split(expr, ".")
 		nodePath := strings.Join(fragments[:len(fragments)-1], ".")
 		if node, ok := s.GetValue(nodePath); ok && toolbox.IsMap(node) {
-			if _, writable := node.(map[string]interface{}); ! writable {
+			if _, writable := node.(map[string]interface{}); !writable {
 				node = Map(toolbox.AsMap(node))
 				s.SetValue(nodePath, node)
 			}
@@ -285,9 +283,6 @@ func (s *Map) SetValue(expr string, value interface{}) {
 			}
 		}
 	}
-
-
-
 
 	if isPushOperation {
 		collection := state.GetCollection(expr)
@@ -565,7 +560,6 @@ func (s *Map) ExpandAsText(text string) string {
 
 func (s *Map) evaluateUDF(candidate interface{}, argument interface{}) (interface{}, bool) {
 	var canExpandAll = true
-
 
 	if toolbox.IsString(argument) {
 		var expandable = strings.TrimSpace(toolbox.AsString(argument))

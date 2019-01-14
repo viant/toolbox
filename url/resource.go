@@ -20,7 +20,7 @@ type Resource struct {
 	Credentials     string   `description:"credentials file"`                                          //name of credential file or credential key depending on implementation
 	ParsedURL       *url.URL `json:"-"`                                                                //parsed URL resource
 	Cache           string   `description:"local cache path"`                                          //Cache path for the resource, if specified resource will be cached in the specified path
-	CacheExpiryMs   int                                                                                //CacheExpiryMs expiry time in ms
+	CacheExpiryMs   int      //CacheExpiryMs expiry time in ms
 	modificationTag int64
 	init            bool
 }

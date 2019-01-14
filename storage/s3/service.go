@@ -232,4 +232,3 @@ func (s *service) Close() error {
 func NewService(config *cred.Config) storage.Service {
 	return &service{config: config}
 }
-

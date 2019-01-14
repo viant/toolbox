@@ -20,6 +20,7 @@ import (
 )
 
 var defaultTime = time.Time{}
+
 type service struct {
 	config *Config
 }
@@ -225,7 +226,6 @@ func (s *service) Register(schema string, service storage.Service) error {
 func (s *service) Close() error {
 	return nil
 }
-
 
 //deprecated - use s3 package
 func NewService(config *Config) storage.Service {

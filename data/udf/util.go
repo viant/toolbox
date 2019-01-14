@@ -78,7 +78,7 @@ func Values(source interface{}, state data.Map) (interface{}, error) {
 
 //IndexOf returns index of the matched slice elements or -1
 func IndexOf(source interface{}, state data.Map) (interface{}, error) {
-	if ! toolbox.IsSlice(source) {
+	if !toolbox.IsSlice(source) {
 		return nil, fmt.Errorf("expected arguments but had: %T", source)
 	}
 	args := toolbox.AsSlice(source)
@@ -134,12 +134,11 @@ func Base64Decode(source interface{}, state data.Map) (interface{}, error) {
 //Base64DecodeText decodes source using base64.StdEncoding to string
 func Base64DecodeText(source interface{}, state data.Map) (interface{}, error) {
 	decoded, err := Base64Decode(source, state)
-	if err !=nil {
+	if err != nil {
 		return nil, err
 	}
 	return toolbox.AsString(decoded), nil
 }
-
 
 //QueryEscape returns url escaped text
 func QueryEscape(source interface{}, state data.Map) (interface{}, error) {
