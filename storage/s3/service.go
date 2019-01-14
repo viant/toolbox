@@ -91,6 +91,9 @@ func listContent(client *s3.S3, parsedURL *url.URL, result *[]storage.Object) er
 }
 
 func (s *service) getAwsConfig() (*aws.Config, error) {
+	if s.config.Secret == "" {
+		return aws.NewConfig().WithRegion(s.config.Region), nil
+	}
 	awsCredentials := credentials.NewStaticCredentials(s.config.Key, s.config.Secret, s.config.Token)
 	_, err := awsCredentials.Get()
 	if err != nil {
@@ -165,6 +168,26 @@ func (s *service) Download(object storage.Object) (io.ReadCloser, error) {
 }
 
 func (s *service) Upload(URL string, reader io.Reader) error {
+	err := s.uploadContent(URL, reader)
+	if toolbox.IsNotFoundError(err) {
+		config, err := s.getAwsConfig()
+		if err != nil {
+			return err
+		}
+		if parserURL, err := url.Parse(URL);err == nil {
+			client := s3.New(session.New(config))
+			if _, err := client.CreateBucket(&s3.CreateBucketInput{
+				Bucket: &parserURL.Host,
+			});err != nil {
+				return err
+			}
+		}
+		return s.uploadContent(URL, reader)
+	}
+	return err
+}
+
+func (s *service) uploadContent(URL string, reader io.Reader) error {
 	parsedURL, err := url.Parse(URL)
 	if err != nil {
 		return err
@@ -180,10 +203,12 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 		Key:    aws.String(parsedURL.Path),
 	})
 	if err != nil {
-		return fmt.Errorf("failed to upload %v", err)
+		return toolbox.ReclassifyNotFoundIfMatched(err, URL)
 	}
 	return nil
 }
+
+
 
 func (s *service) Delete(object storage.Object) error {
 	parsedURL, err := url.Parse(object.URL())
