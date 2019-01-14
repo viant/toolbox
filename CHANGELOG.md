@@ -1,5 +1,7 @@
-## Jan 13 2019 - v0.8.0
-  - Moved storage/aws to storage/s3 
+## Jan 13 2019 - v0.8.1
+  - Moved storage/aws to storage/s3
+  - Added lazy s3 bucket creation on upload
+  - Added data/udf QueryUnescape 
 
 
 ## Jan 13 2019 - v0.7.0
