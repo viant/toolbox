@@ -174,11 +174,11 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 		if err != nil {
 			return err
 		}
-		if parserURL, err := url.Parse(URL);err == nil {
+		if parserURL, err := url.Parse(URL); err == nil {
 			client := s3.New(session.New(config))
 			if _, err := client.CreateBucket(&s3.CreateBucketInput{
 				Bucket: &parserURL.Host,
-			});err != nil {
+			}); err != nil {
 				return err
 			}
 		}
@@ -207,8 +207,6 @@ func (s *service) uploadContent(URL string, reader io.Reader) error {
 	}
 	return nil
 }
-
-
 
 func (s *service) Delete(object storage.Object) error {
 	parsedURL, err := url.Parse(object.URL())
@@ -247,6 +245,15 @@ func (s *service) Delete(object storage.Object) error {
 
 func (s *service) Register(schema string, service storage.Service) error {
 	return fmt.Errorf("Unsupported")
+}
+
+//DownloadWithURL downloads content for passed in object URL
+func (s *service) DownloadWithURL(URL string) (io.ReadCloser, error) {
+	object, err := s.StorageObject(URL)
+	if err != nil {
+		return nil, err
+	}
+	return s.Download(object)
 }
 
 func (s *service) Close() error {

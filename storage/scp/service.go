@@ -309,6 +309,15 @@ func (s *service) Delete(object storage.Object) error {
 	return err
 }
 
+//DownloadWithURL downloads content for passed in object URL
+func (s *service) DownloadWithURL(URL string) (io.ReadCloser, error) {
+	object, err := s.StorageObject(URL)
+	if err != nil {
+		return nil, err
+	}
+	return s.Download(object)
+}
+
 //NewService create a new gc storage service
 func NewService(config *cred.Config) *service {
 	return &service{

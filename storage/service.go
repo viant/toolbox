@@ -19,6 +19,8 @@ type Service interface {
 	StorageObject(URL string) (Object, error)
 	//Download returns reader for downloaded storage object
 	Download(object Object) (io.ReadCloser, error)
+	//DownloadWithURL returns reader for downloaded URL object
+	DownloadWithURL(URL string) (io.ReadCloser, error)
 	//Upload uploads provided reader content for supplied storage object.
 	Upload(URL string, reader io.Reader) error
 	//Delete removes passed in storage object
@@ -80,6 +82,15 @@ func (s *storageService) Download(object Object) (io.ReadCloser, error) {
 		return nil, err
 	}
 	return service.Download(object)
+}
+
+//DownloadWithURL downloads content for passed in object URL
+func (s *storageService) DownloadWithURL(URL string) (io.ReadCloser, error) {
+	object, err := s.StorageObject(URL)
+	if err != nil {
+		return nil, err
+	}
+	return s.Download(object)
 }
 
 //Uploads content for passed in URL

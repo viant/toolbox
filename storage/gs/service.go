@@ -236,6 +236,15 @@ func (s *service) Delete(object tstorage.Object) error {
 		Object(objectInfo.Name).Delete(ctx)
 }
 
+//DownloadWithURL downloads content for passed in object URL
+func (s *service) DownloadWithURL(URL string) (io.ReadCloser, error) {
+	object, err := s.StorageObject(URL)
+	if err != nil {
+		return nil, err
+	}
+	return s.Download(object)
+}
+
 //NewService create a new gc storage service
 func NewService(projectId string, options ...option.ClientOption) *service {
 	return &service{

@@ -224,6 +224,15 @@ func (s *httpStorageService) Close() error {
 	return nil
 }
 
+//DownloadWithURL downloads content for passed in object URL
+func (s *httpStorageService) DownloadWithURL(URL string) (io.ReadCloser, error) {
+	object, err := s.StorageObject(URL)
+	if err != nil {
+		return nil, err
+	}
+	return s.Download(object)
+}
+
 func NewHttpStorageService(credential *cred.Config) Service {
 	return &httpStorageService{
 		Credential: credential,

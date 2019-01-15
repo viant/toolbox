@@ -66,7 +66,10 @@ func ReclassifyNotFoundIfMatched(err error, URL string) error {
 	if err == nil {
 		return nil
 	}
-	if strings.Contains(err.Error(), "doesn't exist") || strings.Contains(err.Error(), "no such file or directory") || strings.Contains(err.Error(), "Error 404: Not Found") {
+	if strings.Contains(err.Error(), "doesn't exist") ||
+		strings.Contains(err.Error(), "no such file or directory") ||
+		strings.Contains(err.Error(), "Error 404: Not Found") ||
+		strings.Contains(err.Error(), "NoSuchBucket") {
 		return &NotFoundError{URL: URL}
 	}
 	return err

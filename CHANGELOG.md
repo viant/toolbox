@@ -1,3 +1,6 @@
+## Jan 15 2019 - v0.9.0
+   - DownloadWithURL(URL string) (io.ReadCloser, error)
+   
 ## Jan 13 2019 - v0.8.1
   - Moved storage/aws to storage/s3
   - Added lazy s3 bucket creation on upload

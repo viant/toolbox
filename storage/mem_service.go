@@ -231,6 +231,15 @@ func (s *memoryStorageService) Delete(object Object) error {
 	return noSuchFileOrDirectoryError
 }
 
+//DownloadWithURL downloads content for passed in object URL
+func (s *memoryStorageService) DownloadWithURL(URL string) (io.ReadCloser, error) {
+	object, err := s.StorageObject(URL)
+	if err != nil {
+		return nil, err
+	}
+	return s.Download(object)
+}
+
 // creates a new private memory service
 func NewPrivateMemoryService() Service {
 	return &memoryStorageService{

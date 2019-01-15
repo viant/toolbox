@@ -227,6 +227,15 @@ func (s *service) Close() error {
 	return nil
 }
 
+//DownloadWithURL downloads content for passed in object URL
+func (s *service) DownloadWithURL(URL string) (io.ReadCloser, error) {
+	object, err := s.StorageObject(URL)
+	if err != nil {
+		return nil, err
+	}
+	return s.Download(object)
+}
+
 //deprecated - use s3 package
 func NewService(config *Config) storage.Service {
 	return &service{config: config}

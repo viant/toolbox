@@ -146,7 +146,6 @@ func QueryEscape(source interface{}, state data.Map) (interface{}, error) {
 	return url.QueryEscape(text), nil
 }
 
-
 //QueryUnescape returns url escaped text
 func QueryUnescape(source interface{}, state data.Map) (interface{}, error) {
 	text := toolbox.AsString(source)
