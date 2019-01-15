@@ -88,6 +88,17 @@ func (s *fileStorageService) Download(object Object) (io.ReadCloser, error) {
 	return toolbox.OpenFile(object.URL())
 }
 
+
+//DownloadWithURL downloads content for passed in object URL
+func (s *fileStorageService) DownloadWithURL(URL string) (io.ReadCloser, error) {
+	object, err := s.StorageObject(URL)
+	if err != nil {
+		return nil, err
+	}
+	return s.Download(object)
+}
+
+
 //Upload uploads provided reader content for supplied url.
 func (s *fileStorageService) Upload(URL string, reader io.Reader) error {
 	parsedUrl, err := url.Parse(URL)
