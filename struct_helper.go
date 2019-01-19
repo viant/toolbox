@@ -2,6 +2,7 @@ package toolbox
 
 import (
 	"fmt"
+	"github.com/go-errors/errors"
 	"reflect"
 	"strings"
 )
@@ -47,7 +48,6 @@ func scanStructMethods(structOrItsType interface{}, scanned map[reflect.Type]boo
 		if !IsStruct(fieldType) {
 			continue
 		}
-
 		if fieldStructType, err := TryDiscoverTypeByKind(fieldType, reflect.Struct); err == nil {
 			fieldStruct := reflect.New(fieldStructType).Interface()
 			if err = scanStructMethods(fieldStruct, scanned, depth-1, handler); err != nil {
@@ -74,6 +74,31 @@ func scanStructMethods(structOrItsType interface{}, scanned map[reflect.Type]boo
 	return nil
 }
 
+//StructField represents a struct field
+type StructField struct {
+	Owner reflect.Value
+	Value reflect.Value
+	Type  reflect.StructField
+}
+
+var onUnexportedHandler = IgnoreUnexportedFields
+
+//UnexportedFieldHandler represents unexported field handler
+type UnexportedFieldHandler func(structField *StructField) bool
+
+//Handler ignoring unexported fields
+func IgnoreUnexportedFields(structField *StructField) bool {
+	return false
+}
+
+func SetUnexportedFieldHandler(handler UnexportedFieldHandler) error {
+	if handler == nil {
+		return errors.New("handler was nil")
+	}
+	onUnexportedHandler = handler
+	return nil
+}
+
 //ProcessStruct reads passed in struct fields and values to pass it to provided handler
 func ProcessStruct(aStruct interface{}, handler func(fieldType reflect.StructField, field reflect.Value) error) error {
 	structValue, err := TryDiscoverValueByKind(reflect.ValueOf(aStruct), reflect.Struct)
@@ -81,18 +106,8 @@ func ProcessStruct(aStruct interface{}, handler func(fieldType reflect.StructFie
 		return err
 	}
 	structType := structValue.Type()
-	var isPrivate = func(candidate string) bool {
-		if candidate == "" {
-			return true
-		}
-		return strings.ToLower(candidate[0:1]) == candidate[0:1]
-	}
 
-	type fieldStruct struct {
-		Value reflect.Value
-		Type  reflect.StructField
-	}
-	var fields = make(map[string]*fieldStruct)
+	var fields = make(map[string]*StructField)
 	for i := 0; i < structType.NumField(); i++ {
 		fieldType := structType.Field(i)
 		if !fieldType.Anonymous {
@@ -100,7 +115,7 @@ func ProcessStruct(aStruct interface{}, handler func(fieldType reflect.StructFie
 		}
 		field := structValue.Field(i)
 		if !IsStruct(field) {
-			fields[fieldType.Name] = &fieldStruct{Type: fieldType, Value: field}
+			fields[fieldType.Name] = &StructField{Type: fieldType, Value: field, Owner: structValue}
 			continue
 		}
 		var aStruct interface{}
@@ -119,7 +134,7 @@ func ProcessStruct(aStruct interface{}, handler func(fieldType reflect.StructFie
 			aStruct = field.Addr().Interface()
 		}
 		if err := ProcessStruct(aStruct, func(fieldType reflect.StructField, field reflect.Value) error {
-			fields[fieldType.Name] = &fieldStruct{Type: fieldType, Value: field}
+			fields[fieldType.Name] = &StructField{Type: fieldType, Value: field, Owner: field.Addr()}
 			return nil
 		}); err != nil {
 			return err
@@ -128,12 +143,17 @@ func ProcessStruct(aStruct interface{}, handler func(fieldType reflect.StructFie
 
 	for i := 0; i < structType.NumField(); i++ {
 		fieldType := structType.Field(i)
-		fieldName := fieldType.Name
-		if isPrivate(fieldName) || fieldType.Anonymous {
+		if fieldType.Anonymous {
 			continue
 		}
 		field := structValue.Field(i)
-		fields[fieldType.Name] = &fieldStruct{Type: fieldType, Value: field}
+		structField := &StructField{Owner: structValue, Type: fieldType, Value: field}
+		if isExported := fieldType.PkgPath == ""; !isExported {
+			if !onUnexportedHandler(structField) {
+				continue
+			}
+		}
+		fields[fieldType.Name] = &StructField{Owner: structValue, Type: fieldType, Value: field}
 	}
 
 	for _, field := range fields {
@@ -166,9 +186,7 @@ func BuildTagMapping(structTemplatePointer interface{}, mappedKeyTag string, res
 			}
 			continue
 		}
-		if isExported := field.PkgPath == ""; !isExported {
-			continue
-		}
+
 		isTransient := strings.EqualFold(field.Tag.Get(resultExclusionTag), "true")
 		if isTransient {
 			continue
@@ -276,6 +294,9 @@ func createEmptySlice(source reflect.Value, dataTypes map[string]bool) {
 //InitStruct initialise any struct pointer to empty struct
 func InitStruct(source interface{}) {
 	var dataTypes = make(map[string]bool)
+	if source == nil {
+		return
+	}
 	initStruct(source, dataTypes)
 }
 
@@ -298,9 +319,17 @@ func initStruct(source interface{}, dataTypes map[string]bool) {
 	if !ok {
 		sourceValue = reflect.ValueOf(source)
 	}
-	if sourceValue.Type().Kind() == reflect.Ptr && !sourceValue.Elem().IsValid() {
-		return
+
+	if sourceValue.Type().Kind() == reflect.Ptr {
+		elem := sourceValue.Elem()
+		if elem.Kind() == reflect.Ptr && elem.IsNil() {
+			return
+		}
+		if !sourceValue.Elem().IsValid() {
+			return
+		}
 	}
+
 	_ = ProcessStruct(source, func(fieldType reflect.StructField, fieldValue reflect.Value) error {
 		if !fieldValue.CanInterface() {
 			return nil
@@ -318,7 +347,6 @@ func initStruct(source interface{}, dataTypes map[string]bool) {
 			return nil
 		}
 		if DereferenceType(fieldType).Kind() == reflect.Struct {
-
 			if !fieldValue.CanSet() {
 				return nil
 			}
@@ -347,10 +375,46 @@ type StructFieldMeta struct {
 //StructMeta represents struct meta details
 type StructMeta struct {
 	Type         string
+	rawType      reflect.Type       `json:"-"`
 	Fields       []*StructFieldMeta `json:"fields,omitempty"`
 	Dependencies []*StructMeta      `json:"dependencies,omitempty"`
 }
 
+func (m *StructMeta) Message() map[string]interface{} {
+	var result = make(map[string]interface{})
+	var deps = make(map[string]*StructMeta)
+	for _, dep := range m.Dependencies {
+		deps[dep.Type] = dep
+	}
+	for _, field := range m.Fields {
+		if dep, ok := deps[field.Type]; ok {
+			result[field.Name] = dep.Message()
+			continue
+		}
+		result[field.Name] = ""
+	}
+	return result
+}
+
+//StructMetaFilter
+type StructMetaFilter func(field reflect.StructField) bool
+
+func DefaultStructMetaFilter(ield reflect.StructField) bool {
+	return true
+}
+
+var structMetaFilter StructMetaFilter = DefaultStructMetaFilter
+
+//SetStructMetaFilter sets struct meta filter
+func SetStructMetaFilter(filter StructMetaFilter) error {
+	if filter == nil {
+		return errors.New("filter was nil")
+	}
+	structMetaFilter = filter
+	return nil
+}
+
+//GetStructMeta returns struct meta
 func GetStructMeta(source interface{}) *StructMeta {
 	var result = &StructMeta{}
 	var trackedTypes = make(map[string]bool)
@@ -363,22 +427,54 @@ func getStructMeta(source interface{}, meta *StructMeta, trackedTypes map[string
 	if source == nil {
 		return false
 	}
+
 	var structType = fmt.Sprintf("%T", source)
 	if _, has := trackedTypes[structType]; has {
 		return false
 	}
+
 	meta.Type = structType
-	trackedTypes[structType] = true
 	meta.Fields = make([]*StructFieldMeta, 0)
 	meta.Dependencies = make([]*StructMeta, 0)
+	sourceValue := reflect.ValueOf(source)
+
+	if sourceValue.Kind() == reflect.Ptr {
+		elem := sourceValue.Elem()
+		if elem.Kind() == reflect.Ptr && elem.IsNil() {
+			return false
+		}
+
+		if !sourceValue.Elem().IsValid() {
+			source = reflect.New(sourceValue.Type().Elem()).Interface()
+		}
+	}
+
+	meta.rawType = sourceValue.Type()
+	trackedTypes[structType] = true
 	_ = ProcessStruct(source, func(fieldType reflect.StructField, field reflect.Value) error {
-		fieldMeta := &StructFieldMeta{}
+		if !structMetaFilter(fieldType) {
+			return nil
+		}
+		if isExported := fieldType.PkgPath == ""; !isExported {
+			structField := &StructField{
+				Owner: reflect.ValueOf(source),
+				Type:  fieldType,
+				Value: field,
+			}
+			if !onUnexportedHandler(structField) {
+				return nil
+			}
+			field = structField.Value
+		}
+
 		if strings.Contains(string(fieldType.Tag), "json:\"-") {
 			return nil
 		}
-
-		meta.Fields = append(meta.Fields, fieldMeta)
+		fieldMeta := &StructFieldMeta{}
 		fieldMeta.Name = fieldType.Name
+		fieldMeta.Type = fieldType.Type.Name()
+		meta.Fields = append(meta.Fields, fieldMeta)
+
 		if value, ok := fieldType.Tag.Lookup("required"); ok {
 			fieldMeta.Required = AsBoolean(value)
 		}
@@ -389,15 +485,32 @@ func getStructMeta(source interface{}, meta *StructMeta, trackedTypes map[string
 		if value == nil {
 			return nil
 		}
-
 		fieldMeta.Type = fmt.Sprintf("%T", value)
+		if fieldType.PkgPath != "" {
+			fieldMeta.Type = strings.Replace(fieldMeta.Type, "*", "", 1)
+		}
+
 		if IsStruct(value) {
 			var fieldStruct = &StructMeta{}
-			if field.Kind() == reflect.Ptr && !field.IsNil() {
+
+			switch field.Kind() {
+			case reflect.Ptr:
+				if field.IsNil() {
+					return nil
+				}
 				if getStructMeta(field.Elem().Interface(), fieldStruct, trackedTypes) {
 					meta.Dependencies = append(meta.Dependencies, fieldStruct)
 				}
+
+			case reflect.Struct:
+				if field.CanInterface() {
+					if getStructMeta(field.Interface(), fieldStruct, trackedTypes) {
+						meta.Dependencies = append(meta.Dependencies, fieldStruct)
+					}
+				}
+
 			}
+
 			return nil
 		}
 		if IsMap(value) {
