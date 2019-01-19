@@ -528,24 +528,39 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 				initAnonymousStruct(structPointer.Interface())
 			}
 			field = aStruct.FieldByName(fieldName)
+			fieldType, _ := aStruct.Type().FieldByName(fieldName)
+			if isExported := fieldType.PkgPath == ""; !isExported {
+				structField := &StructField{
+					Owner: newStructPointer,
+					Value: field,
+					Type:  fieldType,
+				}
+				if !onUnexportedHandler(structField) {
+					continue
+				}
+				field = structField.Value
+			}
 			if _, has := defaultValueMap[fieldName]; has {
 				delete(defaultValueMap, fieldName)
 			}
-
+			previousLayout := c.DateLayout
 			if HasTimeLayout(mapping) {
-				previousLayout := c.DateLayout
 				c.DateLayout = GetTimeLayout(mapping)
-				err := c.AssignConverted(field.Addr().Interface(), value)
-				if err != nil {
+				c.DateLayout = previousLayout
+			}
+
+			if (!field.CanAddr()) && field.Kind() == reflect.Ptr {
+				if err := c.AssignConverted(field.Interface(), value); err != nil {
 					return fmt.Errorf("failed to convert %v to %v due to %v", value, field, err)
 				}
-				c.DateLayout = previousLayout
 
 			} else {
-				err := c.AssignConverted(field.Addr().Interface(), value)
-				if err != nil {
+				if err := c.AssignConverted(field.Addr().Interface(), value); err != nil {
 					return fmt.Errorf("failed to convert %v to %v due to %v", value, field, err)
 				}
+			}
+			if HasTimeLayout(mapping) {
+				c.DateLayout = previousLayout
 			}
 		}
 	}
@@ -569,7 +584,7 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 //AssignConverted assign to the target source, target needs to be pointer, input has to be convertible or compatible type
 func (c *Converter) AssignConverted(target, source interface{}) error {
 	if target == nil {
-		return fmt.Errorf("destinationPointer was nil %v %v", target, source)
+		return fmt.Errorf("destination Pointer was nil %v %v", target, source)
 	}
 	if source == nil {
 		return nil
@@ -837,7 +852,6 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		*targetValuePointer = timeValue
 		return nil
 	case *interface{}:
-
 		(*targetValuePointer) = source
 		return nil
 
@@ -850,17 +864,20 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 	if source == nil || !sourceValue.IsValid() || (sourceValue.CanSet() && sourceValue.IsNil()) {
 		return nil
 	}
-
-	targetIndirectValue := reflect.Indirect(reflect.ValueOf(target))
-	if sourceValue.IsValid() && sourceValue.Type().AssignableTo(reflect.TypeOf(target)) {
-		targetIndirectValue.Set(sourceValue.Elem())
-		return nil
+	targetValue := reflect.ValueOf(target)
+	targetIndirectValue := reflect.Indirect(targetValue)
+	if sourceValue.IsValid() {
+		if sourceValue.Type().AssignableTo(targetValue.Type()) {
+			targetIndirectValue.Set(sourceValue.Elem())
+			return nil
+		} else if sourceValue.Type().AssignableTo(targetValue.Type().Elem()) {
+			targetValue.Elem().Set(sourceValue)
+			return nil
+		}
 	}
-
 	var targetIndirectPointerType = reflect.TypeOf(target).Elem()
 	if targetIndirectPointerType.Kind() == reflect.Ptr || targetIndirectPointerType.Kind() == reflect.Slice || targetIndirectPointerType.Kind() == reflect.Map {
 		targetIndirectPointerType = targetIndirectPointerType.Elem()
-
 	}
 
 	if targetIndirectValue.Kind() == reflect.Slice || targetIndirectPointerType.Kind() == reflect.Slice {
@@ -879,8 +896,18 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		if sourceKind == reflect.Map {
 			return c.assignConvertedMap(target, source, targetIndirectValue, targetIndirectPointerType)
 		} else if sourceKind == reflect.Struct {
-			sourceValue = reflect.ValueOf(DereferenceValue(source))
+			if source == nil {
+				return nil
+			}
+			if sourceValue.Kind() == reflect.Ptr && sourceValue.IsNil() {
+				return nil
+			}
+			targetValue := reflect.ValueOf(target)
+			if !targetValue.CanInterface() {
+				return nil
+			}
 			return c.assignConvertedMapFromStruct(source, target, sourceValue)
+
 		} else if sourceKind == reflect.Slice {
 			componentType := DereferenceType(DiscoverComponentType(source))
 			if componentType.ConvertibleTo(reflect.TypeOf(keyValue{})) {
@@ -923,19 +950,21 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		return nil
 	}
 
-	targetDereferecedType := DereferenceType(target)
+	targetDeRefType := DereferenceType(target)
 
 	for _, candidate := range numericTypes {
-		if candidate.Kind() == targetDereferecedType.Kind() {
+		if candidate.Kind() == targetDeRefType.Kind() {
 			var pointerCount = CountPointers(target)
 			var compatibleTarget = reflect.New(candidate)
 			for i := 0; i < pointerCount-1; i++ {
 				compatibleTarget = reflect.New(compatibleTarget.Type())
 			}
-			c.AssignConverted(compatibleTarget.Interface(), source)
-			targetValue := reflect.ValueOf(target)
-			targetValue.Elem().Set(compatibleTarget.Elem().Convert(targetValue.Elem().Type()))
-			return nil
+			if err := c.AssignConverted(compatibleTarget.Interface(), source); err == nil {
+				targetValue := reflect.ValueOf(target)
+				targetValue.Elem().Set(compatibleTarget.Elem().Convert(targetValue.Elem().Type()))
+				return nil
+			}
+
 		}
 	}
 	return fmt.Errorf("Unable to convert type %T into type %T\n\t%v", source, target, source)
@@ -1078,6 +1107,10 @@ func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sou
 		return fmt.Errorf("target %T is not a map", target)
 	}
 	return ProcessStruct(source, func(fieldType reflect.StructField, field reflect.Value) error {
+		if !field.CanInterface() {
+			return nil
+		}
+
 		value := field.Interface()
 		if value == nil {
 			return nil

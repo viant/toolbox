@@ -21,6 +21,11 @@ func IsInt(input interface{}) bool {
 	return false
 }
 
+//IsNumber returns true if type is either float or int
+func IsNumber(input interface{}) bool {
+	return IsFloat(input) || IsInt(input)
+}
+
 //IsFloat returns true if input is a float
 func IsFloat(input interface{}) bool {
 	switch input.(type) {
