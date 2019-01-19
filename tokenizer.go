@@ -368,9 +368,7 @@ func (m *BodyMatcher) Match(input string, offset int) (matched int) {
 	}
 	var depth = 1
 	var i = 1
-
 	for ; i < len(input)-offset; i++ {
-
 		canCheckEnd := offset+i+endLen <= len(input)
 		if !canCheckEnd {
 			return 0
