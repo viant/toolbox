@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path"
 	"strings"
 )
 
@@ -18,16 +19,22 @@ type StorageMapping struct {
 	UseTextFormat    bool
 }
 
+var binaryFormats = map[string]bool{
+	".png":  true,
+	".jpeg": true,
+	".ico":  true,
+	".jpg":  true,
+}
+
 //GenerateStorageCode create a *.go files with statically scanned content from source URL.
 func GenerateStorageCode(mappings ...*StorageMapping) error {
 	destinationService := NewMemoryService()
 	for _, mapping := range mappings {
-
 		sourceService, err := NewServiceForURL(mapping.SourceURL, mapping.SourceCredential)
 		if err != nil {
 			return err
 		}
-		handler, writer, err := NewStorageMapperHandler(mapping.TargetFile, mapping.TargetPackage, mapping.UseTextFormat)
+		handler, writer, err := NewStorageMapperHandler(mapping.TargetFile, mapping.TargetPackage, mapping.UseTextFormat, binaryFormats)
 		if err != nil {
 			return err
 		}
@@ -42,14 +49,14 @@ func GenerateStorageCode(mappings ...*StorageMapping) error {
 }
 
 //NewStorageMapperHandler creates a template handler for generating go file that write static content into memory service.
-func NewStorageMapperHandler(filename, pkg string, useText bool) (CopyHandler, io.WriteCloser, error) {
-	toolbox.RemoveFileIfExist(filename)
+func NewStorageMapperHandler(filename, pkg string, useTextFormat bool, binaryFormat map[string]bool) (CopyHandler, io.WriteCloser, error) {
+	_ = toolbox.RemoveFileIfExist(filename)
 	writer, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return nil, nil, err
 	}
 	template := &templateWriter{writer}
-	template.Init(pkg)
+	_ = template.Init(pkg)
 	return func(sourceObject Object, source io.Reader, destinationService Service, destinationURL string) error {
 
 		_, name := toolbox.URLSplit(destinationURL)
@@ -61,8 +68,13 @@ func NewStorageMapperHandler(filename, pkg string, useText bool) (CopyHandler, i
 		if err != nil {
 			return err
 		}
+		isText := useTextFormat
+		ext := path.Ext(destinationURL)
+		if binaryFormat[ext] {
+			isText = false
+		}
 
-		template.WriteStorageContent(destinationURL, content, useText)
+		template.WriteStorageContent(destinationURL, content, isText)
 		return nil
 	}, template, nil
 }
