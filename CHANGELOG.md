@@ -1,3 +1,7 @@
+## Jan 23 2019 - v0.10.0
+  - Added MaxIdleConnsPerHost http client option
+  - Added TrimSpaces data/udf
+
 ## Jan 19 2019 - v0.10.0
   - Added IsNumber helper function
   - Enhance Process Struct to handle unexported fields

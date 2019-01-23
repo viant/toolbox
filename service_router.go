@@ -345,6 +345,8 @@ func NewHttpClient(options ...*HttpOptions) (*http.Client, error) {
 			ResponseHeaderTimeoutMs = time.Duration(AsInt(option.Value)) * time.Millisecond
 		case "MaxIdleConns":
 			MaxIdleConns = AsInt(option.Value)
+		case "MaxIdleConnsPerHost":
+			MaxIdleConnsPerHost = AsInt(option.Value)
 		case "DualStack":
 			DualStack = AsBoolean(option.Value)
 		case "FollowRedirects":
