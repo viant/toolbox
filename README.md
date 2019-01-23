@@ -268,11 +268,56 @@ Example:
 <a name="Conversion-Utilities"></a>
 ### Converter && Conversion Utilities
 
+Converter transforms, data between any compatible or incompatible data type including struct/basicType/map/slice/interface{}
+On top of that it supports custom tag to map field to target data type (i.e map)
+
+
+```go
+    myStruct :=  //some struct ...
+    myMap := make(map[string]interface{})
+    converter := NewConverter(dateLayout, keyTag) 	
+    err = converter.AssignConverted(&myMap, myStruct)
+    err = converter.AssignConverted(myStruct, myMap) 
+```
+
+
 <a name="Struct-Utilities"></a>
 ### Struct Utilities
- 	
+
+
+**ScanStructMethods**
+
+Scan struct methods
+
+```go
+    service := New()
+    err = toolbox.ScanStructMethods(service, 1, func(method reflect.Method) error {
+		fmt.Printf("%v\n", method.Name)
+		return nil
+	})
+
+```
+
+**ProcessStruct**
+
+Scan struct fields
+
+```go
+   service := New()
+    err = toolbox.ProcessStruct(service,
+        func(field reflect.StructField, value reflect.Value) error {
+            fmt.Print(field.Type.Name)
+            return nil
+    })
+
+```
+
+
 <a name="Function-Utilities"></a>
 ### Function Utilities
+
+
+
 
 <a name="TimeUtilities"></a>
 ### Time Utilities	
