@@ -88,3 +88,9 @@ func Test_Base64Decode(t *testing.T) {
 	assert.EqualValues(t, `"Hello World"`, decoded)
 
 }
+
+func TestTrimSpace(t *testing.T) {
+	trimmed, _ := TrimSpace(" erer ", nil)
+	assert.EqualValues(t, `erer`, trimmed)
+
+}

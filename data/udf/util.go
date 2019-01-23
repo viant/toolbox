@@ -151,3 +151,9 @@ func QueryUnescape(source interface{}, state data.Map) (interface{}, error) {
 	text := toolbox.AsString(source)
 	return url.QueryUnescape(text)
 }
+
+//TrimSpace returns trims spaces from supplied text
+func TrimSpace(source interface{}, state data.Map) (interface{}, error) {
+	text := toolbox.AsString(source)
+	return strings.TrimSpace(text), nil
+}
