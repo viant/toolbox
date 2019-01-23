@@ -1,4 +1,4 @@
-## Jan 23 2019 - v0.10.0
+## Jan 23 2019 - v0.10.1
   - Added MaxIdleConnsPerHost http client option
   - Added TrimSpaces data/udf
 
