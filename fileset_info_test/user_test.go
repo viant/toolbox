@@ -35,6 +35,7 @@ type User struct { //my comments
 	Ints2          Ints
 	M              map[string][]string
 	C              chan *bool
+	Appointments   []time.Time
 }
 
 //Test represents a test method
