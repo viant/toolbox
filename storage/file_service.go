@@ -47,6 +47,7 @@ func (s *fileStorageService) List(URL string) ([]Object, error) {
 		if parsedURL != nil {
 			fileName = strings.Replace(fileName, parsedURL.Path, "", 1)
 		}
+
 		fileURL := toolbox.URLPathJoin(URL, fileName)
 		result = append(result, newFileObject(fileURL, fileInfo))
 	}
@@ -60,7 +61,7 @@ func (s *fileStorageService) Exists(URL string) (bool, error) {
 		return false, err
 	}
 	if parsedUrl.Scheme != "file" {
-		return false, fmt.Errorf("Invalid schema, expected file but had: %v", parsedUrl.Scheme)
+		return false, fmt.Errorf("invalid schema, expected file but had: %v", parsedUrl.Scheme)
 	}
 	return toolbox.FileExists(parsedUrl.Path), nil
 }
@@ -129,6 +130,22 @@ func (s *fileStorageService) Register(schema string, service Service) error {
 
 //Delete removes passed in storage object
 func (s *fileStorageService) Delete(object Object) error {
+
+	if object.IsFolder() {
+		objects, err := s.List(object.URL())
+		if err != nil {
+			return err
+		}
+		for _, listedObject := range objects {
+			if listedObject.URL() == object.URL() {
+				continue
+			}
+			if err := s.Delete(listedObject); err != nil {
+				return err
+			}
+		}
+
+	}
 	fileName := toolbox.Filename(object.URL())
 	return os.Remove(fileName)
 }
