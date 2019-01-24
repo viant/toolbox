@@ -55,7 +55,6 @@ func NewFieldInfo(field *ast.Field) *FieldInfo {
 			case *ast.SelectorExpr:
 				result.ComponentType = y.X.(*ast.Ident).Name + "." + y.Sel.Name
 			}
-			result.IsPointerComponent = true
 		case *ast.SelectorExpr:
 			result.ComponentType = x.X.(*ast.Ident).Name + "." + x.Sel.Name
 		}

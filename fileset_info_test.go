@@ -85,7 +85,7 @@ func TestNewFileSetInfoInfo(t *testing.T) {
 	receiver := userInfo.Receiver("Test")
 	assert.NotNil(t, receiver)
 
-	appointments := userInfo.Receiver("Appointments")
+	appointments := userInfo.Field("Appointments")
 	assert.NotNil(t, appointments)
 	assert.Equal(t, "time.Time", appointments.ComponentType)
 

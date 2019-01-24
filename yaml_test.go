@@ -1,11 +1,12 @@
 package toolbox
 
 import (
-	"github.com/gin-gonic/gin/json"
-	"github.com/stretchr/testify/assert"
-	"gopkg.in/yaml.v2"
+	"encoding/json"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	yaml "gopkg.in/yaml.v2"
 )
 
 func TestNormalizeKVPairs(t *testing.T) {
