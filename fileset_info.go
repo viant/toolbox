@@ -45,13 +45,19 @@ func NewFieldInfo(field *ast.Field) *FieldInfo {
 	_, result.IsMap = field.Type.(*ast.MapType)
 	var arrayType *ast.ArrayType
 	if arrayType, result.IsSlice = field.Type.(*ast.ArrayType); result.IsSlice {
-		if ident, ok := arrayType.Elt.(*ast.Ident); ok {
-			result.ComponentType = ident.Name
-		} else if startExpr, ok := arrayType.Elt.(*ast.StarExpr); ok {
-			if ident, ok := startExpr.X.(*ast.Ident); ok {
-				result.ComponentType = ident.Name
+		switch x := arrayType.Elt.(type) {
+		case *ast.Ident:
+			result.ComponentType = x.Name
+		case *ast.StarExpr:
+			switch y := x.X.(type) {
+			case *ast.Ident:
+				result.ComponentType = y.Name
+			case *ast.SelectorExpr:
+				result.ComponentType = y.X.(*ast.Ident).Name + "." + y.Sel.Name
 			}
 			result.IsPointerComponent = true
+		case *ast.SelectorExpr:
+			result.ComponentType = x.X.(*ast.Ident).Name + "." + x.Sel.Name
 		}
 	}
 	_, result.IsPointer = field.Type.(*ast.StarExpr)
