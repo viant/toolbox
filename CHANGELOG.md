@@ -1,3 +1,8 @@
+## Jan 24 2019 - v0.10.3
+  - Update file set info fix IsPointerComponent in slice component type
+  - Added recursive remove on file storage impl 
+  
+
 ## Jan 23 2019 - v0.10.1
   - Added MaxIdleConnsPerHost http client option
   - Added TrimSpaces data/udf

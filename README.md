@@ -20,6 +20,7 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 - [Decoder and Encoder](#DecoderandEncoder)
 - [Logger](#Logger)
 - [BatchLimiter](#BatchLimiter)
+- [AST Based FileSetInfo](#AST Based FileSetInfo)
 - [License](#License)
 - [Credits and Acknowledgements](#Credits-and-Acknowledgements)
 
@@ -649,6 +650,20 @@ This library provides a batch limiter, that enables controling number of active 
 	limiter.Wait()
 
 ```
+
+### AST Based FileSetInfo 
+
+
+```go
+    pkgPath := ""
+	source := path.Join(pkgPath)
+	filesetInfo, err :=toolbox.NewFileSetInfo(source)
+    myType := fileSetInfo.Type("MyType")
+    fields := myType.Fields()
+    method := myType.Receivers
+``` 
+
+
 
 
 ## GoCover
