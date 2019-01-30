@@ -34,7 +34,7 @@ func ReadRecordedHttpTrips(directory string) ([]*RecordedHttpTrip, error) {
 	}
 
 	if len(requests) != len(responses) {
-		return nil, fmt.Errorf("Request and Response count does not match req:%v, resp:%v ", len(requests), len(responses))
+		return nil, fmt.Errorf("request and Response count does not match req:%v, resp:%v ", len(requests), len(responses))
 	}
 
 	for i := 0; i < len(requests); i++ {
@@ -42,12 +42,12 @@ func ReadRecordedHttpTrips(directory string) ([]*RecordedHttpTrip, error) {
 		var trip = &RecordedHttpTrip{}
 		trip.Request, ok = requests[i].(*HttpRequest)
 		if !ok {
-			return nil, fmt.Errorf("EXpected HttpRequest but had %T", requests[i])
+			return nil, fmt.Errorf("expected HttpRequest but had %T", requests[i])
 		}
 		if i < len(responses) {
 			trip.Response, ok = responses[i].(*HttpResponse)
 			if !ok {
-				return nil, fmt.Errorf("EXpected HttpRequest but had %T", responses[i])
+				return nil, fmt.Errorf("expected HttpRequest but had %T", responses[i])
 			}
 		}
 		result = append(result, trip)
