@@ -182,6 +182,13 @@ func (r *Resource) DecodeWith(target interface{}, decoderFactory toolbox.Decoder
 	if err != nil {
 		return err
 	}
+
+	text := string(content)
+	if toolbox.IsNewLineDelimitedJSON(text) {
+		if aSlice, err := toolbox.NewLineDelimitedJSON(text); err == nil {
+			return toolbox.DefaultConverter.AssignConverted(target, aSlice)
+		}
+	}
 	err = decoderFactory.Create(bytes.NewReader(content)).Decode(target)
 	if err != nil {
 		return fmt.Errorf("failed to decode: %v, payload: %s", err, content)
