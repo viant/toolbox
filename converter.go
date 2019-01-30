@@ -1061,8 +1061,8 @@ func (c *Converter) assignConvertedMapSliceToMap(target, source interface{}) (er
 			return true
 		}
 		entryMap := AsMap(item)
-		key, value, err := entryMapToKeyValue(entryMap)
-		if err != nil {
+		key, value, e := entryMapToKeyValue(entryMap)
+		if e != nil {
 			err = fmt.Errorf("unable to case %T to %T", source, target)
 			return false
 		}

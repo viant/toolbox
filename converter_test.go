@@ -722,3 +722,22 @@ func TestConvertedMapFromStruct(t *testing.T) {
 		"Description": "desc",
 	}, target)
 }
+
+func TestConvertedSliceToMapError(t *testing.T) {
+	aSlice := []map[string]interface{}{
+		{
+			"id":   1,
+			"name": 111,
+		},
+		{
+			"id":   2,
+			"name": 222,
+		},
+	}
+
+	var aMap = make(map[string]interface{})
+
+	converter := toolbox.NewConverter("", "json")
+	err := converter.AssignConverted(&aMap, aSlice)
+	assert.NotNil(t, err)
+}
