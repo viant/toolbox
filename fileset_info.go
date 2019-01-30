@@ -297,9 +297,10 @@ func (v *FileInfo) Visit(node ast.Node) ast.Visitor {
 			v.currentTypInfo = typeInfo
 			v.types[typeName] = typeInfo
 		case *ast.StructType:
-			v.currentTypInfo.Comment = v.readComment(value.Pos())
-			v.currentTypInfo.AddFields(toFieldInfoSlice(value.Fields)...)
-
+			if v.currentTypInfo != nil {//TODO fixme - understand why current type would be nil
+				v.currentTypInfo.Comment = v.readComment(value.Pos())
+				v.currentTypInfo.AddFields(toFieldInfoSlice(value.Fields)...)
+			}
 		case *ast.FuncDecl:
 			functionInfo := NewFunctionInfo(value)
 			v.currentFunctionInfo = functionInfo
