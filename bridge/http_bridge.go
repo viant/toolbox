@@ -212,7 +212,7 @@ func (h ListeningTripHandler) ServeHTTP(responseWriter http.ResponseWriter, requ
 	if request.ContentLength > 0 {
 		request.Body, originalRequest.Body, err = h.drainBody(request.Body)
 		if err != nil {
-			log.Printf("Faled to serve request :%v due to %v\n", request, err)
+			log.Printf("failed to serve request :%v due to %v\n", request, err)
 			return
 		}
 	}
