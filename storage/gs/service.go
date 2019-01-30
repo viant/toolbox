@@ -25,6 +25,9 @@ type service struct {
 }
 
 func (s *service) NewClient() (*storage.Client, context.Context, error) {
+	if s.projectID == "" {
+		return nil, nil, fmt.Errorf("project ID was empty, consider setting GOOGLE_CLOUD_PROJECT")
+	}
 	ctx := context.Background()
 	deadline, _ := ctx.Deadline()
 	deadline.Add(time.Minute * 30)
@@ -32,7 +35,6 @@ func (s *service) NewClient() (*storage.Client, context.Context, error) {
 	if err != nil {
 		err = fmt.Errorf("failed to create google storage client:%v", err)
 	}
-
 	return client, ctx, err
 }
 
