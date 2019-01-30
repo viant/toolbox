@@ -1,8 +1,10 @@
 package gs
 
 import (
+	"context"
 	"github.com/viant/toolbox/secret"
 	"github.com/viant/toolbox/storage"
+	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 	"os"
 )
@@ -36,6 +38,11 @@ func serviceProvider(credentialsFile string) (storage.Service, error) {
 
 	if customProjectID := os.Getenv(googleStorageProjectKey); customProjectID != "" {
 		projectID = customProjectID
+	}
+	if projectID == "" {
+		if credentials, err := google.FindDefaultCredentials(context.Background(), DevstorageFullControlScope); err == nil {
+			projectID = credentials.ProjectID
+		}
 	}
 	return NewService(projectID, credentialOptions...), nil
 }

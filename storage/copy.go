@@ -168,3 +168,38 @@ func Archive(service Service, URL string, writer *zip.Writer) error {
 	var destURL = "mem:///dev/nul"
 	return Copy(service, URL, memService, destURL, nil, getArchiveCopyHandler(writer, destURL))
 }
+
+func getArchiveCopyHandlerWithFilter(archive *zip.Writer, parentURL string, predicate func(candidate Object) bool) CopyHandler {
+	return func(sourceObject Object, reader io.Reader, destinationService Service, destinationURL string) error {
+		if !predicate(sourceObject) {
+			return nil
+		}
+		var _, relativePath = toolbox.URLSplit(destinationURL)
+		if destinationURL != parentURL {
+			relativePath = strings.Replace(destinationURL, parentURL, "", 1)
+		}
+		header, err := zip.FileInfoHeader(sourceObject.FileInfo())
+		if err != nil {
+			return err
+		}
+		header.Method = zip.Store
+
+		if strings.HasPrefix(relativePath, "/") {
+			relativePath = string(relativePath[1:])
+		}
+		header.Name = relativePath
+		writer, err := archive.CreateHeader(header)
+		if err != nil {
+			return err
+		}
+		_, err = io.Copy(writer, reader)
+		return err
+	}
+}
+
+//Archive archives supplied URL assets into zip writer with supplied filter
+func ArchiveWithFilter(service Service, URL string, writer *zip.Writer, predicate func(candidate Object) bool) error {
+	memService := NewMemoryService()
+	var destURL = "mem:///dev/nul"
+	return Copy(service, URL, memService, destURL, nil, getArchiveCopyHandlerWithFilter(writer, destURL, predicate))
+}
