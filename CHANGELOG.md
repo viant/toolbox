@@ -1,3 +1,13 @@
+## Jan 30 2019 - v0.11.1
+  - Patched new line delimited json decoding
+  - Patched conversion slice to map error handling
+  
+## Jan 29 2019 - v0.11.0
+  - Remove storage/aws package, use storage/s3 instead - breakable change
+  - Added google storage default http clinet (to run within GCE, or with GOOGLE_APPLICATION_CREDENTIALS)  
+  - Added google storage customization with GOOGLE_STORAGE_PROJECT env variable 
+  - Patched nil pointer check on fileset_info
+    
 ## Jan 24 2019 - v0.10.3
   - Update file set info fix IsPointerComponent in slice component type
   - Added recursive remove on file storage impl 
