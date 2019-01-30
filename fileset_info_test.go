@@ -46,7 +46,7 @@ func TestNewFileSetInfoInfo(t *testing.T) {
 	assert.True(t, userInfo.HasField("Name"))
 	assert.False(t, userInfo.HasField("FF"))
 
-	assert.Equal(t, 10, len(userInfo.Fields()))
+	assert.Equal(t, 11, len(userInfo.Fields()))
 
 	idInfo := userInfo.Field("ID")
 	assert.True(t, idInfo.IsPointer)
