@@ -1,3 +1,7 @@
+## Jan 31 2019 - v0.12.0
+  - Added storage/copy:ArchiveWithFilter
+  - Added default project detection to google storage
+    
 ## Jan 30 2019 - v0.11.1
   - Patched new line delimited json decoding
   - Patched conversion slice to map error handling

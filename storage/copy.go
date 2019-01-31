@@ -31,6 +31,16 @@ func urlPath(URL string) string {
 	return result
 }
 
+func truncatePath(path string) string {
+	if len(path) <= 1 {
+		return path
+	}
+	if strings.HasSuffix(path, "/") {
+		return string(path[:len(path)-1])
+	}
+	return path
+}
+
 func copyStorageContent(sourceService Service, sourceURL string, destinationService Service, destinationURL string, modifyContentHandler ModificationHandler, subPath string, copyHandler CopyHandler) error {
 	sourceListURL := sourceURL
 	if subPath != "" {
@@ -42,13 +52,14 @@ func copyStorageContent(sourceService Service, sourceURL string, destinationServ
 	}
 	var objectRelativePath string
 	sourceURLPath := urlPath(sourceURL)
-	for _, object := range objects {
 
+	for _, object := range objects {
 		var objectURLPath = urlPath(object.URL())
 		if object.IsFolder() {
-			if sourceURLPath == objectURLPath {
+			if truncatePath(sourceURLPath) == truncatePath(objectURLPath) {
 				continue
 			}
+
 			if subPath != "" && objectURLPath == toolbox.URLPathJoin(sourceURLPath, subPath) {
 				continue
 			}
@@ -64,6 +75,7 @@ func copyStorageContent(sourceService Service, sourceURL string, destinationServ
 		if objectRelativePath != "" {
 			destinationObjectURL = toolbox.URLPathJoin(destinationURL, objectRelativePath)
 		}
+
 		if object.IsContent() {
 			reader, err := sourceService.Download(object)
 			if err != nil {
@@ -154,6 +166,9 @@ func getArchiveCopyHandler(archive *zip.Writer, parentURL string) CopyHandler {
 func Copy(sourceService Service, sourceURL string, destinationService Service, destinationURL string, modifyContentHandler ModificationHandler, copyHandler CopyHandler) (err error) {
 	if copyHandler == nil {
 		copyHandler = copySourceToDestination
+	}
+	if strings.HasSuffix(sourceURL, "//") {
+		sourceURL = string(sourceURL[:len(sourceURL)-1])
 	}
 	err = copyStorageContent(sourceService, sourceURL, destinationService, destinationURL, modifyContentHandler, "", copyHandler)
 	if err != nil {
