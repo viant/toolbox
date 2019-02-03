@@ -47,3 +47,92 @@ func TerminatedSplitN(text string, fragmentCount int, terminator string) []strin
 	}
 	return result
 }
+
+const (
+	CaseUpper = iota
+	CaseLower
+	CaseUpperCamel
+	CaseLowerCamel
+	CaseUpperUnderscore
+	CaseLowerUnderscore
+)
+
+//ToCaseFormat format text,  from, to are const:  CaseLower, CaseUpperCamel,  CaseLowerCamel,  CaseUpperUnderscore,  CaseLowerUnderscore,
+func ToCaseFormat(text string, from, to int) string {
+	toUpper := false
+	toLower := false
+	toCamel := false
+	toUnserscore := false
+	fromCamel := false
+	fromUnserscore := false
+
+	switch to {
+	case CaseUpper, CaseUpperUnderscore:
+		toUpper = true
+	case CaseLower, CaseLowerUnderscore:
+		toLower = true
+	case CaseUpperCamel, CaseLowerCamel:
+		toCamel = true
+	}
+	switch to {
+	case CaseUpperUnderscore, CaseLowerUnderscore:
+		toUnserscore = true
+	}
+	switch from {
+	case CaseUpperCamel, CaseLowerCamel:
+		fromCamel = true
+	case CaseUpperUnderscore, CaseLowerUnderscore:
+		fromUnserscore = true
+	}
+	underscore := rune('_')
+	var result = make([]rune, 0)
+	makeLower := false
+	makeUpper := false
+	hasUnderscore := false
+	for i, r := range text {
+		first := i == 0
+		if toUpper {
+			makeUpper = true
+		} else if toLower {
+			makeLower = true
+		}
+		if first {
+			if to == CaseLowerCamel {
+				r = unicode.ToLower(r)
+			} else if to == CaseUpperCamel {
+				r = unicode.ToUpper(r)
+			}
+		} else {
+			if fromUnserscore {
+				if toCamel {
+					if r == underscore {
+						hasUnderscore = true
+						continue
+					}
+					if hasUnderscore {
+						makeUpper = true
+						hasUnderscore = false
+					} else {
+						makeLower = true
+					}
+				}
+			}
+			if unicode.IsUpper(r) && fromCamel {
+				if toUnserscore {
+					result = append(result, underscore)
+				}
+			}
+		}
+
+		if makeLower {
+			r = unicode.ToLower(r)
+		} else if makeUpper {
+			r = unicode.ToUpper(r)
+		}
+		result = append(result, r)
+		makeUpper = false
+		makeLower = false
+	}
+
+	return string(result)
+}

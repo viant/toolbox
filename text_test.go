@@ -162,3 +162,63 @@ func TestTerminatedSplitN(t *testing.T) {
 		assert.EqualValues(t, useCase.expectedFragmentSizes, actualFragmentSizes, useCase.description)
 	}
 }
+
+func Test_CaseFormat(t *testing.T) {
+	var useCases = []struct {
+		description string
+		caseFrom    int
+		caseTo      int
+		input       string
+		expect      string
+	}{
+		{
+			description: "camel to uppercase",
+			input:       "thisIsMyTest",
+			caseFrom:    CaseLowerCamel,
+			caseTo:      CaseUpper,
+			expect:      "THISISMYTEST",
+		},
+		{
+			description: "camel to lower underscore",
+			input:       "thisIsMyTest",
+			caseFrom:    CaseLowerCamel,
+			caseTo:      CaseLowerUnderscore,
+			expect:      "this_is_my_test",
+		},
+		{
+			description: "camel to upper underscore",
+			input:       "thisIsMyTest",
+			caseFrom:    CaseLowerCamel,
+			caseTo:      CaseUpperUnderscore,
+			expect:      "THIS_IS_MY_TEST",
+		},
+		{
+			description: "lower underscore to upper camel",
+			input:       "this_is_my_test",
+			caseFrom:    CaseLowerUnderscore,
+			caseTo:      CaseUpperCamel,
+			expect:      "ThisIsMyTest",
+		},
+		{
+			description: "upper underscore to lower camel",
+			input:       "THIS_IS_MY_TEST",
+			caseFrom:    CaseUpperUnderscore,
+			caseTo:      CaseLowerCamel,
+			expect:      "thisIsMyTest",
+		},
+
+		{
+			description: "upper camel to lower camel",
+			input:       "ThisIsMyTest",
+			caseFrom:    CaseUpperCamel,
+			caseTo:      CaseLowerCamel,
+			expect:      "thisIsMyTest",
+		},
+	}
+
+	for _, useCase := range useCases {
+		actual := ToCaseFormat(useCase.input, useCase.caseFrom, useCase.caseTo)
+		assert.Equal(t, useCase.expect, actual, useCase.description)
+	}
+
+}
