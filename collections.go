@@ -25,6 +25,45 @@ func ReverseSlice(source interface{}) {
 	if source == nil {
 		return
 	}
+	var j = 0
+	switch slice := source.(type) {
+	case []byte:
+		var sliceLen = len(slice)
+		if sliceLen <= 1 {
+			return
+		}
+		for i := sliceLen - 1; i >= (sliceLen / 2); i-- {
+			item := slice[i]
+			slice[i] = slice[j]
+			slice[j] = item
+			j++
+		}
+		return
+	case []interface{}:
+		var sliceLen = len(slice)
+		if sliceLen <= 1 {
+			return
+		}
+		for i := sliceLen - 1; i >= (sliceLen / 2); i-- {
+			item := slice[i]
+			slice[i] = slice[j]
+			slice[j] = item
+			j++
+		}
+		return
+	case []string:
+		var sliceLen = len(slice)
+		if sliceLen <= 1 {
+			return
+		}
+		for i := sliceLen - 1; i >= (sliceLen / 2); i-- {
+			item := slice[i]
+			slice[i] = slice[j]
+			slice[j] = item
+			j++
+		}
+		return
+	}
 	sliceValue := reflect.ValueOf(source)
 	if sliceValue.IsNil() || !sliceValue.IsValid() {
 		return
@@ -36,7 +75,7 @@ func ReverseSlice(source interface{}) {
 	if sliceLen <= 1 {
 		return
 	}
-	var j = 0
+
 	for i := sliceLen - 1; i >= (sliceLen / 2); i-- {
 		indexItem := sliceValue.Index(i)
 		indexItemValue := indexItem.Elem()
@@ -674,7 +713,7 @@ func CopyNonEmptyMapEntries(input, output interface{}) (err error) {
 			return map[string]interface{}{}
 		}
 	}
-	ProcessMap(input, func(k, v interface{}) bool {
+	err = ProcessMap(input, func(k, v interface{}) bool {
 		if isNilOrEmpty(v) {
 			return true
 		}

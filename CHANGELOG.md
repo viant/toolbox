@@ -1,3 +1,9 @@
+## Feb 3 2019 - v0.14.0
+  - Added ToCaseFormat text util
+  - Updated fileset reader to read interface method
+  - Patched struct_helper panic
+  - Optimize ReverseSlice
+  - 
 ## Jan 31 2019 - v0.12.0
   - Added storage/copy:ArchiveWithFilter
   - Added default project detection to google storage

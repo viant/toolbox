@@ -15,7 +15,7 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 - [Time Utilities](#TimeUtilities)
 - [Storage API](#storage)
 - [Data substitution](data/)
-- [Macro](#Macro)
+- [Text Utilities](text/)
 - [ServiceRouter](#ServiceRouter)
 - [Decoder and Encoder](#DecoderandEncoder)
 - [Logger](#Logger)
@@ -407,8 +407,16 @@ Provide dynamic semantic for creating time object based on time dif
 
 
 
-<a name="Macro"></a>
-### Macro
+<a name="tet"></a>
+### Text utilities
+
+**ToCaseFormat** 
+
+```go
+    formatted := toolbox.ToCaseFormat(text, toolbox.CaseLowerUnderscore, toolbox.CaseLowerCamel)
+
+```
+
 
 <a name="Tokenizer"></a>
 ### Tokenizer
