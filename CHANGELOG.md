@@ -2,7 +2,7 @@
   - Added ToCaseFormat text util
   - Updated fileset reader to read interface method
   - Patched struct_helper panic
-  - Optimize ReverseSlice
+  - Optimized ReverseSlice
   - 
 ## Jan 31 2019 - v0.12.0
   - Added storage/copy:ArchiveWithFilter
