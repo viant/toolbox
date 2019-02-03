@@ -27,6 +27,55 @@ type FieldInfo struct {
 	IsPointer          bool
 	Tag                string
 	Comment            string
+	IsVariant          bool
+}
+
+//NewFunctionInfoFromField creates a new function info.
+func NewFunctionInfoFromField(field *ast.Field) *FunctionInfo {
+	result := &FunctionInfo{
+		Name:            "",
+		ParameterFields: make([]*FieldInfo, 0),
+		ResultsFields:   make([]*FieldInfo, 0),
+	}
+	if len(field.Names) > 0 {
+		result.Name = field.Names[0].Name
+	}
+
+	if funcType, ok := field.Type.(*ast.FuncType); ok {
+		if funcType.Params != nil && len(funcType.Params.List) > 0 {
+			result.ParameterFields = toFieldInfoSlice(funcType.Params)
+		}
+		if funcType.Results != nil && len(funcType.Results.List) > 0 {
+			result.ResultsFields = toFieldInfoSlice(funcType.Results)
+		}
+		var names = make(map[string]bool)
+		for _, param := range result.ParameterFields {
+			if strings.Contains(strings.ToLower(param.TypeName), strings.ToLower(param.Name)) {
+				name := matchLastNameSegment(param.TypeName)
+				if _, has := names[name]; has {
+					continue
+				}
+				names[name] = true
+				param.Name = name
+			}
+		}
+	}
+	return result
+}
+
+func matchLastNameSegment(name string) string {
+	var result = make([]byte, 0)
+	for i := len(name) - 1; i >= 0; i-- {
+		aChar := string(name[i : i+1])
+		if aChar != "." {
+			result = append(result, byte(aChar[0]))
+		}
+		if strings.ToUpper(aChar) == aChar || aChar == "." {
+			ReverseSlice(result)
+			return string(result)
+		}
+	}
+	return name
 }
 
 //NewFieldInfo creates a new field info.
@@ -82,6 +131,19 @@ func NewFieldInfo(field *ast.Field) *FieldInfo {
 		result.KeyTypeName = types.ExprString(mapType.Key)
 		result.ValueTypeName = types.ExprString(mapType.Value)
 	}
+
+	if strings.Contains(result.TypeName, "...") {
+		result.IsVariant = true
+		result.TypeName = strings.Replace(result.TypeName, "...", "[]", 1)
+	}
+
+	if index := strings.Index(result.TypeName, "."); index != -1 {
+		from := 0
+		if result.IsPointer {
+			from = 1
+		}
+		result.TypePackage = string(result.TypeName[from:index])
+	}
 	return result
 }
 
@@ -125,6 +187,7 @@ type TypeInfo struct {
 	Comment                string
 	IsSlice                bool
 	IsStruct               bool
+	IsInterface            bool
 	IsDerived              bool
 	ComponentType          string
 	IsPointerComponentType bool
@@ -134,6 +197,7 @@ type TypeInfo struct {
 	indexedField           map[string]*FieldInfo
 	receivers              []*FunctionInfo
 	indexedReceiver        map[string]*FunctionInfo
+	receiver_              *FunctionInfo
 }
 
 //AddFields appends fileds to structinfo
@@ -204,6 +268,7 @@ type FileInfo struct {
 	currentTypInfo      *TypeInfo
 	fileSet             *token.FileSet
 	currentFunctionInfo *FunctionInfo
+	Imports             map[string]string
 }
 
 //Type returns a type info for passed in name
@@ -259,8 +324,19 @@ func toFieldInfoSlice(source *ast.FieldList) []*FieldInfo {
 		return result
 	}
 	for _, field := range source.List {
-
 		result = append(result, NewFieldInfo(field))
+	}
+	return result
+}
+
+//toFunctionInfos convers filedList to function info slice.
+func toFunctionInfos(source *ast.FieldList) []*FunctionInfo {
+	var result = make([]*FunctionInfo, 0)
+	if source == nil || len(source.List) == 0 {
+		return result
+	}
+	for _, field := range source.List {
+		result = append(result, NewFunctionInfoFromField(field))
 	}
 	return result
 }
@@ -269,7 +345,8 @@ func toFieldInfoSlice(source *ast.FieldList) []*FieldInfo {
 func (v *FileInfo) Visit(node ast.Node) ast.Visitor {
 	if node != nil {
 
-		//	fmt.Printf("visit %v %T\n", node, node)
+		//	fmt.Printf("node %T %v\n", node, node)
+
 		switch value := node.(type) {
 		case *ast.TypeSpec:
 			typeName := value.Name.Name
@@ -290,6 +367,8 @@ func (v *FileInfo) Visit(node ast.Node) ast.Visitor {
 				}
 			case *ast.StructType:
 				typeInfo.IsStruct = true
+			case *ast.InterfaceType:
+				typeInfo.IsInterface = true
 			case *ast.Ident:
 				typeInfo.Derived = typeValue.Name
 				typeInfo.IsDerived = true
@@ -319,7 +398,17 @@ func (v *FileInfo) Visit(node ast.Node) ast.Visitor {
 				}
 				v.currentFunctionInfo = nil
 			}
+		case *ast.FieldList:
+			if v.currentTypInfo != nil && v.currentTypInfo.IsInterface {
+				v.currentTypInfo.receivers = toFunctionInfos(value)
+				v.currentTypInfo = nil
+			}
+		case *ast.ImportSpec:
+			if value.Name != nil {
+				v.Imports[value.Name.String()] = value.Path.Value
+			}
 		}
+
 	}
 	return v
 }
@@ -332,6 +421,7 @@ func NewFileInfo(basePath, packageName, filename string, fileSet *token.FileSet)
 		packageName: packageName,
 		types:       make(map[string]*TypeInfo),
 		functions:   make(map[string][]*FunctionInfo),
+		Imports:     make(map[string]string),
 		fileSet:     fileSet}
 	return result
 }
