@@ -26,10 +26,15 @@ func scanStructMethods(structOrItsType interface{}, scanned map[reflect.Type]boo
 	if depth < 0 {
 		return nil
 	}
+
 	structValue, err := TryDiscoverValueByKind(reflect.ValueOf(structOrItsType), reflect.Struct)
 	if err != nil {
-		return err
+		structValue := reflect.ValueOf(structOrItsType)
+		if !(structValue.Kind() == reflect.Interface) {
+			return err
+		}
 	}
+
 	structType := structValue.Type()
 	if _, hasScan := scanned[structType]; hasScan {
 		return nil
@@ -281,14 +286,23 @@ func createEmptySlice(source reflect.Value, dataTypes map[string]bool) {
 	var targetComponentPointer = reflect.New(componentType)
 	var targetComponent = targetComponentPointer.Elem()
 	if DereferenceType(componentType).Kind() == reflect.Struct {
-		structElement := reflect.New(targetComponent.Type().Elem())
+		componentType := targetComponent.Type()
+		isPointer := componentType.Kind() == reflect.Ptr
+		if isPointer {
+			componentType = componentType.Elem()
+		}
+		structElement := reflect.New(componentType)
 		initStruct(structElement.Interface(), dataTypes)
-		targetComponentPointer.Elem().Set(structElement)
+
+		if isPointer {
+			targetComponentPointer.Elem().Set(structElement)
+		} else {
+			targetComponentPointer.Elem().Set(structElement.Elem())
+		}
 		initStruct(targetComponentPointer.Elem().Interface(), dataTypes)
 	}
 	slice.Set(reflect.Append(slice, targetComponentPointer.Elem()))
 	source.Set(slicePointer.Elem())
-
 }
 
 //InitStruct initialise any struct pointer to empty struct
@@ -332,6 +346,11 @@ func initStruct(source interface{}, dataTypes map[string]bool) {
 
 	_ = ProcessStruct(source, func(fieldType reflect.StructField, fieldValue reflect.Value) error {
 		if !fieldValue.CanInterface() {
+			return nil
+		}
+
+		if fieldValue.Kind() == reflect.String && fieldValue.CanSet() {
+			fieldValue.SetString(" ")
 			return nil
 		}
 
@@ -492,13 +511,15 @@ func getStructMeta(source interface{}, meta *StructMeta, trackedTypes map[string
 
 		if IsStruct(value) {
 			var fieldStruct = &StructMeta{}
-
 			switch field.Kind() {
 			case reflect.Ptr:
+				var fieldValue interface{}
 				if field.IsNil() {
-					return nil
+					fieldValue = reflect.New(field.Type().Elem()).Interface()
+				} else {
+					fieldValue = field.Elem().Interface()
 				}
-				if getStructMeta(field.Elem().Interface(), fieldStruct, trackedTypes) {
+				if getStructMeta(fieldValue, fieldStruct, trackedTypes) {
 					meta.Dependencies = append(meta.Dependencies, fieldStruct)
 				}
 
