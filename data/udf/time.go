@@ -38,3 +38,30 @@ func FormatTime(source interface{}, state data.Map) (interface{}, error) {
 	}
 	return timeValue.Format(timeLayout), nil
 }
+
+//Elapsed returns elapsed time
+func Elapsed(source interface{}, state data.Map) (interface{}, error) {
+	inThePast, err := toolbox.ToTime(source, time.RFC3339)
+	if err != nil {
+		return nil, err
+	}
+	elapsed := time.Now().Sub(*inThePast).Truncate(time.Second)
+
+	days := elapsed / (24 * time.Hour)
+	hours := int(elapsed.Hours()) % 24
+	min := int(elapsed.Minutes()) % 60
+	sec := int(elapsed.Seconds()) % 60
+	result := ""
+	if days > 0 {
+		result = fmt.Sprintf("%dd", int(days))
+	}
+	if result == "" && hours > 0 {
+		result += fmt.Sprintf("%dh", hours)
+	}
+	if result == "" && min > 0 {
+		result += fmt.Sprintf("%dm", min)
+	}
+	result += fmt.Sprintf("%ds", sec)
+	return result, nil
+
+}

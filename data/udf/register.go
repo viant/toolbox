@@ -26,4 +26,8 @@ func Register(aMap data.Map) {
 	aMap.Put("Base64Decode", Base64Decode)
 	aMap.Put("Base64DecodeText", Base64DecodeText)
 	aMap.Put("TrimSpace", TrimSpace)
+	aMap.Put("Elapsed", Elapsed)
+	aMap.Put("Sum", Elapsed)
+	aMap.Put("Count", Elapsed)
+	aMap.Put("AsNumber", Elapsed)
 }

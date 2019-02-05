@@ -2,6 +2,7 @@ package udf
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/toolbox/data"
 	"testing"
 )
 
@@ -93,4 +94,56 @@ func TestTrimSpace(t *testing.T) {
 	trimmed, _ := TrimSpace(" erer ", nil)
 	assert.EqualValues(t, `erer`, trimmed)
 
+}
+
+func TestSum(t *testing.T) {
+	{ //sum slice keys
+		var aMap = data.NewMap()
+		var collection = data.NewCollection()
+		collection.Push(map[string]interface{}{
+			"amount": 2,
+		})
+		collection.Push(map[string]interface{}{
+			"amount": 12,
+		})
+		aMap.SetValue("node1.obj", collection)
+		total, err := Sum("node1/obj/*/amount", aMap)
+		assert.Nil(t, err)
+		assert.Equal(t, 14, total)
+	}
+	{ //sum map keys
+		var aMap = data.NewMap()
+		aMap.SetValue("node1.obj.k1.amount", 1)
+		aMap.SetValue("node1.obj.k2.amount", 2)
+		aMap.SetValue("node1.obj.k3.amount", 3)
+		total, err := Sum("node1/obj/*/amount", aMap)
+		assert.Nil(t, err)
+		assert.Equal(t, 6, total)
+	}
+}
+
+func TestCount(t *testing.T) {
+	{ //sum slice keys
+		var aMap = data.NewMap()
+		var collection = data.NewCollection()
+		collection.Push(map[string]interface{}{
+			"amount": 2,
+		})
+		collection.Push(map[string]interface{}{
+			"amount": 12,
+		})
+		aMap.SetValue("node1.obj", collection)
+		total, err := Count("node1/obj/*/amount", aMap)
+		assert.Nil(t, err)
+		assert.Equal(t, 2, total)
+	}
+	{ //sum map keys
+		var aMap = data.NewMap()
+		aMap.SetValue("node1.obj.k1.amount", 1)
+		aMap.SetValue("node1.obj.k2.amount", 2)
+		aMap.SetValue("node1.obj.k3.amount", 3)
+		total, err := Count("node1/obj/*/amount", aMap)
+		assert.Nil(t, err)
+		assert.Equal(t, 3, total)
+	}
 }

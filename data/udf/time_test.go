@@ -49,3 +49,11 @@ func Test_FormatTime(t *testing.T) {
 	}
 
 }
+
+func TestElapsed(t *testing.T) {
+	{
+		value, err := Elapsed(time.Now().Add(-time.Hour).Format(time.RFC3339), nil)
+		assert.Nil(t, err)
+		assert.Equal(t, "1h0s", value)
+	}
+}

@@ -157,3 +157,108 @@ func TrimSpace(source interface{}, state data.Map) (interface{}, error) {
 	text := toolbox.AsString(source)
 	return strings.TrimSpace(text), nil
 }
+
+//Count returns count of matched nodes leaf value
+func Count(xPath interface{}, state data.Map) (interface{}, error) {
+	result, err := aggregate(xPath, state, func(previous, newValue float64) float64 {
+		return previous + 1
+	})
+	if err != nil {
+		return nil, err
+	}
+	return AsNumber(result, nil)
+}
+
+//Sum returns sums of matched nodes leaf value
+func Sum(xPath interface{}, state data.Map) (interface{}, error) {
+	result, err := aggregate(xPath, state, func(previous, newValue float64) float64 {
+		return previous + newValue
+	})
+	if err != nil {
+		return nil, err
+	}
+	return AsNumber(result, nil)
+}
+
+//AsNumber return int or float
+func AsNumber(value interface{}, state data.Map) (interface{}, error) {
+	floatValue := toolbox.AsFloat(value)
+	if float64(int(floatValue)) == floatValue {
+		return int(floatValue), nil
+	}
+	return floatValue, nil
+}
+
+//Aggregate applies an aggregation function to matched path
+func aggregate(xPath interface{}, state data.Map, agg func(previous, newValue float64) float64) (float64, error) {
+	var result = 0.0
+	if state == nil {
+		return 0.0, fmt.Errorf("state was empty")
+	}
+	fragments := strings.Split(toolbox.AsString(xPath), "/")
+	var node = state
+	var nodeValue interface{}
+	for i, part := range fragments {
+
+		isLast := i == len(fragments)-1
+		if isLast {
+			if !node.Has(part) {
+				break
+			}
+			value := node.GetFloat(part)
+			result = agg(result, value)
+			continue
+		}
+		if part != "*" {
+			nodeValue = node.Get(part)
+			if nodeValue == nil {
+				break
+			}
+			if toolbox.IsMap(nodeValue) {
+				node = toolbox.AsMap(nodeValue)
+				continue
+			}
+			if toolbox.IsSlice(nodeValue) {
+				continue
+			}
+			break
+		}
+
+		if nodeValue == nil {
+			break
+		}
+
+		subXPath := strings.Join(fragments[i+1:], "/")
+		if toolbox.IsSlice(nodeValue) {
+			aSlice := toolbox.AsSlice(nodeValue)
+			for _, item := range aSlice {
+				if toolbox.IsMap(item) {
+					value, err := aggregate(subXPath, toolbox.AsMap(item), agg)
+					if err != nil {
+						return 0, err
+					}
+					result = agg(result, value)
+					continue
+				}
+				return 0, fmt.Errorf("unsupported path type:%T", item)
+			}
+		}
+
+		if toolbox.IsMap(nodeValue) {
+			aMap := toolbox.AsMap(nodeValue)
+			for _, item := range aMap {
+				if toolbox.IsMap(item) {
+					value, err := aggregate(subXPath, toolbox.AsMap(item), agg)
+					if err != nil {
+						return 0, err
+					}
+					result = agg(result, value)
+					continue
+				}
+				return 0, fmt.Errorf("unsupported path type:%T", item)
+			}
+		}
+		break
+	}
+	return result, nil
+}
