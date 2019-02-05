@@ -456,7 +456,6 @@ func (c *Converter) assignConvertedSlice(target, source interface{}, targetIndir
 	slice := slicePointer.Elem()
 	componentType := DiscoverComponentType(target)
 	var err error
-
 	ProcessSlice(source, func(item interface{}) bool {
 		var targetComponentPointer = reflect.New(componentType)
 		if componentType.Kind() == reflect.Map {
@@ -468,7 +467,6 @@ func (c *Converter) assignConvertedSlice(target, source interface{}, targetIndir
 			err = fmt.Errorf("failed to convert slice item from %T to %T, values: from %v to %v, due to %v", item, targetComponentPointer.Interface(), item, targetComponentPointer.Interface(), err)
 			return false
 		}
-
 		slice.Set(reflect.Append(slice, targetComponentPointer.Elem()))
 		return true
 	})
@@ -870,7 +868,7 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		if sourceValue.Type().AssignableTo(targetValue.Type()) {
 			targetIndirectValue.Set(sourceValue.Elem())
 			return nil
-		} else if sourceValue.Type().AssignableTo(targetValue.Type().Elem()) {
+		} else if sourceValue.Type().AssignableTo(targetValue.Type().Elem()) && sourceValue.Kind() == targetValue.Type().Elem().Kind() {
 			targetValue.Elem().Set(sourceValue)
 			return nil
 		}
@@ -1106,19 +1104,16 @@ func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sou
 	if targetMap == nil {
 		return fmt.Errorf("target %T is not a map", target)
 	}
+
 	return ProcessStruct(source, func(fieldType reflect.StructField, field reflect.Value) error {
 		if !field.CanInterface() {
 			return nil
 		}
-
 		value := field.Interface()
 		if value == nil {
 			return nil
 		}
-		if timeVal, ok := value.(time.Time); ok {
-			value = timeVal.Format(time.RFC3339)
-		}
-		if timeVal, ok := value.(*time.Time); ok && timeVal != nil {
+		if timeVal := tryExtractTime(value); timeVal != nil {
 			value = timeVal.Format(time.RFC3339)
 		}
 		var fieldTarget interface{}
@@ -1151,8 +1146,10 @@ func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sou
 		} else if err := c.AssignConverted(&fieldTarget, value); err != nil {
 			return err
 		}
+
 		fieldName := fieldType.Name
 		keyTag := strings.Trim(fieldType.Tag.Get(c.MappedKeyTag), `"`)
+
 		if keyTag != "" {
 			key := strings.Split(keyTag, ",")[0]
 			if key == "-" {
@@ -1164,6 +1161,33 @@ func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sou
 		targetMap[fieldName] = fieldTarget
 		return nil
 	})
+}
+
+func tryExtractTime(value interface{}) *time.Time {
+
+	if timeVal, ok := value.(time.Time); ok {
+		return &timeVal
+	}
+	if timeVal, ok := value.(*time.Time); ok && timeVal != nil {
+		return timeVal
+	}
+	if !IsStruct(value) {
+		return nil
+	}
+	value = DereferenceValue(value)
+	structValue := reflect.ValueOf(value)
+	if !structValue.IsValid() {
+		return nil
+	}
+	if structValue.NumField() > 1 {
+		return nil
+	}
+	timeField, ok := structValue.Type().FieldByName("Time")
+	if !ok || !timeField.Anonymous {
+		return nil
+	}
+	timeValue := structValue.Field(timeField.Index[0])
+	return tryExtractTime(timeValue.Interface())
 }
 
 //NewColumnConverter create a new converter, that has ability to convert map to struct using column mapping
@@ -1186,7 +1210,7 @@ var DefaultConverter = NewConverter("", "name")
 func DereferenceValues(source interface{}) interface{} {
 	if IsMap(source) {
 		var aMap = make(map[string]interface{})
-		ProcessMap(source, func(key, value interface{}) bool {
+		_ = ProcessMap(source, func(key, value interface{}) bool {
 			if value == nil {
 				return true
 			}
