@@ -133,13 +133,21 @@ func ProcessStruct(aStruct interface{}, handler func(fieldType reflect.StructFie
 			}
 			aStruct = field.Interface()
 		} else {
-			if !field.CanAddr() {
+
+			if field.CanAddr() {
+				aStruct = field.Addr().Interface()
+			} else if field.CanInterface() {
+				aStruct = field.Interface()
+			} else {
 				continue
 			}
-			aStruct = field.Addr().Interface()
 		}
 		if err := ProcessStruct(aStruct, func(fieldType reflect.StructField, field reflect.Value) error {
-			fields[fieldType.Name] = &StructField{Type: fieldType, Value: field, Owner: field.Addr()}
+			structField := &StructField{Type: fieldType, Value: field, Owner: field}
+			if field.CanAddr() {
+				structField.Owner = field.Addr()
+			}
+			fields[fieldType.Name] = structField
 			return nil
 		}); err != nil {
 			return err
@@ -486,7 +494,7 @@ func getStructMeta(source interface{}, meta *StructMeta, trackedTypes map[string
 			field = structField.Value
 		}
 
-		if strings.Contains(string(fieldType.Tag), "json:\"-") {
+		if isJSONSkippable(string(fieldType.Tag)) {
 			return nil
 		}
 		fieldMeta := &StructFieldMeta{}
@@ -564,4 +572,8 @@ func getStructMeta(source interface{}, meta *StructMeta, trackedTypes map[string
 		return nil
 	})
 	return true
+}
+
+func isJSONSkippable(tag string) bool {
+	return strings.Contains(tag, "json:\"-")
 }
