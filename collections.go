@@ -782,3 +782,56 @@ func Pairs(params ...interface{}) map[string]interface{} {
 	}
 	return result
 }
+
+// Intersect find elements presents in slice a and b,  match is appended to result slice
+//It accept generic slices,   All slices should have items of the same type or interface{} type
+func Intersect(a, b interface{}, resultPointer interface{}) error {
+	if reflect.ValueOf(resultPointer).Kind() != reflect.Ptr {
+		return fmt.Errorf("resultPointer has to be pointer but had: %T", resultPointer)
+	}
+	var aItems = make(map[interface{}]bool)
+	ProcessSlice(a, func(item interface{}) bool {
+		aItems[item] = true
+		return true
+	})
+
+	var appendMatch func(item interface{}) error
+	switch aSlicePrt :=resultPointer.(type) {
+	case *[]interface{}:
+		appendMatch = func(item interface{}) error {
+			*aSlicePrt = append(*aSlicePrt, item)
+			return nil
+		}
+	case *[]string:
+		appendMatch = func(item interface{}) error {
+			*aSlicePrt = append(*aSlicePrt, AsString(item))
+			return nil
+		}
+	case *[]int:
+		appendMatch = func(item interface{}) error {
+			intValue, err := ToInt(item)
+			if err != nil {
+				return err
+			}
+			*aSlicePrt = append(*aSlicePrt, intValue)
+			return nil
+		}
+	default:
+		appendMatch = func(item interface{}) error {
+			sliceValue := reflect.ValueOf(resultPointer).Elem()
+			//TODO add check that type of the slice is assignable from item
+			sliceValue.Set(reflect.Append(sliceValue, reflect.ValueOf(item)))
+			return nil
+		}
+	}
+	var err  error
+	ProcessSlice(b, func(item interface{}) bool {
+		if aItems[item] {
+			if err = appendMatch(item);err != nil {
+				return false
+			}
+		}
+		return true
+	})
+	return err
+}

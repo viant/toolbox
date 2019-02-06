@@ -1,3 +1,6 @@
+## Feb 3 2019 - v0.15.1
+ - Added Slice Intersect to collections 
+
 ## Feb 3 2019 - v0.15.0
  - Added Sum, Count, AsNumber Elapsed data/udf
  - Patched StructHelper
