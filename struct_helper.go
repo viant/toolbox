@@ -206,6 +206,7 @@ func BuildTagMapping(structTemplatePointer interface{}, mappedKeyTag string, res
 		}
 
 		key := field.Tag.Get(mappedKeyTag)
+		key = strings.Split(key, ",")[0]
 		if mappedKeyTag == fieldNameKey {
 			key = field.Name
 		}

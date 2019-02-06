@@ -796,7 +796,7 @@ func Intersect(a, b interface{}, resultPointer interface{}) error {
 	})
 
 	var appendMatch func(item interface{}) error
-	switch aSlicePrt :=resultPointer.(type) {
+	switch aSlicePrt := resultPointer.(type) {
 	case *[]interface{}:
 		appendMatch = func(item interface{}) error {
 			*aSlicePrt = append(*aSlicePrt, item)
@@ -824,10 +824,10 @@ func Intersect(a, b interface{}, resultPointer interface{}) error {
 			return nil
 		}
 	}
-	var err  error
+	var err error
 	ProcessSlice(b, func(item interface{}) bool {
 		if aItems[item] {
-			if err = appendMatch(item);err != nil {
+			if err = appendMatch(item); err != nil {
 				return false
 			}
 		}

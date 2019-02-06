@@ -473,53 +473,50 @@ func Test_DeleteEmptyKeys(t *testing.T) {
 	}, cloned)
 }
 
-
 func TestIntersection(t *testing.T) {
 
+	useCase1Actual := []string{}
+	useCase2Actual := []int{}
+	useCase3Actual := []float32{}
 
-	useCase1Actual :=[]string{}
-	useCase2Actual :=[]int{}
-	useCase3Actual :=[]float32{}
-
-	var useCases = []struct{
+	var useCases = []struct {
 		description string
-		sliceA interface{}
-		sliceB interface{}
-		actual interface{}
-		expect interface{}
-		hasError bool
+		sliceA      interface{}
+		sliceB      interface{}
+		actual      interface{}
+		expect      interface{}
+		hasError    bool
 	}{
 		{
-			description:"string slice intersection",
-			sliceA:[]string{"a", "bc", "z", "eee"},
-			sliceB:[]string{"a2", "bc", "5z", "eee"},
-			actual:&useCase1Actual,
-			expect:[]string{"bc", "eee"},
+			description: "string slice intersection",
+			sliceA:      []string{"a", "bc", "z", "eee"},
+			sliceB:      []string{"a2", "bc", "5z", "eee"},
+			actual:      &useCase1Actual,
+			expect:      []string{"bc", "eee"},
 		},
 		{
-			description:"int slice intersection",
-			sliceA:[]int{1, 2, 3, 4},
-			sliceB:[]int{3, 4, 5, 6},
-			actual:&useCase2Actual,
-			expect:[]int{3, 4},
+			description: "int slice intersection",
+			sliceA:      []int{1, 2, 3, 4},
+			sliceB:      []int{3, 4, 5, 6},
+			actual:      &useCase2Actual,
+			expect:      []int{3, 4},
 		},
 		{
-			description:"float slice intersection",
-			sliceA:[]float32{1.1, 2.1, 3.1, 4.1},
-			sliceB:[]float32{3.1, 4.1, 5.1, 6.1},
-			actual:&useCase3Actual,
-			expect:[]float32{3.1, 4.1},
+			description: "float slice intersection",
+			sliceA:      []float32{1.1, 2.1, 3.1, 4.1},
+			sliceB:      []float32{3.1, 4.1, 5.1, 6.1},
+			actual:      &useCase3Actual,
+			expect:      []float32{3.1, 4.1},
 		},
-
 	}
 
-	for _, useCase :=range useCases {
+	for _, useCase := range useCases {
 		err := toolbox.Intersect(useCase.sliceA, useCase.sliceB, useCase.actual)
 		if useCase.hasError {
 			assert.NotNil(t, err, useCase.description)
 			continue
 		}
-		if ! assert.Nil(t, err, useCase.description) {
+		if !assert.Nil(t, err, useCase.description) {
 			continue
 		}
 		actual := reflect.ValueOf(useCase.actual).Elem().Interface()
