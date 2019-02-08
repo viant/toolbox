@@ -232,6 +232,24 @@ func NewNilValueProvider() ValueProvider {
 	return result
 }
 
+
+
+
+type ConstValueProvider struct{
+	Value string
+}
+
+func (p ConstValueProvider) Get(context Context, arguments ...interface{}) (interface{}, error) {
+	return p.Value, nil
+}
+
+//NewConstValueProvider returns a provider that returns a nil
+func NewConstValueProvider(value string) ValueProvider {
+	var result ValueProvider = &ConstValueProvider{Value: value}
+	return result
+}
+
+
 type currentDateProvider struct{}
 
 func (p currentDateProvider) Get(context Context, arguments ...interface{}) (interface{}, error) {
