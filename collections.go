@@ -835,6 +835,3 @@ func Intersect(a, b interface{}, resultPointer interface{}) error {
 	})
 	return err
 }
-
-
-
