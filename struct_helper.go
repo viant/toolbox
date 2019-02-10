@@ -186,9 +186,10 @@ func BuildTagMapping(structTemplatePointer interface{}, mappedKeyTag string, res
 	for i := 0; i < reflectStructType.NumField(); i++ {
 		var field reflect.StructField
 		field = reflectStructType.Field(i)
-		if field.Anonymous {
-			var anonymousType = DereferenceType(field.Type)
+		key := getTagValues(field, mappedKeyTag)
 
+		if field.Anonymous && key == "" {
+			var anonymousType = DereferenceType(field.Type)
 			if anonymousType.Kind() == reflect.Struct {
 				anonymousMapping := BuildTagMapping(reflect.New(anonymousType).Interface(), mappedKeyTag, resultExclusionTag, inheritKeyFromField, convertKeyToLowerCase, tags)
 				for k, v := range anonymousMapping {
@@ -197,6 +198,7 @@ func BuildTagMapping(structTemplatePointer interface{}, mappedKeyTag string, res
 					anonymousMappings[k][fieldIndexKey] = AsString(i)
 				}
 			}
+
 			continue
 		}
 
@@ -205,12 +207,7 @@ func BuildTagMapping(structTemplatePointer interface{}, mappedKeyTag string, res
 			continue
 		}
 
-		key := field.Tag.Get(mappedKeyTag)
-		key = strings.Split(key, ",")[0]
-		if mappedKeyTag == fieldNameKey {
-			key = field.Name
-		}
-		if len(key) == 0 {
+		if key == "" {
 			if !inheritKeyFromField {
 				continue
 			}
@@ -237,6 +234,15 @@ func BuildTagMapping(structTemplatePointer interface{}, mappedKeyTag string, res
 		}
 	}
 	return result
+}
+
+func getTagValues(field reflect.StructField, mappedKeyTag string) string {
+	key := field.Tag.Get(mappedKeyTag)
+	key = strings.Split(key, ",")[0]
+	if mappedKeyTag == fieldNameKey {
+		key = field.Name
+	}
+	return key
 }
 
 //NewFieldSettingByKey reads field's tags and returns them indexed by passed in key, fieldName is always part of the resulting map unless filed has "transient" tag.
