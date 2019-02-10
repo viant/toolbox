@@ -129,6 +129,12 @@ func (p castedValueProvider) Get(context Context, arguments ...interface{}) (int
 		return castedTime, nil
 	case "int":
 		return AsInt(arguments[1]), nil
+	case "int32":
+		return int32(AsInt(arguments[1])), nil
+	case "int64":
+		return int64(AsInt(arguments[1])), nil
+	case "float32":
+		return float32(AsFloat(arguments[1])), nil
 	case "float":
 		return AsFloat(arguments[1]), nil
 	case "bool":
@@ -232,13 +238,12 @@ func NewNilValueProvider() ValueProvider {
 	return result
 }
 
-
-
-
-type ConstValueProvider struct{
+//ConstValueProvider represnet a const value provider
+type ConstValueProvider struct {
 	Value string
 }
 
+//Get return provider value
 func (p ConstValueProvider) Get(context Context, arguments ...interface{}) (interface{}, error) {
 	return p.Value, nil
 }
@@ -248,7 +253,6 @@ func NewConstValueProvider(value string) ValueProvider {
 	var result ValueProvider = &ConstValueProvider{Value: value}
 	return result
 }
-
 
 type currentDateProvider struct{}
 
