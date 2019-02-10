@@ -26,7 +26,8 @@ func NormalizeKVPairs(source interface{}) (interface{}, error) {
 	var normalized interface{}
 	if isDataStruct {
 		var aMap = make(map[string]interface{})
-		if err = ProcessMap(source, func(k, value interface{}) bool {
+
+		err = ProcessMap(source, func(k, value interface{}) bool {
 			var key = AsString(k)
 			aMap[key] = value
 			if value == nil {
@@ -38,25 +39,24 @@ func NormalizeKVPairs(source interface{}) (interface{}, error) {
 				}
 			}
 			return true
-		}); err == nil {
+		})
+		if err == nil {
 			return aMap, nil
+		}
+		if IsSlice(aMap) {
+			return source, err
 		}
 		if IsSlice(source) { //yaml style map conversion if applicable
 			aSlice := AsSlice(source)
 			if len(aSlice) == 0 {
 				return source, nil
 			}
-			if len(aSlice) == 1 && (IsMap(aSlice[0]) || IsStruct(aSlice[0])) {
-				if item, err := NormalizeKVPairs(aSlice[0]); err == nil {
-					return []interface{}{item}, nil
-				}
-
-			} else if IsSlice(aSlice[0]) {
-				for i, item := range aSlice {
+			for i, item := range aSlice {
+				if IsMap(item) || IsSlice(item) {
 					if normalized, err = NormalizeKVPairs(item); err == nil {
 						aSlice[i] = normalized
 					} else {
-						return nil, err
+						return source, nil
 					}
 				}
 			}
