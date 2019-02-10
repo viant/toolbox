@@ -1,3 +1,9 @@
+## Feb 10 2019 - v0.16.0
+ - Added ConstValueProvider
+ - Patched BuildTagMapping with anonymous explicit JSON field
+ - Enhanced cast value provided with int32, int64, float32
+ - Patched NormalizeKVPairs
+ 
 ## Feb 3 2019 - v0.15.1
  - Added Slice Intersect to collections 
 
