@@ -1,3 +1,6 @@
+## Feb 12 2019 - v0.16.1
+ - patched *number nil pointer error
+
 ## Feb 10 2019 - v0.16.0
  - Added ConstValueProvider
  - Patched BuildTagMapping with anonymous explicit JSON field
