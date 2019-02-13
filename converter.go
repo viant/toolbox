@@ -119,7 +119,11 @@ func ToFloat(value interface{}) (float64, error) {
 		return 0.0, nil
 	}
 	if reflect.TypeOf(value).Kind() == reflect.Ptr {
-		return ToFloat(DereferenceValue(value))
+		floatValue, err := ToFloat(DereferenceValue(value))
+		if err != nil && IsNilPointerError(err) {
+			return floatValue, nil
+		}
+		return floatValue, err
 	}
 	valueAsString := AsString(DereferenceValue(value))
 	return strconv.ParseFloat(valueAsString, 64)
@@ -169,7 +173,7 @@ func AsInt(value interface{}) int {
 //ToInt converts input value to int or error
 func ToInt(value interface{}) (int, error) {
 	if value == nil {
-		return 0, NewNilPointerError("float value was nil")
+		return 0, NewNilPointerError("int value was nil")
 	}
 	switch actual := value.(type) {
 	case int:
@@ -203,7 +207,13 @@ func ToInt(value interface{}) (int, error) {
 		return 0, nil
 	}
 	if reflect.TypeOf(value).Kind() == reflect.Ptr {
-		return ToInt(DereferenceValue(value))
+		value := DereferenceValue(value)
+		if intValue, err := ToInt(value); err != nil {
+			if err != nil && IsNilPointerError(err) {
+				return intValue, err
+			}
+			return intValue, err
+		}
 	}
 	valueAsString := AsString(value)
 	if strings.Contains(valueAsString, ".") {
@@ -751,7 +761,7 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 
 	case *int, *int8, *int16, *int32, *int64:
 		directValue := reflect.Indirect(reflect.ValueOf(targetValuePointer))
-		var intValue, err = ToInt(DereferenceValue(source))
+		var intValue, err = ToInt(source)
 		if err != nil {
 			return err
 		}
@@ -760,8 +770,12 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 
 	case **int, **int8, **int16, **int32, **int64:
 		directType := reflect.TypeOf(targetValuePointer).Elem().Elem()
-		var intValue, err = ToInt(DereferenceValue(source))
+		var intValue, err = ToInt(source)
+
 		if err != nil {
+			if IsNilPointerError(err) {
+				return nil
+			}
 			return err
 		}
 		switch directType.Kind() {
@@ -783,15 +797,15 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		return nil
 	case *uint, *uint8, *uint16, *uint32, *uint64:
 		directValue := reflect.Indirect(reflect.ValueOf(targetValuePointer))
-		value, err := ToInt(DereferenceValue(source))
-		if !IsNilPointerError(err) && err != nil {
+		value, err := ToInt(source)
+		if err != nil {
 			return err
 		}
 		directValue.SetUint(uint64(value))
 		return nil
 	case **uint, **uint8, **uint16, **uint32, **uint64:
 		directType := reflect.TypeOf(targetValuePointer).Elem().Elem()
-		value, err := ToInt(DereferenceValue(source))
+		value, err := ToInt(source)
 		if !IsNilPointerError(err) && err != nil {
 			return err
 		}
@@ -815,7 +829,7 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 
 	case *float32, *float64:
 		directValue := reflect.Indirect(reflect.ValueOf(targetValuePointer))
-		value, err := ToFloat(DereferenceValue(source))
+		value, err := ToFloat(source)
 		if err != nil {
 			return err
 		}
@@ -824,7 +838,7 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 	case **float32, **float64:
 		directType := reflect.TypeOf(targetValuePointer).Elem().Elem()
 
-		value, err := ToFloat(DereferenceValue(source))
+		value, err := ToFloat(source)
 		if err != nil {
 			return err
 		}

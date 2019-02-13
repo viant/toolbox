@@ -60,7 +60,7 @@ func (s *Service) CredentialsFromLocation(secret string) (*cred.Config, error) {
 	resource := url.NewResource(secretLocation)
 	configContent, err := resource.Download()
 	if err != nil {
-		return nil, fmt.Errorf("failed to open: %v %v", secretLocation, err)
+		return nil, fmt.Errorf("failed to open: '%v', due to: %v", secretLocation, err)
 	}
 	credConfig = &cred.Config{}
 	if err = credConfig.LoadFromReader(bytes.NewReader(configContent), path.Ext(secretLocation)); err != nil {
