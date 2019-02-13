@@ -249,10 +249,12 @@ func textToTime(value, dateLayout string) (*time.Time, error) {
 	}
 	timeValue, err := ParseTime(value, dateLayout)
 	if err != nil {
-		if len(value) > len(dateLayout) {
-			value = string(value[:len(dateLayout)])
+		if dateLayout != "" {
+			if len(value) > len(dateLayout) {
+				value = string(value[:len(dateLayout)])
+			}
+			timeValue, err = ParseTime(value, dateLayout)
 		}
-		timeValue, err = ParseTime(value, dateLayout)
 		if err != nil { //JSON default time format fallback
 			if timeValue, err = ParseTime(value, time.RFC3339); err == nil {
 				return &timeValue, err
@@ -932,6 +934,13 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		}
 
 	} else if targetIndirectValue.Kind() == reflect.Struct {
+		timeValuePtr := tryExtractTime(target)
+		if timeValuePtr != nil {
+			if timeValue, err := ToTime(source, c.DateLayout); err == nil {
+				return c.assignEmbeddedTime(target, timeValue)
+			}
+		}
+
 		sourceMap, err := ToMap(source)
 		if err != nil {
 			return fmt.Errorf("unable to convert %T to %T", source, target)
@@ -980,6 +989,20 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		}
 	}
 	return fmt.Errorf("Unable to convert type %T into type %T\n\t%v", source, target, source)
+}
+
+func (c *Converter) assignEmbeddedTime(target interface{}, source *time.Time) error {
+	targetValue := reflect.ValueOf(target)
+	structValue := targetValue
+	if targetValue.Kind() == reflect.Ptr {
+		structValue = reflect.Indirect(targetValue)
+	}
+	anonymous := structValue.Field(0)
+	anonymous.Set(reflect.ValueOf(*source))
+	if targetValue.Kind() == reflect.Ptr {
+		targetValue.Elem().Set(structValue)
+	}
+	return nil
 }
 
 type keyValue struct {
@@ -1188,8 +1211,16 @@ func tryExtractTime(value interface{}) *time.Time {
 	if !IsStruct(value) {
 		return nil
 	}
-	value = DereferenceValue(value)
-	structValue := reflect.ValueOf(value)
+
+	structOrPtrValue := reflect.ValueOf(value)
+	structValue := structOrPtrValue
+	if structOrPtrValue.Kind() == reflect.Ptr {
+		structValue = reflect.Indirect(structOrPtrValue)
+	}
+	if structValue.Kind() == reflect.Ptr {
+		structValue = reflect.ValueOf(DereferenceValue(structValue.Interface()))
+	}
+
 	if !structValue.IsValid() {
 		return nil
 	}
@@ -1201,6 +1232,9 @@ func tryExtractTime(value interface{}) *time.Time {
 		return nil
 	}
 	timeValue := structValue.Field(timeField.Index[0])
+	if timeValue.CanAddr() {
+		return tryExtractTime(timeValue.Addr().Interface())
+	}
 	return tryExtractTime(timeValue.Interface())
 }
 
