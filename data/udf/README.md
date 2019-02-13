@@ -13,7 +13,7 @@
     expanded := aMap.ExpandAsText(`$FormatTime($ts, "yyyy")`)
  
 ```
-#### Data node selection substitution
+#### Data node selection
 
 
 ```go
