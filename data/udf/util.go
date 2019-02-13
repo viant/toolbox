@@ -180,6 +180,52 @@ func Sum(xPath interface{}, state data.Map) (interface{}, error) {
 	return AsNumber(result, nil)
 }
 
+//Select returns all matched attributes from matched nodes, attributes can be alised with sourcePath:alias
+func Select(params interface{}, state data.Map) (interface{}, error) {
+	var arguments = make([]interface{}, 0)
+	if toolbox.IsSlice(params) {
+		arguments = toolbox.AsSlice(params)
+	} else {
+		arguments = append(arguments, params)
+	}
+	xPath := toolbox.AsString(arguments[0])
+	var result = make([]interface{}, 0)
+	attributes := make([]string, 0)
+	for i := 1; i < len(arguments); i++ {
+		attributes = append(attributes, toolbox.AsString(arguments[i]))
+	}
+	err := matchPath(xPath, state, func(matched interface{}) error {
+		if len(attributes) == 0 {
+			result = append(result, matched)
+			return nil
+		}
+		if !toolbox.IsMap(matched) {
+			return fmt.Errorf("expected map for %v, but had %T", xPath, matched)
+		}
+		matchedMap := data.Map(toolbox.AsMap(matched))
+		var attributeValues = make(map[string]interface{})
+		for _, attr := range attributes {
+			if strings.Contains(attr, ":") {
+				kvPair := strings.SplitN(attr, ":", 2)
+				value, has := matchedMap.GetValue(kvPair[0])
+				if !has {
+					continue
+				}
+				attributeValues[kvPair[1]] = value
+			} else {
+				value, has := matchedMap.GetValue(attr)
+				if !has {
+					continue
+				}
+				attributeValues[attr] = value
+			}
+		}
+		result = append(result, attributeValues)
+		return nil
+	})
+	return result, err
+}
+
 //AsNumber return int or float
 func AsNumber(value interface{}, state data.Map) (interface{}, error) {
 	floatValue := toolbox.AsFloat(value)
@@ -195,6 +241,21 @@ func aggregate(xPath interface{}, state data.Map, agg func(previous, newValue fl
 	if state == nil {
 		return 0.0, fmt.Errorf("state was empty")
 	}
+	err := matchPath(toolbox.AsString(xPath), state, func(value interface{}) error {
+		if value == nil {
+			return nil
+		}
+		floatValue, err := toolbox.ToFloat(value)
+		if err != nil {
+			return err
+		}
+		result = agg(result, floatValue)
+		return nil
+	})
+	return result, err
+}
+
+func matchPath(xPath string, state data.Map, handler func(value interface{}) error) error {
 	fragments := strings.Split(toolbox.AsString(xPath), "/")
 	var node = state
 	var nodeValue interface{}
@@ -202,11 +263,30 @@ func aggregate(xPath interface{}, state data.Map, agg func(previous, newValue fl
 
 		isLast := i == len(fragments)-1
 		if isLast {
+			if part == "*" {
+				if toolbox.IsSlice(nodeValue) {
+					for _, item := range toolbox.AsSlice(nodeValue) {
+						if err := handler(item); err != nil {
+							return err
+						}
+					}
+					return nil
+				} else if toolbox.IsMap(nodeValue) {
+					for _, item := range toolbox.AsMap(nodeValue) {
+						if err := handler(item); err != nil {
+							return err
+						}
+					}
+				}
+				return handler(nodeValue)
+			}
+
 			if !node.Has(part) {
 				break
 			}
-			value := node.GetFloat(part)
-			result = agg(result, value)
+			if err := handler(node.Get(part)); err != nil {
+				return err
+			}
 			continue
 		}
 		if part != "*" {
@@ -227,38 +307,32 @@ func aggregate(xPath interface{}, state data.Map, agg func(previous, newValue fl
 		if nodeValue == nil {
 			break
 		}
-
 		subXPath := strings.Join(fragments[i+1:], "/")
 		if toolbox.IsSlice(nodeValue) {
 			aSlice := toolbox.AsSlice(nodeValue)
 			for _, item := range aSlice {
 				if toolbox.IsMap(item) {
-					value, err := aggregate(subXPath, toolbox.AsMap(item), agg)
-					if err != nil {
-						return 0, err
+					if err := matchPath(subXPath, toolbox.AsMap(item), handler); err != nil {
+						return err
 					}
-					result = agg(result, value)
 					continue
 				}
-				return 0, fmt.Errorf("unsupported path type:%T", item)
+				return fmt.Errorf("unsupported path type:%T", item)
 			}
 		}
-
 		if toolbox.IsMap(nodeValue) {
 			aMap := toolbox.AsMap(nodeValue)
 			for _, item := range aMap {
 				if toolbox.IsMap(item) {
-					value, err := aggregate(subXPath, toolbox.AsMap(item), agg)
-					if err != nil {
-						return 0, err
+					if err := matchPath(subXPath, toolbox.AsMap(item), handler); err != nil {
+						return err
 					}
-					result = agg(result, value)
 					continue
 				}
-				return 0, fmt.Errorf("unsupported path type:%T", item)
+				return fmt.Errorf("unsupported path type:%T", item)
 			}
 		}
 		break
 	}
-	return result, nil
+	return nil
 }

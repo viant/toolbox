@@ -30,4 +30,6 @@ func Register(aMap data.Map) {
 	aMap.Put("Sum", Elapsed)
 	aMap.Put("Count", Elapsed)
 	aMap.Put("AsNumber", Elapsed)
+	aMap.Put("Select", Select)
+
 }

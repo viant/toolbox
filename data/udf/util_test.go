@@ -147,3 +147,38 @@ func TestCount(t *testing.T) {
 		assert.Equal(t, 3, total)
 	}
 }
+
+func TestSelect(t *testing.T) {
+	{ //sum slice keys
+		var aMap = data.NewMap()
+		var collection = data.NewCollection()
+		collection.Push(map[string]interface{}{
+			"amount": 2,
+			"id":     2,
+			"name":   "p1",
+			"vendor": "v1",
+		})
+		collection.Push(map[string]interface{}{
+			"amount": 12,
+			"id":     3,
+			"name":   "p2",
+			"vendor": "v2",
+		})
+		aMap.SetValue("node1.obj", collection)
+
+		records, err := Select([]interface{}{"node1/obj/*", "id", "name:product"}, aMap)
+		assert.Nil(t, err)
+		assert.Equal(t, []interface{}{
+			map[string]interface{}{
+				"id":      2,
+				"product": "p1",
+			},
+			map[string]interface{}{
+				"id":      3,
+				"product": "p2",
+			},
+		}, records)
+
+	}
+
+}

@@ -1,3 +1,6 @@
+## Feb 13 2019 - v0.17.0
+ - Added $Select UDF 
+
 ## Feb 12 2019 - v0.16.2
  - patched *number nil pointer error
  - patched anonymous time struct conversion

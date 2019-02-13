@@ -2,6 +2,9 @@
 
 ### Usage
 
+
+#### Data substitution
+
 ```go
 
     aMap := data.NewMap();
@@ -10,8 +13,33 @@
     expanded := aMap.ExpandAsText(`$FormatTime($ts, "yyyy")`)
  
 ```
+#### Data node selection substitution
 
-_The list of defined UDFs:_
+
+```go
+
+	holder := data.NewMap()
+    collection := data.NewCollection()
+    collection.Push(map[string]interface{}{
+        "amount": 2,
+        "id":2,
+        "name":"p1",
+        "vendor":"v1",
+    })
+    collection.Push(map[string]interface{}{
+        "amount": 12,
+        "id":3,
+        "name":"p2",
+        "vendor":"v2",
+    })
+    holder.SetValue("node1.obj", collection)
+
+	records, err := Select([]interface{}{"node1/obj/*", "id", "name:product"}, holder)
+
+
+```
+
+#### The list of defined UDFs
 
 -  Length, Len returns length of slice, map or string
 -  AsMap - convert source into a map, it accepts data structure, or JSON, YAML literal
@@ -20,8 +48,18 @@ _The list of defined UDFs:_
 -  AsInt - convert source into a an int
 -  AsFloat - convert source into a a float
 -  AsBool  - convert source into a boolean
+-  AsNumber - converts to either int or float
 -  FormatTime, takes two arguments, date or now, followed by java style date format
 -  Values - returns map values
 -  Keys  - return map keys
 -  IndexOf - returns index of matched slice element
 -  Join - join slice element with supplied separator
+-  Sum - sums values for matched Path, i.e. $Sum('node1/obj/*/amount')
+-  Count - counts values for matched Path, i.e. $Sum('node1/obj/*/amount')
+-  Select - selects attribute for matched path, i.e $Select("node1/obj/*", "id", "name:product")
+-  QueryEscape - url escape
+-  QueryUnescape - url unescape
+-  Base64Encode
+-  Base64DecodeText
+-  TrimSpace
+-  Elapsed elapsed time  
