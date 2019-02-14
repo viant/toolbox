@@ -1,3 +1,6 @@
+## Feb 14 2019 - v0.17.1
+ - Added Rand udf, patched udf  mappings
+
 ## Feb 13 2019 - v0.17.0
  - Added $Select UDF 
 

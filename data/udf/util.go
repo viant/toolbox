@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
+	"math/rand"
 	"net/url"
 	"strings"
+	"time"
 )
 
 //Length returns length of slice or string
@@ -335,4 +337,21 @@ func matchPath(xPath string, state data.Map, handler func(value interface{}) err
 		break
 	}
 	return nil
+}
+
+//Rand returns random
+func Rand(params interface{}, state data.Map) (interface{}, error) {
+	source:=rand.NewSource(time.Now().UnixNano())
+	generator := rand.New(source)
+	floatValue := generator.Float64()
+	if params == nil || ! toolbox.IsSlice(params) {
+		return floatValue, nil
+	}
+	parameters := toolbox.AsSlice(params)
+	if len(parameters) != 2 {
+		return floatValue, nil
+	}
+	min := toolbox.AsInt(parameters[0])
+	max := toolbox.AsInt(parameters[1])
+	return min + int(float64(max-min)  * floatValue), nil
 }

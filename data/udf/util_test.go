@@ -2,6 +2,7 @@ package udf
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"testing"
 )
@@ -181,4 +182,22 @@ func TestSelect(t *testing.T) {
 
 	}
 
+}
+
+
+func TestRand(t *testing.T) {
+	{
+		randValue, err := Rand(nil, nil)
+		assert.Nil(t, err)
+		floatValue, err := toolbox.ToFloat(randValue)
+		assert.Nil(t, err)
+		assert.True(t, toolbox.IsFloat(randValue) && floatValue >=0.0 && floatValue <1.0)
+	}
+	{
+		randValue, err := Rand([]interface{}{2, 15}, nil)
+		assert.Nil(t, err)
+		intValue, err := toolbox.ToInt(randValue)
+		assert.Nil(t, err)
+		assert.True(t, toolbox.IsInt(randValue) && intValue >=2 && intValue <15)
+	}
 }

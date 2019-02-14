@@ -63,3 +63,4 @@
 -  Base64DecodeText
 -  TrimSpace
 -  Elapsed elapsed time  
+-  Rand
