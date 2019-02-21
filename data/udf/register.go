@@ -32,6 +32,7 @@ func Register(aMap data.Map) {
 	aMap.Put("AsNumber", AsNumber)
 	aMap.Put("Select", Select)
 	aMap.Put("Rand", Rand)
-
+	aMap.Put("Concat", Concat)
+	aMap.Put("Merge", Merge)
 
 }

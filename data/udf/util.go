@@ -341,10 +341,10 @@ func matchPath(xPath string, state data.Map, handler func(value interface{}) err
 
 //Rand returns random
 func Rand(params interface{}, state data.Map) (interface{}, error) {
-	source:=rand.NewSource(time.Now().UnixNano())
+	source := rand.NewSource(time.Now().UnixNano())
 	generator := rand.New(source)
 	floatValue := generator.Float64()
-	if params == nil || ! toolbox.IsSlice(params) {
+	if params == nil || !toolbox.IsSlice(params) {
 		return floatValue, nil
 	}
 	parameters := toolbox.AsSlice(params)
@@ -353,5 +353,63 @@ func Rand(params interface{}, state data.Map) (interface{}, error) {
 	}
 	min := toolbox.AsInt(parameters[0])
 	max := toolbox.AsInt(parameters[1])
-	return min + int(float64(max-min)  * floatValue), nil
+	return min + int(float64(max-min)*floatValue), nil
+}
+
+//Concat concatenate supplied parameters, parameters
+func Concat(params interface{}, state data.Map) (interface{}, error) {
+	if params == nil || !toolbox.IsSlice(params) {
+		return nil, fmt.Errorf("invalid signature, expected: $Concat(arrayOrItem1, arrayOrItem2)")
+	}
+	var result = make([]interface{}, 0)
+	parameters := toolbox.AsSlice(params)
+	if len(parameters) == 0 {
+		return result, nil
+	}
+
+	if toolbox.IsString(parameters[0]) {
+		result := ""
+		for _, item := range parameters {
+			result += toolbox.AsString(item)
+		}
+		return result, nil
+	}
+
+	for _, item := range parameters {
+		if toolbox.IsSlice(item) {
+			itemSlice := toolbox.AsSlice(item)
+			result = append(result, itemSlice...)
+			continue
+		}
+		result = append(result, item)
+	}
+	return result, nil
+}
+
+//Merge creates a new merged map for supplied maps,  (mapOrPath1, mapOrPath2, mapOrPathN)
+func Merge(params interface{}, state data.Map) (interface{}, error) {
+	if params == nil || !toolbox.IsSlice(params) {
+		return nil, fmt.Errorf("invalid signature, expected: $Merge(map1, map2, override)")
+	}
+	var result = make(map[string]interface{})
+	parameters := toolbox.AsSlice(params)
+	if len(parameters) == 0 {
+		return result, nil
+	}
+	var ok bool
+	for _, item := range parameters {
+		if toolbox.IsString(item) && state != nil {
+			if item, ok = state.GetValue(toolbox.AsString(item)); !ok {
+				continue
+			}
+		}
+		if !toolbox.IsMap(item) {
+			continue
+		}
+		itemMap := toolbox.AsMap(item)
+		for k, v := range itemMap {
+			result[k] = v
+		}
+	}
+	return result, nil
 }

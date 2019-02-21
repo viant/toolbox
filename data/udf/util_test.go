@@ -184,20 +184,51 @@ func TestSelect(t *testing.T) {
 
 }
 
-
 func TestRand(t *testing.T) {
 	{
 		randValue, err := Rand(nil, nil)
 		assert.Nil(t, err)
 		floatValue, err := toolbox.ToFloat(randValue)
 		assert.Nil(t, err)
-		assert.True(t, toolbox.IsFloat(randValue) && floatValue >=0.0 && floatValue <1.0)
+		assert.True(t, toolbox.IsFloat(randValue) && floatValue >= 0.0 && floatValue < 1.0)
 	}
 	{
 		randValue, err := Rand([]interface{}{2, 15}, nil)
 		assert.Nil(t, err)
 		intValue, err := toolbox.ToInt(randValue)
 		assert.Nil(t, err)
-		assert.True(t, toolbox.IsInt(randValue) && intValue >=2 && intValue <15)
+		assert.True(t, toolbox.IsInt(randValue) && intValue >= 2 && intValue < 15)
+	}
+}
+
+func TestConcat(t *testing.T) {
+	{
+		result, err := Concat([]interface{}{"a", "b", "c"}, nil)
+		assert.Nil(t, err)
+		assert.EqualValues(t, "abc", result)
+	}
+
+	{
+		result, err := Concat([]interface{}{[]interface{}{"a", "b"}, "c"}, nil)
+		assert.Nil(t, err)
+		assert.EqualValues(t, []interface{}{"a", "b", "c"}, result)
+	}
+
+}
+
+func TestMerge(t *testing.T) {
+	{
+		result, err := Merge([]interface{}{map[string]interface{}{
+			"k1": 1,
+		},
+			map[string]interface{}{
+				"k2": 2,
+			},
+		}, nil)
+		assert.Nil(t, err)
+		assert.EqualValues(t, map[string]interface{}{
+			"k1": 1,
+			"k2": 2,
+		}, result)
 	}
 }
