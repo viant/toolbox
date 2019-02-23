@@ -20,9 +20,9 @@ func ExtractPath(expression string) string {
 	return strings.Trim(result, "{}")
 }
 
-func recordToMap(fields []*field, record []interface{}, aMap map[string]interface{}) {
+func recordToMap(fields []*Field, record []interface{}, aMap map[string]interface{}) {
 	for _, field := range fields {
-		index := field.Index
+		index := field.index
 		var value = record[index]
 		if value == nil {
 			continue
