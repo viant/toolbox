@@ -186,6 +186,15 @@ func AsSlice(sourceSlice interface{}) []interface{} {
 		})
 		return result
 	}
+	iterator, ok := sourceSlice.(Iterator)
+	if ok {
+		if iterator.HasNext() {
+			var item interface{}
+			if err := iterator.Next(&item); err == nil {
+				result = append(result, item)
+			}
+		}
+	}
 	result, ok = sourceSlice.([]interface{})
 	if ok {
 		return result
