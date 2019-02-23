@@ -27,6 +27,10 @@ func AsString(source interface{}, state data.Map) (interface{}, error) {
 			return text, nil
 		}
 	}
+	if toolbox.IsNumber(source) {
+		source, _ = AsNumber(source, state)
+	}
+
 	return toolbox.AsString(source), nil
 }
 

@@ -3,6 +3,7 @@ package udf
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/assertly"
+	"github.com/viant/toolbox/data"
 	"log"
 	"reflect"
 	"testing"
@@ -132,4 +133,12 @@ person:
 	expanded, err := AsCollection(YAML, nil)
 	assert.Nil(t, err)
 	assert.NotNil(t, expanded)
+}
+
+func Test_AsString(t *testing.T) {
+	aMap := data.NewMap()
+	Register(aMap)
+	aMap.Put("k1", 6273346999.0)
+	expanded := aMap.ExpandAsText(" $AsString(${k1})")
+	assert.EqualValues(t, "6273346999", expanded)
 }
