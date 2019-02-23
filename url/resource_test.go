@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/url"
+	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -74,29 +75,59 @@ func TestNew_DirectoryPath(t *testing.T) {
 }
 
 func TestResource_YamlDecode(t *testing.T) {
-	var filename = path.Join(os.Getenv("TMPDIR"), "resource.yaml")
-	toolbox.RemoveFileIfExist(filename)
-	defer toolbox.RemoveFileIfExist(filename)
+
+	var filename1 = path.Join(os.Getenv("TMPDIR"), "resource1.yaml")
+	var filename2 = path.Join(os.Getenv("TMPDIR"), "resource2.yaml")
+	_ = toolbox.RemoveFileIfExist(filename1, filename2)
 	var aMap = map[string]interface{}{
 		"a": 1,
 		"b": "123",
 		"c": []int{1, 3, 6},
 	}
-	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR, 0644)
-	fmt.Printf("%v\n", filename)
+	file, err := os.OpenFile(filename1, os.O_CREATE|os.O_RDWR, 0644)
 	if assert.Nil(t, err) {
 		err = toolbox.NewYamlEncoderFactory().Create(file).Encode(aMap)
 		assert.Nil(t, err)
 	}
 
-	var resource = url.NewResource(filename)
-	assert.EqualValues(t, resource.ParsedURL.String(), toolbox.FileSchema+filename)
+	{
+		var resource = url.NewResource(filename1)
+		assert.EqualValues(t, resource.ParsedURL.String(), toolbox.FileSchema+filename1)
 
-	var resourceData = make(map[string]interface{})
-	err = resource.YAMLDecode(&resourceData)
+		var resourceData = make(map[string]interface{})
+		err = resource.YAMLDecode(&resourceData)
+		assert.Nil(t, err)
+		assert.EqualValues(t, resourceData["a"], 1)
+		assert.EqualValues(t, resourceData["b"], "123")
+	}
+
+	YAML := `init:
+  defaultUser: &defaultUser
+    name: bob
+    age: 18
+pipeline:
+  test:
+    init:
+      users:
+        <<: *defaultUser
+        age: 24
+    action: print
+    message: I got $users`
+	err = ioutil.WriteFile(filename2, []byte(YAML), 0644)
 	assert.Nil(t, err)
-	assert.EqualValues(t, resourceData["a"], 1)
-	assert.EqualValues(t, resourceData["b"], "123")
+
+	{
+		var resource = url.NewResource(filename2)
+		var resourceData = make(map[string]interface{})
+		err = resource.YAMLDecode(&resourceData)
+		assert.Nil(t, err)
+
+		if normalized, err := toolbox.NormalizeKVPairs(resourceData); err == nil {
+			resourceData = toolbox.AsMap(normalized)
+		}
+		//TODO add actual test once yaml reference is patched
+		//exposes issue with yaml reference
+	}
 
 }
 

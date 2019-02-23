@@ -1,4 +1,4 @@
-## Feb 14 2019 - v0.18.0
+## Feb 23 2019 - v0.18.0
  - Added Fields and Ranger method on Compacted slice
  - Made compacted slice field public
  - Added Rand udf, patched udf mappings
