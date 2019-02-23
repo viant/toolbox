@@ -58,7 +58,7 @@ func Test_optimizedStorage(t *testing.T) {
 	var compressed = []interface{}{nilGroup(3), "123", nilGroup(2), "abc", 12, nilGroup(3), "a"}
 	var optimized = collection.compress(data)
 	assert.EqualValues(t, compressed, optimized)
-	collection.fields = make([]*field, 12)
+	collection.fields = make([]*Field, 12)
 	var uncompressed = make([]interface{}, len(collection.fields))
 	collection.uncompress(compressed, uncompressed)
 	assert.EqualValues(t, data, uncompressed)
@@ -177,7 +177,7 @@ func TestCompactedSlice_SortedRange(t *testing.T) {
 			},
 		},
 		{
-			description: "missing field",
+			description: "missing Field",
 			indexBy:     []string{"field1"},
 			data: []map[string]interface{}{
 				{
@@ -189,7 +189,7 @@ func TestCompactedSlice_SortedRange(t *testing.T) {
 			hasError: true,
 		},
 		{
-			description: "unsupported index type field",
+			description: "unsupported index type Field",
 			indexBy:     []string{"id"},
 			data: []map[string]interface{}{
 				{
@@ -338,7 +338,7 @@ func TestCompactedSlice_SortedIterator(t *testing.T) {
 			},
 		},
 		{
-			description: "missing field",
+			description: "missing Field",
 			indexBy:     []string{"field1"},
 			data: []map[string]interface{}{
 				{
@@ -350,7 +350,7 @@ func TestCompactedSlice_SortedIterator(t *testing.T) {
 			hasError: true,
 		},
 		{
-			description: "unsupported index type field",
+			description: "unsupported index type Field",
 			indexBy:     []string{"id"},
 			data: []map[string]interface{}{
 				{

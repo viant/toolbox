@@ -3,13 +3,15 @@ package data
 import (
 	"fmt"
 	"github.com/viant/toolbox"
+	"reflect"
 	"sync"
 	"sync/atomic"
 )
 
-type field struct {
+type Field struct {
 	Name  string
-	Index int
+	Type  reflect.Type
+	index int
 }
 
 type nilGroup int
@@ -19,10 +21,14 @@ type CompactedSlice struct {
 	omitEmpty    bool
 	compressNils bool
 	lock         *sync.RWMutex
-	fieldNames   map[string]*field
-	fields       []*field
+	fieldNames   map[string]*Field
+	fields       []*Field
 	data         [][]interface{}
 	size         int64
+}
+
+func (s *CompactedSlice) Fields() []*Field {
+	return s.fields
 }
 
 //Size returns size of collection
@@ -30,19 +36,19 @@ func (s *CompactedSlice) Size() int {
 	return int(atomic.LoadInt64(&s.size))
 }
 
-func (s *CompactedSlice) index(fieldName string) int {
+func (s *CompactedSlice) index(fieldName string, value interface{}) int {
 	s.lock.RLock()
 	f, ok := s.fieldNames[fieldName]
 	s.lock.RUnlock()
 	if ok {
-		return f.Index
+		return f.index
 	}
-	f = &field{Name: fieldName, Index: len(s.fieldNames)}
+	f = &Field{Name: fieldName, index: len(s.fieldNames), Type: reflect.TypeOf(value)}
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	s.fieldNames[fieldName] = f
 	s.fields = append(s.fields, f)
-	return f.Index
+	return f.index
 }
 
 func expandIfNeeded(size int, data []interface{}) []interface{} {
@@ -104,7 +110,7 @@ func (s *CompactedSlice) Add(data map[string]interface{}) {
 	atomic.AddInt64(&s.size, 1)
 	var record = make([]interface{}, initSize)
 	for k, v := range data {
-		i := s.index(k)
+		i := s.index(k, v)
 		if !(i < len(record)) {
 			record = expandIfNeeded(i+1, record)
 		}
@@ -136,9 +142,9 @@ func (s *CompactedSlice) mapNamesToFieldPositions(names []string) ([]int, error)
 	for _, name := range names {
 		field, ok := s.fieldNames[name]
 		if !ok {
-			return nil, fmt.Errorf("failed to lookup field: %v", name)
+			return nil, fmt.Errorf("failed to lookup Field: %v", name)
 		}
-		result = append(result, field.Index)
+		result = append(result, field.index)
 	}
 	return result, nil
 }
@@ -245,7 +251,7 @@ func (s *CompactedSlice) SortedIterator(indexBy []string) (toolbox.Iterator, err
 	}, nil
 }
 
-//Range iterate over slice
+//Range iterate over slice, and remove processed data from the compacted slice
 func (s *CompactedSlice) Range(handler func(item interface{}) (bool, error)) error {
 	s.lock.Lock()
 	fields := s.fields
@@ -268,6 +274,24 @@ func (s *CompactedSlice) Range(handler func(item interface{}) (bool, error)) err
 		}
 	}
 	return nil
+}
+
+//Ranger moves data from slice to ranger
+func (s *CompactedSlice) Ranger() toolbox.Ranger {
+	s.lock.Lock()
+	clone := &CompactedSlice{
+		data:         s.data,
+		fields:       s.fields,
+		size:         s.size,
+		omitEmpty:    s.omitEmpty,
+		compressNils: s.compressNils,
+		lock:         &sync.RWMutex{},
+		fieldNames:   s.fieldNames,
+	}
+	s.data = [][]interface{}{}
+	atomic.StoreInt64(&s.size, 0)
+	s.lock.Unlock()
+	return clone
 }
 
 //Iterator returns a slice iterator
@@ -333,8 +357,8 @@ func NewCompactedSlice(omitEmpty, compressNils bool) *CompactedSlice {
 	return &CompactedSlice{
 		omitEmpty:    omitEmpty,
 		compressNils: compressNils,
-		fields:       make([]*field, 0),
-		fieldNames:   make(map[string]*field),
+		fields:       make([]*Field, 0),
+		fieldNames:   make(map[string]*Field),
 		data:         make([][]interface{}, 0),
 		lock:         &sync.RWMutex{},
 	}
