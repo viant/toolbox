@@ -1,6 +1,10 @@
-## Feb 14 2019 - v0.17.1
- - Added Rand udf, patched udf  mappings
-
+## Feb 14 2019 - v0.18.0
+ - Added Fields and Ranger method on Compacted slice
+ - Made compacted slice field public
+ - Added Rand udf, patched udf mappings
+ - Patched $AsString udf
+ - Updated AsSlice to support Iterator
+ 
 ## Feb 13 2019 - v0.17.0
  - Added $Select UDF 
 
