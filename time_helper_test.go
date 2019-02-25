@@ -210,3 +210,63 @@ func TestDayElapsedInPct(t *testing.T) {
 	assert.EqualValues(t, int(remaining+elapsed), 1)
 
 }
+
+func TestTimeWindow_Range(t *testing.T) {
+
+	var useCaes = []struct {
+		description   string
+		window        *TimeWindow
+		expectedCount int
+	}{
+		{
+			description:   "empty window",
+			window:        &TimeWindow{},
+			expectedCount: 1,
+		},
+		{
+			description: "loopback window",
+			window: &TimeWindow{
+				TimeFormat: "yyyy-MM-dd HH:mm:ss",
+				Loopback:   &Duration{Value: 3, Unit: "sec"},
+				EndDate:    "2011-12-01 15:01:01",
+				Interval:   &Duration{Value: 1, Unit: "sec"},
+			},
+			expectedCount: 4,
+		},
+		{
+			description: "default loopback with interval window",
+			window: &TimeWindow{
+				Loopback: &Duration{Value: 3, Unit: "min"},
+				Interval: &Duration{Value: 1, Unit: "min"},
+			},
+			expectedCount: 4,
+		},
+		{
+			description: "default loopback window",
+			window: &TimeWindow{
+				Loopback: &Duration{Value: 3, Unit: "min"},
+			},
+			expectedCount: 2,
+		},
+		{
+			description: "date range window",
+			window: &TimeWindow{
+				TimeFormat: "yyyy-MM-dd HH:mm:ss",
+				StartDate:  "2011-12-01 15:01:01",
+				EndDate:    "2011-12-01 15:02:01",
+				Interval:   &Duration{Value: 10, Unit: "sec"}},
+			expectedCount: 7,
+		},
+	}
+
+	for _, useCase := range useCaes {
+		count := 0
+		err := useCase.window.Range(func(time time.Time) (bool, error) {
+			count++
+			return true, nil
+		})
+		assert.Nil(t, err, useCase.description)
+		assert.Equal(t, useCase.expectedCount, count, useCase.description)
+	}
+
+}

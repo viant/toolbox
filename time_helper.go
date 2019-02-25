@@ -30,6 +30,17 @@ const (
 	DurationNanosecondAbbr  = "ns"
 )
 
+//Duration represents duration
+type Duration struct {
+	Value int
+	Unit  string
+}
+
+//Duration return durations
+func (d Duration) Duration() (time.Duration, error) {
+	return NewDuration(d.Value, d.Unit)
+}
+
 //NewDuration returns a durationToken for supplied value and time unit, 3, "second"
 func NewDuration(value int, unit string) (time.Duration, error) {
 	var duration time.Duration
@@ -186,4 +197,108 @@ func RemainingToday(tz string) (float64, error) {
 		return 0, err
 	}
 	return 1.0 - elapsedToday, nil
+}
+
+//TimeWindow represents a time window
+type TimeWindow struct {
+	Loopback   *Duration
+	StartDate  string
+	startTime  *time.Time
+	EndDate    string
+	endTime    *time.Time
+	TimeLayout string
+	TimeFormat string
+	Interval   *Duration
+}
+
+//Range iterates with interval step between start and window end.
+func (w *TimeWindow) Range(handler func(time time.Time) (bool, error)) error {
+	start, err := w.StartTime()
+	if err != nil {
+		return err
+	}
+
+	end, err := w.EndTime()
+	if err != nil {
+		return err
+	}
+	if w.Interval == nil && w.Loopback != nil {
+		w.Interval = w.Loopback
+	}
+
+	if w.Interval == nil {
+		_, err = handler(*end)
+		return err
+	}
+	interval, err := w.Interval.Duration()
+	if err != nil {
+		return err
+	}
+	for ts := *start; ts.Before(*end) || ts.Equal(*end); ts = ts.Add(interval) {
+		if ok, err := handler(ts); err != nil || !ok {
+			return err
+		}
+	}
+	return err
+}
+
+//Layout return time layout
+func (w *TimeWindow) Layout() string {
+	if w.TimeLayout != "" {
+		return w.TimeLayout
+	}
+	if w.TimeFormat != "" {
+		w.TimeLayout = DateFormatToLayout(w.TimeFormat)
+	}
+	if w.TimeLayout == "" {
+		w.TimeLayout = time.RFC3339
+	}
+	return w.TimeLayout
+}
+
+//StartTime returns time window start time
+func (w *TimeWindow) StartTime() (*time.Time, error) {
+	if w.StartDate != "" {
+		if w.startTime != nil {
+			return w.startTime, nil
+		}
+		timeLayout := w.Layout()
+		startTime, err := time.Parse(timeLayout, w.StartDate)
+		if err != nil {
+			return nil, err
+		}
+		w.startTime = &startTime
+		return w.startTime, nil
+	}
+	endDate, err := w.EndTime()
+	if err != nil {
+		return nil, err
+	}
+	if w.Loopback == nil || w.Loopback.Value == 0 {
+		return endDate, nil
+	}
+	loopback, err := w.Loopback.Duration()
+	if err != nil {
+		return nil, err
+	}
+	startTime := endDate.Add(-loopback)
+	return &startTime, nil
+}
+
+//EndTime returns time window end time
+func (w *TimeWindow) EndTime() (*time.Time, error) {
+	if w.EndDate != "" {
+		if w.endTime != nil {
+			return w.endTime, nil
+		}
+		timeLayout := w.Layout()
+		endTime, err := time.Parse(timeLayout, w.EndDate)
+		if err != nil {
+			return nil, err
+		}
+		w.endTime = &endTime
+		return w.endTime, nil
+	}
+	now := time.Now()
+	return &now, nil
 }
