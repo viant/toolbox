@@ -531,23 +531,23 @@ func CopyMapEntries(sourceMap, targetMap interface{}) {
 		targetMapValue = targetMapValue.Elem()
 	}
 	if target, ok := targetMap.(map[string]interface{}); ok {
-		ProcessMap(sourceMap, func(key, value interface{}) bool {
+		_ = ProcessMap(sourceMap, func(key, value interface{}) bool {
 			target[AsString(key)] = value
 			return true
 		})
 		return
 	}
-	ProcessMap(sourceMap, func(key, value interface{}) bool {
+	_ = ProcessMap(sourceMap, func(key, value interface{}) bool {
 		targetMapValue.SetMapIndex(reflect.ValueOf(key), reflect.ValueOf(value))
 		return true
 	})
 }
 
 //MapKeysToSlice appends all map keys to targetSlice
-func MapKeysToSlice(sourceMap interface{}, targetSlicePointer interface{}) {
+func MapKeysToSlice(sourceMap interface{}, targetSlicePointer interface{}) error {
 	AssertPointerKind(targetSlicePointer, reflect.Slice, "targetSlicePointer")
 	slicePointerValue := reflect.ValueOf(targetSlicePointer).Elem()
-	ProcessMap(sourceMap, func(key, value interface{}) bool {
+	return ProcessMap(sourceMap, func(key, value interface{}) bool {
 		slicePointerValue.Set(reflect.Append(slicePointerValue, reflect.ValueOf(key)))
 		return true
 	})
@@ -555,17 +555,26 @@ func MapKeysToSlice(sourceMap interface{}, targetSlicePointer interface{}) {
 
 //MapKeysToStringSlice creates a string slice from sourceMap keys, keys do not need to be of a string type.
 func MapKeysToStringSlice(sourceMap interface{}) []string {
-
-	if stringKeyMap, ok := sourceMap.(map[string]interface{}); ok {
-		var keys = make([]string, 0)
-		for k := range stringKeyMap {
+	var keys = make([]string, 0)
+	//common cases
+	switch aMap := sourceMap.(type) {
+	case map[string]interface{}:
+		for k := range aMap {
 			keys = append(keys, k)
 		}
-
+		return keys
+	case map[string]bool:
+		for k := range aMap {
+			keys = append(keys, k)
+		}
+		return keys
+	case map[string]int:
+		for k := range aMap {
+			keys = append(keys, k)
+		}
 		return keys
 	}
-	var keys = make([]string, 0)
-	ProcessMap(sourceMap, func(key interface{}, value interface{}) bool {
+	_ = ProcessMap(sourceMap, func(key interface{}, value interface{}) bool {
 		keys = append(keys, AsString(key))
 		return true
 	})
