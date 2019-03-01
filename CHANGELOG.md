@@ -1,4 +1,5 @@
-## Feb 23 2019 - v0.18.1
+## March 1 2019 - v0.18.1
+ - Added custom converter Registry with RegisterConverter and GetConverter functions
  - Added TimeWindow util 
 
 ## Feb 23 2019 - v0.18.0
