@@ -400,7 +400,7 @@ type Converter struct {
 	MappedKeyTag string
 }
 
-func (c *Converter) assignConvertedMap(target, input interface{}, targetIndirectValue reflect.Value, targetIndirectPointerType reflect.Type) error {
+func (c *Converter) assignConvertedMap(target, source interface{}, targetIndirectValue reflect.Value, targetIndirectPointerType reflect.Type) error {
 	mapType := DiscoverTypeByKind(target, reflect.Map)
 	mapPointer := reflect.New(mapType)
 	mapValueType := mapType.Elem()
@@ -408,8 +408,7 @@ func (c *Converter) assignConvertedMap(target, input interface{}, targetIndirect
 	newMap := mapPointer.Elem()
 	newMap.Set(reflect.MakeMap(mapType))
 	var err error
-
-	err = ProcessMap(input, func(key, value interface{}) bool {
+	err = ProcessMap(source, func(key, value interface{}) bool {
 		if value == nil {
 			return true
 		}
@@ -417,14 +416,14 @@ func (c *Converter) assignConvertedMap(target, input interface{}, targetIndirect
 		targetMapValuePointer := reflect.New(mapValueType)
 		err = c.AssignConverted(targetMapValuePointer.Interface(), value)
 		if err != nil {
-			err = fmt.Errorf("failed to assigned converted map value %v to %v due to %v", input, target, err)
+			err = fmt.Errorf("failed to assigned converted map value %v to %v due to %v", source, target, err)
 			return false
 		}
 
 		targetMapKeyPointer := reflect.New(mapKeyType)
 		err = c.AssignConverted(targetMapKeyPointer.Interface(), key)
 		if err != nil {
-			err = fmt.Errorf("failed to assigned converted map key %v to %v due to %v", input, target, err)
+			err = fmt.Errorf("failed to assigned converted map key %v to %v due to %v", source, target, err)
 			return false
 		}
 		var elementKey = targetMapKeyPointer.Elem()
@@ -591,6 +590,27 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 	return nil
 }
 
+//customConverter map of target, source type with converter
+var customConverter = make(map[reflect.Type]map[reflect.Type]func(target, source interface{}) error)
+
+//RegisterConverter register custom converter for supplied target, source type
+func RegisterConverter(target, source reflect.Type, converter func(target, source interface{}) error) {
+	if _, ok := customConverter[target]; ! ok {
+		customConverter[target] = make(map[reflect.Type]func(target, source interface{}) error)
+	}
+	customConverter[target][source] = converter
+}
+
+//GetConverter returns register converter for supplied target and source type
+func GetConverter(target, source interface{}) (func(target, source interface{}) error, bool) {
+	sourceConverters, ok := customConverter[reflect.TypeOf(target)];
+	if ! ok {
+		return nil, false
+	}
+	converter, ok := sourceConverters[reflect.TypeOf(source)]
+	return converter, ok
+}
+
 //AssignConverted assign to the target source, target needs to be pointer, input has to be convertible or compatible type
 func (c *Converter) AssignConverted(target, source interface{}) error {
 	if target == nil {
@@ -599,7 +619,6 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 	if source == nil {
 		return nil
 	}
-
 	switch targetValuePointer := target.(type) {
 	case *string:
 		switch sourceValue := source.(type) {
@@ -866,12 +885,23 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		*targetValuePointer = timeValue
 		return nil
 	case *interface{}:
+		if converter, ok := GetConverter(target, source); ok {
+			return converter(target, source)
+		}
 		(*targetValuePointer) = source
 		return nil
 
 	case **interface{}:
+		if converter, ok := GetConverter(target, source); ok {
+			return converter(target, source)
+		}
 		(*targetValuePointer) = &source
 		return nil
+
+	default:
+		if converter, ok := GetConverter(target, source); ok {
+			return converter(target, source)
+		}
 	}
 
 	sourceValue := reflect.ValueOf(source)
