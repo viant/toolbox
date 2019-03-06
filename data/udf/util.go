@@ -3,6 +3,7 @@ package udf
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/gin-gonic/gin/json"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"math/rand"
@@ -114,6 +115,13 @@ func Base64Encode(source interface{}, state data.Map) (interface{}, error) {
 	case []byte:
 		return base64.StdEncoding.EncodeToString(value), nil
 	default:
+		if toolbox.IsMap(source) || toolbox.IsSlice(source) {
+			encoded, err := json.Marshal(source)
+			fmt.Printf("%s %v\n", encoded, err)
+			if err == nil {
+				return base64.StdEncoding.EncodeToString(encoded), nil
+			}
+		}
 		return nil, fmt.Errorf("unsupported type: %T", source)
 	}
 }

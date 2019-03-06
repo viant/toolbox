@@ -130,3 +130,15 @@ func AsJSON(source interface{}, state data.Map) (interface{}, error) {
 func Type(source interface{}, state data.Map) (interface{}, error) {
 	return fmt.Printf("%T", source)
 }
+
+//AsStringMap returns map[string]string
+func AsStringMap(source interface{}, state data.Map) (interface{}, error) {
+	if source == nil && !toolbox.IsMap(source) {
+		return nil, fmt.Errorf("not a map")
+	}
+	var result = make(map[string]string)
+	for k, v := range toolbox.AsMap(source) {
+		result[k] = toolbox.AsString(v)
+	}
+	return result, nil
+}

@@ -34,5 +34,5 @@ func Register(aMap data.Map) {
 	aMap.Put("Rand", Rand)
 	aMap.Put("Concat", Concat)
 	aMap.Put("Merge", Merge)
-
+	aMap.Put("AsStringMap", AsStringMap)
 }

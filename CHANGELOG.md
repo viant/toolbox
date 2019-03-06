@@ -1,3 +1,6 @@
+## March 6 2019 - v0.18.2
+ - Added AsStringMap udf
+
 ## March 1 2019 - v0.18.1
  - Added custom converter Registry with RegisterConverter and GetConverter functions
  - Added TimeWindow util 
