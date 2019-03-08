@@ -53,9 +53,13 @@ func (p *Parser) Parse(parsedURL *url.URL, stdout string, isURLDir bool) ([]stor
 		}
 		var object storage.Object
 		if p.IsoTimeStyle {
-			object, err = p.extractObjectFromIsoBasedTimeCommand(parsedURL, line, isURLDir)
+			if object, err = p.extractObjectFromIsoBasedTimeCommand(parsedURL, line, isURLDir);err != nil {
+				object, err = p.extractObjectFromNonIsoBaseTimeCommand(parsedURL, line, isURLDir)
+			}
 		} else {
-			object, err = p.extractObjectFromNonIsoBaseTimeCommand(parsedURL, line, isURLDir)
+			if object, err = p.extractObjectFromNonIsoBaseTimeCommand(parsedURL, line, isURLDir);err != nil {
+				object, err = p.extractObjectFromIsoBasedTimeCommand(parsedURL, line, isURLDir)
+			}
 		}
 		if err != nil {
 			return nil, err
@@ -105,7 +109,7 @@ func (p *Parser) extractObjectFromNonIsoBaseTimeCommand(parsedURL *url.URL, line
 	}
 	var owner, name, permission, group, size, year, month, day, hour string
 	for i, aRune := range line {
-		if unicode.IsSpace(aRune) {
+		 if unicode.IsSpace(aRune) {
 			if p.HasNextTokenInout(i+1, line) {
 				tokenIndex++
 			}
@@ -121,6 +125,11 @@ func (p *Parser) extractObjectFromNonIsoBaseTimeCommand(parsedURL *url.URL, line
 		case fileInfoGroup:
 			group += aChar
 		case fileInfoSize:
+			if size == "" && ! unicode.IsNumber(aRune) {
+				tokenIndex--
+				group +=" " + aChar
+				continue
+			}
 			size += aChar
 		case fileInfoDateMonth:
 			month += aChar
@@ -151,22 +160,23 @@ func (p *Parser) extractObjectFromNonIsoBaseTimeCommand(parsedURL *url.URL, line
 //extractObjectFromNonIsoBaseTimeCommand extract file storage object from line,
 // it expects a file info with iso i.e. -rw-r--r-- 1 awitas awitas 2002 2017-11-04 22:29:33.363458941 +0000 aerospikeciads_aerospike.conf
 func (p *Parser) extractObjectFromIsoBasedTimeCommand(parsedURL *url.URL, line string, isURLDirectory bool) (storage.Object, error) {
-	tokeIndex := 0
+	tokenIndex := 0
 	if strings.TrimSpace(line) == "" {
 		return nil, nil
 	}
 	var owner, name, permission, group, timezone, date, modTime, size string
 	line = vtclean.Clean(line, false)
-
 	for i, aRune := range line {
+
 		if unicode.IsSpace(aRune) {
 			if p.HasNextTokenInout(i+1, line) {
-				tokeIndex++
+				tokenIndex++
 			}
 			continue
 		}
+
 		aChar := string(aRune)
-		switch tokeIndex {
+		switch tokenIndex {
 		case fileIsoInfoPermission:
 			permission += aChar
 		case fileIsoInfoOwner:
@@ -174,6 +184,11 @@ func (p *Parser) extractObjectFromIsoBasedTimeCommand(parsedURL *url.URL, line s
 		case fileIsoInfoGroup:
 			group += aChar
 		case fileIsoInfoSize:
+			if size == "" && ! unicode.IsNumber(aRune) {
+				tokenIndex--
+				group +=" " + aChar
+				continue
+			}
 			size += aChar
 		case fileIsoDate:
 			date += aChar
