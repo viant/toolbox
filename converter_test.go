@@ -583,6 +583,9 @@ func TestAsFloat(t *testing.T) {
 func TestAsBoolean(t *testing.T) {
 	assert.False(t, toolbox.AsBoolean(1.1))
 	assert.True(t, toolbox.AsBoolean("true"))
+	assert.True(t, toolbox.AsBoolean(0x1))
+	assert.False(t, toolbox.AsBoolean(0x0))
+
 }
 
 func TestAsInt(t *testing.T) {

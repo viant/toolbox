@@ -151,7 +151,7 @@ func (p *Parser) extractObjectFromNonIsoBaseTimeCommand(parsedURL *url.URL, line
 	layout := toolbox.DateFormatToLayout("yyyy MMM ddd HH:mm:s")
 	modificationTime, err := time.Parse(layout, dateTime)
 	if err != nil {
-		return nil, fmt.Errorf("failed to scrape file info from stdout: %v, err: %v", line, err)
+		return nil, fmt.Errorf("failed to extract file info from stdout: %v, err: %v", line, err)
 	}
 
 	return p.newObject(parsedURL, name, permission, line, size, modificationTime, isURLDirectory)
@@ -212,7 +212,7 @@ func (p *Parser) extractObjectFromIsoBasedTimeCommand(parsedURL *url.URL, line s
 	}
 	modificationTime, err := time.Parse(layout, dateTime)
 	if err != nil {
-		return nil, fmt.Errorf("failed to scrape file info from stdout: %v, err: %v", line, err)
+		return nil, fmt.Errorf("failed to extract file info from stdout: %v, err: %v", line, err)
 	}
 	return p.newObject(parsedURL, name, permission, line, size, modificationTime, isURLDirectory)
 }
