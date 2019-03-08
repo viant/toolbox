@@ -1,3 +1,6 @@
+## March 6 2019 - v0.18.3
+ - Patched storage scp file parsing
+
 ## March 6 2019 - v0.18.2
  - Added AsStringMap udf
 
