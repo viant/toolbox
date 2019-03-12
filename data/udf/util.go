@@ -2,8 +2,8 @@ package udf
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin/json"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"math/rand"

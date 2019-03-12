@@ -1,3 +1,6 @@
+## March 12 2019 - v0.18.4
+ - Patch json dependencies
+ 
 ## March 8 2019 - v0.18.3
  - Patched storage scp file parsing
 
