@@ -31,6 +31,14 @@ func FileExists(filename string) bool {
 	return true
 }
 
+// IsDirectory checks if file is directory
+func IsDirectory(location string) bool {
+	if stat, err := os.Stat(location); err != nil {
+		return stat.IsDir()
+	}
+	return true
+}
+
 // CreateDirIfNotExist creates directory if they do not exist
 func CreateDirIfNotExist(dirs ...string) error {
 	for _, dir := range dirs {
