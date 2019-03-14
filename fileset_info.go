@@ -31,7 +31,7 @@ type FieldInfo struct {
 }
 
 //NewFunctionInfoFromField creates a new function info.
-func NewFunctionInfoFromField(field *ast.Field) *FunctionInfo {
+func NewFunctionInfoFromField(field *ast.Field, owner *FileInfo) *FunctionInfo {
 	result := &FunctionInfo{
 		Name:            "",
 		ParameterFields: make([]*FieldInfo, 0),
@@ -80,13 +80,18 @@ func matchLastNameSegment(name string) string {
 
 //NewFieldInfo creates a new field info.
 func NewFieldInfo(field *ast.Field) *FieldInfo {
+	return NewFieldInfoByIndex(field, 0)
+}
+
+//NewFieldInfoByIndex creates a new field info.
+func NewFieldInfoByIndex(field *ast.Field, index int) *FieldInfo {
 	result := &FieldInfo{
 		Name:     "",
 		TypeName: types.ExprString(field.Type),
 	}
 
 	if len(field.Names) > 0 {
-		result.Name = field.Names[0].Name
+		result.Name = field.Names[index].Name
 	} else {
 		result.Name = strings.Replace(strings.Replace(result.TypeName, "[]", "", len(result.TypeName)), "*", "", len(result.TypeName))
 		result.IsAnonymous = true
@@ -153,10 +158,11 @@ type FunctionInfo struct {
 	ReceiverTypeName string
 	ParameterFields  []*FieldInfo
 	ResultsFields    []*FieldInfo
+	*FileInfo
 }
 
 //NewFunctionInfo create a new function
-func NewFunctionInfo(funcDeclaration *ast.FuncDecl) *FunctionInfo {
+func NewFunctionInfo(funcDeclaration *ast.FuncDecl, owner *FileInfo) *FunctionInfo {
 	result := &FunctionInfo{
 		Name:            "",
 		ParameterFields: make([]*FieldInfo, 0),
@@ -317,26 +323,32 @@ func (v *FileInfo) readComment(pos token.Pos) string {
 	return ""
 }
 
-//toFieldInfoSlice convers filedList to FiledInfo slice.
+//toFieldInfoSlice converts filedList to FiledInfo slice.
 func toFieldInfoSlice(source *ast.FieldList) []*FieldInfo {
 	var result = make([]*FieldInfo, 0)
 	if source == nil || len(source.List) == 0 {
 		return result
 	}
 	for _, field := range source.List {
-		result = append(result, NewFieldInfo(field))
+		if len(field.Names) > 0 {
+			for i := range field.Names {
+				result = append(result, NewFieldInfoByIndex(field, i))
+			}
+		} else {
+			result = append(result, NewFieldInfoByIndex(field, 0))
+		}
 	}
 	return result
 }
 
 //toFunctionInfos convers filedList to function info slice.
-func toFunctionInfos(source *ast.FieldList) []*FunctionInfo {
+func toFunctionInfos(source *ast.FieldList, owner *FileInfo) []*FunctionInfo {
 	var result = make([]*FunctionInfo, 0)
 	if source == nil || len(source.List) == 0 {
 		return result
 	}
 	for _, field := range source.List {
-		result = append(result, NewFunctionInfoFromField(field))
+		result = append(result, NewFunctionInfoFromField(field, owner))
 	}
 	return result
 }
@@ -381,7 +393,8 @@ func (v *FileInfo) Visit(node ast.Node) ast.Visitor {
 				v.currentTypInfo.AddFields(toFieldInfoSlice(value.Fields)...)
 			}
 		case *ast.FuncDecl:
-			functionInfo := NewFunctionInfo(value)
+			functionInfo := NewFunctionInfo(value, v)
+			functionInfo.FileInfo = v
 			v.currentFunctionInfo = functionInfo
 			if len(functionInfo.ReceiverTypeName) > 0 {
 				v.addFunction(functionInfo)
@@ -393,6 +406,7 @@ func (v *FileInfo) Visit(node ast.Node) ast.Visitor {
 				if value.Params != nil {
 					v.currentFunctionInfo.ParameterFields = toFieldInfoSlice(value.Params)
 				}
+
 				if value.Results != nil {
 					v.currentFunctionInfo.ResultsFields = toFieldInfoSlice(value.Results)
 				}
@@ -400,12 +414,16 @@ func (v *FileInfo) Visit(node ast.Node) ast.Visitor {
 			}
 		case *ast.FieldList:
 			if v.currentTypInfo != nil && v.currentTypInfo.IsInterface {
-				v.currentTypInfo.receivers = toFunctionInfos(value)
+				v.currentTypInfo.receivers = toFunctionInfos(value, v)
 				v.currentTypInfo = nil
 			}
 		case *ast.ImportSpec:
-			if value.Name != nil {
+			if value.Name != nil && value.Name.String() != "" {
 				v.Imports[value.Name.String()] = value.Path.Value
+			} else {
+				_, name := path.Split(value.Path.Value)
+				name = strings.Replace(name, `"`, "", 2)
+				v.Imports[name] = value.Path.Value
 			}
 		}
 
