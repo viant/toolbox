@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"archive/tar"
 	"archive/zip"
 	"bytes"
 	"fmt"
@@ -217,4 +218,40 @@ func ArchiveWithFilter(service Service, URL string, writer *zip.Writer, predicat
 	memService := NewMemoryService()
 	var destURL = "mem:///dev/nul"
 	return Copy(service, URL, memService, destURL, nil, getArchiveCopyHandlerWithFilter(writer, destURL, predicate))
+}
+
+func getTarCopyHandler(archive *tar.Writer, parentURL string) CopyHandler {
+	return func(sourceObject Object, reader io.Reader, destinationService Service, destinationURL string) error {
+		var _, relativePath = toolbox.URLSplit(destinationURL)
+		if destinationURL != parentURL {
+			relativePath = strings.Replace(destinationURL, parentURL, "", 1)
+		}
+
+		contents := new(bytes.Buffer)
+		if _, err := io.Copy(contents, reader); err != nil {
+			return err
+		}
+		data := contents.Bytes()
+		if strings.HasPrefix(relativePath, "/") {
+			relativePath = string(relativePath[1:])
+		}
+		tarHeader := &tar.Header{
+			Name: relativePath,
+			Size: int64(len(data)),
+		}
+		if err := archive.WriteHeader(tarHeader); err != nil {
+			return fmt.Errorf(" unable to write tar header, %v", err)
+		}
+		if _, err := archive.Write(data); err != nil {
+			return fmt.Errorf(" unable to write tar content, %v", err)
+		}
+		return nil
+	}
+}
+
+//Tar tar archives supplied URL assets into zip writer
+func Tar(service Service, URL string, writer *tar.Writer) error {
+	memService := NewMemoryService()
+	var destURL = "mem:///dev/nul"
+	return Copy(service, URL, memService, destURL, nil, getTarCopyHandler(writer, destURL))
 }
