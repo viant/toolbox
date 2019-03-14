@@ -595,7 +595,7 @@ var customConverter = make(map[reflect.Type]map[reflect.Type]func(target, source
 
 //RegisterConverter register custom converter for supplied target, source type
 func RegisterConverter(target, source reflect.Type, converter func(target, source interface{}) error) {
-	if _, ok := customConverter[target]; ! ok {
+	if _, ok := customConverter[target]; !ok {
 		customConverter[target] = make(map[reflect.Type]func(target, source interface{}) error)
 	}
 	customConverter[target][source] = converter
@@ -603,8 +603,8 @@ func RegisterConverter(target, source reflect.Type, converter func(target, sourc
 
 //GetConverter returns register converter for supplied target and source type
 func GetConverter(target, source interface{}) (func(target, source interface{}) error, bool) {
-	sourceConverters, ok := customConverter[reflect.TypeOf(target)];
-	if ! ok {
+	sourceConverters, ok := customConverter[reflect.TypeOf(target)]
+	if !ok {
 		return nil, false
 	}
 	converter, ok := sourceConverters[reflect.TypeOf(source)]
