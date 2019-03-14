@@ -1,3 +1,9 @@
+## March 14 2019 - v0.19.0
+ - Added storage Tar archive support
+ - Added IsDirectory helper method
+ - Patched filesetinfo (function parameters names)
+ - Added FileInfo to FileInfo to access relevant imports
+ 
 ## March 12 2019 - v0.18.4
  - Patch json dependencies
  
