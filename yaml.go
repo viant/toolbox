@@ -52,6 +52,9 @@ func NormalizeKVPairs(source interface{}) (interface{}, error) {
 				return source, nil
 			}
 			for i, item := range aSlice {
+				if item == nil {
+					continue
+				}
 				if IsMap(item) || IsSlice(item) {
 					if normalized, err = NormalizeKVPairs(item); err == nil {
 						aSlice[i] = normalized
