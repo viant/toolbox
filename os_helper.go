@@ -33,10 +33,10 @@ func FileExists(filename string) bool {
 
 // IsDirectory checks if file is directory
 func IsDirectory(location string) bool {
-	if stat, err := os.Stat(location); err != nil {
+	if stat, _ := os.Stat(location); stat != nil {
 		return stat.IsDir()
 	}
-	return true
+	return false
 }
 
 // CreateDirIfNotExist creates directory if they do not exist
