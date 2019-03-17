@@ -220,11 +220,38 @@ func ArchiveWithFilter(service Service, URL string, writer *zip.Writer, predicat
 	return Copy(service, URL, memService, destURL, nil, getArchiveCopyHandlerWithFilter(writer, destURL, predicate))
 }
 
-func getTarCopyHandler(archive *tar.Writer, parentURL string) CopyHandler {
+func getTarCopyHandler(archive *tar.Writer, destParentURL, parentURL string, dirs map[string]bool) CopyHandler {
+	if strings.HasSuffix(parentURL, "/") {
+		parentURL = string(parentURL[:len(parentURL)-2])
+	}
+	_, root := path.Split(destParentURL)
+	if root == "." {
+		root = ""
+	}
 	return func(sourceObject Object, reader io.Reader, destinationService Service, destinationURL string) error {
 		var _, relativePath = toolbox.URLSplit(destinationURL)
 		if destinationURL != parentURL {
 			relativePath = strings.Replace(destinationURL, parentURL, "", 1)
+		}
+
+		if strings.HasPrefix(relativePath, "/") {
+			relativePath = string(relativePath[1:])
+		}
+
+		relativePath = path.Join(root, relativePath)
+		parent, _ := path.Split(relativePath)
+
+		if parent != "" && !dirs[parent] {
+			tarHeader := &tar.Header{
+				Name:    parent,
+				Size:    int64(0),
+				Mode:    int64(sourceObject.FileInfo().Mode()),
+				ModTime: sourceObject.FileInfo().ModTime(),
+			}
+			if err := archive.WriteHeader(tarHeader); err != nil {
+				return fmt.Errorf(" unable to write tar header, %v", err)
+			}
+			dirs[parent] = true
 		}
 
 		contents := new(bytes.Buffer)
@@ -232,12 +259,11 @@ func getTarCopyHandler(archive *tar.Writer, parentURL string) CopyHandler {
 			return err
 		}
 		data := contents.Bytes()
-		if strings.HasPrefix(relativePath, "/") {
-			relativePath = string(relativePath[1:])
-		}
 		tarHeader := &tar.Header{
-			Name: relativePath,
-			Size: int64(len(data)),
+			Name:    relativePath,
+			Size:    int64(len(data)),
+			Mode:    int64(sourceObject.FileInfo().Mode()),
+			ModTime: sourceObject.FileInfo().ModTime(),
 		}
 		if err := archive.WriteHeader(tarHeader); err != nil {
 			return fmt.Errorf(" unable to write tar header, %v", err)
@@ -250,8 +276,13 @@ func getTarCopyHandler(archive *tar.Writer, parentURL string) CopyHandler {
 }
 
 //Tar tar archives supplied URL assets into zip writer
-func Tar(service Service, URL string, writer *tar.Writer) error {
+func Tar(service Service, URL string, writer *tar.Writer, includeOwnerDir bool) error {
 	memService := NewMemoryService()
 	var destURL = "mem:///dev/nul"
-	return Copy(service, URL, memService, destURL, nil, getTarCopyHandler(writer, destURL))
+	var dirs = make(map[string]bool)
+	ownerDir := ""
+	if includeOwnerDir {
+		ownerDir = URL
+	}
+	return Copy(service, URL, memService, destURL, nil, getTarCopyHandler(writer, ownerDir, destURL, dirs))
 }

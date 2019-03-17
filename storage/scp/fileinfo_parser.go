@@ -53,11 +53,11 @@ func (p *Parser) Parse(parsedURL *url.URL, stdout string, isURLDir bool) ([]stor
 		}
 		var object storage.Object
 		if p.IsoTimeStyle {
-			if object, err = p.extractObjectFromIsoBasedTimeCommand(parsedURL, line, isURLDir);err != nil {
+			if object, err = p.extractObjectFromIsoBasedTimeCommand(parsedURL, line, isURLDir); err != nil {
 				object, err = p.extractObjectFromNonIsoBaseTimeCommand(parsedURL, line, isURLDir)
 			}
 		} else {
-			if object, err = p.extractObjectFromNonIsoBaseTimeCommand(parsedURL, line, isURLDir);err != nil {
+			if object, err = p.extractObjectFromNonIsoBaseTimeCommand(parsedURL, line, isURLDir); err != nil {
 				object, err = p.extractObjectFromIsoBasedTimeCommand(parsedURL, line, isURLDir)
 			}
 		}
@@ -109,7 +109,7 @@ func (p *Parser) extractObjectFromNonIsoBaseTimeCommand(parsedURL *url.URL, line
 	}
 	var owner, name, permission, group, size, year, month, day, hour string
 	for i, aRune := range line {
-		 if unicode.IsSpace(aRune) {
+		if unicode.IsSpace(aRune) {
 			if p.HasNextTokenInout(i+1, line) {
 				tokenIndex++
 			}
@@ -125,9 +125,9 @@ func (p *Parser) extractObjectFromNonIsoBaseTimeCommand(parsedURL *url.URL, line
 		case fileInfoGroup:
 			group += aChar
 		case fileInfoSize:
-			if size == "" && ! unicode.IsNumber(aRune) {
+			if size == "" && !unicode.IsNumber(aRune) {
 				tokenIndex--
-				group +=" " + aChar
+				group += " " + aChar
 				continue
 			}
 			size += aChar
@@ -184,9 +184,9 @@ func (p *Parser) extractObjectFromIsoBasedTimeCommand(parsedURL *url.URL, line s
 		case fileIsoInfoGroup:
 			group += aChar
 		case fileIsoInfoSize:
-			if size == "" && ! unicode.IsNumber(aRune) {
+			if size == "" && !unicode.IsNumber(aRune) {
 				tokenIndex--
-				group +=" " + aChar
+				group += " " + aChar
 				continue
 			}
 			size += aChar
