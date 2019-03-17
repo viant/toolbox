@@ -39,6 +39,17 @@ func AsFloat(source interface{}, state data.Map) (interface{}, error) {
 	return toolbox.AsFloat(source), nil
 }
 
+//AsFloat32 converts source into float32
+func AsFloat32(source interface{}, state data.Map) (interface{}, error) {
+	return float32(toolbox.AsFloat(source)), nil
+}
+
+//AsFloat32 converts source into float32
+func AsFloat32Ptr(source interface{}, state data.Map) (interface{}, error) {
+	result := float32(toolbox.AsFloat(source))
+	return &result, nil
+}
+
 //AsBool converts source into bool
 func AsBool(source interface{}, state data.Map) (interface{}, error) {
 	return toolbox.AsBoolean(source), nil

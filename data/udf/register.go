@@ -7,6 +7,9 @@ func Register(aMap data.Map) {
 	aMap.Put("AsInt", AsInt)
 	aMap.Put("AsString", AsString)
 	aMap.Put("AsFloat", AsFloat)
+	aMap.Put("AsFloat32", AsFloat32)
+	aMap.Put("AsFloat32Ptr", AsFloat32Ptr)
+
 	aMap.Put("AsBool", AsBool)
 	aMap.Put("AsMap", AsMap)
 	aMap.Put("AsData", AsData)
