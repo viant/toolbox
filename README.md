@@ -20,7 +20,7 @@ Please refer to [`CHANGELOG.md`](CHANGELOG.md) if you encounter breaking changes
 - [Decoder and Encoder](#DecoderandEncoder)
 - [Logger](#Logger)
 - [BatchLimiter](#BatchLimiter)
-- [AST Based FileSetInfo](#AST Based FileSetInfo)
+- [AST Based FileSetInfo](#ast-based-filesetinfo)
 - [License](#License)
 - [Credits and Acknowledgements](#Credits-and-Acknowledgements)
 
