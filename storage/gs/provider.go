@@ -2,6 +2,7 @@ package gs
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/viant/toolbox/secret"
 	"github.com/viant/toolbox/storage"
 	"golang.org/x/oauth2/google"
@@ -18,18 +19,21 @@ func init() {
 	storage.NewStorageProvider().Registry[ProviderScheme] = serviceProvider
 }
 
-func serviceProvider(credentialsFile string) (storage.Service, error) {
+func serviceProvider(credentials string) (storage.Service, error) {
 	var credentialOptions = make([]option.ClientOption, 0)
 	var projectID = os.Getenv("GOOGLE_CLOUD_PROJECT")
-	if credentialsFile == "" {
+	if credentials == "" {
 		credentialOptions = append([]option.ClientOption{},
 			option.WithScopes(DevstorageFullControlScope),
 			option.WithUserAgent(userAgent))
 	} else {
-		credentialOption := option.WithCredentialsFile(credentialsFile)
-		credentialOptions = append(credentialOptions, credentialOption)
+		if json.Valid([]byte(credentials)) {
+			credentialOptions = append(credentialOptions, option.WithCredentialsJSON([]byte(credentials)))
+		} else {
+			credentialOptions = append(credentialOptions, option.WithCredentialsFile(credentials))
+		}
 		secretService := secret.New("", false)
-		config, err := secretService.GetCredentials(credentialsFile)
+		config, err := secretService.GetCredentials(credentials)
 		if err != nil {
 			return nil, err
 		}
