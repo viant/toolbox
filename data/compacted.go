@@ -323,6 +323,9 @@ func (s *CompactedSlice) Iterator() toolbox.Iterator {
 	}
 }
 
+
+
+
 type iterator struct {
 	size     int
 	provider func(index int) (map[string]interface{}, error)

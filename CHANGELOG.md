@@ -1,3 +1,6 @@
+## March 20 2019 - v0.19.0
+- Added gs storage with JSON credentials
+
 ## March 14 2019 - v0.19.0
  - Added storage Tar archive support
  - Added IsDirectory helper method
