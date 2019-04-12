@@ -132,6 +132,9 @@ func JSONToSlice(source interface{}) ([]interface{}, error) {
 
 //AsJSONText converts data structure int text JSON
 func AsJSONText(source interface{}) (string, error) {
+	if source == nil {
+		return "", fmt.Errorf("source was nil")
+	}
 	if IsStruct(source) || IsMap(source) || IsSlice(source) {
 		buf := new(bytes.Buffer)
 		err := NewJSONEncoderFactory().Create(buf).Encode(source)

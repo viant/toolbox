@@ -49,6 +49,11 @@ func Test_IsNewDelimitedJSON(t *testing.T) {
 		assert.False(t, toolbox.IsNewLineDelimitedJSON(input))
 	}
 
+	{
+		input := "{\"category\":\"Food\",\"country\":\"Poland\",\"expenditure\":\"6759.00\",\"id\":1,\"sub_category\":null,\"year\":2014}\n{\"category\":\"Housing\",\"country\":\"US\",\"expenditure\":\"17798.00\",\"id\":4,\"sub_category\":null,\"year\":2014}\n{\"category\":\"Food\",\"country\":\"Poland\",\"expenditure\":\"7023.00\",\"id\":2,\"sub_category\":null,\"year\":2015}\n{\"category\":\"Housing\",\"country\":\"US\",\"expenditure\":\"18409.00\",\"id\":5,\"sub_category\":null,\"year\":2015}\n{\"category\":\"Food\",\"country\":\"Poland\",\"expenditure\":\"7023.00\",\"id\":3,\"sub_category\":null,\"year\":2016}\n{\"category\":\"Housing\",\"country\":\"US\",\"expenditure\":\"18886.00\",\"id\":6,\"sub_category\":null,\"year\":2016}\n"
+		assert.True(t, toolbox.IsNewLineDelimitedJSON(input))
+	}
+
 }
 
 func Test_JSONToMap(t *testing.T) {
