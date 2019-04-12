@@ -1,6 +1,10 @@
 package toolbox
 
-import "unicode"
+import (
+	"bufio"
+	"io"
+	"unicode"
+)
 
 //IsASCIIText return true if supplied string does not have binary data
 func IsASCIIText(candidate string) bool {
@@ -38,14 +42,56 @@ func TerminatedSplitN(text string, fragmentCount int, terminator string) []strin
 	lowerBound := 0
 	for i := fragmentSize - 1; i < len(text); i++ {
 		isLast := i+1 == len(text)
-		isAtLeastOfFragementSize := i-lowerBound >= fragmentSize
+		isAtLeastOfFragmentSize := i-lowerBound >= fragmentSize
 		isNewLine := string(text[i:i+len(terminator)]) == terminator
-		if (isAtLeastOfFragementSize && isNewLine) || isLast {
+		if (isAtLeastOfFragmentSize && isNewLine) || isLast {
 			result = append(result, string(text[lowerBound:i+1]))
 			lowerBound = i + 1
 		}
 	}
 	return result
+}
+
+//SplitTextStream divides reader supplied text by number of specified line
+func SplitTextStream(reader io.Reader, writerProvider func() io.WriteCloser, elementCount int) error {
+	scanner := bufio.NewScanner(reader)
+	var writer io.WriteCloser
+	counter := 0
+	var err error
+	if elementCount == 0 {
+		elementCount = 1
+	}
+	for scanner.Scan() {
+
+		if writer == nil {
+			writer = writerProvider()
+		}
+		data := scanner.Bytes()
+		if err = scanner.Err(); err != nil {
+			return err
+		}
+
+		if counter > 0 {
+			if _, err = writer.Write([]byte{'\n'}); err != nil {
+				return err
+			}
+		}
+		if _, err = writer.Write(data); err != nil {
+			return err
+		}
+		counter++
+		if counter == elementCount {
+			if err := writer.Close(); err != nil {
+				return err
+			}
+			counter = 0
+			writer = nil
+		}
+	}
+	if writer != nil {
+		return writer.Close()
+	}
+	return nil
 }
 
 const (
