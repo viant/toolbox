@@ -1,3 +1,6 @@
+## March 20 2019 - v0.19.1
+- Added SplitTextStream util function
+
 ## March 20 2019 - v0.19.0
 - Added gs storage with JSON credentials
 
