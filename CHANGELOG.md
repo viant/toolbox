@@ -1,3 +1,6 @@
+## April 12 2019 - v0.19.2
+- updated ReclassifyNotFoundIfMatched
+
 ## March 20 2019 - v0.19.1
 - Added SplitTextStream util function
 
