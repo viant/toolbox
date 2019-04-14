@@ -504,3 +504,21 @@ func NewFileSetInfo(baseDir string) (*FileSetInfo, error) {
 	}
 	return result, nil
 }
+
+//StructFields by name sorter
+type StructFields []*StructField
+
+// Len is part of sort.Interface.
+func (s StructFields) Len() int {
+	return len(s)
+}
+
+// Swap is part of sort.Interface.
+func (s StructFields) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+// Less is part of sort.Interface.
+func (s StructFields) Less(i, j int) bool {
+	return s[i].Type.Name < s[j].Type.Name
+}
