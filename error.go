@@ -70,7 +70,7 @@ func ReclassifyNotFoundIfMatched(err error, URL string) error {
 	if strings.Contains(message, "doesn't exist") ||
 		strings.Contains(message, "no such file or directory") ||
 		strings.Contains(err.Error(), "404") ||
-		strings.Contains(err.Error(), "nosuchbucket")  {
+		strings.Contains(err.Error(), "nosuchbucket") {
 		return &NotFoundError{URL: URL}
 	}
 	return err

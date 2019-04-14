@@ -1,3 +1,6 @@
+## April 14 2019 - v0.19.4
+- added StructFields sort type
+
 ## April 12 2019 - v0.19.3
 - updated ReclassifyNotFoundIfMatched
 
