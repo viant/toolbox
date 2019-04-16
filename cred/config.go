@@ -2,9 +2,11 @@ package cred
 
 import (
 	"bytes"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"github.com/viant/toolbox"
 	"golang.org/x/crypto/ssh"
@@ -178,6 +180,26 @@ func (c *Config) NewJWTConfig(scopes ...string) (*jwt.Config, error) {
 	return result, nil
 }
 
+func loadPEM(location string, password string) ([]byte, error) {
+	var pemBytes []byte
+	if IsKeyEncrypted(location) {
+		block, _ := pem.Decode(pemBytes)
+		if block == nil {
+			return nil, errors.New("invalid PEM data")
+		}
+		if x509.IsEncryptedPEMBlock(block) {
+			key, err := x509.DecryptPEMBlock(block, []byte(password))
+			if err != nil {
+				return nil, err
+			}
+			block = &pem.Block{Type: block.Type, Bytes: key}
+			pemBytes = pem.EncodeToMemory(block)
+			return pemBytes, nil
+		}
+	}
+	return ioutil.ReadFile(location)
+}
+
 //ClientConfig returns a new instance of sshClientConfig
 func (c *Config) ClientConfig() (*ssh.ClientConfig, error) {
 	if c.sshClientConfig != nil {
@@ -194,21 +216,12 @@ func (c *Config) ClientConfig() (*ssh.ClientConfig, error) {
 		result.Auth = append(result.Auth, ssh.Password(c.Password))
 	}
 	if c.PrivateKeyPath != "" {
-
-		if IsKeyEncrypted(c.PrivateKeyPath) {
-			return nil, fmt.Errorf("key: %v, has been encrypeed with password", c.PrivateKeyPath)
-		}
-
-		privateKeyBytes, err := ioutil.ReadFile(c.PrivateKeyPath)
-		if err != nil {
-			return nil, err
-		}
-		key, err := ssh.ParsePrivateKey(privateKeyBytes)
+		pemBytes, err := loadPEM(c.PrivateKeyPath, c.Password)
+		key, err := ssh.ParsePrivateKey(pemBytes)
 		if err != nil {
 			return nil, err
 		}
 		result.Auth = append(result.Auth, ssh.PublicKeys(key))
-
 	}
 	c.sshClientConfig = result
 	return result, nil
