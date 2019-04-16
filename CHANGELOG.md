@@ -1,3 +1,6 @@
+## April 15 2019 - v0.20.0
+- added paraphrase ssh key support
+
 ## April 14 2019 - v0.19.4
 - added StructFields sort type
 
