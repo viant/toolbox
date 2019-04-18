@@ -669,6 +669,14 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		case *[]string:
 			*targetValuePointer = *sourceValue
 			return nil
+		case *string:
+			transient := []string{*sourceValue}
+			*targetValuePointer = transient
+			return nil
+		case string:
+			transient := []string{sourceValue}
+			*targetValuePointer = transient
+			return nil
 		default:
 			if IsSlice(source) {
 				var stingItems = make([]string, 0)
