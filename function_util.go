@@ -43,6 +43,11 @@ func CallFunction(function interface{}, parameters ...interface{}) []interface{}
 
 //AsCompatibleFunctionParameters takes incompatible function parameters and converts then into provided function signature compatible
 func AsCompatibleFunctionParameters(function interface{}, parameters []interface{}) ([]interface{}, error) {
+	return AsFunctionParameters(function, parameters, map[string]interface{}{})
+}
+
+//AsFunctionParameters takes incompatible function parameters and converts then into provided function signature compatible
+func AsFunctionParameters(function interface{}, parameters []interface{}, parametersKV map[string]interface{}) ([]interface{}, error) {
 	AssertKind(function, reflect.Func, "function")
 	functionValue := reflect.ValueOf(function)
 	funcSignature := GetFuncSignature(function)
@@ -53,26 +58,31 @@ func AsCompatibleFunctionParameters(function interface{}, parameters []interface
 	}
 	var functionParameters = make([]interface{}, 0)
 	for i, parameterValue := range parameters {
-
-		if parameterValue == nil {
-			return nil, fmt.Errorf("parameter[%v] was empty", i)
-		}
-
+		isStruct := IsStruct(funcSignature[i])
 		reflectValue := reflect.ValueOf(parameterValue)
-		if reflectValue.Kind() == reflect.Slice && funcSignature[i].Kind() != reflectValue.Kind() {
-			return nil, fmt.Errorf("incompatible types expected: %v, but had %v", funcSignature[i].Kind(), reflectValue.Kind())
-		} else if !reflectValue.IsValid() {
-			if funcSignature[i].Kind() == reflect.Slice {
-				parameterValue = reflect.New(funcSignature[i]).Interface()
-				reflectValue = reflect.ValueOf(parameterValue)
+		if !isStruct {
+			if parameterValue == nil {
+				return nil, fmt.Errorf("parameter[%v] was empty", i)
+			}
+			if reflectValue.Kind() == reflect.Slice && funcSignature[i].Kind() != reflectValue.Kind() {
+				return nil, fmt.Errorf("incompatible types expected: %v, but had %v", funcSignature[i].Kind(), reflectValue.Kind())
+			} else if !reflectValue.IsValid() {
+				if funcSignature[i].Kind() == reflect.Slice {
+					parameterValue = reflect.New(funcSignature[i]).Interface()
+					reflectValue = reflect.ValueOf(parameterValue)
+				}
 			}
 		}
-
 		if reflectValue.Type() != funcSignature[i] {
 			newValuePointer := reflect.New(funcSignature[i])
-			err := converter.AssignConverted(newValuePointer.Interface(), parameterValue)
+			var err error
+			if IsStruct(funcSignature[i]) && !(IsStruct(parameterValue) || IsMap(parameterValue)) {
+				err = converter.AssignConverted(newValuePointer.Interface(), parametersKV)
+			} else {
+				err = converter.AssignConverted(newValuePointer.Interface(), parameterValue)
+			}
 			if err != nil {
-				return nil, fmt.Errorf("failed to assign convert %v to %v due to %v", parameterValue, newValuePointer.Interface(), err)
+				return nil, fmt.Errorf("failed to assign convert %v to %v due to %v", parametersKV, newValuePointer.Interface(), err)
 			}
 			reflectValue = newValuePointer.Elem()
 		}
@@ -95,7 +105,7 @@ func BuildFunctionParameters(function interface{}, parameters []string, paramete
 	for _, name := range parameters {
 		functionParameters = append(functionParameters, parameterValues[name])
 	}
-	return AsCompatibleFunctionParameters(function, functionParameters)
+	return AsFunctionParameters(function, functionParameters, parameterValues)
 }
 
 //GetFuncSignature returns a function signature
