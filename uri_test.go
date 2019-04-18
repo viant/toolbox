@@ -28,6 +28,14 @@ func TestExtractURIParameters(t *testing.T) {
 		assert.Equal(t, "subpath", parameters["sub"])
 		assert.Equal(t, "abc", parameters["name"])
 	}
+
+	{
+		parameters, matched := toolbox.ExtractURIParameters("/v1/path/{ids}", "/v1/path/this-is-test")
+		assert.True(t, matched)
+		assert.Equal(t, 1, len(parameters))
+		assert.Equal(t, "this-is-test", parameters["ids"])
+	}
+
 	{
 		_, matched := toolbox.ExtractURIParameters("/v2/path/{ids}/{sub}/a/{name}", "/v1/path/1,2,3,4,5/subpath/a/abc")
 		assert.False(t, matched)
