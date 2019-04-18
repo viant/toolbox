@@ -121,7 +121,7 @@ func (sr ServiceRouting) extractParameterFromBody(parameterName string, targetTy
 
 func (sr ServiceRouting) extractParameters(request *http.Request, response http.ResponseWriter) (map[string]interface{}, error) {
 	var result = make(map[string]interface{})
-	request.ParseForm()
+	_ = request.ParseForm()
 	functionSignature := GetFuncSignature(sr.Handler)
 	uriParameters, _ := ExtractURIParameters(sr.URI, request.RequestURI)
 	for _, name := range sr.Parameters {
