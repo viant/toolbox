@@ -1,5 +1,8 @@
-## April 15 2019 - v0.20.0
+## April 17 2019 - v0.20.0
 - added paraphrase ssh key support
+- added AsFunctionParameters
+- added string to []string conversion path
+
 
 ## April 14 2019 - v0.19.4
 - added StructFields sort type
