@@ -59,6 +59,9 @@ func AsFunctionParameters(function interface{}, parameters []interface{}, parame
 	var functionParameters = make([]interface{}, 0)
 	for i, parameterValue := range parameters {
 		isStruct := IsStruct(funcSignature[i])
+		if isStruct && parameterValue == nil {
+			parameterValue = make(map[string]interface{})
+		}
 		reflectValue := reflect.ValueOf(parameterValue)
 		if !isStruct {
 			if parameterValue == nil {
