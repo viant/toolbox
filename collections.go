@@ -475,6 +475,9 @@ func ProcessMap(source interface{}, handler func(key, value interface{}) bool) e
 
 //ToMap converts underlying map/struct/[]KV as map[string]interface{}
 func ToMap(source interface{}) (map[string]interface{}, error) {
+	if source == nil {
+		return nil, nil
+	}
 	var result map[string]interface{}
 	switch candidate := source.(type) {
 	case map[string]interface{}:
