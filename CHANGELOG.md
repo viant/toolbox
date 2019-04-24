@@ -1,11 +1,15 @@
+## April 17 2019 - v0.20.2
+- Added cred.Config Email field
+- Patched zero value access error
+
 ## April 17 2019 - v0.20.0
-- added paraphrase ssh key support
-- added AsFunctionParameters
-- added string to []string conversion path
+- Added paraphrase ssh key support
+- Added AsFunctionParameters
+- Added string to []string conversion path
 
 
 ## April 14 2019 - v0.19.4
-- added StructFields sort type
+- Added StructFields sort type
 
 ## April 12 2019 - v0.19.3
 - updated ReclassifyNotFoundIfMatched
@@ -187,12 +191,12 @@
 ## Dec 6 2018 - v0.3.8
  - Patched udf arguments conversion glitch
  - Patched scp service with additional fallback for file scraping
- - Refactor data/map expression parser, added basic arithmetic support
+ - Refactor data/map expression parser, Added basic arithmetic support
  - Added expansion of struct datatype, patched asEncodableValue
  
  
 ## Dec 3 2018 - v0.3.1
- - Refactor data/map expression parser, added basic arithmetic support
+ - Refactor data/map expression parser, Added basic arithmetic support
  - Refactor tokenizer matchers 
 
 ## Nov 28 2018 - v0.2.4
