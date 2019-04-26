@@ -1,4 +1,4 @@
-package toolbox
+	package toolbox
 
 import (
 	"errors"
@@ -265,6 +265,7 @@ func textToTime(value, dateLayout string) (*time.Time, error) {
 	return &timeValue, nil
 }
 
+//ToTime converts value to time, optionally uses layout if value if of string type
 func ToTime(value interface{}, dateLayout string) (*time.Time, error) {
 	if value == nil {
 		return nil, errors.New("values was empty")
@@ -286,7 +287,6 @@ func ToTime(value interface{}, dateLayout string) (*time.Time, error) {
 		textValue := AsString(DereferenceValue(actual))
 		return textToTime(textValue, dateLayout)
 	}
-	return nil, fmt.Errorf("unsupported type: %T", value)
 }
 
 //AsTime converts an input to time, it takes time input,  dateLaout as parameters.
@@ -1229,9 +1229,8 @@ func (c *Converter) assignConvertedMapFromStruct(source, target interface{}, sou
 			key := strings.Split(keyTag, ",")[0]
 			if key == "-" {
 				return nil
-			} else {
-				fieldName = key
 			}
+			fieldName = key
 		}
 		targetMap[fieldName] = fieldTarget
 		return nil

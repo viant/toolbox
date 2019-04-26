@@ -56,7 +56,7 @@ func (e *marshalerEncoder) Encode(v interface{}) error {
 	if err != nil {
 		return err
 	}
-	var totalByteWritten int = 0
+	var totalByteWritten = 0
 	var bytesLen = len(bytes)
 	for i := 0; i < bytesLen; i++ {
 		bytesWritten, err := e.writer.Write(bytes[totalByteWritten:])

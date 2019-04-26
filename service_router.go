@@ -20,6 +20,7 @@ const (
 )
 
 const (
+	//MethodGet HTTP GET meothd
 	MethodGet     = "GET"
 	MethodHead    = "HEAD"
 	MethodPost    = "POST"

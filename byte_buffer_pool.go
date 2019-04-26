@@ -34,7 +34,7 @@ func NewBytesBufferPool(poolSize, bufferSize int) httputil.BufferPool {
 	}
 }
 
-//CopyBuffer copies bytes from passed in source to destination with provided pool
+//CopyWithBufferPool copies bytes from passed in source to destination with provided pool
 func CopyWithBufferPool(source io.Reader, destination io.Writer, pool httputil.BufferPool) (int64, error) {
 	buf := pool.Get()
 	defer pool.Put(buf)

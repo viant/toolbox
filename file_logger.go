@@ -125,19 +125,17 @@ func (s *LogStream) manageWritesInBatch() {
 		case <-time.After(timeout):
 			if !manageWritesInBatchLoopFlush(s, messageCount, messages) {
 				return
-			} else {
-				messageCount = 0
-				messages = ""
 			}
+			messageCount = 0
+			messages = ""
 		case message = <-s.Messages:
 			messages += message + "\n"
-
 			messageCount++
 			s.RecordCount++
 
 			var hasReachMaxRecrods = messageCount >= s.Config.QueueFlashCount && s.Config.QueueFlashCount > 0
 			if hasReachMaxRecrods || s.isFrequencyFlushNeeded() {
-				s.write(messages)
+				_ = s.write(messages)
 				messages = ""
 				messageCount = 0
 			}
@@ -243,6 +241,7 @@ func (l *FileLogger) Log(message *LogMessage) error {
 	return logStream.Log(message)
 }
 
+//Notify notifies logger
 func (l *FileLogger) Notify(siginal os.Signal) {
 	l.siginal <- siginal
 }

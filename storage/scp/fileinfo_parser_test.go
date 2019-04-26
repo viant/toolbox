@@ -50,5 +50,20 @@ func Test_ExtractFileInfo(t *testing.T) {
 		}
 
 	}
+	{
+		parserURL, _ = url.Parse("scp://127.0.0.1:22/")
+		var parser = scp.Parser{IsoTimeStyle: true}
+		var objects, err = parser.Parse(parserURL, `rwxr-xr-x@ 1 "github.com/viant/toolbox/storage/scp"  WORKGROUP\\Domain Users  108143621 Apr 19 15:55:57 2019 /Users/ojoseph/git/test-app/../go-cm/dist/linux/go-cm`, true)
+		if assert.Nil(t, err) {
+			var object = objects[0]
+			assert.Equal(t, "scp://127.0.0.1:22/Users/ojoseph/git/test-app/../go-cm/dist/linux/go-cm", object.URL())
+			assert.Equal(t, int64(1555689357), object.FileInfo().ModTime().Unix())
+			assert.Equal(t, int64(108143621), object.FileInfo().Size())
+			assert.Equal(t, true, object.IsContent())
+		}
+
+	}
+
+
 
 }

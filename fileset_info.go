@@ -203,7 +203,7 @@ type TypeInfo struct {
 	indexedField           map[string]*FieldInfo
 	receivers              []*FunctionInfo
 	indexedReceiver        map[string]*FunctionInfo
-	receiver_              *FunctionInfo
+	rcv                    *FunctionInfo
 }
 
 //AddFields appends fileds to structinfo
@@ -292,7 +292,7 @@ func (f *FileInfo) addFunction(funcion *FunctionInfo) {
 	f.functions[funcion.ReceiverTypeName] = append(f.functions[funcion.ReceiverTypeName], funcion)
 }
 
-//Type returns all struct info
+//Types returns all struct info
 func (f *FileInfo) Types() []*TypeInfo {
 	var result = make([]*TypeInfo, 0)
 	for _, v := range f.types {
@@ -308,9 +308,9 @@ func (f *FileInfo) HasType(name string) bool {
 }
 
 //readComment reads comment from the position
-func (v *FileInfo) readComment(pos token.Pos) string {
-	position := v.fileSet.Position(pos)
-	fileName := path.Join(v.basePath, v.filename)
+func (f *FileInfo) readComment(pos token.Pos) string {
+	position := f.fileSet.Position(pos)
+	fileName := path.Join(f.basePath, f.filename)
 	content, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		panic("Unable to open file " + fileName)
@@ -354,17 +354,17 @@ func toFunctionInfos(source *ast.FieldList, owner *FileInfo) []*FunctionInfo {
 }
 
 //Visit visits ast node to extract struct details from the passed file
-func (v *FileInfo) Visit(node ast.Node) ast.Visitor {
+func (f *FileInfo) Visit(node ast.Node) ast.Visitor {
 	if node != nil {
 
-		//	fmt.Printf("node %T %v\n", node, node)
+		//	fmt.Printf("node %T %f\n", node, node)
 
 		switch value := node.(type) {
 		case *ast.TypeSpec:
 			typeName := value.Name.Name
 			typeInfo := NewTypeInfo(typeName)
-			typeInfo.Package = v.packageName
-			typeInfo.FileName = v.filename
+			typeInfo.Package = f.packageName
+			typeInfo.FileName = f.filename
 
 			switch typeValue := value.Type.(type) {
 			case *ast.ArrayType:
@@ -385,53 +385,53 @@ func (v *FileInfo) Visit(node ast.Node) ast.Visitor {
 				typeInfo.Derived = typeValue.Name
 				typeInfo.IsDerived = true
 			}
-			v.currentTypInfo = typeInfo
-			v.types[typeName] = typeInfo
+			f.currentTypInfo = typeInfo
+			f.types[typeName] = typeInfo
 		case *ast.StructType:
-			if v.currentTypInfo != nil { //TODO fixme - understand why current type would be nil
-				v.currentTypInfo.Comment = v.readComment(value.Pos())
-				v.currentTypInfo.AddFields(toFieldInfoSlice(value.Fields)...)
+			if f.currentTypInfo != nil { //TODO fixme - understand why current type would be nil
+				f.currentTypInfo.Comment = f.readComment(value.Pos())
+				f.currentTypInfo.AddFields(toFieldInfoSlice(value.Fields)...)
 			}
 		case *ast.FuncDecl:
-			functionInfo := NewFunctionInfo(value, v)
-			functionInfo.FileInfo = v
-			v.currentFunctionInfo = functionInfo
+			functionInfo := NewFunctionInfo(value, f)
+			functionInfo.FileInfo = f
+			f.currentFunctionInfo = functionInfo
 			if len(functionInfo.ReceiverTypeName) > 0 {
-				v.addFunction(functionInfo)
+				f.addFunction(functionInfo)
 			}
 
 		case *ast.FuncType:
 
-			if v.currentFunctionInfo != nil {
+			if f.currentFunctionInfo != nil {
 				if value.Params != nil {
-					v.currentFunctionInfo.ParameterFields = toFieldInfoSlice(value.Params)
+					f.currentFunctionInfo.ParameterFields = toFieldInfoSlice(value.Params)
 				}
 
 				if value.Results != nil {
-					v.currentFunctionInfo.ResultsFields = toFieldInfoSlice(value.Results)
+					f.currentFunctionInfo.ResultsFields = toFieldInfoSlice(value.Results)
 				}
-				v.currentFunctionInfo = nil
+				f.currentFunctionInfo = nil
 			}
 		case *ast.FieldList:
-			if v.currentTypInfo != nil && v.currentTypInfo.IsInterface {
-				v.currentTypInfo.receivers = toFunctionInfos(value, v)
-				v.currentTypInfo = nil
+			if f.currentTypInfo != nil && f.currentTypInfo.IsInterface {
+				f.currentTypInfo.receivers = toFunctionInfos(value, f)
+				f.currentTypInfo = nil
 			}
 		case *ast.ImportSpec:
 			if value.Name != nil && value.Name.String() != "" {
-				v.Imports[value.Name.String()] = value.Path.Value
+				f.Imports[value.Name.String()] = value.Path.Value
 			} else {
 				_, name := path.Split(value.Path.Value)
 				name = strings.Replace(name, `"`, "", 2)
-				v.Imports[name] = value.Path.Value
+				f.Imports[name] = value.Path.Value
 			}
 		}
 
 	}
-	return v
+	return f
 }
 
-//Visit creates a new file info.
+//NewFileInfo creates a new file info.
 func NewFileInfo(basePath, packageName, filename string, fileSet *token.FileSet) *FileInfo {
 	result := &FileInfo{
 		basePath:    basePath,
@@ -459,7 +459,7 @@ func (f *FileSetInfo) FilesInfo() map[string]*FileInfo {
 	return f.files
 }
 
-//TypeInfo returns type info for passed in type  name.
+//Type returns type info for passed in type  name.
 func (f *FileSetInfo) Type(name string) *TypeInfo {
 	if pointerIndex := strings.LastIndex(name, "*"); pointerIndex != -1 {
 		name = name[pointerIndex+1:]

@@ -20,7 +20,7 @@ var CopyStringValueProvider = func(source string) string {
 	return source
 }
 
-//ProcessSlice iterates over any slice, it calls handler with each element unless handler returns false,
+//ReverseSlice reverse a slice
 func ReverseSlice(source interface{}) {
 	if source == nil {
 		return
@@ -709,7 +709,8 @@ func isNilOrEmpty(v interface{}) bool {
 	return AsString(v) == ""
 }
 
-//CloneNonEmptyMap removes empty keys from map result
+
+//CopyNonEmptyMapEntries removes empty keys from map result
 func CopyNonEmptyMapEntries(input, output interface{}) (err error) {
 	var mutator func(k, v interface{})
 	if aMap, ok := output.(map[interface{}]interface{}); ok {

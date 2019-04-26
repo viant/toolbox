@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+//TrueProvider represents a true provider
 var TrueProvider = func(input interface{}) bool {
 	return true
 }
