@@ -709,7 +709,6 @@ func isNilOrEmpty(v interface{}) bool {
 	return AsString(v) == ""
 }
 
-
 //CopyNonEmptyMapEntries removes empty keys from map result
 func CopyNonEmptyMapEntries(input, output interface{}) (err error) {
 	var mutator func(k, v interface{})
