@@ -1,3 +1,6 @@
+## May 6 2019 - v0.20.3
+- Patched yaml detection
+
 ## April 17 2019 - v0.20.2
 - Added cred.Config Email field
 - Patched zero value access error
