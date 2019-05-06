@@ -13,10 +13,10 @@ import (
 )
 
 const (
-	jsonContentType      = "application/json"
-	yamlContentType      = "text/yaml"
-	textPlainContentType = "text/plain"
-	contentTypeHeader    = "Content-Type"
+	jsonContentType       = "application/json"
+	yamlContentTypeSuffix = "/yaml"
+	textPlainContentType  = "text/plain"
+	contentTypeHeader     = "Content-Type"
 )
 
 const (
@@ -74,7 +74,7 @@ func (sr ServiceRouting) getDecoderFactory(contentType string) DecoderFactory {
 			return factory
 		}
 	}
-	if contentType == yamlContentType {
+	if strings.HasSuffix(contentType, yamlContentTypeSuffix) {
 		return YamlDefaultDecoderFactory
 	}
 	return DefaultDecoderFactory
@@ -86,7 +86,7 @@ func (sr ServiceRouting) getEncoderFactory(contentType string) EncoderFactory {
 			return factory
 		}
 	}
-	if contentType == yamlContentType {
+	if strings.HasSuffix(contentType, yamlContentTypeSuffix) {
 		return YamlDefaultEncoderFactory
 	}
 	return DefaultEncoderFactory
