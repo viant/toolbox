@@ -14,6 +14,11 @@ func (r *BatchLimiter) Acquire() {
 	<-r.queue
 }
 
+//Add adds element to wait group
+func (r *BatchLimiter) Add(delta int) {
+	r.group.Add(delta)
+}
+
 //Done flags wait group as done, returns back a token to a channel
 func (r *BatchLimiter) Done() {
 	r.group.Done()
