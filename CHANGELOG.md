@@ -1,3 +1,6 @@
+## May 7 2019 - v0.21.0
+- Merge KMS helper
+
 ## May 6 2019 - v0.20.3
 - Patched yaml detection
 
