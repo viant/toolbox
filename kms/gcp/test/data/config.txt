@@ -1,0 +1,5 @@
+{
+        "Region":"Test R",
+        "Key":"test key",
+        "Secret":"test S!!@"
+}
