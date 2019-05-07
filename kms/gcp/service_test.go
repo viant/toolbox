@@ -12,9 +12,9 @@ import (
 )
 
 type MyTestConfig  struct {
-	Key       string `json:",omitempty"`
-	Secret    string `json:",omitempty"`
-	Region    string `json:",omitempty"`
+	Aaa       string `json:",omitempty"`
+	Bbb    string `json:",omitempty"`
+	Ccc    string `json:",omitempty"`
 
 }
 func TestDecoder(t *testing.T) {
@@ -29,9 +29,9 @@ func TestDecoder(t *testing.T) {
 		mytestConfig := MyTestConfig{}
 		service := service{KmsService: &testKmsService{}}
 		service.Decode(context.Background(),&decryptRequest,decoderFactory,&mytestConfig)
-		assert.Equal(t,mytestConfig.Key,"test key")
-		assert.Equal(t,mytestConfig.Region,"Test R")
-		assert.Equal(t,mytestConfig.Secret,"test S!!@")
+		assert.Equal(t,mytestConfig.Aaa,"Test1")
+		assert.Equal(t,mytestConfig.Bbb,"test2")
+		assert.Equal(t,mytestConfig.Ccc,"test3")
 
 
 	}
@@ -46,9 +46,9 @@ func TestDecoder(t *testing.T) {
 		mytestConfig := MyTestConfig{}
 		service := service{KmsService: &testKmsService{}}
 		service.Decode(context.Background(),&decryptRequest,decoderFactory,&mytestConfig)
-		assert.Equal(t,mytestConfig.Key,"test key2")
-		assert.Equal(t,mytestConfig.Region,"Test R2")
-		assert.Equal(t,mytestConfig.Secret,"test2 S!!@")
+		assert.Equal(t,mytestConfig.Aaa,"Test111")
+		assert.Equal(t,mytestConfig.Bbb,"test222")
+		assert.Equal(t,mytestConfig.Ccc,"test333")
 
 
 	}
