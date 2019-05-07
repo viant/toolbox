@@ -9,26 +9,19 @@ import (
 	"github.com/viant/toolbox/kms"
 	"github.com/viant/toolbox/storage"
 	"google.golang.org/api/cloudkms/v1"
-	"io/ioutil"
 	"google.golang.org/api/option"
-
+	"io/ioutil"
 )
 
-
-
 type KmsService interface {
-	Encrypt(ctx context.Context,key string,value string)  (string, error)
-	Decrypt(ctx context.Context,key string,value string)  (string, error)
+	Encrypt(ctx context.Context, key string, value string) (string, error)
+	Decrypt(ctx context.Context, key string, value string) (string, error)
 }
 
-func (k *kmsService) Encrypt(ctx context.Context,key string,plainText string) (string, error) {
+func (k *kmsService) Encrypt(ctx context.Context, key string, plainText string) (string, error) {
 	kms, err := cloudkms.NewService(ctx, option.WithScopes(cloudkms.CloudPlatformScope, cloudkms.CloudkmsScope))
 	if err != nil {
 		return "", err
-	}
-
-	if err != nil {
-		return "",err
 	}
 	service := cloudkms.NewProjectsLocationsKeyRingsCryptoKeysService(kms)
 
@@ -36,40 +29,33 @@ func (k *kmsService) Encrypt(ctx context.Context,key string,plainText string) (s
 	if err != nil {
 		return "", err
 	}
-	return response.Ciphertext,nil
+	return response.Ciphertext, nil
 }
 
-
-
-func (k *kmsService) Decrypt(ctx context.Context,key string,plainText string) (string, error) {
+func (k *kmsService) Decrypt(ctx context.Context, key string, plainText string) (string, error) {
 	kms, err := cloudkms.NewService(ctx, option.WithScopes(cloudkms.CloudPlatformScope, cloudkms.CloudkmsScope))
 	if err != nil {
 		return "", err
 	}
-	if err != nil {
-		return "",err
-	}
 	service := cloudkms.NewProjectsLocationsKeyRingsCryptoKeysService(kms)
-	response, err := service.Decrypt(key, &cloudkms.DecryptRequest{Ciphertext:plainText}).Context(ctx).Do()
+	response, err := service.Decrypt(key, &cloudkms.DecryptRequest{Ciphertext: plainText}).Context(ctx).Do()
 	if err != nil {
 		return "", err
 	}
-	return response.Plaintext,nil
+	return response.Plaintext, nil
 }
 
 type kmsService struct {
-
 }
 
 type service struct {
 	KmsService
 }
 
-
 var srv kms.Service
 
 //GetService returns service
-func GetService() (kms.Service) {
+func GetService() kms.Service {
 	if srv != nil {
 		return srv
 	}
@@ -77,11 +63,11 @@ func GetService() (kms.Service) {
 }
 
 func newService() kms.Service {
-	return &service{KmsService:&kmsService{}}
+	return &service{KmsService: &kmsService{}}
 }
 
-func (s *service) Decode(ctx context.Context,decryptRequest *kms.DecryptRequest, factory toolbox.DecoderFactory,target interface{}) error {
-	response, err := s.Decrypt(ctx,decryptRequest)
+func (s *service) Decode(ctx context.Context, decryptRequest *kms.DecryptRequest, factory toolbox.DecoderFactory, target interface{}) error {
+	response, err := s.Decrypt(ctx, decryptRequest)
 	if err != nil {
 		return err
 	}
@@ -89,32 +75,32 @@ func (s *service) Decode(ctx context.Context,decryptRequest *kms.DecryptRequest,
 	return factory.Create(reader).Decode(target)
 }
 
-func (s *service) Encrypt(ctx context.Context,request *kms.EncryptRequest) (*kms.EncryptResponse, error) {
+func (s *service) Encrypt(ctx context.Context, request *kms.EncryptRequest) (*kms.EncryptResponse, error) {
 	if request.URL != "" {
 		data, err := getDataFromURL(request.URL)
 		if err != nil {
-			return nil , err
+			return nil, err
 		}
 		if data == nil || len(data) == 0 {
-			return nil,fmt.Errorf("data empty in the encrypt")
+			return nil, fmt.Errorf("data empty in the encrypt")
 		}
 		request.Data = data
 
 	}
-	plainText := getPlainText(request.Data,request.IsBase64)
-	encryptedText,err := s.KmsService.Encrypt(ctx,request.Key,plainText)
-	if err != nil{
-		return nil,err
+	plainText := getPlainText(request.Data, request.IsBase64)
+	encryptedText, err := s.KmsService.Encrypt(ctx, request.Key, plainText)
+	if err != nil {
+		return nil, err
 	}
-	if  encryptedText == "" {
-		return nil,fmt.Errorf("no encryptedText in the encrypt")
+	if encryptedText == "" {
+		return nil, fmt.Errorf("no encryptedText in the encrypt")
 	}
 
-    if request.TargetURL != "" {
-	 	err = upload(request.TargetURL,encryptedText)
-	 	if err != nil {
-	 		fmt.Printf("error = %v\n",err)
-	 		return nil,err
+	if request.TargetURL != "" {
+		err = upload(request.TargetURL, encryptedText)
+		if err != nil {
+			fmt.Printf("error = %v\n", err)
+			return nil, err
 		}
 	}
 	encryptedData, err := base64.StdEncoding.DecodeString(encryptedText)
@@ -127,22 +113,19 @@ func (s *service) Encrypt(ctx context.Context,request *kms.EncryptRequest) (*kms
 	}, nil
 }
 
-
-
-
-func (s *service) Decrypt(ctx context.Context,request *kms.DecryptRequest) (*kms.DecryptResponse, error) {
+func (s *service) Decrypt(ctx context.Context, request *kms.DecryptRequest) (*kms.DecryptResponse, error) {
 	if request.URL != "" {
 		data, err := getDataFromURL(request.URL)
 		if err != nil {
-			return nil , err
+			return nil, err
 		}
 		if data == nil || len(data) == 0 {
-			return nil,fmt.Errorf("data empty in the decrypt")
+			return nil, fmt.Errorf("data empty in the decrypt")
 		}
 		request.Data = data
 	}
 
-	plainText := getPlainText(request.Data,request.IsBase64)
+	plainText := getPlainText(request.Data, request.IsBase64)
 
 	text, err := s.KmsService.Decrypt(ctx, request.Key, plainText)
 	if err != nil {
@@ -157,14 +140,14 @@ func (s *service) Decrypt(ctx context.Context,request *kms.DecryptRequest) (*kms
 		return nil, err
 	}
 	decryptResponse := &kms.DecryptResponse{
-		Data:     data,
+		Data: data,
 		Text: text,
 	}
 
 	return decryptResponse, nil
 }
 
-func getPlainText(data []byte,isBase64 bool) string {
+func getPlainText(data []byte, isBase64 bool) string {
 	plainText := string(data)
 	if !isBase64 {
 		plainText = base64.StdEncoding.EncodeToString(data)
@@ -172,29 +155,28 @@ func getPlainText(data []byte,isBase64 bool) string {
 	return plainText
 }
 
-func upload(TargetURL string,encryptedText string) error {
-	storageService, err:= storage.NewServiceForURL(TargetURL, "")
+func upload(TargetURL string, encryptedText string) error {
+	storageService, err := storage.NewServiceForURL(TargetURL, "")
 	if err != nil {
-		fmt.Printf("err when upload =%v\n",err)
+		fmt.Printf("err when upload =%v\n", err)
 		return err
 	}
-	return storageService.Upload(TargetURL,bytes.NewReader([]byte(encryptedText)))
+	return storageService.Upload(TargetURL, bytes.NewReader([]byte(encryptedText)))
 }
 
-func  getDataFromURL(URL string) ([]byte, error) {
-	storageService, err:= storage.NewServiceForURL(URL, "")
+func getDataFromURL(URL string) ([]byte, error) {
+	storageService, err := storage.NewServiceForURL(URL, "")
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 	reader, err := storageService.DownloadWithURL(URL)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 	data, err := ioutil.ReadAll(reader)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
-	return data,nil
+	return data, nil
 
 }
-
