@@ -47,9 +47,8 @@ func AsString(input interface{}) string {
 			}
 			return string(stringBytes)
 		}
-
 		var result = ""
-		for v := range value {
+		for _, v := range value {
 			result += AsString(v)
 		}
 		return result

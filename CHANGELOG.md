@@ -1,3 +1,6 @@
+## May 13 2019 - v0.21.1
+- Patched AsString
+
 ## May 7 2019 - v0.21.0
 - Merge KMS helper
 
