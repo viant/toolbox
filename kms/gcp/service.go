@@ -21,13 +21,13 @@ type KmsService interface {
 func (k *kmsService) Encrypt(ctx context.Context, key string, plainText string) (string, error) {
 	kms, err := cloudkms.NewService(ctx, option.WithScopes(cloudkms.CloudPlatformScope, cloudkms.CloudkmsScope))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Fail to get kms service in encrypt %v\n",err)
 	}
 	service := cloudkms.NewProjectsLocationsKeyRingsCryptoKeysService(kms)
 
 	response, err := service.Encrypt(key, &cloudkms.EncryptRequest{Plaintext: plainText}).Context(ctx).Do()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Fail to kms encrypt %v\n",err)
 	}
 	return response.Ciphertext, nil
 }
@@ -35,12 +35,12 @@ func (k *kmsService) Encrypt(ctx context.Context, key string, plainText string) 
 func (k *kmsService) Decrypt(ctx context.Context, key string, plainText string) (string, error) {
 	kms, err := cloudkms.NewService(ctx, option.WithScopes(cloudkms.CloudPlatformScope, cloudkms.CloudkmsScope))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Fail to get kms service in decrypt %v\n",err)
 	}
 	service := cloudkms.NewProjectsLocationsKeyRingsCryptoKeysService(kms)
 	response, err := service.Decrypt(key, &cloudkms.DecryptRequest{Ciphertext: plainText}).Context(ctx).Do()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Fail to kms decrypt %v\n",err)
 	}
 	return response.Plaintext, nil
 }
@@ -137,7 +137,7 @@ func (s *service) Decrypt(ctx context.Context, request *kms.DecryptRequest) (*km
 
 	data, err := base64.StdEncoding.DecodeString(text)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Fail to decode based64 in decrypt %v\n",err)
 	}
 	decryptResponse := &kms.DecryptResponse{
 		Data: data,
@@ -158,8 +158,7 @@ func getPlainText(data []byte, isBase64 bool) string {
 func upload(TargetURL string, encryptedText string) error {
 	storageService, err := storage.NewServiceForURL(TargetURL, "")
 	if err != nil {
-		fmt.Printf("err when upload =%v\n", err)
-		return err
+		return fmt.Errorf("Fail to create storageService in upload %v\n",err)
 	}
 	return storageService.Upload(TargetURL, bytes.NewReader([]byte(encryptedText)))
 }
@@ -167,15 +166,15 @@ func upload(TargetURL string, encryptedText string) error {
 func getDataFromURL(URL string) ([]byte, error) {
 	storageService, err := storage.NewServiceForURL(URL, "")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Fail to create storageService %v\n",err)
 	}
 	reader, err := storageService.DownloadWithURL(URL)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Fail to download data %v\n",err)
 	}
 	data, err := ioutil.ReadAll(reader)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Fail to read data %v\n",err)
 	}
 	return data, nil
 
