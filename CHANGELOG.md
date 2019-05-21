@@ -1,5 +1,6 @@
 ## May 21 2019 - v0.22.0
 - Added AtTime schedule type
+- Minor patches
 
 ## May 13 2019 - v0.21.1
 - Patched AsString
