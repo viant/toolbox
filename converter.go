@@ -932,8 +932,12 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 	}
 
 	if targetIndirectValue.Kind() == reflect.Slice || targetIndirectPointerType.Kind() == reflect.Slice {
+
 		if sourceValue.Kind() == reflect.Ptr && sourceValue.Elem().Kind() == reflect.Slice {
 			sourceValue = sourceValue.Elem()
+		}
+		if sourceValue.Kind() == reflect.Ptr && sourceValue.IsNil() {
+			return nil
 		}
 		if sourceValue.Kind() == reflect.Slice {
 			if targetIndirectValue.Kind() == reflect.Map {
