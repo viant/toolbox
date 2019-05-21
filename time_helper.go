@@ -30,6 +30,102 @@ const (
 	DurationNanosecondAbbr  = "ns"
 )
 
+//AtTime represents a time at given schedule
+type AtTime struct {
+	WeekDay string
+	Hour    string
+	Minute  string
+}
+
+func (t *AtTime) min(base time.Time) int {
+	switch t.Minute {
+	case "*":
+		return base.Minute() + 1%59
+	case "":
+		return 0
+	}
+	candidates := strings.Split(t.Minute, ",")
+	for _, candidate := range candidates {
+		candidateMin := AsInt(candidate)
+		if base.Minute() < candidateMin {
+			return candidateMin
+		}
+	}
+	return AsInt(candidates[0])
+}
+
+func (t *AtTime) hour(base time.Time) int {
+	min := t.min(base)
+	switch t.Hour {
+	case "*":
+		if min > base.Minute() {
+			return base.Hour()
+		}
+		return base.Hour() + 1%23
+	case "":
+		return 0
+	}
+	candidates := strings.Split(t.Hour, ",")
+	for _, candidate := range candidates {
+		candidateHour := AsInt(candidate)
+		if base.Hour() < candidateHour {
+			return candidateHour
+		}
+	}
+	return AsInt(candidates[0])
+}
+
+func (t *AtTime) weekday(base time.Time) int {
+	hour := t.hour(base)
+	min := t.min(base)
+	baseWeekday := int(base.Weekday())
+	isPastDue := hour > base.Hour() || (hour == base.Hour() && min > base.Minute())
+	switch t.WeekDay {
+	case "*":
+		if isPastDue {
+			return baseWeekday
+		}
+		return baseWeekday + 1%7
+	case "":
+		return 0
+	}
+	candidates := strings.Split(t.WeekDay, ",")
+	result := AsInt(candidates[0])
+	for _, candidate := range candidates {
+		candidateWeekday := AsInt(candidate)
+		if baseWeekday < candidateWeekday {
+			result = candidateWeekday
+			break
+		}
+	}
+	if result < baseWeekday && isPastDue {
+		return 7 + result
+	}
+
+	return result
+}
+
+//Next returns next time schedule
+func (t *AtTime) Next(base time.Time) time.Time {
+	min := t.min(base)
+	hour := t.hour(base)
+	timeLiteral := base.Format("2006-01-02")
+	updateTimeLiteral := fmt.Sprintf("%v %02d:%02d:00", timeLiteral, hour, min)
+	weekday := t.weekday(base)
+	baseWeekday := int(base.Weekday())
+	weekdayDiff := 0
+	if weekday >= baseWeekday {
+		weekdayDiff = weekday - baseWeekday
+	} else {
+		weekdayDiff = 7 + weekday - baseWeekday
+	}
+	result, _ := time.Parse("2006-01-02 15:04:05", updateTimeLiteral)
+	if weekdayDiff > 0 {
+		result = result.Add(time.Hour * 24 * time.Duration(weekdayDiff))
+	}
+	return result
+}
+
 //Duration represents duration
 type Duration struct {
 	Value int
@@ -138,7 +234,7 @@ func TimeDiff(base time.Time, expression string) (*time.Time, error) {
 			return nil, err
 		}
 		delta, _ = NewDuration(val, strings.ToLower(token.Matched))
-		ExpectToken(tokenizer, "", durationPluralToken)
+		_, _ = ExpectToken(tokenizer, "", durationPluralToken)
 		token, err = ExpectTokenOptionallyFollowedBy(tokenizer, whitespacesToken, "expected time modifier", positiveModifierToken, negativeModifierToken)
 		if err != nil {
 			return nil, err

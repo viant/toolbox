@@ -7,6 +7,184 @@ import (
 	"time"
 )
 
+func TestAtTime_Next(t *testing.T) {
+
+	timeLayout := "2006-01-02 15:04:05"
+
+	var useCases = []struct {
+		description string
+		at          *AtTime
+		baseTime    string
+		expectTime  string
+	}{
+		{
+			description: "evey minute",
+			at: &AtTime{
+				WeekDay: "*",
+				Hour:    "*",
+				Minute:  "*",
+			},
+			baseTime:   "2019-01-01 01:01:01",
+			expectTime: "2019-01-01 01:02:00",
+		},
+		{
+			description: "evey 30 minute before",
+			at: &AtTime{
+				WeekDay: "*",
+				Hour:    "*",
+				Minute:  "30",
+			},
+			baseTime:   "2019-01-01 01:01:01",
+			expectTime: "2019-01-01 01:30:00",
+		},
+		{
+			description: "evey 30 minute after",
+			at: &AtTime{
+				WeekDay: "*",
+				Hour:    "*",
+				Minute:  "30",
+			},
+			baseTime:   "2019-01-01 01:31:01",
+			expectTime: "2019-01-01 02:30:00",
+		},
+		{
+			description: "evey 10, 30 minute, before",
+			at: &AtTime{
+				WeekDay: "*",
+				Hour:    "*",
+				Minute:  "10,30",
+			},
+			baseTime:   "2019-01-01 01:09:01",
+			expectTime: "2019-01-01 01:10:00",
+		},
+		{
+			description: "evey 10, 30 minute, after first",
+			at: &AtTime{
+				WeekDay: "*",
+				Hour:    "*",
+				Minute:  "10,30",
+			},
+			baseTime:   "2019-01-01 01:13:01",
+			expectTime: "2019-01-01 01:30:00",
+		},
+		{
+			description: "evey 10, 30 minute, after second",
+			at: &AtTime{
+				WeekDay: "*",
+				Hour:    "*",
+				Minute:  "10,30",
+			},
+			baseTime:   "2019-01-01 01:33:01",
+			expectTime: "2019-01-01 02:10:00",
+		},
+
+		{
+			description: "evey *:0 minute",
+			at: &AtTime{
+				WeekDay: "*",
+				Hour:    "*",
+				Minute:  "0",
+			},
+			baseTime:   "2019-01-01 01:59:01",
+			expectTime: "2019-01-01 02:00:00",
+		},
+
+		{
+			description: "evey hour",
+			at: &AtTime{
+				WeekDay: "*",
+				Hour:    "*",
+				Minute:  "",
+			},
+			baseTime:   "2019-01-01 01:33:01",
+			expectTime: "2019-01-01 02:00:00",
+		},
+		{
+			description: "at 13 hour, before",
+			at: &AtTime{
+				WeekDay: "*",
+				Hour:    "13",
+				Minute:  "",
+			},
+			baseTime:   "2019-01-01 01:33:01",
+			expectTime: "2019-01-01 13:00:00",
+		},
+		{
+			description: "at midnight",
+			at: &AtTime{
+				WeekDay: "*",
+				Hour:    "0",
+				Minute:  "",
+			},
+			baseTime:   "2019-01-01 23:33:01",
+			expectTime: "2019-01-02 00:00:00",
+		},
+
+		{
+			description: "at midnight weekday 9",
+			at: &AtTime{
+				WeekDay: "*",
+				Hour:    "0",
+				Minute:  "",
+			},
+			baseTime:   "2019-01-06 23:33:01",
+			expectTime: "2019-01-07 00:00:00",
+		},
+
+		{
+			description: "every 0 weekdy",
+			at: &AtTime{
+				WeekDay: "0",
+				Hour:    "",
+				Minute:  "",
+			},
+			baseTime:   "2019-01-04 23:33:01",
+			expectTime: "2019-01-06 00:00:00",
+		},
+
+		{
+			description: "every 0 weekdy",
+			at: &AtTime{
+				WeekDay: "2",
+				Hour:    "",
+				Minute:  "",
+			},
+			baseTime:   "2019-01-04 23:33:01",
+			expectTime: "2019-01-08 00:00:00",
+		},
+		{
+			description: "every 0 weekdy",
+			at: &AtTime{
+				WeekDay: "2",
+				Hour:    "",
+				Minute:  "",
+			},
+			baseTime:   "2019-01-08 23:33:01",
+			expectTime: "2019-01-08 00:00:00",
+		},
+		{
+			description: "every 5 weekday in the future",
+			at: &AtTime{
+				WeekDay: "2,5",
+				Hour:    "",
+				Minute:  "",
+			},
+			baseTime:   "2019-01-09 23:33:01",
+			expectTime: "2019-01-11 00:00:00",
+		},
+	}
+
+	for _, useCase := range useCases {
+		baseTime, err := time.Parse(timeLayout, useCase.baseTime)
+		assert.Nil(t, err, useCase.description)
+		expectTime, err := time.Parse(timeLayout, useCase.expectTime)
+		assert.Nil(t, err, useCase.description)
+		actualTime := useCase.at.Next(baseTime)
+		assert.Equal(t, expectTime, actualTime, useCase.description)
+	}
+
+}
+
 func TestNewDuration(t *testing.T) {
 
 	var useCases = []struct {

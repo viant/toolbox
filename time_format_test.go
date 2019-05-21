@@ -26,8 +26,8 @@ func TestTimeFormat(t *testing.T) {
 
 	{
 
-		dateLaout := toolbox.DateFormatToLayout("yyyy-MM-dd HH:mm:ss.SSSZ")
-		timeValue, err := time.Parse(dateLaout, "2022-11-10 10:32:28.984-08")
+		dateLayout := toolbox.DateFormatToLayout("yyyy-MM-dd HH:mm:ss.SSSZ")
+		timeValue, err := time.Parse(dateLayout, "2022-11-10 10:32:28.984-08")
 		assert.Nil(t, err)
 
 		assert.Equal(t, int64(1668105148), timeValue.Unix())

@@ -382,7 +382,17 @@ Provide dynamic semantic for creating time object based on time dif
 	
 ```
 
-
+**AtTime**
+```go
+    atTime := &AtTime{
+  				WeekDay: "*",
+  				Hour:    "*",
+  				Minute:  "10,30",
+  			}
+    
+    //returns the nearest future time for xx:10 or xx:30  
+    nextScheduleTime := atTime.Next(time.Now)
+```
 <a name="storage"></a>
 
 ## Storage API
