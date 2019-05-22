@@ -16,7 +16,7 @@ const DevstorageFullControlScope = "https://www.googleapis.com/auth/devstorage.f
 const googleStorageProjectKey = "GOOGLE_STORAGE_PROJECT"
 
 func init() {
-	storage.NewStorageProvider().Registry[ProviderScheme] = serviceProvider
+	storage.Registry().Registry[ProviderScheme] = serviceProvider
 }
 
 func serviceProvider(credentials string) (storage.Service, error) {

@@ -133,8 +133,8 @@ func NewService() Service {
 	var result = &storageService{
 		registry: make(map[string]Service),
 	}
-	result.Register("file", &fileStorageService{})
-	result.Register("mem", NewMemoryService())
+	_ = result.Register("file", &fileStorageService{})
+	_ = result.Register("mem", NewMemoryService())
 	return result
 }
 
@@ -145,7 +145,7 @@ func NewServiceForURL(URL, credentials string) (Service, error) {
 		return nil, err
 	}
 	service := NewService()
-	provider := NewStorageProvider().Get(parsedURL.Scheme)
+	provider := Registry().Get(parsedURL.Scheme)
 
 	if provider != nil {
 		if len(credentials) > 0 {

@@ -33,12 +33,12 @@ func serviceProvider(credentialFile string) (storage.Service, error) {
 
 //SetProvider set s3 provider with dynamic credentials
 func SetDefaultProvider() {
-	storage.NewStorageProvider().Registry[ProviderScheme] = serviceProvider
+	storage.Registry().Registry[ProviderScheme] = serviceProvider
 }
 
 //SetProvider set s3 provider with supplied config
 func SetProvider(config *cred.Config) {
-	storage.NewStorageProvider().Registry[ProviderScheme] = func(string) (storage.Service, error) {
+	storage.Registry().Registry[ProviderScheme] = func(string) (storage.Service, error) {
 		return NewService(config), nil
 	}
 }

@@ -14,8 +14,8 @@ const ProviderScheme = "scp"
 const SSHProviderScheme = "ssh"
 
 func init() {
-	storage.NewStorageProvider().Registry[ProviderScheme] = serviceProvider
-	storage.NewStorageProvider().Registry[SSHProviderScheme] = serviceProvider
+	storage.Registry().Registry[ProviderScheme] = serviceProvider
+	storage.Registry().Registry[SSHProviderScheme] = serviceProvider
 }
 
 func serviceProvider(credentials string) (storage.Service, error) {

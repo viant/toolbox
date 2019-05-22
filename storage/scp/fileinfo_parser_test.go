@@ -64,6 +64,4 @@ func Test_ExtractFileInfo(t *testing.T) {
 
 	}
 
-
-
 }

@@ -267,8 +267,8 @@ const HttpProviderScheme = "http"
 const HttpsProviderScheme = "https"
 
 func init() {
-	NewStorageProvider().Registry[HttpsProviderScheme] = httpServiceProvider
-	NewStorageProvider().Registry[HttpProviderScheme] = httpServiceProvider
+	Registry().Registry[HttpsProviderScheme] = httpServiceProvider
+	Registry().Registry[HttpProviderScheme] = httpServiceProvider
 
 }
 

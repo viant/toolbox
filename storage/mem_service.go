@@ -255,7 +255,7 @@ func NewMemoryService() Service {
 }
 
 func init() {
-	NewStorageProvider().Registry[MemoryProviderScheme] = memServiceProvider
+	Registry().Registry[MemoryProviderScheme] = memServiceProvider
 }
 
 func memServiceProvider(credentialFile string) (Service, error) {

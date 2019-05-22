@@ -1,3 +1,6 @@
+## May 22 2019 - v0.23.0
+- Renamed StorageProvider to Registry
+
 ## May 21 2019 - v0.22.0
 - Added AtTime schedule type
 - Minor patches
