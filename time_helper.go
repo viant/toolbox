@@ -35,6 +35,8 @@ type AtTime struct {
 	WeekDay string
 	Hour    string
 	Minute  string
+	TZ      string
+	loc *time.Location
 }
 
 func (t *AtTime) min(base time.Time) int {
@@ -105,10 +107,24 @@ func (t *AtTime) weekday(base time.Time) int {
 	return result
 }
 
+//Init initializes tz
+func (t *AtTime) Init() error {
+	if t.TZ == "" {
+		t.TZ = "UTC"
+	}
+	var err error
+	t.loc, err = time.LoadLocation(t.TZ)
+	return err
+}
+
 //Next returns next time schedule
 func (t *AtTime) Next(base time.Time) time.Time {
+	if t.loc != nil {
+		base = base.In(t.loc)
+	}
 	min := t.min(base)
 	hour := t.hour(base)
+	fmt.Printf("%v -> %v\n", t.TZ, base)
 	timeLiteral := base.Format("2006-01-02")
 	updateTimeLiteral := fmt.Sprintf("%v %02d:%02d:00", timeLiteral, hour, min)
 	weekday := t.weekday(base)
@@ -119,12 +135,18 @@ func (t *AtTime) Next(base time.Time) time.Time {
 	} else {
 		weekdayDiff = 7 + weekday - baseWeekday
 	}
-	result, _ := time.Parse("2006-01-02 15:04:05", updateTimeLiteral)
+	var result time.Time
+	if t.loc != nil {
+		result, _ = time.ParseInLocation("2006-01-02 15:04:05", updateTimeLiteral, t.loc)
+	} else {
+		result, _ = time.Parse("2006-01-02 15:04:05", updateTimeLiteral)
+	}
 	if weekdayDiff > 0 {
 		result = result.Add(time.Hour * 24 * time.Duration(weekdayDiff))
 	}
 	return result
 }
+
 
 //Duration represents duration
 type Duration struct {

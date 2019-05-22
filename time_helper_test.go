@@ -182,12 +182,26 @@ func TestAtTime_Next(t *testing.T) {
 			baseTime:   "2019-01-09 23:33:01",
 			expectTime: "2019-01-11 00:00:00",
 		},
+		{
+			description: "every 5 weekday in the future",
+			at: &AtTime{
+				WeekDay: "2,5",
+				Hour:    "",
+				Minute:  "",
+				TZ:"America/Los_Angeles",
+			},
+			baseTime:   "2019-01-09 23:33:01",
+			expectTime: "2019-01-11 00:00:00",
+		},
 	}
 
 	for _, useCase := range useCases {
-		baseTime, err := time.Parse(timeLayout, useCase.baseTime)
+		err := useCase.at.Init()
+		assert.Nil(t, err)
+		loc , _:= time.LoadLocation(useCase.at.TZ)
+		baseTime, err := time.ParseInLocation(timeLayout, useCase.baseTime, loc)
 		assert.Nil(t, err, useCase.description)
-		expectTime, err := time.Parse(timeLayout, useCase.expectTime)
+		expectTime, err := time.ParseInLocation(timeLayout, useCase.expectTime, loc)
 		assert.Nil(t, err, useCase.description)
 		actualTime := useCase.at.Next(baseTime)
 		assert.Equal(t, expectTime, actualTime, useCase.description)
