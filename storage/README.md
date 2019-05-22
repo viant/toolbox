@@ -82,6 +82,7 @@ type Object interface {
     import (
     	"github.com/viant/toolbox/storage"
     	_ "github.com/viant/toolbox/storage/gs"
+    	_ "github.com/viant/toolbox/storage/s3"
 	
     )
 
@@ -89,5 +90,7 @@ type Object interface {
     destinationCredentialFile = "gs-secret.json"
 	storageService, err := storage.NewServiceForURL(destinationURL, destinationCredentialFile)
 
+    provider := storage.Registry().Get("s3")
+    storageS3Service, err := provider("aws-secret.json")
 
 ```
