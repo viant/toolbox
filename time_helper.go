@@ -124,7 +124,6 @@ func (t *AtTime) Next(base time.Time) time.Time {
 	}
 	min := t.min(base)
 	hour := t.hour(base)
-	fmt.Printf("%v -> %v\n", t.TZ, base)
 	timeLiteral := base.Format("2006-01-02")
 	updateTimeLiteral := fmt.Sprintf("%v %02d:%02d:00", timeLiteral, hour, min)
 	weekday := t.weekday(base)
