@@ -145,41 +145,14 @@ func (s *service) uploadContent(ctx context.Context, client *storage.Client, par
 	writer := client.Bucket(parserURL.Host).
 		Object(name).
 		NewWriter(ctx)
-
 	expiry := parserURL.Query().Get("expiry")
 	if expiry != "" {
 		writer.Metadata = map[string]string{
 			"Cache-Control": "private, max-age=" + expiry,
 		}
 	}
-
-	var err error
-	bufferReader, ok := reader.(*bytes.Buffer)
-	if !ok {
-		content, err := ioutil.ReadAll(reader)
-		if err != nil {
-			return fmt.Errorf("failed to read all during upload:%v", err)
-		}
-		bufferReader = bytes.NewBuffer(content)
-	}
-
-	if parserURL.Query().Get("disableMD5") == "" {
-		hashReader := bytes.NewBuffer(bufferReader.Bytes())
-		h := md5.New()
-		_, _ = io.Copy(h, hashReader)
-		writer.MD5 = h.Sum(nil)
-		hashReader.Reset()
-	}
-
-	if parserURL.Query().Get("disableCRC32") == "" {
-		crc32HashReader := bytes.NewBuffer(bufferReader.Bytes())
-		crc32Hash := crc32.New(crc32.MakeTable(crc32.Castagnoli))
-		_, _ = io.Copy(crc32Hash, crc32HashReader)
-		writer.CRC32C = crc32Hash.Sum32()
-		crc32HashReader.Reset()
-	}
-
-	if _, err = io.Copy(writer, bufferReader); err != nil {
+	reader, err:= updateUploadChecksum(parserURL, reader, writer)
+	if _, err = io.Copy(writer, reader); err != nil {
 		return fmt.Errorf("failed to copy to writer during upload:%v", err)
 	}
 	if err = writer.Close(); err != nil {
@@ -187,6 +160,41 @@ func (s *service) uploadContent(ctx context.Context, client *storage.Client, par
 	}
 	return nil
 }
+
+
+func updateUploadChecksum(parserURL *url.URL, reader io.Reader, writer *storage.Writer) (io.Reader, error) {
+	checksumDisabled := parserURL.Query().Get("disableChecksum") != ""
+	updateMD5 := parserURL.Query().Get("disableMD5") == ""
+	updateCRC := parserURL.Query().Get("disableCRC32") == ""
+	if !(updateCRC || updateMD5) || checksumDisabled {
+		return reader, nil
+	}
+
+	var err error
+	bufferReader, ok := reader.(*bytes.Buffer)
+	if !ok {
+		content, err := ioutil.ReadAll(reader)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read all during upload:%v", err)
+		}
+		bufferReader = bytes.NewBuffer(content)
+	}
+	if parserURL.Query().Get("disableMD5") == "" {
+		hashReader := bytes.NewBuffer(bufferReader.Bytes())
+		h := md5.New()
+		_, _ = io.Copy(h, hashReader)
+		writer.MD5 = h.Sum(nil)
+		hashReader.Reset()
+	} else if parserURL.Query().Get("disableCRC32") == "" {
+		crc32HashReader := bytes.NewBuffer(bufferReader.Bytes())
+		crc32Hash := crc32.New(crc32.MakeTable(crc32.Castagnoli))
+		_, _ = io.Copy(crc32Hash, crc32HashReader)
+		writer.CRC32C = crc32Hash.Sum32()
+		crc32HashReader.Reset()
+	}
+	return bufferReader, err
+}
+
 
 func (s *service) Register(schema string, service tstorage.Service) error {
 	return errors.New("unsupported")
