@@ -152,27 +152,34 @@ func (s *service) uploadContent(ctx context.Context, client *storage.Client, par
 			"Cache-Control": "private, max-age=" + expiry,
 		}
 	}
-	content, err := ioutil.ReadAll(reader)
-	if err != nil {
-		return fmt.Errorf("failed to read all during upload:%v", err)
+
+	var err error
+	bufferReader, ok := reader.(*bytes.Buffer)
+	if !ok {
+		content, err := ioutil.ReadAll(reader)
+		if err != nil {
+			return fmt.Errorf("failed to read all during upload:%v", err)
+		}
+		bufferReader = bytes.NewBuffer(content)
 	}
-	contentReader := bytes.NewBuffer(content)
 
 	if parserURL.Query().Get("disableMD5") == "" {
-		hashReader := bytes.NewBuffer(content)
+		hashReader := bytes.NewBuffer(bufferReader.Bytes())
 		h := md5.New()
 		_, _ = io.Copy(h, hashReader)
 		writer.MD5 = h.Sum(nil)
+		hashReader.Reset()
 	}
 
 	if parserURL.Query().Get("disableCRC32") == "" {
-		crc32HashReader := bytes.NewBuffer(content)
+		crc32HashReader := bytes.NewBuffer(bufferReader.Bytes())
 		crc32Hash := crc32.New(crc32.MakeTable(crc32.Castagnoli))
 		_, _ = io.Copy(crc32Hash, crc32HashReader)
 		writer.CRC32C = crc32Hash.Sum32()
+		crc32HashReader.Reset()
 	}
 
-	if _, err = io.Copy(writer, contentReader); err != nil {
+	if _, err = io.Copy(writer, bufferReader); err != nil {
 		return fmt.Errorf("failed to copy to writer during upload:%v", err)
 	}
 	if err = writer.Close(); err != nil {
