@@ -186,3 +186,14 @@ func newFileObject(url string, fileInfo os.FileInfo) Object {
 	result.AbstractObject.Object = result
 	return result
 }
+
+const FileProviderSchema = "file"
+
+func init() {
+	Registry().Registry[FileProviderSchema] = fileServiceProvider
+
+}
+
+func fileServiceProvider(credentialFile string) (service Service, err error) {
+	return NewFileStorage(), nil
+}
