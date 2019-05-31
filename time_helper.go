@@ -42,7 +42,7 @@ type AtTime struct {
 func (t *AtTime) min(base time.Time) int {
 	switch t.Minute {
 	case "*":
-		return base.Minute() + 1%59
+		return (base.Minute() + 1)%59
 	case "":
 		return 0
 	}
@@ -63,7 +63,7 @@ func (t *AtTime) hour(base time.Time) int {
 		if min > base.Minute() {
 			return base.Hour()
 		}
-		return base.Hour() + 1%23
+		return (base.Hour() + 1)%23
 	case "":
 		return 0
 	}
@@ -87,7 +87,7 @@ func (t *AtTime) weekday(base time.Time) int {
 		if isPastDue {
 			return baseWeekday
 		}
-		return baseWeekday + 1%7
+		return (baseWeekday + 1)%7
 	case "":
 		return 0
 	}
@@ -128,8 +128,6 @@ func (t *AtTime) Next(base time.Time) time.Time {
 	hour := t.hour(base)
 	timeLiteral := base.Format("2006-01-02")
 	updateTimeLiteral := fmt.Sprintf("%v %02d:%02d:00", timeLiteral, hour, min)
-
-
 	weekday := t.weekday(base)
 	baseWeekday := int(base.Weekday())
 	weekdayDiff := 0
