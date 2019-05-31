@@ -17,6 +17,20 @@ func TestAtTime_Next(t *testing.T) {
 		baseTime    string
 		expectTime  string
 	}{
+
+		{
+			description: "evey hour - next day" ,
+			at: &AtTime{
+				WeekDay: "*",
+				Hour:    "0",
+				Minute:  "*",
+			},
+			baseTime:   "2019-01-01 23:01:01",
+			expectTime: "2019-01-02 00:02:00",
+		},
+
+
+
 		{
 			description: "evey minute",
 			at: &AtTime{
@@ -27,6 +41,8 @@ func TestAtTime_Next(t *testing.T) {
 			baseTime:   "2019-01-01 01:01:01",
 			expectTime: "2019-01-01 01:02:00",
 		},
+
+
 		{
 			description: "evey 30 minute before",
 			at: &AtTime{

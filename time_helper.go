@@ -121,11 +121,15 @@ func (t *AtTime) Init() error {
 func (t *AtTime) Next(base time.Time) time.Time {
 	if t.loc != nil {
 		base = base.In(t.loc)
+	} else {
+		t.loc = base.Location()
 	}
 	min := t.min(base)
 	hour := t.hour(base)
 	timeLiteral := base.Format("2006-01-02")
 	updateTimeLiteral := fmt.Sprintf("%v %02d:%02d:00", timeLiteral, hour, min)
+
+
 	weekday := t.weekday(base)
 	baseWeekday := int(base.Weekday())
 	weekdayDiff := 0
@@ -134,12 +138,15 @@ func (t *AtTime) Next(base time.Time) time.Time {
 	} else {
 		weekdayDiff = 7 + weekday - baseWeekday
 	}
+
+
 	var result time.Time
 	if t.loc != nil {
 		result, _ = time.ParseInLocation("2006-01-02 15:04:05", updateTimeLiteral, t.loc)
 	} else {
 		result, _ = time.Parse("2006-01-02 15:04:05", updateTimeLiteral)
 	}
+
 	if weekdayDiff > 0 {
 		result = result.Add(time.Hour * 24 * time.Duration(weekdayDiff))
 	}
