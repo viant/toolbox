@@ -29,6 +29,29 @@ func TestAtTime_Next(t *testing.T) {
 			expectTime: "2019-01-02 01:30:00",
 		},
 
+
+		{
+			description: "evey 1/2, last minute - next day" ,
+			at: &AtTime{
+				WeekDay: "*",
+				Hour:    "*",
+				Minute:  "0,30",
+			},
+			baseTime:   "2019-01-01 23:59:00",
+			expectTime: "2019-01-02 01:00:00",
+		},
+
+		{
+			description: "evey 1/2, last day of the month - next day" ,
+			at: &AtTime{
+				WeekDay: "*",
+				Hour:    "*",
+				Minute:  "0,30",
+			},
+			baseTime:   "2019-05-31 23:59:00",
+			expectTime: "2019-06-01 01:00:00",
+		},
+
 		{
 			description: "evey hour - next day" ,
 			at: &AtTime{
@@ -172,7 +195,7 @@ func TestAtTime_Next(t *testing.T) {
 		},
 
 		{
-			description: "every 0 weekdy",
+			description: "every 0 weekday",
 			at: &AtTime{
 				WeekDay: "0",
 				Hour:    "",
@@ -183,7 +206,7 @@ func TestAtTime_Next(t *testing.T) {
 		},
 
 		{
-			description: "every 0 weekdy",
+			description: "every 2 weekday",
 			at: &AtTime{
 				WeekDay: "2",
 				Hour:    "",
@@ -192,15 +215,16 @@ func TestAtTime_Next(t *testing.T) {
 			baseTime:   "2019-01-04 23:33:01",
 			expectTime: "2019-01-08 00:00:00",
 		},
+
 		{
-			description: "every 0 weekdy",
+			description: "every 2nd weekday - overlaps with base time",
 			at: &AtTime{
 				WeekDay: "2",
 				Hour:    "",
 				Minute:  "",
 			},
 			baseTime:   "2019-01-08 23:33:01",
-			expectTime: "2019-01-08 00:00:00",
+			expectTime: "2019-01-15 00:00:00",
 		},
 		{
 			description: "every 5 weekday in the future",
@@ -213,7 +237,7 @@ func TestAtTime_Next(t *testing.T) {
 			expectTime: "2019-01-11 00:00:00",
 		},
 		{
-			description: "every 5 weekday in the future",
+			description: "every 5 weekday in the future tz",
 			at: &AtTime{
 				WeekDay: "2,5",
 				Hour:    "",
@@ -226,16 +250,47 @@ func TestAtTime_Next(t *testing.T) {
 	}
 
 	for _, useCase := range useCases {
+
 		err := useCase.at.Init()
 		assert.Nil(t, err)
-		loc , _:= time.LoadLocation(useCase.at.TZ)
-		baseTime, err := time.ParseInLocation(timeLayout, useCase.baseTime, loc)
-		assert.Nil(t, err, useCase.description)
-		expectTime, err := time.ParseInLocation(timeLayout, useCase.expectTime, loc)
-		assert.Nil(t, err, useCase.description)
+
+		var loc *time.Location
+		if useCase.at.TZ != "" {
+			loc, _ = time.LoadLocation(useCase.at.TZ)
+		}
+		var baseTime time.Time
+		if loc != nil {
+			baseTime, err = time.ParseInLocation(timeLayout, useCase.baseTime, loc)
+			assert.Nil(t, err, useCase.description)
+		} else {
+			baseTime, err = time.Parse(timeLayout, useCase.baseTime)
+			assert.Nil(t, err, useCase.description)
+
+		}
+
+		var expectTime time.Time
+		if loc != nil {
+			expectTime, err = time.ParseInLocation(timeLayout, useCase.expectTime, loc)
+			assert.Nil(t, err, useCase.description)
+		} else {
+			expectTime, err = time.Parse(timeLayout, useCase.expectTime)
+			assert.Nil(t, err, useCase.description)
+
+		}
 		actualTime := useCase.at.Next(baseTime)
 		assert.Equal(t, expectTime, actualTime, useCase.description)
+
+		//without tz
+		baseTime, err = time.Parse(timeLayout, useCase.baseTime)
+		actualTime = useCase.at.Next(baseTime)
+		assert.Equal(t, expectTime, actualTime, useCase.description)
+
 	}
+
+
+
+
+
 
 }
 

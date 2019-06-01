@@ -110,20 +110,24 @@ func (t *AtTime) weekday(base time.Time) int {
 //Init initializes tz
 func (t *AtTime) Init() error {
 	if t.TZ == "" {
-		t.TZ = "UTC"
+		return nil
 	}
 	var err error
 	t.loc, err = time.LoadLocation(t.TZ)
 	return err
 }
 
+
 //Next returns next time schedule
 func (t *AtTime) Next(base time.Time) time.Time {
-	if t.loc != nil {
+
+	if t.loc != nil && base.Location() != nil && base.Location() != t.loc {
 		base = base.In(t.loc)
 	} else {
 		t.loc = base.Location()
 	}
+
+
 	min := t.min(base)
 	hour := t.hour(base)
 	timeLiteral := base.Format("2006-01-02")
@@ -145,9 +149,18 @@ func (t *AtTime) Next(base time.Time) time.Time {
 		result, _ = time.Parse("2006-01-02 15:04:05", updateTimeLiteral)
 	}
 
+
 	if weekdayDiff > 0 {
 		result = result.Add(time.Hour * 24 * time.Duration(weekdayDiff))
+	} else if weekdayDiff == 0 && AsInt(t.WeekDay) > 0 {
+		result = result.Add(time.Hour * 24 * 7)
 	}
+
+	if result.UnixNano() < base.UnixNano() {
+		fmt.Printf("broken: %v %v\n", result, base)
+		return base
+	}
+
 	return result
 }
 
