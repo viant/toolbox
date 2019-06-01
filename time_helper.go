@@ -2,6 +2,7 @@ package toolbox
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"time"
 )
@@ -157,10 +158,8 @@ func (t *AtTime) Next(base time.Time) time.Time {
 	}
 
 	if result.UnixNano() < base.UnixNano() {
-		fmt.Printf("broken: %v %v\n", result, base)
-		return base
+		log.Print("invalid schedule next: %v is before base: %v\n", result, base)
 	}
-
 	return result
 }
 
