@@ -1,3 +1,6 @@
+## June 7 2019 - v0.23.1
+- add Split udf (data/udf)
+
 ## May 22 2019 - v0.23.0
 - Renamed StorageProvider to Registry
 
