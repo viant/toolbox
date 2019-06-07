@@ -54,6 +54,7 @@
 -  Keys  - return map keys
 -  IndexOf - returns index of matched slice element
 -  Join - join slice element with supplied separator
+-  Split - split text by separator
 -  Sum - sums values for matched Path, i.e. $Sum('node1/obj/*/amount')
 -  Count - counts values for matched Path, i.e. $Sum('node1/obj/*/amount')
 -  Select - selects attribute for matched path, i.e $Select("node1/obj/*", "id", "name:product")

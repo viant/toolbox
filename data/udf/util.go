@@ -45,6 +45,30 @@ func Join(args interface{}, state data.Map) (interface{}, error) {
 	return strings.Join(result, toolbox.AsString(arguments[1])), nil
 }
 
+
+
+
+// Split split text to build a slice
+func Split(args interface{}, state data.Map) (interface{}, error) {
+	if !toolbox.IsSlice(args) {
+		return nil, fmt.Errorf("expected 2 arguments but had: %T", args)
+	}
+	arguments := toolbox.AsSlice(args)
+	if len(arguments) != 2 {
+		return nil, fmt.Errorf("expected 2 arguments but had: %v", len(arguments))
+	}
+	if !toolbox.IsString(arguments[0]) {
+		return nil, fmt.Errorf("expected 1st arguments as string but had: %T", arguments[0])
+	}
+	result := strings.Split(toolbox.AsString(arguments[0]), toolbox.AsString(arguments[1]))
+	for i := range  result {
+		result[i] = strings.TrimSpace(result[i])
+	}
+	return result, nil
+}
+
+
+
 //Keys returns keys of the supplied map
 func Keys(source interface{}, state data.Map) (interface{}, error) {
 	aMap, err := AsMap(source, state)

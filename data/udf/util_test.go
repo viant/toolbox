@@ -74,6 +74,19 @@ func Test_Join(t *testing.T) {
 	}
 }
 
+
+func Test_Split(t *testing.T) {
+	{
+		var joined, err = Split([]interface{}{
+			"abc , zc",
+			",",
+		}, nil)
+		assert.Nil(t, err)
+		assert.NotNil(t, joined)
+		assert.EqualValues(t, []string{"abc", "zc"}, joined)
+	}
+}
+
 func Test_IndexOf(t *testing.T) {
 	{
 		index, _ := IndexOf([]interface{}{"this is test", "is"}, nil)

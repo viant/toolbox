@@ -19,6 +19,7 @@ func Register(aMap data.Map) {
 	aMap.Put("AsJSON", AsJSON)
 	aMap.Put("Type", Type)
 	aMap.Put("Join", Join)
+	aMap.Put("Split", Split)
 	aMap.Put("Keys", Keys)
 	aMap.Put("Values", Values)
 	aMap.Put("Length", Length)
