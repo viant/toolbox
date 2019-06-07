@@ -1,5 +1,8 @@
-## June 7 2019 - v0.23.1
+## June 7 2019 - v0.23.8
 - add Split udf (data/udf)
+
+## June 1 2019 - v0.23.7
+- patched TimeAt.Next
 
 ## May 22 2019 - v0.23.0
 - Renamed StorageProvider to Registry
