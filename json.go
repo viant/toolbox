@@ -9,8 +9,8 @@ import (
 	"strings"
 )
 
-//IsCompleteJSON returns true if supplied represent complete JSON
-func IsCompleteJSON(candidate string) bool {
+//IsStructuredJSON returns true if supplied represent JSON structure (map,array)
+func IsStructuredJSON(candidate string) bool {
 	candidate = strings.Trim(candidate, "\n \t\r")
 	if candidate == "" {
 		return false
@@ -27,6 +27,11 @@ func IsCompleteJSON(candidate string) bool {
 	if !(strings.HasPrefix(candidate, "{") && strings.HasSuffix(candidate, "}") || strings.HasPrefix(candidate, "[") && strings.HasSuffix(candidate, "]")) {
 		return false
 	}
+	return json.Valid([]byte(candidate))
+}
+
+//IsCompleteJSON returns true if supplied represent complete JSON
+func IsCompleteJSON(candidate string) bool {
 	return json.Valid([]byte(candidate))
 }
 
@@ -66,7 +71,7 @@ func IsNewLineDelimitedJSON(candidate string) bool {
 	if len(lines) <= 1 {
 		return false
 	}
-	return IsCompleteJSON(lines[0]) && IsCompleteJSON(lines[1])
+	return IsStructuredJSON(lines[0]) && IsStructuredJSON(lines[1])
 }
 
 //JSONToInterface converts JSON source to an interface (either map or slice)

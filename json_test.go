@@ -25,6 +25,33 @@ func Test_IsCompleteJSON(t *testing.T) {
 		input := `{"name":"abc"},{"id":"10}"`
 		assert.False(t, toolbox.IsCompleteJSON(input))
 	}
+	{
+		input := `"abc"`
+		assert.True(t, toolbox.IsCompleteJSON(input))
+	}
+
+}
+
+func Test_IsStructuredJSON(t *testing.T) {
+	{
+		input := `{"a":1, "b":2}`
+		assert.True(t, toolbox.IsStructuredJSON(input))
+	}
+	{
+		input := `{"a":1, "b":2}
+	   {"a2":2, "b3":21}
+	   {"a3":3, "b4:22
+	   `
+		assert.False(t, toolbox.IsStructuredJSON(input))
+	}
+	{
+		input := `{"name":"abc"},{"id":"10}"`
+		assert.False(t, toolbox.IsStructuredJSON(input))
+	}
+	{
+		input := `"abc""`
+		assert.False(t, toolbox.IsStructuredJSON(input))
+	}
 
 }
 
