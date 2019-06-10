@@ -1,3 +1,9 @@
+## June 10 2019 - v0.24.0
+
+- Added IsStructuredJSON
+- Updated IsCompleteJSON to be compatible with json.Valid - this is breaking change if you need check is input is structure json use IsStructuredJSON
+    
+
 ## June 7 2019 - v0.23.8
 - add Split udf (data/udf)
 
