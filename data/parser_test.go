@@ -493,7 +493,7 @@ func TestParseExpression(t *testing.T) {
 			if isUDF {
 				if udf, ok := result.(func(interface{}, Map) (interface{}, error)); ok {
 					expandedArgs := useCase.aMap.expandArgumentsExpressions(argument)
-					if toolbox.IsString(expandedArgs) && toolbox.IsCompleteJSON(toolbox.AsString(expandedArgs)) {
+					if toolbox.IsString(expandedArgs) && toolbox.IsStructuredJSON(toolbox.AsString(expandedArgs)) {
 						if evaluated, err := toolbox.JSONToInterface(toolbox.AsString(expandedArgs)); err == nil {
 							expandedArgs = evaluated
 						}
