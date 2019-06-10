@@ -19,7 +19,7 @@ func TestAtTime_Next(t *testing.T) {
 	}{
 
 		{
-			description: "evey 1/2 - next day" ,
+			description: "evey 1/2 - next day",
 			at: &AtTime{
 				WeekDay: "*",
 				Hour:    "*",
@@ -29,9 +29,8 @@ func TestAtTime_Next(t *testing.T) {
 			expectTime: "2019-01-02 01:30:00",
 		},
 
-
 		{
-			description: "evey 1/2, last minute - next day" ,
+			description: "evey 1/2, last minute - next day",
 			at: &AtTime{
 				WeekDay: "*",
 				Hour:    "*",
@@ -42,7 +41,7 @@ func TestAtTime_Next(t *testing.T) {
 		},
 
 		{
-			description: "evey 1/2, last day of the month - next day" ,
+			description: "evey 1/2, last day of the month - next day",
 			at: &AtTime{
 				WeekDay: "*",
 				Hour:    "*",
@@ -53,7 +52,7 @@ func TestAtTime_Next(t *testing.T) {
 		},
 
 		{
-			description: "evey hour - next day" ,
+			description: "evey hour - next day",
 			at: &AtTime{
 				WeekDay: "*",
 				Hour:    "0",
@@ -62,11 +61,6 @@ func TestAtTime_Next(t *testing.T) {
 			baseTime:   "2019-01-01 23:01:01",
 			expectTime: "2019-01-02 00:02:00",
 		},
-
-
-
-
-
 
 		{
 			description: "evey minute",
@@ -78,7 +72,6 @@ func TestAtTime_Next(t *testing.T) {
 			baseTime:   "2019-01-01 01:01:01",
 			expectTime: "2019-01-01 01:02:00",
 		},
-
 
 		{
 			description: "evey 30 minute before",
@@ -242,7 +235,7 @@ func TestAtTime_Next(t *testing.T) {
 				WeekDay: "2,5",
 				Hour:    "",
 				Minute:  "",
-				TZ:"America/Los_Angeles",
+				TZ:      "America/Los_Angeles",
 			},
 			baseTime:   "2019-01-09 23:33:01",
 			expectTime: "2019-01-11 00:00:00",
@@ -286,11 +279,6 @@ func TestAtTime_Next(t *testing.T) {
 		assert.Equal(t, expectTime, actualTime, useCase.description)
 
 	}
-
-
-
-
-
 
 }
 

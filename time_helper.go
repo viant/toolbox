@@ -37,13 +37,13 @@ type AtTime struct {
 	Hour    string
 	Minute  string
 	TZ      string
-	loc *time.Location
+	loc     *time.Location
 }
 
 func (t *AtTime) min(base time.Time) int {
 	switch t.Minute {
 	case "*":
-		return (base.Minute() + 1)%59
+		return (base.Minute() + 1) % 59
 	case "":
 		return 0
 	}
@@ -64,7 +64,7 @@ func (t *AtTime) hour(base time.Time) int {
 		if min > base.Minute() {
 			return base.Hour()
 		}
-		return (base.Hour() + 1)%23
+		return (base.Hour() + 1) % 23
 	case "":
 		return 0
 	}
@@ -88,7 +88,7 @@ func (t *AtTime) weekday(base time.Time) int {
 		if isPastDue {
 			return baseWeekday
 		}
-		return (baseWeekday + 1)%7
+		return (baseWeekday + 1) % 7
 	case "":
 		return 0
 	}
@@ -118,7 +118,6 @@ func (t *AtTime) Init() error {
 	return err
 }
 
-
 //Next returns next time schedule
 func (t *AtTime) Next(base time.Time) time.Time {
 
@@ -127,7 +126,6 @@ func (t *AtTime) Next(base time.Time) time.Time {
 	} else {
 		t.loc = base.Location()
 	}
-
 
 	min := t.min(base)
 	hour := t.hour(base)
@@ -142,14 +140,12 @@ func (t *AtTime) Next(base time.Time) time.Time {
 		weekdayDiff = 7 + weekday - baseWeekday
 	}
 
-
 	var result time.Time
 	if t.loc != nil {
 		result, _ = time.ParseInLocation("2006-01-02 15:04:05", updateTimeLiteral, t.loc)
 	} else {
 		result, _ = time.Parse("2006-01-02 15:04:05", updateTimeLiteral)
 	}
-
 
 	if weekdayDiff > 0 {
 		result = result.Add(time.Hour * 24 * time.Duration(weekdayDiff))
@@ -158,11 +154,10 @@ func (t *AtTime) Next(base time.Time) time.Time {
 	}
 
 	if result.UnixNano() < base.UnixNano() {
-		log.Print("invalid schedule next: %v is before base: %v\n", result, base)
+		log.Printf("invalid schedule next: %v is before base: %v\n", result, base)
 	}
 	return result
 }
-
 
 //Duration represents duration
 type Duration struct {
