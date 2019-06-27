@@ -149,6 +149,11 @@ func (r *Resource) Decode(target interface{}) (err error) {
 			err = fmt.Errorf("failed to decode: %v, %v", r.URL, err)
 		}
 	}()
+	if r.ParsedURL == nil {
+		if r.ParsedURL, err = url.Parse(r.URL); err != nil {
+			return err
+		}
+	}
 	ext := path.Ext(r.ParsedURL.Path)
 	switch ext {
 	case ".yaml", ".yml":
