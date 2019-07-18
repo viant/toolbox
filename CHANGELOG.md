@@ -1,3 +1,8 @@
+## July 18 2019 - v0.25.0
+- Add Storage.UploadWithMode
+- Patched/streamlined SSH/SCP Upload
+- Streamline storage.Copy 
+
 ## June 10 2019 - v0.24.0
 
 - Added IsStructuredJSON
