@@ -26,7 +26,7 @@ var PasswordCipher = GetDefaultPasswordCipher()
 
 type Config struct {
 	Username          string `json:",omitempty"`
-	Email 			  string `json:",omitempty"`
+	Email             string `json:",omitempty"`
 	Password          string `json:",omitempty"`
 	EncryptedPassword string `json:",omitempty"`
 	PrivateKeyPath    string `json:",omitempty"`

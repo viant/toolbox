@@ -1,10 +1,10 @@
 package kms
 
 type Resource struct {
-	URL string
+	URL       string
 	Parameter string
-	IsBase64 bool
-	Data []byte
+	IsBase64  bool
+	Data      []byte
 }
 
 type EncryptRequest struct {
@@ -12,7 +12,6 @@ type EncryptRequest struct {
 	*Resource
 	TargetURL string
 }
-
 
 type EncryptResponse struct {
 	EncryptedData []byte
@@ -22,7 +21,6 @@ type EncryptResponse struct {
 type DecryptRequest struct {
 	Key string
 	*Resource
-
 }
 
 type DecryptResponse struct {

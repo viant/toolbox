@@ -8,13 +8,10 @@ import (
 	"strings"
 )
 
-
-
 //AsInt converts source into int
 func AsInt(source interface{}, state data.Map) (interface{}, error) {
 	return toolbox.ToInt(source)
 }
-
 
 //AsInt converts source into int
 func AsString(source interface{}, state data.Map) (interface{}, error) {

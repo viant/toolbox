@@ -74,7 +74,6 @@ func Test_Join(t *testing.T) {
 	}
 }
 
-
 func Test_Split(t *testing.T) {
 	{
 		var joined, err = Split([]interface{}{

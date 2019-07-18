@@ -2,8 +2,6 @@ package udf
 
 import "github.com/viant/toolbox/data"
 
-
-
 //Register registers defined in this package UDFs
 func Register(aMap data.Map) {
 	aMap.Put("AsInt", AsInt)
