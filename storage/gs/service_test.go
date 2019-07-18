@@ -6,9 +6,6 @@ import (
 
 func TestService_List(t *testing.T) {
 
-
-
-
 	/*	credential := option.WithServiceAccountFile("<Secret file path>")
 		service := gs.NewService(credential)
 		assert.NotNil(t, service)

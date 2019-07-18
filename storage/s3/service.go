@@ -18,6 +18,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
+	"os"
 )
 
 var defaultTime = time.Time{}
@@ -168,6 +169,10 @@ func (s *service) Download(object storage.Object) (io.ReadCloser, error) {
 }
 
 func (s *service) Upload(URL string, reader io.Reader) error {
+	return s.UploadWithMode(URL, storage.DefaultFileMode, reader)
+}
+
+func (s *service) UploadWithMode(URL string, mode os.FileMode, reader io.Reader) error {
 	err := s.uploadContent(URL, reader)
 	if toolbox.IsNotFoundError(err) {
 		config, err := s.getAwsConfig()

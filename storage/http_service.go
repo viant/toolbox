@@ -210,6 +210,11 @@ func (s *httpStorageService) Upload(URL string, reader io.Reader) error {
 	return errors.New("unsupported")
 }
 
+//Upload uploads provided reader content for supplied url.
+func (s *httpStorageService) UploadWithMode(URL string, mode os.FileMode, reader io.Reader) error {
+	return errors.New("unsupported")
+}
+
 func (s *httpStorageService) Register(schema string, service Service) error {
 	return errors.New("unsupported")
 }

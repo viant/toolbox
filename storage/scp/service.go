@@ -12,13 +12,16 @@ import (
 	"io"
 	"io/ioutil"
 	"net/url"
+	"os"
 	"path"
 	"strings"
 	"sync"
 )
 
-const defaultSSHPort = 22
-const verificationSizeThreshold = 1024 * 1024
+const (
+	defaultSSHPort            = 22
+	verificationSizeThreshold = 1024 * 1024
+)
 
 //NoSuchFileOrDirectoryError represents no such file or directory error
 var NoSuchFileOrDirectoryError = errors.New("No such file or directory")
@@ -208,20 +211,31 @@ func (s *service) Download(object storage.Object) (io.ReadCloser, error) {
 
 //Upload uploads provided reader content for supplied URL.
 func (s *service) Upload(URL string, reader io.Reader) error {
+	return s.UploadWithMode(URL, storage.DefaultFileMode, reader)
+}
+
+//Upload uploads provided reader content for supplied URL.
+func (s *service) UploadWithMode(URL string, mode os.FileMode, reader io.Reader) error {
+	if mode == 0 {
+		mode = storage.DefaultFileMode
+	}
 	parsedURL, err := url.Parse(URL)
 	if err != nil {
 		return err
 	}
+
 	if parsedURL.Host == "127.0.0.1" || parsedURL.Host == "127.0.0.1:22" {
 		var fileURL = toolbox.FileSchema + parsedURL.Path
-		return s.fileService.Upload(fileURL, reader)
+		return s.fileService.UploadWithMode(fileURL, mode, reader)
 	}
 
 	port := toolbox.AsInt(parsedURL.Port())
 	if port == 0 {
 		port = defaultSSHPort
 	}
-	service, err := ssh.NewService(parsedURL.Hostname(), toolbox.AsInt(port), s.config)
+
+	//service, err := ssh.NewService(parsedURL.Hostname(), toolbox.AsInt(port), s.config)
+	service, err := s.getService(parsedURL)
 	if err != nil {
 		return err
 	}
@@ -232,28 +246,10 @@ func (s *service) Upload(URL string, reader io.Reader) error {
 		return fmt.Errorf("failed to upload - unable read: %v", err)
 	}
 
-	err = service.Upload(parsedURL.Path, content)
+	err = service.Upload(parsedURL.Path, mode, content)
 	if err != nil {
 		return fmt.Errorf("failed to upload: %v %v", URL, err)
 	}
-
-	if verificationSizeThreshold < len(content) {
-		object, err := s.StorageObject(URL)
-		if err != nil {
-			return fmt.Errorf("failed to get upload object  %v for verification: %v", URL, err)
-		}
-		if int(object.FileInfo().Size()) != len(content) {
-			err = service.Upload(parsedURL.Path, content)
-			object, err = s.StorageObject(URL)
-			if err != nil {
-				return err
-			}
-			if int(object.FileInfo().Size()) != len(content) {
-				return fmt.Errorf("failed to upload to %v, actual size was:%v,  but uploaded size was %v", URL, len(content), int(object.FileInfo().Size()))
-			}
-		}
-	}
-
 	return err
 }
 
@@ -303,7 +299,7 @@ func (s *service) Delete(object storage.Object) error {
 	defer session.Close()
 
 	if parsedURL.Path == "/" {
-		return fmt.Errorf("Invalid removal path: %v", parsedURL.Path)
+		return fmt.Errorf("invalid removal path: %v", parsedURL.Path)
 	}
 	_, err = session.Output("rm -rf " + parsedURL.Path)
 	return err

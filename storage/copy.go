@@ -51,89 +51,96 @@ func copyStorageContent(sourceService Service, sourceURL string, destinationServ
 	if err != nil {
 		return err
 	}
+
+	for _, object := range objects {
+		if err = copyObject(object, sourceService, sourceURL, destinationService, destinationURL, modifyContentHandler, subPath, copyHandler); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func copyObject(object Object, sourceService Service, sourceURL string, destinationService Service, destinationURL string, modifyContentHandler ModificationHandler, subPath string, copyHandler CopyHandler) error {
 	var objectRelativePath string
 	sourceURLPath := urlPath(sourceURL)
 
-	for _, object := range objects {
-		var objectURLPath = urlPath(object.URL())
-		if object.IsFolder() {
-			if truncatePath(sourceURLPath) == truncatePath(objectURLPath) {
-				continue
-			}
-
-			if subPath != "" && objectURLPath == toolbox.URLPathJoin(sourceURLPath, subPath) {
-				continue
-			}
+	var objectURLPath = urlPath(object.URL())
+	if object.IsFolder() {
+		if truncatePath(sourceURLPath) == truncatePath(objectURLPath) {
+			return nil
 		}
-
-		if len(objectURLPath) > len(sourceURLPath) {
-			objectRelativePath = objectURLPath[len(sourceURLPath):]
-			if strings.HasPrefix(objectRelativePath, "/") {
-				objectRelativePath = string(objectRelativePath[1:])
-			}
+		if subPath != "" && objectURLPath == toolbox.URLPathJoin(sourceURLPath, subPath) {
+			return nil
 		}
-		var destinationObjectURL = destinationURL
-		if objectRelativePath != "" {
-			destinationObjectURL = toolbox.URLPathJoin(destinationURL, objectRelativePath)
+	}
+	if len(objectURLPath) > len(sourceURLPath) {
+		objectRelativePath = objectURLPath[len(sourceURLPath):]
+		if strings.HasPrefix(objectRelativePath, "/") {
+			objectRelativePath = string(objectRelativePath[1:])
 		}
+	}
+	var destinationObjectURL = destinationURL
+	if objectRelativePath != "" {
+		destinationObjectURL = toolbox.URLPathJoin(destinationURL, objectRelativePath)
+	}
 
-		if object.IsContent() {
-			reader, err := sourceService.Download(object)
+	if object.IsContent() {
+		reader, err := sourceService.Download(object)
+		if err != nil {
+			err = fmt.Errorf("unable download, %v -> %v, %v", object.URL(), destinationObjectURL, err)
+			return err
+		}
+		defer reader.Close()
+
+		if modifyContentHandler != nil {
+			content, err := ioutil.ReadAll(reader)
 			if err != nil {
-				err = fmt.Errorf("unable download, %v -> %v, %v", object.URL(), destinationObjectURL, err)
 				return err
 			}
-			defer reader.Close()
-
-			if modifyContentHandler != nil {
-
-				content, err := ioutil.ReadAll(reader)
-				if err != nil {
-					return err
-				}
-				reader = ioutil.NopCloser(bytes.NewReader(content))
-				reader, err = modifyContentHandler(reader)
-				if err != nil {
-					err = fmt.Errorf("unable modify content, %v %v %v", object.URL(), destinationObjectURL, err)
-					return err
-				}
-
+			reader = ioutil.NopCloser(bytes.NewReader(content))
+			reader, err = modifyContentHandler(reader)
+			if err != nil {
+				err = fmt.Errorf("unable modify content, %v %v %v", object.URL(), destinationObjectURL, err)
+				return err
 			}
-			if subPath == "" {
-				_, sourceName := path.Split(object.URL())
-				_, destinationName := path.Split(destinationURL)
-				if strings.HasSuffix(destinationObjectURL, "/") {
+		}
+
+		if subPath == "" {
+			_, sourceName := path.Split(object.URL())
+			_, destinationName := path.Split(destinationURL)
+			if strings.HasSuffix(destinationObjectURL, "/") {
+				destinationObjectURL = toolbox.URLPathJoin(destinationObjectURL, sourceName)
+			} else {
+				destinationObject, _ := destinationService.StorageObject(destinationObjectURL)
+				if destinationObject != nil && destinationObject.IsFolder() {
 					destinationObjectURL = toolbox.URLPathJoin(destinationObjectURL, sourceName)
-				} else {
-					destinationObject, _ := destinationService.StorageObject(destinationObjectURL)
-					if destinationObject != nil && destinationObject.IsFolder() {
-						destinationObjectURL = toolbox.URLPathJoin(destinationObjectURL, sourceName)
-					} else if destinationName != sourceName {
-						if !strings.Contains(destinationName, ".") {
-							destinationObjectURL = toolbox.URLPathJoin(destinationURL, sourceName)
-						}
-
+				} else if destinationName != sourceName {
+					if !strings.Contains(destinationName, ".") {
+						destinationObjectURL = toolbox.URLPathJoin(destinationURL, sourceName)
 					}
+
 				}
 			}
+		}
+		err = copyHandler(object, reader, destinationService, destinationObjectURL)
+		if err != nil {
+			return err
+		}
 
-			err = copyHandler(object, reader, destinationService, destinationObjectURL)
-			if err != nil {
-				return err
-			}
-
-		} else {
-			err = copyStorageContent(sourceService, sourceURL, destinationService, destinationURL, modifyContentHandler, objectRelativePath, copyHandler)
-			if err != nil {
-				return err
-			}
+	} else {
+		if err := copyStorageContent(sourceService, sourceURL, destinationService, destinationURL, modifyContentHandler, objectRelativePath, copyHandler); err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
 func copySourceToDestination(sourceObject Object, reader io.Reader, destinationService Service, destinationURL string) error {
-	err := destinationService.Upload(destinationURL, reader)
+	mode := DefaultFileMode
+	if fileInfo := sourceObject.FileInfo(); fileInfo != nil {
+		mode = fileInfo.Mode()
+	}
+	err := destinationService.UploadWithMode(destinationURL, mode, reader)
 	if err != nil {
 		err = fmt.Errorf("unable upload, %v %v %v", sourceObject.URL(), destinationURL, err)
 	}

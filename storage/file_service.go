@@ -98,8 +98,15 @@ func (s *fileStorageService) DownloadWithURL(URL string) (io.ReadCloser, error) 
 	return s.Download(object)
 }
 
-//Upload uploads provided reader content for supplied url.
 func (s *fileStorageService) Upload(URL string, reader io.Reader) error {
+	return s.UploadWithMode(URL, DefaultFileMode, reader)
+}
+
+//Upload uploads provided reader content for supplied url.
+func (s *fileStorageService) UploadWithMode(URL string, mode os.FileMode, reader io.Reader) error {
+	if mode == 0 {
+		mode = DefaultFileMode
+	}
 	parsedUrl, err := url.Parse(URL)
 	if err != nil {
 		return err
@@ -118,10 +125,7 @@ func (s *fileStorageService) Upload(URL string, reader io.Reader) error {
 	if err != nil {
 		return err
 	}
-	if path.Ext(parsedUrl.Path) == "" {
-		return ioutil.WriteFile(parsedUrl.Path, data, execFileMode)
-	}
-	return ioutil.WriteFile(parsedUrl.Path, data, fileMode)
+	return ioutil.WriteFile(parsedUrl.Path, data, mode)
 }
 
 func (s *fileStorageService) Register(schema string, service Service) error {

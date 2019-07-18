@@ -171,6 +171,11 @@ func (s *memoryStorageService) Download(object Object) (io.ReadCloser, error) {
 
 //Upload uploads provided reader content for supplied url.
 func (s *memoryStorageService) Upload(URL string, reader io.Reader) error {
+	return s.UploadWithMode(URL, DefaultFileMode, reader)
+}
+
+//Upload uploads provided reader content for supplied url.
+func (s *memoryStorageService) UploadWithMode(URL string, mode os.FileMode, reader io.Reader) error {
 	urlPath, err := s.getPath(URL)
 	if err != nil {
 		return err

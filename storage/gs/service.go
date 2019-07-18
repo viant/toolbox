@@ -15,6 +15,7 @@ import (
 	"github.com/viant/toolbox"
 	tstorage "github.com/viant/toolbox/storage"
 	"google.golang.org/api/option"
+	"os"
 	"strings"
 	"time"
 )
@@ -110,8 +111,11 @@ func (s *service) Download(object tstorage.Object) (io.ReadCloser, error) {
 		NewReader(ctx)
 }
 
-//Upload uploads provided reader content for supplied url.
 func (s *service) Upload(URL string, reader io.Reader) error {
+	return s.UploadWithMode(URL, tstorage.DefaultFileMode, reader)
+}
+
+func (s *service) UploadWithMode(URL string, mode os.FileMode, reader io.Reader) error {
 	parserURL, err := url.Parse(URL)
 	if err != nil {
 		return fmt.Errorf("failed to parse URL for uploading: %v, %v", URL, err)
@@ -151,7 +155,7 @@ func (s *service) uploadContent(ctx context.Context, client *storage.Client, par
 			"Cache-Control": "private, max-age=" + expiry,
 		}
 	}
-	reader, err:= updateUploadChecksum(parserURL, reader, writer)
+	reader, err := updateUploadChecksum(parserURL, reader, writer)
 	if _, err = io.Copy(writer, reader); err != nil {
 		return fmt.Errorf("failed to copy to writer during upload:%v", err)
 	}
@@ -160,7 +164,6 @@ func (s *service) uploadContent(ctx context.Context, client *storage.Client, par
 	}
 	return nil
 }
-
 
 func updateUploadChecksum(parserURL *url.URL, reader io.Reader, writer *storage.Writer) (io.Reader, error) {
 	checksumDisabled := parserURL.Query().Get("disableChecksum") != ""
@@ -194,7 +197,6 @@ func updateUploadChecksum(parserURL *url.URL, reader io.Reader, writer *storage.
 	}
 	return bufferReader, err
 }
-
 
 func (s *service) Register(schema string, service tstorage.Service) error {
 	return errors.New("unsupported")

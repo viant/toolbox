@@ -9,6 +9,8 @@ import (
 	"strings"
 )
 
+var DefaultFileMode os.FileMode = 0755
+
 //Service represents abstract way to accessing local or remote storage
 type Service interface {
 	//List returns a list of object for supplied url
@@ -23,6 +25,8 @@ type Service interface {
 	DownloadWithURL(URL string) (io.ReadCloser, error)
 	//Upload uploads provided reader content for supplied storage object.
 	Upload(URL string, reader io.Reader) error
+	//Upload uploads provided reader content for supplied storage object.
+	UploadWithMode(URL string, mode os.FileMode, reader io.Reader) error
 	//Delete removes passed in storage object
 	Delete(object Object) error
 	//Register register schema with provided service
@@ -99,7 +103,16 @@ func (s *storageService) Upload(URL string, reader io.Reader) error {
 	if err != nil {
 		return err
 	}
-	return service.Upload(URL, reader)
+	return service.UploadWithMode(URL, 0644, reader)
+}
+
+//Uploads content for passed in URL
+func (s *storageService) UploadWithMode(URL string, mode os.FileMode, reader io.Reader) error {
+	service, err := s.getServiceForSchema(URL)
+	if err != nil {
+		return err
+	}
+	return service.UploadWithMode(URL, mode, reader)
 }
 
 //Delete remove storage object
