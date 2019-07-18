@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"golang.org/x/crypto/ssh"
+	"os"
 )
 
 //Service represents ssh service
@@ -36,7 +37,7 @@ func (s *replayService) Run(command string) error {
 }
 
 //Upload uploads provided content to specified destination
-func (s *replayService) Upload(destination string, content []byte) error {
+func (s *replayService) Upload(destination string, mode os.FileMode, content []byte) error {
 	s.storage[destination] = content
 	return nil
 }

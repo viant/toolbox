@@ -1,6 +1,7 @@
 package ssh_test
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
@@ -50,7 +51,7 @@ func TestClient_Upload(t *testing.T) {
 	}
 	if err == nil {
 		assert.NotNil(t, service)
-		err = service.Upload("/tmp/a/abcd.bin", []byte{0x1, 0x6, 0x10})
+		err = service.Upload("/tmp/a/abcd.bin", 0644, []byte{0x1, 0x6, 0x10})
 		assert.Nil(t, err)
 
 		content, err := service.Download("/tmp/a/abcd.bin")
@@ -83,9 +84,9 @@ func TestClient_UploadLargeFile(t *testing.T) {
 	}
 
 	tempdir := os.TempDir()
-	filename := path.Join(tempdir, "largefile.bin")
+	filename := path.Join(tempdir, "kkk/.bin/largefile.bin")
 	toolbox.RemoveFileIfExist(filename)
-	defer toolbox.RemoveFileIfExist(filename)
+	//defer toolbox.RemoveFileIfExist(filename)
 	//file, err := os.OpenFile(filename, os.O_RDWR | os.O_CREATE, 0644)
 	//assert.Nil(t, err)
 
@@ -96,12 +97,13 @@ func TestClient_UploadLargeFile(t *testing.T) {
 	//file.Write(payload)
 	//file.Close()
 
-	err = service.Upload(filename, payload)
+	err = service.Upload(filename, 0644, payload)
+	fmt.Printf("%v\n", err)
 	assert.Nil(t, err)
 
 	data, err := ioutil.ReadFile(filename)
 	assert.Nil(t, err)
-	if assert.Equal(t, len(data), len(payload)) {
+	if assert.Equal(t, len(payload), len(data)) {
 		assert.EqualValues(t, data, payload)
 	}
 

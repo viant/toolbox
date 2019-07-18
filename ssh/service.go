@@ -1,26 +1,20 @@
 package ssh
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/pkg/errors"
 	"github.com/viant/toolbox/cred"
+	"github.com/viant/toolbox/storage"
 	"golang.org/x/crypto/ssh"
 	"io"
 	"net"
+	"os"
 	"path"
-	"sync/atomic"
+	"strings"
+	"sync"
 	"time"
 )
-
-const (
-	createFileSequence = "C0644"
-)
-
-var bufferSize = 64 * 1024
-var scpUploadSleep = 50 * time.Millisecond
-var commandResponseDelaySleep = 300 * time.Millisecond
-
-var endTransferSequence = []byte("\x00")
 
 //Service represents ssh service
 type Service interface {
@@ -34,7 +28,7 @@ type Service interface {
 	Run(command string) error
 
 	//Upload uploads provided content to specified destination
-	Upload(destination string, content []byte) error
+	Upload(destination string, mode os.FileMode, content []byte) error
 
 	//Download downloads content from specified source.
 	Download(source string) ([]byte, error)
@@ -81,101 +75,133 @@ func (c *service) Run(command string) error {
 	return session.Run(command)
 }
 
-//listenForMessage this function read data from reader to filer textual output to result channel.
-func listenForMessage(reader io.Reader, result chan string, done *int32) {
-	for {
-		if atomic.LoadInt32(done) == 1 {
-			return
-		}
-		var buf = make([]byte, bufferSize)
-		read, _ := reader.Read(buf)
-		if read > 0 {
+func (c *service) transferData(payload []byte, createFileCmd string, writer io.Writer, errors chan error, waitGroup *sync.WaitGroup) {
+	const endSequence = "\x00"
+	defer waitGroup.Done()
+	_, err := fmt.Fprint(writer, createFileCmd)
+	if err != nil {
+		errors <- err
+		return
+	}
+	_, err = io.Copy(writer, bytes.NewReader(payload))
+	if err != nil {
+		errors <- err
+		return
+	}
+	if _, err = fmt.Fprint(writer, endSequence); err != nil {
+		errors <- err
+		return
+	}
+}
 
-			data := buf[:read]
-			var text = ""
-			for _, b := range data {
-				if b >= 32 {
-					text += string(b)
-				}
-			}
-			if text != "" {
-				result <- text
-			}
+type Errors chan error
+
+func (e Errors) GetError() error {
+	select {
+	case err := <-e:
+		return err
+	case <-time.After(time.Millisecond):
+	}
+	return nil
+}
+
+const operationSuccessful = 0
+
+func checkOutput(reader io.Reader, errorChannel Errors) {
+	writer := new(bytes.Buffer)
+	io.Copy(writer, reader)
+	if writer.Len() > 1 {
+		data := writer.Bytes()
+		if data[1] == operationSuccessful {
+			return
+		} else if len(data) > 2 {
+			errorChannel <- errors.New(string(data[2:]))
 		}
 	}
 }
 
 //Upload uploads passed in content into remote destination
-func (c *service) Upload(destination string, content []byte) (err error) {
-	dir, file := path.Split(destination)
-	if len(dir) > 0 {
-		c.Run("mkdir -p " + dir)
-	}
-	session, err := c.client.NewSession()
-	if err != nil {
-		return fmt.Errorf("failed to create session %v", err)
-	}
-	defer session.Close()
-	writer, err := session.StdinPipe()
-	if err != nil {
-		return fmt.Errorf("failed to acquire stdin %v", err)
-	}
-	defer writer.Close()
+func (c *service) Upload(destination string, mode os.FileMode, content []byte) (err error) {
+	err = c.upload(destination, mode, content)
 
-	var done int32
-	defer func() {
-		atomic.StoreInt32(&done, 1)
-	}()
-	output, err := session.StdoutPipe()
-	var messages = make(chan string, 1)
-	go listenForMessage(output, messages, &done)
-	cmd := "scp -qtr " + dir
-	err = session.Start(cmd)
 	if err != nil {
-		return fmt.Errorf("failed to start command%v %v", cmd, err)
-	}
-	createFileCommand := fmt.Sprintf("%v %d %s\n", createFileSequence, len(content), file)
-	_, err = writer.Write([]byte(createFileCommand))
-	if err != nil {
-		return fmt.Errorf("failed to write create file sequence: %v %v", content, err)
-	}
-	var message string
-	select {
-	case message = <-messages:
-	case <-time.After(commandResponseDelaySleep):
-	}
-	if message != "" {
-		return errors.New(message)
-	}
-	var payloadFragmentCount = (len(content) / bufferSize) + 1
-	//This is terrible hack, but  it looks like writer.Write at once or using io.Copy causes some data being lost in the final file,
-	//so slowing down writes addresses this issue
-	for i := 0; i < payloadFragmentCount; i++ {
-		maxLength := (i + 1) * bufferSize
-		if maxLength >= len(content) {
-			maxLength = len(content)
-		}
-		buffer := content[i*bufferSize : maxLength]
-		_, err = writer.Write(buffer)
+		if strings.Contains(err.Error(), "No such file or directory") {
+			dir, _ := path.Split(destination)
+			c.Run("mkdir -p " + dir)
+			return c.upload(destination, mode, content)
+		} else if strings.Contains(err.Error(), "handshake") || strings.Contains(err.Error(), "connection") {
 
-		if err != nil {
-			if err.Error() == io.EOF.Error() {
-				break
-			}
-			return fmt.Errorf("failed to write content %v %v %v", err, len(content), i)
-		}
-		if payloadFragmentCount > 1 && i+2 > payloadFragmentCount {
-			time.Sleep(scpUploadSleep)
-		}
-	}
-
-	if err == nil {
-		_, err = writer.Write(endTransferSequence)
-		if err != nil {
-			return fmt.Errorf("failed to write end transfer seq: %v", err)
+			time.Sleep(500 * time.Millisecond)
+			fmt.Printf("got error %v\n", err)
+			c.Reconnect()
+			return c.upload(destination, mode, content)
 		}
 	}
 	return err
+}
+
+func (c *service) getSession() (*ssh.Session, error) {
+	return c.client.NewSession()
+}
+
+//Upload uploads passed in content into remote destination
+func (c *service) upload(destination string, mode os.FileMode, content []byte) (err error) {
+	dir, file := path.Split(destination)
+	if mode == 0 {
+		mode = 0644
+	}
+	waitGroup := &sync.WaitGroup{}
+	waitGroup.Add(1)
+	if strings.HasPrefix(file, "/") {
+		file = string(file[1:])
+	}
+	session, err := c.getSession()
+	if err != nil {
+		return err
+	}
+
+	writer, err := session.StdinPipe()
+	if err != nil {
+		return errors.Wrap(err, "failed to acquire stdin")
+	}
+	defer writer.Close()
+
+	var transferError Errors = make(chan error, 1)
+	defer close(transferError)
+	var sessionError Errors = make(chan error, 1)
+	defer close(sessionError)
+	output, err := session.StdoutPipe()
+	if err != nil {
+		return errors.Wrap(err, "failed to acquire stdout")
+	}
+	go checkOutput(output, sessionError)
+
+	if mode >= 01000 {
+		mode = storage.DefaultFileMode
+	}
+	fileMode := string(fmt.Sprintf("C%04o", mode)[:5])
+	createFileCmd := fmt.Sprintf("%v %d %s\n", fileMode, len(content), file)
+	go c.transferData(content, createFileCmd, writer, transferError, waitGroup)
+	scpCommand := "scp -qtr " + dir
+	err = session.Start(scpCommand)
+	if err != nil {
+		return err
+	}
+	waitGroup.Wait()
+	writerErr := writer.Close()
+	if err := sessionError.GetError(); err != nil {
+		return err
+	}
+	if err := transferError.GetError(); err != nil {
+		return err
+	}
+	if err = session.Wait(); err != nil {
+		if err := sessionError.GetError(); err != nil {
+			return err
+		}
+		return err
+	}
+	return writerErr
 }
 
 //Download download passed source file from remote host.
@@ -212,7 +238,7 @@ func (c *service) Reconnect() error {
 func (c *service) OpenTunnel(localAddress, remoteAddress string) error {
 	local, err := net.Listen("tcp", localAddress)
 	if err != nil {
-		return fmt.Errorf("failed to listen on local: %v %v", localAddress, err)
+		return errors.Wrap(err, fmt.Sprintf("failed to listen on local: %v %v", localAddress))
 	}
 	var forwarding = NewForwarding(c.client, remoteAddress, local)
 	if len(c.forwarding) == 0 {
@@ -225,7 +251,7 @@ func (c *service) OpenTunnel(localAddress, remoteAddress string) error {
 
 func (c *service) connect() (err error) {
 	if c.client, err = ssh.Dial("tcp", c.host, c.config); err != nil {
-		return fmt.Errorf("failed to dial %v: %s", c.host, err)
+		return errors.Wrap(err, fmt.Sprintf("failed to dial %v: %s", c.host))
 	}
 	return nil
 }
