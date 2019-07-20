@@ -1,7 +1,6 @@
 package secret
 
 import (
-	"fmt"
 	"github.com/viant/toolbox/cred"
 	"strings"
 )
@@ -64,19 +63,7 @@ func (s SecretKey) Secret(cred *cred.Config) string {
 	return cred.Data
 }
 
-//Keys expands to statics keys
-func (s SecretKey) Keys() []SecretKey {
-	var key = s.String()
-	var result = []SecretKey{
-		SecretKey(fmt.Sprintf("**%v**", key)),
-		SecretKey(fmt.Sprintf("${%v.username}", key)),
-		SecretKey(fmt.Sprintf("${%v.Username}", key)),
-		SecretKey(fmt.Sprintf("##%v##", key)),
-		SecretKey(fmt.Sprintf("${%v.password}", key)),
-		SecretKey(fmt.Sprintf("${%v.Password}", key)),
-	}
-	return result
-}
+
 
 //Secret represents a secret
 type Secret string

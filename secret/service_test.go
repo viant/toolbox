@@ -72,7 +72,7 @@ func TestService_Expand(t *testing.T) {
 		Matchable   string
 		Input       string
 		Credentials map[SecretKey]Secret
-		Expended    string
+		Expect      string
 		HasError    bool
 	}{
 		{
@@ -82,7 +82,7 @@ func TestService_Expand(t *testing.T) {
 			Credentials: map[SecretKey]Secret{
 				"**sudo**": "localhost",
 			},
-			Expended: "pass1",
+			Expect: "pass1",
 		},
 		{
 			Description: "Password replacement with secret short name, explicit",
@@ -91,7 +91,7 @@ func TestService_Expand(t *testing.T) {
 			Credentials: map[SecretKey]Secret{
 				"sudo": "localhost",
 			},
-			Expended: "pass1",
+			Expect: "pass1",
 		},
 		{
 			Description: "Username replacement with URL based secret",
@@ -100,7 +100,7 @@ func TestService_Expand(t *testing.T) {
 			Credentials: map[SecretKey]Secret{
 				"##sudo##": "mem://secret/localhost",
 			},
-			Expended: "user1",
+			Expect: "user1",
 		},
 		{
 			Description: "Username replacement with URL based secret and dynamic key",
@@ -109,7 +109,7 @@ func TestService_Expand(t *testing.T) {
 			Credentials: map[SecretKey]Secret{
 				"sudo": "mem://secret/localhost",
 			},
-			Expended: "user1",
+			Expect: "user1",
 		},
 
 		{
@@ -119,22 +119,9 @@ func TestService_Expand(t *testing.T) {
 			Credentials: map[SecretKey]Secret{
 				"sudo": "mem://secret/localhost",
 			},
-			Expended: "user1",
+			Expect: "user1",
 		},
 
-		{
-			Description: "Data secret",
-			Input:       "**key**",
-			Matchable:   "",
-			Credentials: map[SecretKey]Secret{
-				"key": "10.3.3.12.json",
-			},
-			Expended: `{
-	"Data":{
-		"Key1":"abc"
-	}
-}`,
-		},
 
 		{
 			Description: "Non existing CredentialsFromLocation",
@@ -154,19 +141,22 @@ func TestService_Expand(t *testing.T) {
 			Credentials: map[SecretKey]Secret{
 				"key": "test",
 			},
-			Expended: "password2",
+			Expect: "password2",
 		},
 	}
 
 	for _, useCase := range useCases {
 		service.interactive = useCase.Interactive
-		expaned, err := service.Expand(useCase.Input, useCase.Credentials)
+		actual, err := service.Expand(useCase.Input, useCase.Credentials)
 		if useCase.HasError {
 			assert.NotNil(t, err, useCase.Description)
 			continue
 		}
 		if assert.Nil(t, err, useCase.Description) {
-			assertly.AssertValues(t, useCase.Expended, expaned, useCase.Description)
+
+			if ! assertly.AssertValues(t, useCase.Expect, actual, useCase.Description) {
+				fmt.Printf("expect: %v, actual: %v\n", useCase.Expect, actual)
+			}
 		}
 	}
 }

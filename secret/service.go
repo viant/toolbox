@@ -12,6 +12,7 @@ import (
 	"path"
 	"strings"
 	"sync"
+	"github.com/viant/toolbox/data"
 )
 
 //represents a secret service
@@ -104,13 +105,34 @@ func (s *Service) expandDynamicSecret(input string, key SecretKey, secret Secret
 	if !strings.Contains(input, key.String()) {
 		return input, nil
 	}
-	var err error
-	for _, candidate := range key.Keys() {
-		if input, err = s.expandSecret(input, candidate, secret); err != nil {
-			return input, err
-		}
+	credConfig, err := s.GetOrCreate(string(secret))
+	if err != nil {
+		return "", err
 	}
-	return input, nil
+	createMap := data.NewMap()
+	credInfo := map[string]interface{}{}
+	toolbox.DefaultConverter.AssignConverted(&credInfo, credInfo)
+	credInfo["username"] = credConfig.Username
+	credInfo["password"] = credConfig.Password
+	createMap.Put(string(key), credInfo)
+
+	passwordKey := fmt.Sprintf("**%v**", key)
+	if count := strings.Count(input, passwordKey); count > 0 {
+		secret := credConfig.Password
+		if secret == "" {
+			secret = credConfig.Data
+		}
+		input = strings.Replace(input, passwordKey, secret, count)
+	}
+	userKey := fmt.Sprintf("##%v##", key)
+	if count := strings.Count(input, userKey); count > 0 {
+		input = strings.Replace(input, userKey, credConfig.Username, count)
+	}
+	if index := strings.Index(input, "$");index == -1 {
+		return input, nil
+	}
+
+	return createMap.ExpandAsText(input), nil
 }
 
 func (s *Service) expandSecret(command string, key SecretKey, secret Secret) (string, error) {

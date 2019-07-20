@@ -293,14 +293,17 @@ func (s *multiCommandSession) readResponse(timeoutMs int, listener Listener, ter
 outer:
 	for {
 		select {
-		case o := <-s.stdOutput:
+		case partialOutput := <-s.stdOutput:
 			waitTimeMs = 0
-			if len(o) > 0 {
-				notification.notify(s.removePromptIfNeeded(o))
-			}
-			out += o
-			hasPrompt = s.hasPrompt(out)
+			out += partialOutput
 			hasTerminator = s.hasTerminator(out, terminators...)
+			if len(partialOutput) > 0 {
+				if  hasTerminator {
+					partialOutput = addLineBreakIfNeeded(partialOutput)
+				}
+				notification.notify(s.removePromptIfNeeded(partialOutput))
+			}
+			hasPrompt = s.hasPrompt(out)
 			if (hasPrompt || hasTerminator) && len(s.stdOutput) == 0 {
 				break outer
 			}
@@ -322,6 +325,8 @@ outer:
 
 	if hasTerminator {
 		s.drainStdout()
+
+
 	}
 	if errOut != "" {
 		err = errors.New(errOut)
@@ -332,6 +337,17 @@ outer:
 		out = s.removePromptIfNeeded(out)
 	}
 	return out, hasOutput, err
+}
+func addLineBreakIfNeeded(text string) string {
+	index := strings.LastIndex(text, "\n")
+	if index == -1 {
+		return text +"\n"
+	}
+	lastFragment := string(text[index:])
+	if strings.TrimSpace(lastFragment) != "" {
+		return text +"\n"
+	}
+	return text
 }
 
 func (s *multiCommandSession) drainStdout() {
