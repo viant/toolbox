@@ -1,4 +1,4 @@
-## July 18 2019 - v0.25.1
+## July 20 2019 - v0.25.1
 - Update supported secret sequences 
 
 ## July 18 2019 - v0.25.0
