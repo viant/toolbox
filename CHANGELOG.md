@@ -1,3 +1,6 @@
+## July 18 2019 - v0.25.1
+- Update supported secret sequences 
+
 ## July 18 2019 - v0.25.0
 - Add Storage.UploadWithMode
 - Patched/streamlined SSH/SCP Upload
