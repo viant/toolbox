@@ -1,3 +1,6 @@
+## July 20 2019 - v0.25.3
+- Added credConfig provider for gs 
+
 ## July 20 2019 - v0.25.2
 - Update supported secret sequences 
 

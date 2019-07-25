@@ -3,6 +3,7 @@ package gs
 import (
 	"context"
 	"encoding/json"
+	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/secret"
 	"github.com/viant/toolbox/storage"
 	"golang.org/x/oauth2/google"
@@ -49,4 +50,22 @@ func serviceProvider(credentials string) (storage.Service, error) {
 		}
 	}
 	return NewService(projectID, credentialOptions...), nil
+}
+
+
+func credServiceProvider(config *cred.Config) (storage.Service, error) {
+	var credentialOptions = make([]option.ClientOption, 0)
+	projectID := config.ProjectID
+	credentialOptions = append(credentialOptions, option.WithCredentialsJSON([]byte(config.Data)))
+	return NewService(projectID, credentialOptions...), nil
+}
+
+
+
+
+//SetProvider set gs provider with supplied config
+func SetProvider(config *cred.Config) {
+	storage.Registry().Registry[ProviderScheme] = func(string) (storage.Service, error) {
+		return credServiceProvider(config)
+	}
 }
