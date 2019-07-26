@@ -2,6 +2,7 @@ package url
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
@@ -369,6 +370,28 @@ func (r *Resource) Init() (err error) {
 	r.URL = normalizeURL(r.URL)
 	r.ParsedURL, err = url.Parse(r.URL)
 	return err
+}
+
+//DownloadBase64 loads base64 resource content
+func (r *Resource) DownloadBase64() (string, error) {
+	storageService, err := storage.NewServiceForURL(r.URL, r.Credentials)
+	if err != nil {
+		return "", err
+	}
+	reader, err := storage.Download(storageService, r.URL)
+	if err != nil {
+		return "", err
+	}
+	defer reader.Close()
+	data, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return "", err
+	}
+	_, err = base64.StdEncoding.DecodeString(string(data))
+	if err == nil {
+		return string(data), nil
+	}
+	return base64.StdEncoding.EncodeToString(data), nil
 }
 
 //NewResource returns a new resource for provided URL, followed by optional credential, cache and cache expiryMs.
