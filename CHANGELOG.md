@@ -1,5 +1,10 @@
-## July 25 2019 - v0.25.3
-- Added credConfig provider for gs 
+## July 26 2019 - v0.26.0
+- Removed Base64 flag from kms
+- Added base64 auto detection
+- Added credConfig provider for gs
+- Added kms aws service 
+- Add url.Resource: DownloadBase64
+
 
 ## July 20 2019 - v0.25.2
 - Update supported secret sequences 
