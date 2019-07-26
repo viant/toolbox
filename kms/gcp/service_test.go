@@ -23,7 +23,7 @@ func TestDecoder(t *testing.T) {
 	{
 
 		decryptRequest := kms.DecryptRequest{}
-		decryptRequest.Resource = &kms.Resource{IsBase64: false}
+		decryptRequest.Resource = &kms.Resource{}
 		decryptRequest.Resource.URL = url.NewResource("test/data/config.txt", "").URL
 		decoderFactory := toolbox.NewJSONDecoderFactory()
 		mytestConfig := MyTestConfig{}
@@ -39,7 +39,7 @@ func TestDecoder(t *testing.T) {
 	{
 
 		decryptRequest := kms.DecryptRequest{}
-		decryptRequest.Resource = &kms.Resource{IsBase64: true}
+		decryptRequest.Resource = &kms.Resource{}
 		decryptRequest.Resource.URL = url.NewResource("test/data/config_base_64.txt", "").URL
 		decoderFactory := toolbox.NewJSONDecoderFactory()
 		mytestConfig := MyTestConfig{}
@@ -60,7 +60,7 @@ func TestEncrypt(t *testing.T) {
 
 		request := kms.EncryptRequest{}
 		encryptTextAfterBase64 := base64.StdEncoding.EncodeToString([]byte(text))
-		request.Resource = &kms.Resource{Data: []byte(encryptTextAfterBase64), IsBase64: true}
+		request.Resource = &kms.Resource{Data: []byte(encryptTextAfterBase64)}
 		service := service{KmsService: &testKmsService{}}
 		response, err := service.Encrypt(context.Background(), &request)
 		assert.Nil(t, err)
@@ -69,7 +69,7 @@ func TestEncrypt(t *testing.T) {
 
 		decryptRequest := kms.DecryptRequest{}
 		decryptTextAfterBase64 := base64.StdEncoding.EncodeToString(response.EncryptedData)
-		decryptRequest.Resource = &kms.Resource{Data: []byte(decryptTextAfterBase64), IsBase64: true}
+		decryptRequest.Resource = &kms.Resource{Data: []byte(decryptTextAfterBase64)}
 		decryptResponse, err := service.Decrypt(context.Background(), &decryptRequest)
 		assert.Nil(t, err)
 		assert.Equal(t, decryptResponse.Text, decryptTextAfterBase64)
@@ -82,7 +82,7 @@ func TestEncrypt(t *testing.T) {
 
 		request := kms.EncryptRequest{}
 
-		request.Resource = &kms.Resource{Data: []byte(text), IsBase64: false}
+		request.Resource = &kms.Resource{Data: []byte(text)}
 		service := service{KmsService: &testKmsService{}}
 		response, err := service.Encrypt(context.Background(), &request)
 		assert.Nil(t, err)
@@ -90,7 +90,7 @@ func TestEncrypt(t *testing.T) {
 		assert.Equal(t, string(response.EncryptedData), text)
 
 		decryptRequest := kms.DecryptRequest{}
-		decryptRequest.Resource = &kms.Resource{Data: response.EncryptedData, IsBase64: false}
+		decryptRequest.Resource = &kms.Resource{Data: response.EncryptedData}
 		decryptResponse, err := service.Decrypt(context.Background(), &decryptRequest)
 		assert.Nil(t, err)
 		assert.Equal(t, decryptResponse.Text, base64.StdEncoding.EncodeToString([]byte(text)))
@@ -101,7 +101,7 @@ func TestEncrypt(t *testing.T) {
 	{
 
 		request := kms.EncryptRequest{}
-		request.Resource = &kms.Resource{IsBase64: true}
+		request.Resource = &kms.Resource{}
 		request.Resource.URL = url.NewResource("test/data/test1.txt", "").URL
 		request.TargetURL = url.NewResource("test/upload/upload1.txt").URL
 		service := service{KmsService: &testKmsService{}}
@@ -111,7 +111,7 @@ func TestEncrypt(t *testing.T) {
 		assert.Equal(t, string(response.EncryptedData), "This is a encrypt/decrypt test!!")
 
 		decryptRequest := kms.DecryptRequest{}
-		decryptRequest.Resource = &kms.Resource{IsBase64: true}
+		decryptRequest.Resource = &kms.Resource{}
 		decryptRequest.Resource.URL = url.NewResource("test/data/test1.txt", "").URL
 		decryptResponse, err := service.Decrypt(context.Background(), &decryptRequest)
 		assert.Nil(t, err)
@@ -123,7 +123,7 @@ func TestEncrypt(t *testing.T) {
 	{
 
 		request := kms.EncryptRequest{}
-		request.Resource = &kms.Resource{IsBase64: false}
+		request.Resource = &kms.Resource{}
 		request.Resource.URL = url.NewResource("test/data/test2.txt", "").URL
 		service := service{KmsService: &testKmsService{}}
 		response, err := service.Encrypt(context.Background(), &request)
@@ -132,7 +132,7 @@ func TestEncrypt(t *testing.T) {
 		assert.Equal(t, string(response.EncryptedData), "This is a encrypt/decrypt test no2 !!!")
 
 		decryptRequest := kms.DecryptRequest{}
-		decryptRequest.Resource = &kms.Resource{IsBase64: false}
+		decryptRequest.Resource = &kms.Resource{}
 		decryptRequest.Resource.URL = url.NewResource("test/data/test2.txt", "").URL
 		decryptResponse, err := service.Decrypt(context.Background(), &decryptRequest)
 		assert.Nil(t, err)
@@ -144,7 +144,7 @@ func TestEncrypt(t *testing.T) {
 	{
 
 		request := kms.EncryptRequest{}
-		request.Resource = &kms.Resource{IsBase64: false}
+		request.Resource = &kms.Resource{}
 		request.Resource.URL = url.NewResource("test/data/test3.txt", "").URL
 		service := service{KmsService: &testKmsService{}}
 		response, err := service.Encrypt(context.Background(), &request)
@@ -153,7 +153,7 @@ func TestEncrypt(t *testing.T) {
 		assert.Equal(t, string(response.EncryptedData), "This is a encrypt/decrypt test no3 !!!@@@")
 
 		decryptRequest := kms.DecryptRequest{}
-		decryptRequest.Resource = &kms.Resource{IsBase64: true}
+		decryptRequest.Resource = &kms.Resource{}
 		decryptRequest.Resource.URL = url.NewResource("test/data/test3_3.txt", "").URL
 		decryptResponse, err := service.Decrypt(context.Background(), &decryptRequest)
 		assert.Nil(t, err)

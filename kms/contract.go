@@ -1,9 +1,10 @@
 package kms
 
+import "errors"
+
 type Resource struct {
 	URL       string
 	Parameter string
-	IsBase64  bool
 	Data      []byte
 }
 
@@ -26,4 +27,27 @@ type DecryptRequest struct {
 type DecryptResponse struct {
 	Data []byte
 	Text string
+}
+
+
+func (r *EncryptRequest) Validate() error {
+	if r.Key == "" {
+		return errors.New("key was empty")
+	}
+	if r.Resource == nil {
+		return errors.New("nothing to encrypt")
+	}
+	return nil
+}
+
+
+func (r *DecryptRequest) Validate() error {
+	if r.Key == "" {
+		return errors.New("key was empty")
+	}
+	if r.Resource == nil {
+		return errors.New("nothing to decrypt")
+	}
+	return nil
+
 }
