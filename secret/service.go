@@ -111,7 +111,7 @@ func (s *Service) expandDynamicSecret(input string, key SecretKey, secret Secret
 	}
 	createMap := data.NewMap()
 	credInfo := map[string]interface{}{}
-	toolbox.DefaultConverter.AssignConverted(&credInfo, credInfo)
+	_ = toolbox.DefaultConverter.AssignConverted(&credInfo, credInfo)
 	credInfo["username"] = credConfig.Username
 	credInfo["password"] = credConfig.Password
 	createMap.Put(string(key), credInfo)
