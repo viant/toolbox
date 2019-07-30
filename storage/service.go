@@ -169,7 +169,7 @@ func NewServiceForURL(URL, credentials string) (Service, error) {
 		}
 		serviceForScheme, err := provider(credentials)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get storage for url %v: %v", URL, err)
+			return nil, fmt.Errorf("failed lookup service for %v: %v", parsedURL.Scheme, err)
 		}
 		err = service.Register(parsedURL.Scheme, serviceForScheme)
 		if err != nil {

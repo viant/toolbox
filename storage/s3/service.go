@@ -154,7 +154,7 @@ func (s *service) Download(object storage.Object) (io.ReadCloser, error) {
 	}
 	downloader := s3manager.NewDownloader(session.New(config))
 	target := &s3.Object{}
-	object.Unwrap(&target)
+	_ = object.Unwrap(&target)
 	writer := toolbox.NewByteWriterAt()
 	_, err = downloader.Download(writer,
 		&s3.GetObjectInput{

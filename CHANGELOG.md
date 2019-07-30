@@ -1,3 +1,6 @@
+## July 26 2019 - v0.26.1
+- Extended cred.Config
+
 ## July 26 2019 - v0.26.0
 - Removed Base64 flag from kms
 - Added base64 auto detection

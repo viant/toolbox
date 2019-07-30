@@ -57,7 +57,6 @@ func (s *service) List(URL string) ([]tstorage.Object, error) {
 	if len(parsedUrl.Path) > 0 {
 		query.Prefix = parsedUrl.Path[1:]
 	}
-
 	responseIterator := client.Bucket(parsedUrl.Host).Objects(ctx, query)
 	var result = make([]tstorage.Object, 0)
 	for obj, err := responseIterator.Next(); err == nil; obj, err = responseIterator.Next() {

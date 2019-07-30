@@ -13,4 +13,5 @@ type Service interface {
 
 	Decode(ctx context.Context, decryptRequest *DecryptRequest, factory toolbox.DecoderFactory, target interface{}) error
 
+
 }
