@@ -71,6 +71,7 @@ func (s *service) Decode(ctx context.Context, decryptRequest *kms.DecryptRequest
 	return factory.Create(reader).Decode(target)
 }
 
+
 func (s *service) Encrypt(ctx context.Context, request *kms.EncryptRequest) (*kms.EncryptResponse, error) {
 
 	if request.URL != "" {

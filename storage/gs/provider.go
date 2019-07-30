@@ -56,6 +56,12 @@ func serviceProvider(credentials string) (storage.Service, error) {
 func credServiceProvider(config *cred.Config) (storage.Service, error) {
 	var credentialOptions = make([]option.ClientOption, 0)
 	projectID := config.ProjectID
+
+	if config.Data == "" {
+		if data, err := json.Marshal(config);err == nil {
+			config.Data= string(data)
+		}
+	}
 	credentialOptions = append(credentialOptions, option.WithCredentialsJSON([]byte(config.Data)))
 	return NewService(projectID, credentialOptions...), nil
 }

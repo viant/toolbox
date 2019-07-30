@@ -1,5 +1,6 @@
-## July 26 2019 - v0.26.1
+## July 29 2019 - v0.26.2
 - Extended cred.Config
+- Patched gs.SetProvider
 
 ## July 26 2019 - v0.26.0
 - Removed Base64 flag from kms
