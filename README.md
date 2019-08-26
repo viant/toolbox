@@ -395,10 +395,12 @@ Provide dynamic semantic for creating time object based on time dif
 ```
 <a name="storage"></a>
 
-## Storage API
+## Storage
+
 
 [Storage API](storage/README.md) provides unified way of accessing local or remote storage system.  
 
+This API has been deprecated, please consider using [Abstract Storage](https://github.com/viant/afs)
 
 **Example** 
 
