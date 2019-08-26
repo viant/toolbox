@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -144,7 +144,7 @@ func Filename(filename string) string {
 	}
 
 	elements := append(root, strings.Split(filename, "/")...)
-	filename = path.Join(elements...)
+	filename = filepath.Join(elements...)
 	return filename
 }
 
