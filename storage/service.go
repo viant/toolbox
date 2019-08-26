@@ -1,3 +1,6 @@
+// Package storage define abstract storage operation
+// Deprecated - please use https://github.com/viant/afs API instead
+// This package is frozen and no new functionality will be added, and future removal takes place.
 package storage
 
 import (
