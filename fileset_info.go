@@ -8,6 +8,7 @@ import (
 	"go/types"
 	"io/ioutil"
 	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -485,7 +486,7 @@ func NewFileSetInfo(baseDir string) (*FileSetInfo, error) {
 	}
 	for packageName, pkg := range pkgs {
 		for filename, file := range pkg.Files {
-			filename := path.Base(filename)
+			filename := filepath.Base(filename)
 			fileInfo := NewFileInfo(baseDir, packageName, filename, fileSet)
 			ast.Walk(fileInfo, file)
 			result.files[filename] = fileInfo
