@@ -16,30 +16,34 @@ import (
 	"time"
 )
 
-//Service represents ssh service
-type Service interface {
-	//Service returns a service wrapper
-	Client() *ssh.Client
+type (
+	//Service represents ssh service
+	Service interface {
+		//Service returns a service wrapper
+		Client() *ssh.Client
 
-	//OpenMultiCommandSession opens multi command session
-	OpenMultiCommandSession(config *SessionConfig) (MultiCommandSession, error)
+		//OpenMultiCommandSession opens multi command session
+		OpenMultiCommandSession(config *SessionConfig) (MultiCommandSession, error)
 
-	//Run runs supplied command
-	Run(command string) error
+		//Run runs supplied command
+		Run(command string) error
 
-	//Upload uploads provided content to specified destination
-	Upload(destination string, mode os.FileMode, content []byte) error
+		//Upload uploads provided content to specified destination
+		//Deprecated: please consider using https://github.com/viant/afs/tree/master/scp
+		Upload(destination string, mode os.FileMode, content []byte) error
 
-	//Download downloads content from specified source.
-	Download(source string) ([]byte, error)
+		//Download downloads content from specified source.
+		//Deprecated: please consider using https://github.com/viant/afs/tree/master/scp
+		Download(source string) ([]byte, error)
 
-	//OpenTunnel opens a tunnel between local to remote for network traffic.
-	OpenTunnel(localAddress, remoteAddress string) error
+		//OpenTunnel opens a tunnel between local to remote for network traffic.
+		OpenTunnel(localAddress, remoteAddress string) error
 
-	NewSession() (*ssh.Session, error)
+		NewSession() (*ssh.Session, error)
 
-	Close() error
-}
+		Close() error
+	}
+)
 
 //service represnt SSH service
 type service struct {
