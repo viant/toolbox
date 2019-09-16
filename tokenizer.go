@@ -392,11 +392,54 @@ func (m *BodyMatcher) Match(input string, offset int) (matched int) {
 	return i
 }
 
+
 //NewBodyMatcher creates a new body matcher
 func NewBodyMatcher(begin, end string) Matcher {
 	return &BodyMatcher{Begin: begin, End: end}
 }
+// Parses SQL Begin End blocks
+func NewSQLBeginEndMatcher() Matcher {
+	return &SQLBeginEndMatcher{}
+}
 
+type SQLBeginEndMatcher struct { }
+
+func (m *SQLBeginEndMatcher) Match(input string, offset int) (matched int) {
+	begin := "BEGIN"
+	end := "END;"
+	beginLen := len(begin)
+	endLen := len(end)
+
+	if offset+beginLen >= len(input) {
+		return 0
+	}
+	if input[offset:offset+beginLen] != begin {
+		return 0
+	}
+	var depth = 1
+	var i = 1
+	for ; i < len(input)-offset; i++ {
+		canCheckEnd := offset+i+endLen <= len(input)
+		if !canCheckEnd {
+			return 0
+		}
+		canCheckBegin := offset+i+beginLen <= len(input)
+		if canCheckBegin {
+			beginning := input[offset+i:offset+i+beginLen]
+			if beginning == begin  ||  beginning == "IF" || input[offset+i:offset+i+4] == "CASE"{
+				depth++
+			}
+		}
+		if input[offset+i:offset+i+endLen] == end && unicode.IsSpace(rune(input[offset+i-1])){
+			depth--
+		}
+		if depth == 0 {
+			i += endLen
+			break
+		}
+	}
+	return i
+}
 //KeywordMatcher represents a keyword matcher
 type KeywordMatcher struct {
 	Keyword       string
