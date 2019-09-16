@@ -35,8 +35,8 @@ type Config struct {
 	Key       string `json:",omitempty"`
 	Secret    string `json:",omitempty"`
 	Region    string `json:",omitempty"`
-	AccountID string `json:"-"`
-	Token     string `json:"-"`
+	AccountID string `json:",omitempty"`
+	Token     string `json:",omitempty"`
 
 	//google cloud credential
 	ClientEmail             string `json:"client_email,omitempty"`
@@ -48,7 +48,7 @@ type Config struct {
 	Type                    string `json:"type"`
 	ClientX509CertURL       string `json:"client_x509_cert_url"`
 	AuthProviderX509CertURL string `json:"auth_provider_x509_cert_url"`
-
+	
 
 	//JSON string for this secret
 	Data            string `json:",omitempty"`
@@ -94,6 +94,7 @@ func (c *Config) LoadFromReader(reader io.Reader, ext string) error {
 	}
 	return nil
 }
+
 
 func (c *Config) Save(filename string) error {
 	_ = os.Remove(filename)
@@ -186,6 +187,15 @@ func (c *Config) NewJWTConfig(scopes ...string) (*jwt.Config, error) {
 	return result, nil
 }
 
+
+//JWTConfig returns jwt config and projectID
+func (c *Config) JWTConfig(scopes ...string) (config *jwt.Config, projectID string, err error) {
+	 config, err = c.NewJWTConfig(scopes...)
+	 return config, c.ProjectID, err
+}
+
+
+
 func loadPEM(location string, password string) ([]byte, error) {
 	var pemBytes []byte
 	if IsKeyEncrypted(location) {
@@ -232,6 +242,10 @@ func (c *Config) ClientConfig() (*ssh.ClientConfig, error) {
 	c.sshClientConfig = result
 	return result, nil
 }
+
+
+
+
 
 //NewConfig create a new config for supplied file name
 func NewConfig(filename string) (*Config, error) {
