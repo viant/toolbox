@@ -398,43 +398,95 @@ func NewBodyMatcher(begin, end string) Matcher {
 	return &BodyMatcher{Begin: begin, End: end}
 }
 // Parses SQL Begin End blocks
-func NewSQLBeginEndMatcher() Matcher {
-	return &SQLBeginEndMatcher{}
+func NewBlockMatcher(caseSensitive bool, sequenceStart string, sequenceTerminator string, nestedSequences []string, ignoredTerminators []string) Matcher {
+	return &BlockMatcher{
+		CaseSensitive: caseSensitive,
+		SequenceStart: sequenceStart,
+		SequenceTerminator: sequenceTerminator,
+		NestedSequences: nestedSequences,
+		IgnoredTerminators: ignoredTerminators,
+	}
 }
 
-type SQLBeginEndMatcher struct { }
+type BlockMatcher struct {
+	CaseSensitive bool
+	SequenceStart string
+	SequenceTerminator string
+	NestedSequences []string
+	IgnoredTerminators []string
+}
 
-func (m *SQLBeginEndMatcher) Match(input string, offset int) (matched int) {
-	begin := "BEGIN"
-	end := "END;"
-	beginLen := len(begin)
-	endLen := len(end)
+func (m *BlockMatcher) Match(input string, offset int) (matched int) {
 
-	if offset+beginLen >= len(input) {
+	sequenceStart := m.SequenceStart
+	terminator := m.SequenceTerminator
+	nestedSequences := m.NestedSequences
+	ignoredTerminators := m.IgnoredTerminators
+	in := input
+
+	starterLen := len(sequenceStart)
+	terminatorLen := len(terminator)
+
+	if !m.CaseSensitive {
+		sequenceStart = strings.ToLower(sequenceStart)
+		terminator = strings.ToLower(terminator)
+		for i, seq := range nestedSequences {
+			nestedSequences[i] = strings.ToLower(seq)
+		}
+		for i, term := range ignoredTerminators {
+			ignoredTerminators[i] = strings.ToLower(term)
+		}
+		in = strings.ToLower(input)
+	}
+
+	if offset+starterLen >= len(in) {
 		return 0
 	}
-	if input[offset:offset+beginLen] != begin {
+	if in[offset:offset+starterLen] != sequenceStart {
 		return 0
 	}
 	var depth = 1
 	var i = 1
-	for ; i < len(input)-offset; i++ {
-		canCheckEnd := offset+i+endLen <= len(input)
+	for ; i < len(in)-offset; i++ {
+		canCheckEnd := offset+i+terminatorLen <= len(in)
 		if !canCheckEnd {
 			return 0
 		}
-		canCheckBegin := offset+i+beginLen <= len(input)
+		canCheckBegin := offset+i+starterLen <= len(in)
 		if canCheckBegin {
-			beginning := input[offset+i:offset+i+beginLen]
-			if beginning == begin  ||  beginning == "IF" || input[offset+i:offset+i+4] == "CASE"{
+			beginning := in[offset+i:offset+i+starterLen]
+
+			if beginning == sequenceStart {
 				depth++
+			} else {
+				for _, nestedSeq := range nestedSequences {
+					nestedLen := len(nestedSeq)
+					if offset+i+nestedLen >= len(in) { continue }
+
+					beginning := in[offset+i : offset+i+nestedLen]
+					if beginning == nestedSeq {
+						depth++
+						break
+					}
+				}
 			}
 		}
-		if input[offset+i:offset+i+endLen] == end && unicode.IsSpace(rune(input[offset+i-1])){
+		ignored := false
+		for _, ignoredTerm := range ignoredTerminators {
+			termLen := len(ignoredTerm)
+			if offset + i + termLen >= len(in) { continue }
+
+			ending := in[offset+i : offset+i+termLen]
+			if ending == ignoredTerm {
+				ignored = true
+				break
+			}
+		}
+		if !ignored && in[offset+i : offset+i+terminatorLen] == terminator && unicode.IsSpace(rune(in[offset+i-1])){
 			depth--
 		}
 		if depth == 0 {
-			i += endLen
+			i += terminatorLen
 			break
 		}
 	}

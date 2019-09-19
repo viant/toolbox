@@ -107,3 +107,63 @@ func TestBodyMatcher(t *testing.T) {
 		assert.Equal(t, 20, pos)
 	}
 }
+
+func TestBlockMatcher(t *testing.T) {
+	{
+		matcher := toolbox.NewBlockMatcher(false, "begin", "end;", []string{"CASE"}, []string{"END IF"})
+		text := ` TRIGGER users_before_insert
+BEFORE INSERT ON users
+FOR EACH ROW
+BEGIN
+SELECT users_seq.NEXTVAL
+INTO   :new.id
+FROM   dual;
+END;
+
+INSERT INTO DUMMY(ID, NAME) VALUES(2, 'xyz');
+
+`
+		matcher.Match(text, 65)
+	}
+	{
+		matcher := toolbox.BlockMatcher{
+			CaseSensitive:      false,
+			SequenceStart:      "begin",
+			SequenceTerminator: "end",
+			NestedSequences:    []string{"case"},
+			IgnoredTerminators: []string{"end if"},
+		}
+		text := "\n\n" +
+			"BEgin\n" +
+				"IF get_version()=20\n" +
+					"select *\n" +
+					"from table\n" +
+					"where color = case inventory when 1 then 'brown' when 2 then 'red' END;\n" +
+				"END IF\n" +
+			"END;"
+		pos := matcher.Match(text, 2)
+		assert.Equal(t, 128, pos)
+	}
+	{
+		matcher := toolbox.BlockMatcher{
+			CaseSensitive:      false,
+			SequenceStart:      "begin",
+			SequenceTerminator: "end;",
+			NestedSequences:    []string{"case"},
+		}
+		text := "bEgIn case 123deabc then 22 End; End;"
+		pos:=matcher.Match(text, 0)
+		assert.Equal(t, 37, pos)
+
+		matcher.CaseSensitive = true
+		pos=matcher.Match(text, 0)
+		assert.Equal(t, 0, pos)
+
+		matcher.SequenceTerminator = "End;"
+		matcher.SequenceStart = "bEgIn"
+		pos=matcher.Match(text, 0)
+		assert.Equal(t, 37, pos)
+	}
+
+
+}
