@@ -392,11 +392,106 @@ func (m *BodyMatcher) Match(input string, offset int) (matched int) {
 	return i
 }
 
+
 //NewBodyMatcher creates a new body matcher
 func NewBodyMatcher(begin, end string) Matcher {
 	return &BodyMatcher{Begin: begin, End: end}
 }
+// Parses SQL Begin End blocks
+func NewBlockMatcher(caseSensitive bool, sequenceStart string, sequenceTerminator string, nestedSequences []string, ignoredTerminators []string) Matcher {
+	return &BlockMatcher{
+		CaseSensitive: caseSensitive,
+		SequenceStart: sequenceStart,
+		SequenceTerminator: sequenceTerminator,
+		NestedSequences: nestedSequences,
+		IgnoredTerminators: ignoredTerminators,
+	}
+}
 
+type BlockMatcher struct {
+	CaseSensitive bool
+	SequenceStart string
+	SequenceTerminator string
+	NestedSequences []string
+	IgnoredTerminators []string
+}
+
+func (m *BlockMatcher) Match(input string, offset int) (matched int) {
+
+	sequenceStart := m.SequenceStart
+	terminator := m.SequenceTerminator
+	nestedSequences := m.NestedSequences
+	ignoredTerminators := m.IgnoredTerminators
+	in := input
+
+	starterLen := len(sequenceStart)
+	terminatorLen := len(terminator)
+
+	if !m.CaseSensitive {
+		sequenceStart = strings.ToLower(sequenceStart)
+		terminator = strings.ToLower(terminator)
+		for i, seq := range nestedSequences {
+			nestedSequences[i] = strings.ToLower(seq)
+		}
+		for i, term := range ignoredTerminators {
+			ignoredTerminators[i] = strings.ToLower(term)
+		}
+		in = strings.ToLower(input)
+	}
+
+	if offset+starterLen >= len(in) {
+		return 0
+	}
+	if in[offset:offset+starterLen] != sequenceStart {
+		return 0
+	}
+	var depth = 1
+	var i = 1
+	for ; i < len(in)-offset; i++ {
+		canCheckEnd := offset+i+terminatorLen <= len(in)
+		if !canCheckEnd {
+			return 0
+		}
+		canCheckBegin := offset+i+starterLen <= len(in)
+		if canCheckBegin {
+			beginning := in[offset+i:offset+i+starterLen]
+
+			if beginning == sequenceStart {
+				depth++
+			} else {
+				for _, nestedSeq := range nestedSequences {
+					nestedLen := len(nestedSeq)
+					if offset+i+nestedLen >= len(in) { continue }
+
+					beginning := in[offset+i : offset+i+nestedLen]
+					if beginning == nestedSeq {
+						depth++
+						break
+					}
+				}
+			}
+		}
+		ignored := false
+		for _, ignoredTerm := range ignoredTerminators {
+			termLen := len(ignoredTerm)
+			if offset + i + termLen >= len(in) { continue }
+
+			ending := in[offset+i : offset+i+termLen]
+			if ending == ignoredTerm {
+				ignored = true
+				break
+			}
+		}
+		if !ignored && in[offset+i : offset+i+terminatorLen] == terminator && unicode.IsSpace(rune(in[offset+i-1])){
+			depth--
+		}
+		if depth == 0 {
+			i += terminatorLen
+			break
+		}
+	}
+	return i
+}
 //KeywordMatcher represents a keyword matcher
 type KeywordMatcher struct {
 	Keyword       string
