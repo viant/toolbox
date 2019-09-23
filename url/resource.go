@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
+	"github.com/viant/afs/option"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/storage"
 	"gopkg.in/yaml.v2"
@@ -17,11 +18,12 @@ import (
 
 //Resource represents a URL based resource, with enriched meta info
 type Resource struct {
-	URL             string   `description:"resource URL or relative or absolute path" required:"true"` //URL of resource
-	Credentials     string   `description:"credentials file"`                                          //name of credential file or credential key depending on implementation
-	ParsedURL       *url.URL `json:"-"`                                                                //parsed URL resource
-	Cache           string   `description:"local cache path"`                                          //Cache path for the resource, if specified resource will be cached in the specified path
-	CacheExpiryMs   int      //CacheExpiryMs expiry time in ms
+	URL             string            `description:"resource URL or relative or absolute path" required:"true"` //URL of resource
+	Credentials     string            `description:"credentials file"`                                          //name of credential file or credential key depending on implementation
+	ParsedURL       *url.URL          `json:"-"`                                                                //parsed URL resource
+	Cache           string            `description:"local cache path"`                                          //Cache path for the resource, if specified resource will be cached in the specified path
+	CustomKey       *option.AES256Key `description:" content encryption key"`
+	CacheExpiryMs   int               //CacheExpiryMs expiry time in ms
 	modificationTag int64
 	init            bool
 }
