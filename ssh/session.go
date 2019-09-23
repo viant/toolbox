@@ -298,7 +298,7 @@ outer:
 			out += partialOutput
 			hasTerminator = s.hasTerminator(out, terminators...)
 			if len(partialOutput) > 0 {
-				if  hasTerminator {
+				if hasTerminator {
 					partialOutput = addLineBreakIfNeeded(partialOutput)
 				}
 				notification.notify(s.removePromptIfNeeded(partialOutput))
@@ -326,7 +326,6 @@ outer:
 	if hasTerminator {
 		s.drainStdout()
 
-
 	}
 	if errOut != "" {
 		err = errors.New(errOut)
@@ -341,11 +340,11 @@ outer:
 func addLineBreakIfNeeded(text string) string {
 	index := strings.LastIndex(text, "\n")
 	if index == -1 {
-		return text +"\n"
+		return text + "\n"
 	}
 	lastFragment := string(text[index:])
 	if strings.TrimSpace(lastFragment) != "" {
-		return text +"\n"
+		return text + "\n"
 	}
 	return text
 }

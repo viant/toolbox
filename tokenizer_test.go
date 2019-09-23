@@ -135,11 +135,11 @@ INSERT INTO DUMMY(ID, NAME) VALUES(2, 'xyz');
 		}
 		text := "\n\n" +
 			"BEgin\n" +
-				"IF get_version()=20\n" +
-					"select *\n" +
-					"from table\n" +
-					"where color = case inventory when 1 then 'brown' when 2 then 'red' END;\n" +
-				"END IF\n" +
+			"IF get_version()=20\n" +
+			"select *\n" +
+			"from table\n" +
+			"where color = case inventory when 1 then 'brown' when 2 then 'red' END;\n" +
+			"END IF\n" +
 			"END;"
 		pos := matcher.Match(text, 2)
 		assert.Equal(t, 128, pos)
@@ -152,18 +152,17 @@ INSERT INTO DUMMY(ID, NAME) VALUES(2, 'xyz');
 			NestedSequences:    []string{"case"},
 		}
 		text := "bEgIn case 123deabc then 22 End; End;"
-		pos:=matcher.Match(text, 0)
+		pos := matcher.Match(text, 0)
 		assert.Equal(t, 37, pos)
 
 		matcher.CaseSensitive = true
-		pos=matcher.Match(text, 0)
+		pos = matcher.Match(text, 0)
 		assert.Equal(t, 0, pos)
 
 		matcher.SequenceTerminator = "End;"
 		matcher.SequenceStart = "bEgIn"
-		pos=matcher.Match(text, 0)
+		pos = matcher.Match(text, 0)
 		assert.Equal(t, 37, pos)
 	}
-
 
 }

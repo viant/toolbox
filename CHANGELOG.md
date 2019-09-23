@@ -1,3 +1,7 @@
+## September 23 - v0.27.1
+- Added Body matcher
+- Added url.Resource CustomKey
+
 ## July 29 2019 - v0.26.2
 - Extended cred.Config
 - Patched gs.SetProvider

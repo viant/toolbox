@@ -392,27 +392,27 @@ func (m *BodyMatcher) Match(input string, offset int) (matched int) {
 	return i
 }
 
-
 //NewBodyMatcher creates a new body matcher
 func NewBodyMatcher(begin, end string) Matcher {
 	return &BodyMatcher{Begin: begin, End: end}
 }
+
 // Parses SQL Begin End blocks
 func NewBlockMatcher(caseSensitive bool, sequenceStart string, sequenceTerminator string, nestedSequences []string, ignoredTerminators []string) Matcher {
 	return &BlockMatcher{
-		CaseSensitive: caseSensitive,
-		SequenceStart: sequenceStart,
+		CaseSensitive:      caseSensitive,
+		SequenceStart:      sequenceStart,
 		SequenceTerminator: sequenceTerminator,
-		NestedSequences: nestedSequences,
+		NestedSequences:    nestedSequences,
 		IgnoredTerminators: ignoredTerminators,
 	}
 }
 
 type BlockMatcher struct {
-	CaseSensitive bool
-	SequenceStart string
+	CaseSensitive      bool
+	SequenceStart      string
 	SequenceTerminator string
-	NestedSequences []string
+	NestedSequences    []string
 	IgnoredTerminators []string
 }
 
@@ -454,14 +454,16 @@ func (m *BlockMatcher) Match(input string, offset int) (matched int) {
 		}
 		canCheckBegin := offset+i+starterLen <= len(in)
 		if canCheckBegin {
-			beginning := in[offset+i:offset+i+starterLen]
+			beginning := in[offset+i : offset+i+starterLen]
 
 			if beginning == sequenceStart {
 				depth++
 			} else {
 				for _, nestedSeq := range nestedSequences {
 					nestedLen := len(nestedSeq)
-					if offset+i+nestedLen >= len(in) { continue }
+					if offset+i+nestedLen >= len(in) {
+						continue
+					}
 
 					beginning := in[offset+i : offset+i+nestedLen]
 					if beginning == nestedSeq {
@@ -474,7 +476,9 @@ func (m *BlockMatcher) Match(input string, offset int) (matched int) {
 		ignored := false
 		for _, ignoredTerm := range ignoredTerminators {
 			termLen := len(ignoredTerm)
-			if offset + i + termLen >= len(in) { continue }
+			if offset+i+termLen >= len(in) {
+				continue
+			}
 
 			ending := in[offset+i : offset+i+termLen]
 			if ending == ignoredTerm {
@@ -482,7 +486,7 @@ func (m *BlockMatcher) Match(input string, offset int) (matched int) {
 				break
 			}
 		}
-		if !ignored && in[offset+i : offset+i+terminatorLen] == terminator && unicode.IsSpace(rune(in[offset+i-1])){
+		if !ignored && in[offset+i:offset+i+terminatorLen] == terminator && unicode.IsSpace(rune(in[offset+i-1])) {
 			depth--
 		}
 		if depth == 0 {
@@ -492,6 +496,7 @@ func (m *BlockMatcher) Match(input string, offset int) (matched int) {
 	}
 	return i
 }
+
 //KeywordMatcher represents a keyword matcher
 type KeywordMatcher struct {
 	Keyword       string

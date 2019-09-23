@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
+	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/storage"
 	"github.com/viant/toolbox/url"
 	"os"
 	"path"
 	"strings"
 	"sync"
-	"github.com/viant/toolbox/data"
 )
 
 //represents a secret service
@@ -128,7 +128,7 @@ func (s *Service) expandDynamicSecret(input string, key SecretKey, secret Secret
 	if count := strings.Count(input, userKey); count > 0 {
 		input = strings.Replace(input, userKey, credConfig.Username, count)
 	}
-	if index := strings.Index(input, "$");index == -1 {
+	if index := strings.Index(input, "$"); index == -1 {
 		return input, nil
 	}
 

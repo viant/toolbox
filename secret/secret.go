@@ -63,8 +63,6 @@ func (s SecretKey) Secret(cred *cred.Config) string {
 	return cred.Data
 }
 
-
-
 //Secret represents a secret
 type Secret string
 

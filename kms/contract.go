@@ -29,7 +29,6 @@ type DecryptResponse struct {
 	Text string
 }
 
-
 func (r *EncryptRequest) Validate() error {
 	if r.Key == "" {
 		return errors.New("key was empty")
@@ -39,7 +38,6 @@ func (r *EncryptRequest) Validate() error {
 	}
 	return nil
 }
-
 
 func (r *DecryptRequest) Validate() error {
 	if r.Key == "" {

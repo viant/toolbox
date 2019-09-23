@@ -122,7 +122,6 @@ func TestService_Expand(t *testing.T) {
 			Expect: "user1",
 		},
 
-
 		{
 			Description: "Non existing CredentialsFromLocation",
 			Input:       "**key**",
@@ -154,7 +153,7 @@ func TestService_Expand(t *testing.T) {
 		}
 		if assert.Nil(t, err, useCase.Description) {
 
-			if ! assertly.AssertValues(t, useCase.Expect, actual, useCase.Description) {
+			if !assertly.AssertValues(t, useCase.Expect, actual, useCase.Description) {
 				fmt.Printf("expect: %v, actual: %v\n", useCase.Expect, actual)
 			}
 		}
