@@ -25,11 +25,14 @@ var DefaultKey = []byte{0x24, 0x66, 0xDD, 0x87, 0x8B, 0x96, 0x3C, 0x9D}
 var PasswordCipher = GetDefaultPasswordCipher()
 
 type Config struct {
-	Username          string `json:",omitempty"`
-	Email             string `json:",omitempty"`
-	Password          string `json:",omitempty"`
-	EncryptedPassword string `json:",omitempty"`
-	PrivateKeyPath    string `json:",omitempty"`
+	Username                    string `json:",omitempty"`
+	Email                       string `json:",omitempty"`
+	Password                    string `json:",omitempty"`
+	EncryptedPassword           string `json:",omitempty"`
+
+	PrivateKeyPath              string `json:",omitempty"`
+	PrivateKeyPassword          string `json:",omitempty"`
+	PrivateKeyEncryptedPassword string `json:",omitempty"`
 
 	//amazon cloud credential
 	Key       string `json:",omitempty"`
@@ -90,6 +93,15 @@ func (c *Config) LoadFromReader(reader io.Reader, ext string) error {
 		c.Password = string(PasswordCipher.Decrypt(data))
 	} else if c.Password != "" {
 		c.encryptPassword(c.Password)
+	}
+
+	if c.PrivateKeyEncryptedPassword != "" {
+		decoder := base64.NewDecoder(base64.StdEncoding, strings.NewReader(c.PrivateKeyEncryptedPassword))
+		data, err := ioutil.ReadAll(decoder)
+		if err != nil {
+			return err
+		}
+		c.PrivateKeyPassword = string(PasswordCipher.Decrypt(data))
 	}
 	return nil
 }
@@ -172,6 +184,8 @@ func (c *Config) NewJWTConfig(scopes ...string) (*jwt.Config, error) {
 		Scopes:       scopes,
 		TokenURL:     c.TokenURL,
 	}
+
+
 	if c.PrivateKeyPath != "" && c.PrivateKey == "" {
 		privateKey, err := ioutil.ReadFile(c.PrivateKeyPath)
 		if err != nil {
@@ -226,8 +240,13 @@ func (c *Config) ClientConfig() (*ssh.ClientConfig, error) {
 	if c.Password != "" {
 		result.Auth = append(result.Auth, ssh.Password(c.Password))
 	}
+
 	if c.PrivateKeyPath != "" {
-		pemBytes, err := loadPEM(c.PrivateKeyPath, c.Password)
+		password := c.PrivateKeyPassword //backward-compatible
+		if password == "" {
+			password = c.Password
+		}
+		pemBytes, err := loadPEM(c.PrivateKeyPath, password)
 		key, err := ssh.ParsePrivateKey(pemBytes)
 		if err != nil {
 			return nil, err
