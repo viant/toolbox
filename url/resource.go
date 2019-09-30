@@ -25,7 +25,7 @@ type Resource struct {
 	CustomKey       *option.AES256Key `description:" content encryption key"`
 	CacheExpiryMs   int               //CacheExpiryMs expiry time in ms
 	modificationTag int64
-	init            bool
+	init            string
 }
 
 //Clone creates a clone of the resource
@@ -365,10 +365,10 @@ func normalizeURL(URL string) string {
 }
 
 func (r *Resource) Init() (err error) {
-	if r.init {
+	if r.init == r.URL {
 		return nil
 	}
-	r.init = true
+	r.init = r.URL
 	r.URL = normalizeURL(r.URL)
 	r.ParsedURL, err = url.Parse(r.URL)
 	return err
@@ -384,7 +384,9 @@ func (r *Resource) DownloadBase64() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer reader.Close()
+	defer func() {
+		_ = reader.Close()
+	}()
 	data, err := ioutil.ReadAll(reader)
 	if err != nil {
 		return "", err
@@ -418,7 +420,7 @@ func NewResource(Params ...interface{}) *Resource {
 	}
 	parsedURL, _ := url.Parse(URL)
 	return &Resource{
-		init:          true,
+		init:          URL,
 		ParsedURL:     parsedURL,
 		URL:           URL,
 		Credentials:   credential,
