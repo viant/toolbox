@@ -106,9 +106,9 @@ func (s *multiCommandSession) System() string {
 //Close closes the session with its resources
 func (s *multiCommandSession) Close() {
 	atomic.StoreInt32(&s.running, 0)
-	s.stdInput.Close()
+	_ = s.stdInput.Close()
 	if s.session != nil {
-		s.session.Close()
+		_ = s.session.Close()
 	}
 
 }
