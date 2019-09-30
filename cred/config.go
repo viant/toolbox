@@ -25,10 +25,10 @@ var DefaultKey = []byte{0x24, 0x66, 0xDD, 0x87, 0x8B, 0x96, 0x3C, 0x9D}
 var PasswordCipher = GetDefaultPasswordCipher()
 
 type Config struct {
-	Username                    string `json:",omitempty"`
-	Email                       string `json:",omitempty"`
-	Password                    string `json:",omitempty"`
-	EncryptedPassword           string `json:",omitempty"`
+	Username          string `json:",omitempty"`
+	Email             string `json:",omitempty"`
+	Password          string `json:",omitempty"`
+	EncryptedPassword string `json:",omitempty"`
 
 	PrivateKeyPath              string `json:",omitempty"`
 	PrivateKeyPassword          string `json:",omitempty"`
@@ -184,7 +184,6 @@ func (c *Config) NewJWTConfig(scopes ...string) (*jwt.Config, error) {
 		Scopes:       scopes,
 		TokenURL:     c.TokenURL,
 	}
-
 
 	if c.PrivateKeyPath != "" && c.PrivateKey == "" {
 		privateKey, err := ioutil.ReadFile(c.PrivateKeyPath)

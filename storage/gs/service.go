@@ -270,5 +270,3 @@ func NewService(projectId string, options ...option.ClientOption) *service {
 		options:   options,
 	}
 }
-
-
