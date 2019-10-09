@@ -1,3 +1,6 @@
+## October 9 - v0.28.0
+- Added data.udf.Replace
+
 ## September 23 - v0.27.1
 - Added Body matcher
 - Added url.Resource CustomKey
