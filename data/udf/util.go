@@ -27,6 +27,25 @@ func Length(source interface{}, state data.Map) (interface{}, error) {
 	return 0, nil
 }
 
+
+//Replace replaces text with old and new fragments
+func Replace(source interface{}, state data.Map) (interface{}, error) {
+	var args []interface{}
+	if ! toolbox.IsSlice(source) {
+		return nil, fmt.Errorf("expacted %T, but had %T", args, source)
+	}
+	args = toolbox.AsSlice(source)
+	if len(args) < 3 {
+		return nil, fmt.Errorf("expected 3 arguments (text, old, new), but had: %v" , len(args))
+	}
+	text := toolbox.AsString(args[0])
+	old := toolbox.AsString(args[1])
+	new := toolbox.AsString(args[2])
+	count := strings.Count(text, old)
+	return strings.Replace(text, old, new, count), nil
+}
+
+
 // Join joins slice by separator
 func Join(args interface{}, state data.Map) (interface{}, error) {
 	if !toolbox.IsSlice(args) {

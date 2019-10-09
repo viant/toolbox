@@ -39,4 +39,6 @@ func Register(aMap data.Map) {
 	aMap.Put("Concat", Concat)
 	aMap.Put("Merge", Merge)
 	aMap.Put("AsStringMap", AsStringMap)
+	aMap.Put("Replace", Replace)
+
 }
