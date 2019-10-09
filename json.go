@@ -171,6 +171,9 @@ func (s *AnyJSONType) UnmarshalJSON(b []byte) error {
 
 //MarshalJSON implements marshaler interface
 func (s *AnyJSONType) MarshalJSON() ([]byte, error) {
+	if len(*s) == 0 {
+		return []byte(`""`), nil
+	}
 	return []byte(*s), nil
 }
 
