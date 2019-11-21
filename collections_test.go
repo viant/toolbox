@@ -473,6 +473,51 @@ func Test_DeleteEmptyKeys(t *testing.T) {
 	}, cloned)
 }
 
+func TestReplaceMapKeys(t *testing.T) {
+
+	aMap := map[string]interface{}{
+		"k1": []int{},
+		"k2": []int{1},
+		"k3": "",
+		"k40": map[interface{}]interface{}{
+			"k1":  nil,
+			1:     2,
+			"k31": []map[string]interface{}{},
+			"k41": []map[string]interface{}{
+				{
+					"z": 1,
+				},
+			},
+		},
+		"k5": map[string]interface{}{
+			"k1":  "",
+			"k10": 20,
+		},
+	}
+	replaced := toolbox.ReplaceMapKeys(aMap, map[string]interface{}{
+		"k1":  123,
+		"k10": 30,
+	}, true)
+
+	assert.EqualValues(t, replaced, map[string]interface{}{
+		"k1": 123,
+		"k2": []interface{}{1},
+		"k40": map[interface{}]interface{}{
+			"k1": 123,
+			1:    2,
+			"k41": []interface{}{
+				map[string]interface{}{
+					"z": 1,
+				},
+			},
+		},
+		"k5": map[string]interface{}{
+			"k10": 30,
+			"k1":  123,
+		},
+	})
+}
+
 func TestIntersection(t *testing.T) {
 
 	useCase1Actual := []string{}

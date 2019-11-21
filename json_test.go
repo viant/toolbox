@@ -206,8 +206,8 @@ func TestAnyJSONType_Value(t *testing.T) {
 			description: "slice any type",
 			source:      `{"k":{"z":[1,2]}}`,
 			key:         "k",
-			expect:      map[string]interface{}{
-				"z":[]interface{}{float64(1),float64(2)},
+			expect: map[string]interface{}{
+				"z": []interface{}{float64(1), float64(2)},
 			},
 		},
 	}
@@ -217,7 +217,6 @@ func TestAnyJSONType_Value(t *testing.T) {
 		if !assert.Nil(t, err, useCase.description) {
 			continue
 		}
-
 
 		actual, ok := useCase.target[useCase.key]
 		if !assert.True(t, ok, useCase.description) {
@@ -231,7 +230,6 @@ func TestAnyJSONType_Value(t *testing.T) {
 
 		_, err = json.Marshal(useCase.target)
 		assert.Nil(t, err)
-
 
 	}
 
