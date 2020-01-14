@@ -1,6 +1,7 @@
 package data
 
 import (
+	"encoding/json"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
 	"testing"
@@ -456,6 +457,55 @@ func TestCompactedSlice_Iterator(t *testing.T) {
 			actual = append(actual, record[useCase.indexBy[0]])
 		}
 		assert.EqualValues(t, useCase.expected, actual, useCase.description)
+	}
+
+}
+
+
+func TestCompactedSlice_MarshalJSON(t *testing.T) {
+	var useCases = []struct {
+		description string
+		data        []map[string]interface{}
+		hasError    bool
+	}{
+		{
+			description: "array marshaling",
+			data: []map[string]interface{}{
+				{
+					"id":   float64(10),
+					"name": "name 10",
+				},
+				{
+					"id":   float64(3),
+					"name": "name 3",
+				},
+				{
+					"id":   float64(1),
+					"name": "name 1",
+				},
+			},
+
+		},
+
+	}
+
+	for _, useCase := range useCases {
+		collection := NewCompactedSlice(true, true)
+
+		for _, item := range useCase.data {
+			collection.Add(item)
+		}
+		rawJSON, err := json.Marshal(collection)
+		if ! assert.Nil(t, err, useCase.description) {
+			continue
+		}
+		actual := []map[string]interface{}{}
+		json.Unmarshal(rawJSON, &actual)
+		assert.EqualValues(t, useCase.data, actual)
+
+
+
+
 	}
 
 }

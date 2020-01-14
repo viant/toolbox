@@ -1,6 +1,8 @@
 package data
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/viant/toolbox"
 	"reflect"
@@ -25,7 +27,41 @@ type CompactedSlice struct {
 	fields       []*Field
 	data         [][]interface{}
 	size         int64
+	RawEncoding bool
 }
+
+
+func (d CompactedSlice) MarshalJSON() ([]byte, error) {
+	buf := new(bytes.Buffer)
+	_, err := buf.Write([]byte("["))
+	if err != nil {
+		return nil, err
+	}
+	i := 0
+	if err = d.Range(func(item interface{}) (b bool, err error) {
+		if i > 0 {
+			_, err := buf.Write([]byte(","))
+			if err != nil {
+				return false, err
+			}
+		}
+		i++
+		data, err :=json.Marshal(item)
+		if err != nil {
+			return false, err
+		}
+		_, err = buf.Write(data)
+		return err == nil, err
+	});err != nil {
+		return nil, err
+	}
+	if _, err := buf.Write([]byte("]")); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+
 
 func (s *CompactedSlice) Fields() []*Field {
 	return s.fields
