@@ -78,6 +78,8 @@ func ExtractURIParameters(templateURI, requestURI string) (map[string]string, bo
 	return uriParameters, matched
 }
 
+
+
 //URLStripPath removes path from URL
 func URLStripPath(URL string) string {
 	protoIndex := strings.Index(URL, "://")

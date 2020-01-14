@@ -14,7 +14,7 @@ func TestWaitTimeout_TimeoutTriggered(t *testing.T) {
 	go sleep(&wg)
 
 	//task will sleep for 3 seconds but timeout is set only for 1 second
-	isTimeOut := WaitTimeout(&wg, time.Second*1)
+	isTimeOut := WaitTimeout(&wg, time.Second*2)
 	assert.Equal(t, true, isTimeOut)
 }
 
