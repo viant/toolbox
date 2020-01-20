@@ -29,6 +29,7 @@ type Config struct {
 	Email             string `json:",omitempty"`
 	Password          string `json:",omitempty"`
 	EncryptedPassword string `json:",omitempty"`
+	Endpoint          string `json:",omitempty"`
 
 	PrivateKeyPath              string `json:",omitempty"`
 	PrivateKeyPassword          string `json:",omitempty"`
