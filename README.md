@@ -148,7 +148,7 @@ Example:
 ```go
     var source = []Foo{ Foo{1, "A"}, Foo{2, "B"} }
 	var target = make(map[int]string)
-	toolbox.MakeMapFromSlice(source, target, func(foo Foo) int {
+	toolbox.SliceToMap(source, target, func(foo Foo) int {
 		return foo.id
 	},
 	func(foo Foo) string {
