@@ -1,3 +1,6 @@
+## Feb 6 2020 - v0.29.5
+    - Added data.udf.FormatTime with trunc parameter
+    - Added cred.Config.Endpoint
 ## October 9 - v0.29.0
 - Added data.udf.Replace
 

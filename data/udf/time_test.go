@@ -1,9 +1,11 @@
 package udf
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
+	"strings"
 	"testing"
 	"time"
 )
@@ -46,6 +48,14 @@ func Test_FormatTime(t *testing.T) {
 		Register(aMap)
 		expanded := aMap.ExpandAsText(`$FormatTime($ts, "yyyy")`)
 		assert.Equal(t, "2015", expanded)
+	}
+
+	{
+		value, err := FormatTime([]interface{}{"now", "yyyy-MM-dd hh:mm:ss", "", "yyyy-MM"}, nil)
+		fmt.Printf("value: %v\n", value)
+		assert.Nil(t, err)
+		now := time.Now()
+		assert.True(t, strings.HasPrefix(toolbox.AsString(value), toolbox.AsString(now.Year())))
 	}
 
 }

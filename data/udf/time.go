@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-//FormatTime return formatted time, it takes an array of two arguments, the first id time, or now followed by java style time format.
+//FormatTime return formatted time, it takes an array of arguments, the first is  time express, or now followed by java style time format, optional timezone and truncate format .
 func FormatTime(source interface{}, state data.Map) (interface{}, error) {
 	if !toolbox.IsSlice(source) {
 		return nil, fmt.Errorf("unable to run FormatTime: expected %T, but had: %T", []interface{}{}, source)
@@ -28,7 +28,7 @@ func FormatTime(source interface{}, state data.Map) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(aSlice) > 2 {
+	if len(aSlice) > 2 && aSlice[2] != "" {
 		timeLocation, err := time.LoadLocation(toolbox.AsString(aSlice[2]))
 		if err != nil {
 			return nil, err
@@ -36,6 +36,14 @@ func FormatTime(source interface{}, state data.Map) (interface{}, error) {
 		timeInLocation := timeValue.In(timeLocation)
 		timeValue = &timeInLocation
 	}
+
+	if len(aSlice) > 3 {
+		truncFromat := toolbox.DateFormatToLayout(toolbox.AsString(aSlice[3]))
+		if ts, err := time.Parse(truncFromat, timeValue.Format(truncFromat));err == nil {
+			timeValue = &ts
+		}
+	}
+
 	return timeValue.Format(timeLayout), nil
 }
 
