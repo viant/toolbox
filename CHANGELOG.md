@@ -1,6 +1,8 @@
-## Feb 6 2020 - v0.29.5
+## Feb 7 2020 - v0.29.6
     - Added data.udf.FormatTime with trunc parameter
     - Added cred.Config.Endpoint
+    - Added http options to RouteToService
+    
 ## October 9 - v0.29.0
 - Added data.udf.Replace
 

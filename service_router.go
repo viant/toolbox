@@ -299,8 +299,8 @@ func NewServiceRouter(serviceRouting ...ServiceRouting) *ServiceRouter {
 }
 
 //RouteToService calls web service url, with passed in json request, and encodes http json response into passed response
-func RouteToService(method, url string, request, response interface{}) (err error) {
-	client, err := NewToolboxHTTPClient()
+func RouteToService(method, url string, request, response interface{}, options ...*HttpOptions) (err error) {
+	client, err := NewToolboxHTTPClient(options...)
 	if err != nil {
 		return err
 	}
@@ -461,7 +461,7 @@ func (c *ToolboxHTTPClient) Request(method, url string, request, response interf
 			return nil
 		}
 
-		if int(serverResponse.StatusCode /100) * 100 == http.StatusInternalServerError {
+		if int(serverResponse.StatusCode/100)*100 == http.StatusInternalServerError {
 			return errors.New(string(body))
 		}
 		err = decoderFactory.Create(strings.NewReader(string(body))).Decode(response)
