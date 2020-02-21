@@ -791,6 +791,29 @@ func CopyMap(input, output interface{}, copier func(key, value interface{}) (int
 }
 
 
+//OmitEmptyMapWriter return false for all nil or empty values
+func OmitEmptyMapWriter(key, value interface{}) (interface{}, interface{}, bool){
+	if value == nil {
+		return key, value, false
+	}
+	if IsPointer(value) {
+		if reflect.ValueOf(value).IsNil() {
+			return key, value, false
+		}
+	}
+	if IsString(value) {
+		return key, value,  AsString(value) != ""
+	}
+	if IsBool(value) {
+		return key, value, AsBoolean(value)
+	}
+	if IsNumber(value) {
+		return key, value, AsFloat(value) != 0.0
+	}
+	return key, value, true
+}
+
+
 
 //CopyNonEmptyMapEntries removes empty keys from map result
 func CopyNonEmptyMapEntries(input, output interface{}) (err error) {
