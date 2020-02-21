@@ -709,8 +709,11 @@ func isNilOrEmpty(v interface{}) bool {
 	return AsString(v) == ""
 }
 
-//CopyNonEmptyMapEntries removes empty keys from map result
-func CopyNonEmptyMapEntries(input, output interface{}) (err error) {
+
+
+
+//CopyMap copy source map into destination map, copier function can modify key, value, or return false to skip map entry
+func CopyMap(input, output interface{}, copier func(key, value interface{}) (interface{},interface{}, bool)) (err error) {
 	var mutator func(k, v interface{})
 	if aMap, ok := output.(map[interface{}]interface{}); ok {
 		mutator = func(k, v interface{}) {
@@ -734,13 +737,17 @@ func CopyNonEmptyMapEntries(input, output interface{}) (err error) {
 			return map[string]interface{}{}
 		}
 	}
+	var ok bool
 	err = ProcessMap(input, func(k, v interface{}) bool {
-		if isNilOrEmpty(v) {
+		k,  v,  ok = copier(k, v)
+		if ! ok {
 			return true
 		}
-		if IsMap(v) {
+		if v == nil {
+			//
+		} else if  IsMap(v) {
 			transformed := mapProvider(v)()
-			err = CopyNonEmptyMapEntries(v, transformed)
+			err = CopyMap(v, transformed, copier)
 			if err != nil {
 				return false
 			}
@@ -749,7 +756,7 @@ func CopyNonEmptyMapEntries(input, output interface{}) (err error) {
 			}
 			v = transformed
 
-		} else if IsSlice(v) {
+		} else if  IsSlice(v) {
 			aSlice := AsSlice(v)
 			var transformed = []interface{}{}
 			for _, item := range aSlice {
@@ -759,7 +766,7 @@ func CopyNonEmptyMapEntries(input, output interface{}) (err error) {
 				if IsMap(item) {
 					transformedItem := mapProvider(item)()
 
-					err = CopyNonEmptyMapEntries(item, transformedItem)
+					err = CopyMap(item, transformedItem, copier)
 					if err != nil {
 						return false
 					}
@@ -772,7 +779,6 @@ func CopyNonEmptyMapEntries(input, output interface{}) (err error) {
 				}
 
 			}
-
 			if len(transformed) == 0 {
 				return true
 			}
@@ -784,83 +790,30 @@ func CopyNonEmptyMapEntries(input, output interface{}) (err error) {
 	return err
 }
 
+
+
+//CopyNonEmptyMapEntries removes empty keys from map result
+func CopyNonEmptyMapEntries(input, output interface{}) (err error) {
+	return CopyMap(input, output, func(key, value interface{}) (interface{}, interface{}, bool) {
+		if isNilOrEmpty(value) {
+			return key, value, false
+		}
+		return key, value, true
+	})
+}
+
 //CopyNonEmptyMapEntries removes empty keys from map result
 func ReplaceMapEntries(input, output interface{}, replacement map[string]interface{}, removeEmpty bool) (err error) {
-	var mutator func(k, v interface{})
-	if aMap, ok := output.(map[interface{}]interface{}); ok {
-		mutator = func(k, v interface{}) {
-			aMap[k] = v
+	return CopyMap(input, output, func(key, value interface{}) (interface{}, interface{}, bool) {
+		k := AsString(key)
+		if v, ok := replacement[k]; ok {
+			return key, v, ok
 		}
-	} else if aMap, ok := output.(map[string]interface{}); ok {
-		mutator = func(k, v interface{}) {
-			aMap[AsString(k)] = v
+		if removeEmpty && isNilOrEmpty(value) {
+			return nil, nil, false
 		}
-	} else {
-		return fmt.Errorf("unsupported map type: %v", output)
-	}
-
-	mapProvider := func(source interface{}) func() interface{} {
-		if _, ok := source.(map[interface{}]interface{}); ok {
-			return func() interface{} {
-				return map[interface{}]interface{}{}
-			}
-		}
-		return func() interface{} {
-			return map[string]interface{}{}
-		}
-	}
-
-	err = ProcessMap(input, func(k, v interface{}) bool {
-		if value, ok := replacement[AsString(k)]; ok {
-			v = value
-		}
-		if removeEmpty && isNilOrEmpty(v) {
-			return true
-		}
-		if IsMap(v) {
-			transformed := mapProvider(v)()
-			err = ReplaceMapEntries(v, transformed, replacement, removeEmpty)
-			if err != nil {
-				return false
-			}
-			if isNilOrEmpty(transformed) {
-				return true
-			}
-			v = transformed
-
-		} else if IsSlice(v) {
-			aSlice := AsSlice(v)
-			var transformed = []interface{}{}
-			for _, item := range aSlice {
-				if isNilOrEmpty(item) {
-					continue
-				}
-				if IsMap(item) {
-					transformedItem := mapProvider(item)()
-
-					err = ReplaceMapEntries(item, transformedItem, replacement, removeEmpty)
-					if err != nil {
-						return false
-					}
-					if isNilOrEmpty(transformedItem) {
-						return true
-					}
-					transformed = append(transformed, transformedItem)
-				} else {
-					transformed = append(transformed, item)
-				}
-
-			}
-
-			if len(transformed) == 0 {
-				return true
-			}
-			v = transformed
-		}
-		mutator(k, v)
-		return true
+		return key, value, true
 	})
-	return err
 }
 
 //DeleteEmptyKeys removes empty keys from map result
@@ -876,11 +829,8 @@ func DeleteEmptyKeys(input interface{}) map[string]interface{} {
 //DeleteEmptyKeys removes empty keys from map result
 func ReplaceMapKeys(input interface{}, replacement map[string]interface{}, removeEmpty bool) map[string]interface{} {
 	result := map[string]interface{}{}
-	err := ReplaceMapEntries(input, result, replacement, removeEmpty)
-	if err == nil {
-		return result
-	}
-	return AsMap(input)
+	_ = ReplaceMapEntries(input, result, replacement, removeEmpty)
+	return result
 }
 
 //Pairs returns map for pairs.
