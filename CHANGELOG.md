@@ -1,5 +1,6 @@
 ## Fab 21 2020  - v.30.0
     - Added CopyMap
+    - Added OmitEmptyMapWriter
 
 ## Feb 7 2020 - v0.29.6
     - Added data.udf.FormatTime with trunc parameter
