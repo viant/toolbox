@@ -254,10 +254,11 @@ func AsListeningTripHandler(handler http.Handler) *ListeningTripHandler {
 
 //HttpRequest represents JSON serializable http request
 type HttpRequest struct {
-	Method string      `json:",omitempty"`
-	URL    string      `json:",omitempty"`
-	Header http.Header `json:",omitempty"`
-	Body   string      `json:",omitempty"`
+	Method      string      `json:",omitempty"`
+	URL         string      `json:",omitempty"`
+	Header      http.Header `json:",omitempty"`
+	Body        string      `json:",omitempty"`
+	ThinkTimeMs int         `json:",omitempty"`
 }
 
 //NewHTTPRequest create a new instance of http request

@@ -3,9 +3,11 @@ package bridge
 import (
 	"bytes"
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/viant/toolbox"
 	"io/ioutil"
 	"path"
+	"strings"
 )
 
 //RecordedHttpTrip represents a recorded http trip
@@ -14,11 +16,17 @@ type RecordedHttpTrip struct {
 	Response *HttpResponse
 }
 
-//ReadRecordedHttpTrips scans provided directory for bridge.HttpRequest-%v.json and  bridge.HttpResponse-%v.json pairs
-func ReadRecordedHttpTrips(directory string) ([]*RecordedHttpTrip, error) {
+//ReadRecordedHttpTripsWithPrefix scans provided directory for request, response  pairs
+func ReadRecordedHttpTripsWithTemplate(directory string, requestTemplate, respTemplate string) ([]*RecordedHttpTrip, error) {
+	if !strings.Contains(requestTemplate, "%") {
+		return nil, errors.New("invalid request template: it could contains counter '%' expressions")
+	}
+	if !strings.Contains(respTemplate, "%") {
+		return nil, errors.New("invalid response template: it could contains counter '%' expressions")
+	}
 	var result = make([]*RecordedHttpTrip, 0)
-	var requestTemplatePath = path.Join(directory, "bridge.HttpRequest-%v.json")
-	var responseTemplatePath = path.Join(directory, "bridge.HttpResponse-%v.json")
+	var requestTemplatePath = path.Join(directory, requestTemplate)
+	var responseTemplatePath = path.Join(directory, respTemplate)
 
 	requests, err := readAll(requestTemplatePath, func() interface{} {
 		return &HttpRequest{}
@@ -52,8 +60,12 @@ func ReadRecordedHttpTrips(directory string) ([]*RecordedHttpTrip, error) {
 		}
 		result = append(result, trip)
 	}
-
 	return result, nil
+}
+
+//ReadRecordedHttpTrips scans provided directory for bridge.HttpRequest-%v.json and  bridge.HttpResponse-%v.json template pairs
+func ReadRecordedHttpTrips(directory string) ([]*RecordedHttpTrip, error) {
+	return ReadRecordedHttpTripsWithTemplate(directory, "bridge.HttpRequest-%v.json", "bridge.HttpResponse-%v.json")
 }
 
 func readAll(pathTemplate string, provider func() interface{}) ([]interface{}, error) {

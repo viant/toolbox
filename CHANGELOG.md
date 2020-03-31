@@ -1,3 +1,6 @@
+## March 31 2020 - v.31.0
+    - Added bridge.ReadRecordedHttpTripsWithTemplate
+    
 ## Fab 21 2020  - v.30.0
     - Added CopyMap
     - Added OmitEmptyMapWriter
