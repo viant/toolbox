@@ -1,3 +1,5 @@
+## April 20 2020 - v.31.1
+    - Added ToLower, ToUpper data.udf
 ## March 31 2020 - v.31.0
     - Added bridge.ReadRecordedHttpTripsWithTemplate
     
