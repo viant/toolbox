@@ -34,6 +34,20 @@ func AsString(source interface{}, state data.Map) (interface{}, error) {
 	return toolbox.AsString(source), nil
 }
 
+
+//Lower converts string to lower case
+func ToLower(source interface{}, state data.Map) (interface{}, error) {
+	return strings.ToLower(toolbox.AsString(source)), nil
+}
+
+
+//Lower converts string to upper case
+func ToUpper(source interface{}, state data.Map) (interface{}, error) {
+	return strings.ToUpper(toolbox.AsString(source)), nil
+}
+
+
+
 //AsFloat converts source into float64
 func AsFloat(source interface{}, state data.Map) (interface{}, error) {
 	return toolbox.AsFloat(source), nil

@@ -40,5 +40,6 @@ func Register(aMap data.Map) {
 	aMap.Put("Merge", Merge)
 	aMap.Put("AsStringMap", AsStringMap)
 	aMap.Put("Replace", Replace)
-
+	aMap.Put("ToLower", ToLower)
+	aMap.Put("ToUpper", ToUpper)
 }
