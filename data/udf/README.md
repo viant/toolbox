@@ -65,3 +65,7 @@
 -  TrimSpace
 -  Elapsed elapsed time  
 -  Rand
+-  Replace
+-  ToLower
+-  ToUpper
+-  AsNewLineDelimitedJSON
