@@ -459,3 +459,17 @@ func Merge(params interface{}, state data.Map) (interface{}, error) {
 	}
 	return result, nil
 }
+
+//AsNewLineDelimitedJSON convers a slice into new line delimited JSON
+func AsNewLineDelimitedJSON(source interface{}, state data.Map) (interface{}, error) {
+	if source == nil || !toolbox.IsSlice(source) {
+		return nil, fmt.Errorf("invalid signature, expected: $AsNewLineDelimitedJSON([])")
+	}
+	aSlice := toolbox.AsSlice(source)
+	var result = make([]string, 0)
+	for _, item := range aSlice {
+		data, _ := json.Marshal(item)
+		result = append(result, string(data))
+	}
+	return strings.Join(result, "\n"), nil
+}

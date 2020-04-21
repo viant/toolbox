@@ -1,5 +1,7 @@
-## April 20 2020 - v.31.1
-    - Added ToLower, ToUpper data.udf
+## April 20 2020 - v.31.2
+    - Added ToLower, ToUpper in data.udf
+    - Add AsNewLineDelimitedJSON in data.udf
+
 ## March 31 2020 - v.31.0
     - Added bridge.ReadRecordedHttpTripsWithTemplate
     
