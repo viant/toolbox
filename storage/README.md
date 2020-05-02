@@ -1,5 +1,6 @@
 ## Storage API
 
+Deprecated - please use https://github.com/viant/afs API instead
 
 This API provides unified way of accessing any storage system. 
 
