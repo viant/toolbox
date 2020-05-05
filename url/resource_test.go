@@ -75,7 +75,9 @@ func TestNew_DirectoryPath(t *testing.T) {
 }
 
 func TestResource_YamlDecode(t *testing.T) {
-
+	if os.Getenv("TMPDIR")== "" {
+		return
+	}
 	var filename1 = path.Join(os.Getenv("TMPDIR"), "resource1.yaml")
 	var filename2 = path.Join(os.Getenv("TMPDIR"), "resource2.yaml")
 	_ = toolbox.RemoveFileIfExist(filename1, filename2)
@@ -132,6 +134,9 @@ pipeline:
 }
 
 func TestResource_JsonDecode(t *testing.T) {
+	if os.Getenv("TMPDIR") == "" {
+		return
+	}
 	var filename = path.Join(os.Getenv("TMPDIR"), "resource.json")
 	toolbox.RemoveFileIfExist(filename)
 	defer toolbox.RemoveFileIfExist(filename)
@@ -140,7 +145,6 @@ func TestResource_JsonDecode(t *testing.T) {
 		"b": "123",
 	}
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR, 0644)
-	fmt.Printf("%v\n", filename)
 	if assert.Nil(t, err) {
 		err = toolbox.NewJSONEncoderFactory().Create(file).Encode(aMap)
 		assert.Nil(t, err)
