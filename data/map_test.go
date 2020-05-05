@@ -281,20 +281,7 @@ func Test_Udf(t *testing.T) {
 	state.Put("b", "2")
 	state.Put("Dob", dateOfBirth)
 
-	{
-		var text = "$Dob([11,2,2,\"yyyy\"])"
-		expanded := state.Expand(text)
-		assert.EqualValues(t, "2008", expanded)
 
-	}
-	{
-		state.Put("args", []interface{}{11, 2, 2, "yyyy"})
-
-		var text = "$Dob($args)"
-		expanded := state.Expand(text)
-		assert.EqualValues(t, "2008", expanded)
-
-	}
 
 	{
 		var text = "$xyz($name)"
@@ -334,13 +321,6 @@ func Test_Udf(t *testing.T) {
 		assert.EqualValues(t, "zz 1 2a", expanded)
 	}
 
-	{
-		//Chaining UDFs together
-		state.Put("args", []interface{}{11, 2, 2, "yyyy"})
-		var text = "$test($Dob($args))"
-		expanded := state.Expand(text)
-		assert.EqualValues(t, "2008", expanded)
-	}
 
 }
 
