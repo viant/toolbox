@@ -8,10 +8,10 @@ import (
 // WaitGroup that waits with a timeout
 // Returns true if timeout exceeded and false if there was no timeout
 func WaitTimeout(wg *sync.WaitGroup, duration time.Duration) bool {
-	done := make(chan struct{}, 0)
+	done := make(chan bool, 1)
 	go func() {
-		defer close(done)
 		wg.Wait()
+		done <- true
 	}()
 
 	select {
