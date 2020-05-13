@@ -11,10 +11,6 @@ import (
 	"time"
 )
 
-func TestExpandTemplate(t *testing.T) {
-	expanded := toolbox.ExpandFileTemplate("/tmp/test[yyyy].log")
-	assert.Equal(t, expanded, fmt.Sprintf("/tmp/test%v.log", time.Now().Year()))
-}
 
 func TestConfigLogger(t *testing.T) {
 

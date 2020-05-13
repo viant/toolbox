@@ -17,11 +17,39 @@ import (
 type FileLoggerConfig struct {
 	LogType            string
 	FileTemplate       string
+	filenameProvider   func(t time.Time) string
 	QueueFlashCount    int
 	MaxQueueSize       int
 	FlushRequencyInMs  int //type backward-forward compatibility
 	FlushFrequencyInMs int
 	MaxIddleTimeInSec  int
+	inited             bool
+}
+
+func (c *FileLoggerConfig) Init() {
+	if c.inited {
+		return
+	}
+	defaultProvider := func(t time.Time) string {
+		return c.FileTemplate
+	}
+	c.inited = true
+	template := c.FileTemplate
+	c.filenameProvider = defaultProvider
+	startIndex := strings.Index(template, "[")
+	if startIndex == -1 {
+		return
+	}
+	endIndex := strings.Index(template, "]")
+	if endIndex == -1 {
+		return
+	}
+	format := template[startIndex+1 : endIndex]
+	layout := DateFormatToLayout(format)
+	c.filenameProvider = func(t time.Time) string {
+		formatted := t.Format(layout)
+		return strings.Replace(template, "["+format+"]", formatted, 1)
+	}
 }
 
 //Validate valides configuration sttings
@@ -42,6 +70,7 @@ func (c *FileLoggerConfig) Validate() error {
 	if len(c.FileTemplate) == 0 {
 		return errors.New("FileTemplate was empty")
 	}
+
 	if c.MaxIddleTimeInSec == 0 {
 		return errors.New("MaxIddleTimeInSec was 0")
 	}
@@ -175,24 +204,8 @@ func (l *FileLogger) getConfig(messageType string) (*FileLoggerConfig, error) {
 	if !found {
 		return nil, errors.New("failed to lookup config for " + messageType)
 	}
+	config.Init()
 	return config, nil
-}
-
-//ExpandFileTemplate expands
-func ExpandFileTemplate(template string) string {
-	startIndex := strings.Index(template, "[")
-	if startIndex == -1 {
-		return template
-	}
-	endIndex := strings.Index(template, "]")
-	if endIndex == -1 {
-		return template
-	}
-	format := template[startIndex+1 : endIndex]
-
-	formatedTime := time.Now().Format(DateFormatToLayout(format))
-	source := "[" + format + "]"
-	return strings.Replace(template, source, formatedTime, 1)
 }
 
 //NewLogStream creat a new LogStream for passed om path and file config
@@ -213,8 +226,7 @@ func (l *FileLogger) acquireLogStream(messageType string) (*LogStream, error) {
 	if err != nil {
 		return nil, err
 	}
-	fileName := ExpandFileTemplate(config.FileTemplate)
-
+	fileName := config.filenameProvider(time.Now())
 	l.streamMapMutex.RLock()
 	logStream, found := l.streams[fileName]
 	l.streamMapMutex.RUnlock()
