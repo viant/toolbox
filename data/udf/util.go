@@ -21,7 +21,11 @@ func Length(source interface{}, state data.Map) (interface{}, error) {
 	if toolbox.IsMap(source) {
 		return len(toolbox.AsMap(source)), nil
 	}
+
 	if text, ok := source.(string); ok {
+		if strings.HasPrefix(text, "$") {
+			return nil, fmt.Errorf("unexpanded variable: %v", text)
+		}
 		return len(text), nil
 	}
 	return 0, nil
