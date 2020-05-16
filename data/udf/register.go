@@ -43,4 +43,5 @@ func Register(aMap data.Map) {
 	aMap.Put("ToLower", ToLower)
 	aMap.Put("ToUpper", ToUpper)
 	aMap.Put("AsNewLineDelimitedJSON", AsNewLineDelimitedJSON)
+	aMap.Put("LoadJSON", LoadJSON)
 }
