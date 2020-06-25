@@ -38,9 +38,14 @@ func FormatTime(source interface{}, state data.Map) (interface{}, error) {
 	}
 
 	if len(aSlice) > 3 {
-		truncFromat := toolbox.DateFormatToLayout(toolbox.AsString(aSlice[3]))
-		if ts, err := time.Parse(truncFromat, timeValue.Format(truncFromat));err == nil {
-			timeValue = &ts
+		switch aSlice[3] {
+		case "weekday":
+			return timeValue.Weekday(), nil
+		default:
+			truncFromat := toolbox.DateFormatToLayout(toolbox.AsString(aSlice[3]))
+			if ts, err := time.Parse(truncFromat, timeValue.Format(truncFromat));err == nil {
+				timeValue = &ts
+			}
 		}
 	}
 

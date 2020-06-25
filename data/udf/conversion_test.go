@@ -138,7 +138,7 @@ person:
 func Test_AsString(t *testing.T) {
 	aMap := data.NewMap()
 	Register(aMap)
-	aMap.Put("k1", 6273346999.0)
+	aMap.Put("k1", 6273346999)
 	expanded := aMap.ExpandAsText(" $AsString(${k1})")
 	assert.EqualValues(t, "6273346999", expanded)
 }
