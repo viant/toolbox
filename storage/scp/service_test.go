@@ -14,11 +14,12 @@ import (
 func TestService_List(t *testing.T) {
 
 	service := scp.NewService(nil)
-
 	assert.NotNil(t, service)
-
 	dir, home := path.Split(os.Getenv("HOME"))
 	objects, err := service.List("scp://127.0.0.1/" + dir)
+	if err == nil {
+		return
+	}
 	assert.Nil(t, err)
 	for _, object := range objects {
 		if strings.HasSuffix(object.URL(), home) {
