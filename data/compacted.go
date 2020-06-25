@@ -139,6 +139,9 @@ func (s *CompactedSlice) uncompress(in, out []interface{}) {
 
 //Add adds data to a collection
 func (s *CompactedSlice) Add(data map[string]interface{}) {
+	if s == nil {
+		return
+	}
 	var initSize = len(s.fieldNames)
 	if initSize < len(data) {
 		initSize = len(data)
