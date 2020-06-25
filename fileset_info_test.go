@@ -8,13 +8,13 @@ import (
 
 func TestNewFileSetInfoInfo(t *testing.T) {
 
-	fileSetInfo, err := toolbox.NewFileSetInfo("./fileset_info_test/")
+	fileSetInfo, err := toolbox.NewFileSetInfo("./test/fileset_info/")
 	if err != nil {
 		panic(err)
 	}
 	assert.True(t, len(fileSetInfo.FilesInfo()) > 0)
 
-	fileInfo := fileSetInfo.FileInfo("user_test.go")
+	fileInfo := fileSetInfo.FileInfo("user.go")
 	assert.NotNil(t, fileInfo)
 
 	addresses := fileSetInfo.Type("Addresses")
