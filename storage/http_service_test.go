@@ -4,7 +4,7 @@ import "testing"
 
 func TestNewHttpStorageService(t *testing.T) {
 
-	// Deprecated use github/viant/afs/http
+	// Deprecated use gith	ub/viant/afs/http
 	//{
 	//	service, err := storage.NewServiceForURL("https://github.com/viant/", credentialFile)
 	//	assert.Nil(t, err)

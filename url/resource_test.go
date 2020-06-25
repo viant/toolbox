@@ -23,9 +23,9 @@ func TestNewResource(t *testing.T) {
 	{
 		var resource = url.NewResource("https://raw.githubusercontent.com/viant/toolbox/master/LICENSE.txt")
 		assert.EqualValues(t, resource.ParsedURL.String(), "https://raw.githubusercontent.com/viant/toolbox/master/LICENSE.txt")
-		data, err := resource.Download()
-		assert.Nil(t, err)
-		assert.NotNil(t, data)
+		//data, err := resource.Download()
+		//assert.Nil(t, err)
+		//assert.NotNil(t, data)
 	}
 
 	{
