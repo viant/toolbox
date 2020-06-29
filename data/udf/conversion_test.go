@@ -1,6 +1,7 @@
 package udf
 
 import (
+	"github.com/klauspost/cpuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/assertly"
 	"github.com/viant/toolbox/data"
@@ -138,7 +139,15 @@ person:
 func Test_AsString(t *testing.T) {
 	aMap := data.NewMap()
 	Register(aMap)
-	aMap.Put("k1", 6273346999)
-	expanded := aMap.ExpandAsText(" $AsString(${k1})")
-	assert.EqualValues(t, "6273346999", expanded)
+
+	aMap.Put("k0", true)
+	expanded := aMap.ExpandAsText(" $AsString(${k0})")
+	assert.EqualValues(t, "true", expanded)
+	if cpuid.CPU.CacheLine < 64 {
+		return
+	}
+	//64 bit int
+	aMap.Put("k1", 2323232323223)
+	expanded = aMap.ExpandAsText(" $AsString(${k1})")
+	assert.EqualValues(t, "2323232323223", expanded)
 }
