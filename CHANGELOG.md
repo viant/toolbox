@@ -1,4 +1,4 @@
-## June 30 2020 - v.32.0
+## June 30 2020 - v.33.0
     - Added sampler
     
 ## April 20 2020 - v.31.2
