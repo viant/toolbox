@@ -1,3 +1,6 @@
+## June 30 2020 - v.32.0
+    - Added sampler
+    
 ## April 20 2020 - v.31.2
     - Added ToLower, ToUpper in data.udf
     - Add AsNewLineDelimitedJSON in data.udf
