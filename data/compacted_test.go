@@ -2,7 +2,6 @@ package data
 
 import (
 	"encoding/json"
-	"github.com/klauspost/cpuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
 	"testing"
@@ -10,9 +9,10 @@ import (
 )
 
 func TestNewCollection(t *testing.T) {
-	if cpuid.CPU.CacheLine < 64 {
-		return
+	if ! canRun64BitArch() {
+		t.Skip()
 	}
+
 	collection := NewCompactedSlice(true, true)
 	collection.Add(map[string]interface{}{
 		"f1":  1,
@@ -57,8 +57,8 @@ func TestNewCollection(t *testing.T) {
 }
 
 func Test_optimizedStorage(t *testing.T) {
-	if cpuid.CPU.CacheLine < 64 {
-		return
+	if ! canRun64BitArch() {
+		t.Skip()
 	}
 	collection := NewCompactedSlice(true, true)
 	var data = []interface{}{nil, nil, nil, "123", nil, nil, "abc", 12, nil, nil, nil, "a"}
@@ -72,8 +72,8 @@ func Test_optimizedStorage(t *testing.T) {
 }
 
 func TestCompactedSlice_SortedRange(t *testing.T) {
-	if cpuid.CPU.CacheLine < 64 {
-		return
+	if ! canRun64BitArch() {
+		t.Skip()
 	}
 	var useCases = []struct {
 		description string
@@ -236,8 +236,8 @@ func TestCompactedSlice_SortedRange(t *testing.T) {
 }
 
 func TestCompactedSlice_SortedIterator(t *testing.T) {
-	if cpuid.CPU.CacheLine < 64 {
-		return
+	if ! canRun64BitArch() {
+		t.Skip()
 	}
 	var useCases = []struct {
 		description string
@@ -403,8 +403,8 @@ func TestCompactedSlice_SortedIterator(t *testing.T) {
 }
 
 func TestCompactedSlice_Iterator(t *testing.T) {
-	if cpuid.CPU.CacheLine < 64 {
-		return
+	if ! canRun64BitArch() {
+		t.Skip()
 	}
 	var useCases = []struct {
 		description string
@@ -478,8 +478,8 @@ func TestCompactedSlice_Iterator(t *testing.T) {
 
 
 func TestCompactedSlice_MarshalJSON(t *testing.T) {
-	if cpuid.CPU.CacheLine < 64 {
-		return
+	if ! canRun64BitArch() {
+		t.Skip()
 	}
 	var useCases = []struct {
 		description string
@@ -526,4 +526,10 @@ func TestCompactedSlice_MarshalJSON(t *testing.T) {
 
 	}
 
+}
+
+
+func canRun64BitArch() bool {
+	isNot64BitArch := 32 << uintptr(^uintptr(0)>>63) < 64
+	return ! isNot64BitArch
 }

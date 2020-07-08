@@ -14,3 +14,4 @@ func Test_ExtractPath(t *testing.T) {
 	assert.EqualValues(t, "var.z", ExtractPath("->${var.z}"))
 
 }
+

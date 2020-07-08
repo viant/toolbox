@@ -2,6 +2,7 @@ package toolbox
 
 import (
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -9,9 +10,17 @@ import (
 // Returns true if timeout exceeded and false if there was no timeout
 func WaitTimeout(wg *sync.WaitGroup, duration time.Duration) bool {
 	done := make(chan bool, 1)
+	closed := int32(0)
+	defer func() {
+		if atomic.CompareAndSwapInt32(&closed, 0, 1) {
+			close(done)
+		}
+	}()
 	go func() {
 		wg.Wait()
-		done <- true
+		if atomic.LoadInt32(&closed) == 0 {
+			done <- true
+		}
 	}()
 
 	select {

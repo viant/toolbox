@@ -6,26 +6,25 @@ import (
 
 	"github.com/viant/toolbox/storage/scp"
 	"io/ioutil"
-	"os"
-	"path"
 	"strings"
 )
 
 func TestService_List(t *testing.T) {
+	//deprecated use viant/afs istead
 
-	service := scp.NewService(nil)
-	assert.NotNil(t, service)
-	dir, home := path.Split(os.Getenv("HOME"))
-	objects, err := service.List("scp://127.0.0.1/" + dir)
-	if err == nil {
-		return
-	}
-	assert.Nil(t, err)
-	for _, object := range objects {
-		if strings.HasSuffix(object.URL(), home) {
-			assert.True(t, object.IsFolder())
-		}
-	}
+	//service := scp.NewService(nil)
+	//assert.NotNil(t, service)
+	//dir, home := path.Split(os.Getenv("HOME"))
+	//objects, err := service.List("scp://127.0.0.1/" + dir)
+	//if err == nil {
+	//	return
+	//}
+	//assert.Nil(t, err)
+	//for _, object := range objects {
+	//	if strings.HasSuffix(object.URL(), home) {
+	//		assert.True(t, object.IsFolder())
+	//	}
+	//}
 
 }
 
