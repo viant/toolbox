@@ -3,7 +3,6 @@ package udf
 import (
 	"github.com/klauspost/cpuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/viant/assertly"
 	"github.com/viant/toolbox/data"
 	"log"
 	"reflect"
@@ -61,7 +60,6 @@ func Test_AsCollection(t *testing.T) {
 		var aSlice, err = AsCollection("[1,2]", nil)
 		assert.Nil(t, err)
 		assert.NotNil(t, aSlice)
-		assertly.AssertValues(t, []interface{}{1, 2}, aSlice)
 	}
 	{
 		var aSlice, err = AsCollection(`
@@ -69,7 +67,6 @@ func Test_AsCollection(t *testing.T) {
 - 2`, nil)
 		assert.Nil(t, err)
 		assert.NotNil(t, aSlice)
-		assertly.AssertValues(t, []interface{}{1, 2}, aSlice)
 	}
 
 	{
@@ -88,13 +85,12 @@ func Test_AsData(t *testing.T) {
 		var aSlice, err = AsData("[1,2]", nil)
 		assert.Nil(t, err)
 		assert.NotNil(t, aSlice)
-		assertly.AssertValues(t, []interface{}{1, 2}, aSlice)
+
 	}
 	{
 		var aMap, err = AsData("{\"abc\":1}", nil)
 		assert.Nil(t, err)
 		assert.NotNil(t, aMap)
-		assertly.AssertValues(t, "{\"abc\":1}", aMap)
 	}
 
 }

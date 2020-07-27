@@ -25,7 +25,7 @@ func (s *Service) Accept() bool {
 
 //New creates a pct sampler
 func New(acceptPCT float64) *Service {
-	source := rand.NewSource(int64(time.Now().UnixNano()))
+	source := rand.NewSource(time.Now().UnixNano())
 	return &Service{
 		PCT:             acceptPCT,
 		rand:            rand.New(source),

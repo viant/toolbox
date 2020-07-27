@@ -118,7 +118,7 @@ func TestAtTime_Next(t *testing.T) {
 			at: &AtTime{
 				WeekDay: "*",
 				Hour:    "*",
-				Minute:  "10,30",
+					Minute:  "10,30",
 			},
 			baseTime:   "2019-01-01 01:33:01",
 			expectTime: "2019-01-01 02:10:00",
@@ -543,5 +543,11 @@ func TestTimeWindow_Range(t *testing.T) {
 		assert.Nil(t, err, useCase.description)
 		assert.Equal(t, useCase.expectedCount, count, useCase.description)
 	}
+
+}
+
+
+func TestN(t *testing.T) {
+
 
 }

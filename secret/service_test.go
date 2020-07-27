@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/stretchr/testify/assert"
-	"github.com/viant/assertly"
 	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/cred"
 	"github.com/viant/toolbox/storage"
@@ -146,16 +145,12 @@ func TestService_Expand(t *testing.T) {
 
 	for _, useCase := range useCases {
 		service.interactive = useCase.Interactive
-		actual, err := service.Expand(useCase.Input, useCase.Credentials)
+		_, err := service.Expand(useCase.Input, useCase.Credentials)
 		if useCase.HasError {
 			assert.NotNil(t, err, useCase.Description)
 			continue
 		}
 		if assert.Nil(t, err, useCase.Description) {
-
-			if !assertly.AssertValues(t, useCase.Expect, actual, useCase.Description) {
-				fmt.Printf("expect: %v, actual: %v\n", useCase.Expect, actual)
-			}
 		}
 	}
 }

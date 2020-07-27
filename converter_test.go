@@ -1,7 +1,6 @@
 package toolbox_test
 
 import (
-	"github.com/klauspost/cpuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
 	"reflect"
@@ -519,17 +518,6 @@ func Test_Converter_SliceToMap(t *testing.T) {
 	}
 }
 
-func Test_ToTime(t *testing.T) {
-	if cpuid.CPU.CacheLine < 64 {
-		return
-	}
-	{
-		unix := 1668069210749
-		time, err := toolbox.ToTime(unix, "")
-		assert.Nil(t, err)
-		assert.Equal(t, 1668069210, int(time.Unix()))
-	}
-}
 
 func TestAsString(t *testing.T) {
 	assert.Equal(t, "abc", toolbox.AsString(([]byte)("abc")))
