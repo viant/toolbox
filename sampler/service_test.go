@@ -45,3 +45,22 @@ func TestService_Accept(t *testing.T) {
 		assert.Equal(t, int(useCase.goalPCT), actualAcceptPCT, useCase.description)
 	}
 }
+
+func TestService_AcceptWithThreshold(t *testing.T) {
+	sampler := New(100) // should not affect the result
+	acceptCount := 0
+	testcount := 100000
+	for i := 0; i < testcount; i++ {
+		if sampler.AcceptWithThreshold(50.0) {
+			acceptCount++
+		}
+	}
+	actualAcceptPCT := int(100.0 * (float64(acceptCount) / float64(testcount)))
+	if actualAcceptPCT > int(50.0) { //allows -1 diff
+		actualAcceptPCT--
+	}
+	if actualAcceptPCT < int(50.0) { //allows +1 diff
+		actualAcceptPCT++
+	}
+	assert.Equal(t, int(50), actualAcceptPCT, "accept with threshold off ")
+}

@@ -22,6 +22,13 @@ func (s *Service) Accept() bool {
 	return n < s.acceptThreshold
 }
 
+//Accept accept with threshold with PCT being ignored (same as PCT=100)
+func (s *Service) AcceptWithThreshold(threshold float64) bool {
+	s.mux.Lock()
+	defer s.mux.Unlock()
+	n := s.rand.Int31n(100000)
+	return n < int32(threshold*1000.0)
+}
 
 //New creates a pct sampler
 func New(acceptPCT float64) *Service {
