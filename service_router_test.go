@@ -1,11 +1,13 @@
 package toolbox_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
 	"log"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 )
@@ -97,6 +99,26 @@ func StartServer(port string, t *testing.T) {
 				return result
 			},
 		},
+		toolbox.ServiceRouting{
+			HTTPMethod: "GET",
+			URI:        "/v1/explain/{cluster}/{yyyy}/{mm}/{dd}/{hh}/{name}/{sid}/{aid}",
+			Parameters: []string{"cluster", "sid"},
+			Handler: func(amap map[string]interface{}) map[string]interface{} {
+				return amap
+			},
+			HandlerInvoker: func(serviceRouting *toolbox.ServiceRouting, request *http.Request, response http.ResponseWriter, parameters map[string]interface{}) error {
+				var result = make(map[string]interface{})
+				for k, v := range parameters {
+					if strings.HasPrefix(k, "@") {
+						continue
+					}
+					result[k] = v
+				}
+				data, _ := json.Marshal(result)
+				response.Write(data)
+				return nil
+			},
+		},
 	)
 
 	http.HandleFunc("/v1/", func(writer http.ResponseWriter, reader *http.Request) {
@@ -114,6 +136,18 @@ func TestServiceRouter(t *testing.T) {
 	}()
 
 	time.Sleep(2 * time.Second)
+
+	{ //Test explain
+		var result = map[string]interface{}{}
+		err := toolbox.RouteToService("get", "http://127.0.0.1:8082/v1/explain/west/2020/07/26/22/22-02.0.i-08b66c734e4d10a60/59af369e-cf8b-11ea-8858-134d48b29f18/1258652", nil, &result)
+		if err != nil {
+			t.Errorf("failed to send explain request  %v", err)
+		}
+		assert.EqualValues(t, map[string]interface{}{
+			"cluster": "west",
+			"sid": "59af369e-cf8b-11ea-8858-134d48b29f18",
+		}, result)
+	}
 
 	{
 
@@ -171,6 +205,15 @@ func TestServiceRouter(t *testing.T) {
 	{
 
 		err := toolbox.RouteToService("delete", "http://127.0.0.1:8082/v1/delete/1,7,3", nil, &result)
+		if err != nil {
+			t.Errorf("failed to send delete request  %v", err)
+		}
+		assert.EqualValues(t, []int{3, 7, 1}, result)
+	}
+
+	{ //Test custom handler invocation without reflection
+
+		err := toolbox.RouteToService("get", "http://127.0.0.1:8082/v1/reverse2/1,7,3", nil, &result)
 		if err != nil {
 			t.Errorf("failed to send delete request  %v", err)
 		}
