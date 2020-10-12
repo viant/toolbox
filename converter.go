@@ -171,6 +171,13 @@ func AsInt(value interface{}) int {
 
 //ToInt converts input value to int or error
 func ToInt(value interface{}) (int, error) {
+	if text, ok := value.(string);ok { //common use case
+		return strconv.Atoi(text)
+	}
+	return toInt(value)
+}
+
+func toInt(value interface{}) (int, error) {
 	if value == nil {
 		return 0, NewNilPointerError("int value was nil")
 	}
