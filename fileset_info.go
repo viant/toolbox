@@ -193,12 +193,15 @@ type TypeInfo struct {
 	FileName               string
 	Comment                string
 	IsSlice                bool
+	IsMap                  bool
 	IsStruct               bool
 	IsInterface            bool
 	IsDerived              bool
 	ComponentType          string
 	IsPointerComponentType bool
 	Derived                string
+	KeyTypeName            string
+	ValueTypeName          string
 	Settings               map[string]string
 	fields                 []*FieldInfo
 	indexedField           map[string]*FieldInfo
@@ -358,8 +361,6 @@ func toFunctionInfos(source *ast.FieldList, owner *FileInfo) []*FunctionInfo {
 func (f *FileInfo) Visit(node ast.Node) ast.Visitor {
 	if node != nil {
 
-		//	fmt.Printf("node %T %f\n", node, node)
-
 		switch value := node.(type) {
 		case *ast.TypeSpec:
 			typeName := value.Name.Name
@@ -400,7 +401,19 @@ func (f *FileInfo) Visit(node ast.Node) ast.Visitor {
 			if len(functionInfo.ReceiverTypeName) > 0 {
 				f.addFunction(functionInfo)
 			}
+		case *ast.MapType:
+			f.currentTypInfo.IsMap = true
 
+			if keyTypeID, ok := value.Key.(*ast.Ident); ok {
+				f.currentTypInfo.KeyTypeName = keyTypeID.Name
+			}
+			switch v := value.Value.(type) {
+			case *ast.Ident:
+				f.currentTypInfo.ValueTypeName = v.Name
+			case *ast.ArrayType:
+				componentType := v.Elt.(*ast.Ident)
+				f.currentTypInfo.ValueTypeName = "[]" + componentType.Name
+			}
 		case *ast.FuncType:
 
 			if f.currentFunctionInfo != nil {
