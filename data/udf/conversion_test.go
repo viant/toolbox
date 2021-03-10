@@ -1,7 +1,6 @@
 package udf
 
 import (
-	"github.com/klauspost/cpuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox/data"
 	"log"
@@ -139,9 +138,6 @@ func Test_AsString(t *testing.T) {
 	aMap.Put("k0", true)
 	expanded := aMap.ExpandAsText(" $AsString(${k0})")
 	assert.EqualValues(t, "true", expanded)
-	if cpuid.CPU.CacheLine < 64 {
-		return
-	}
 	//64 bit int
 	aMap.Put("k1", 2323232323223)
 	expanded = aMap.ExpandAsText(" $AsString(${k1})")

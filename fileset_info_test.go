@@ -1,15 +1,14 @@
 package toolbox_test
 
 import (
-	"github.com/klauspost/cpuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/viant/toolbox"
 	"testing"
 )
 
 func TestNewFileSetInfoInfo(t *testing.T) {
-	if cpuid.CPU.CacheLine < 64 {
-		return
+	if (32 << uintptr(^uintptr(0)>>63)) < 64 {
+		t.Skip()
 	}
 	fileSetInfo, err := toolbox.NewFileSetInfo("./test/fileset_info/")
 	if err != nil {
