@@ -25,7 +25,7 @@ func TestNewFileSetInfoInfo(t *testing.T) {
 	assert.False(t, fileInfo.HasType("F"))
 	assert.True(t, fileInfo.HasType("User"))
 
-	assert.Equal(t, 7, len(fileInfo.Types()))
+	assert.Equal(t, 8, len(fileInfo.Types()))
 
 	address := fileSetInfo.Type("Address")
 	assert.NotNil(t, address)
@@ -48,7 +48,7 @@ func TestNewFileSetInfoInfo(t *testing.T) {
 	assert.True(t, userInfo.HasField("Name"))
 	assert.False(t, userInfo.HasField("FF"))
 
-	assert.Equal(t, 11, len(userInfo.Fields()))
+	assert.Equal(t, 12, len(userInfo.Fields()))
 
 	idInfo := userInfo.Field("ID")
 	assert.True(t, idInfo.IsPointer)
@@ -65,6 +65,16 @@ func TestNewFileSetInfoInfo(t *testing.T) {
 	addressPointer := userInfo.Field("AddressPointer")
 	assert.NotNil(t, addressPointer)
 	assert.Equal(t, "Address", addressPointer.TypeName)
+
+
+	aMapField := userInfo.Field("AMap")
+	assert.NotNil(t, aMapField)
+	assert.EqualValues(t, "AMap", aMapField.TypeName)
+	aMapType := fileSetInfo.Type(aMapField.TypeName)
+	assert.NotNil(t, aMapType)
+	assert.True(t, aMapType.IsMap)
+	assert.EqualValues(t, "string", aMapType.KeyTypeName)
+	assert.EqualValues(t, "[]int", aMapType.ValueTypeName)
 
 	cInfo := userInfo.Field("C")
 	assert.True(t, cInfo.IsChannel)

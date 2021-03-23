@@ -20,6 +20,8 @@ type Address struct {
 	City string
 }
 
+type AMap map[string][]int
+
 type A Address
 
 //User represents a test struct
@@ -36,6 +38,7 @@ type User struct { //my comments
 	M              map[string][]string
 	C              chan *bool
 	Appointments   []time.Time
+	AMap
 }
 
 //Test represents a test method
