@@ -73,6 +73,9 @@ func readAll(pathTemplate string, provider func() interface{}) ([]interface{}, e
 	for i := 0; ; i++ {
 		filename := fmt.Sprintf(pathTemplate, i)
 		if !toolbox.FileExists(filename) {
+			if i == 0 {
+				continue
+			}
 			break
 		}
 		data, err := ioutil.ReadFile(filename)
