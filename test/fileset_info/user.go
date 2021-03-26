@@ -22,6 +22,8 @@ type Address struct {
 
 type AMap map[string][]int
 
+type AMap2 map[string][]*Country
+
 type A Address
 
 //User represents a test struct
@@ -38,6 +40,7 @@ type User struct { //my comments
 	M              map[string][]string
 	C              chan *bool
 	Appointments   []time.Time
+	AMap2
 	AMap
 }
 

@@ -411,8 +411,21 @@ func (f *FileInfo) Visit(node ast.Node) ast.Visitor {
 			case *ast.Ident:
 				f.currentTypInfo.ValueTypeName = v.Name
 			case *ast.ArrayType:
-				componentType := v.Elt.(*ast.Ident)
-				f.currentTypInfo.ValueTypeName = "[]" + componentType.Name
+
+				componentTypeName := ""
+				switch compType := v.Elt.(type) {
+				case *ast.StarExpr:
+					componentTypeName += "*"
+					switch y := compType.X.(type) {
+					case *ast.Ident:
+						componentTypeName += y.Name
+					case *ast.SelectorExpr:
+						componentTypeName += y.X.(*ast.Ident).Name + "." + y.Sel.Name
+					}
+				case *ast.Ident:
+					componentTypeName = compType.Name
+				}
+				f.currentTypInfo.ValueTypeName = "[]" + componentTypeName
 			}
 		case *ast.FuncType:
 
