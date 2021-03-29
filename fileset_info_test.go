@@ -25,7 +25,7 @@ func TestNewFileSetInfoInfo(t *testing.T) {
 	assert.False(t, fileInfo.HasType("F"))
 	assert.True(t, fileInfo.HasType("User"))
 
-	assert.Equal(t, 9, len(fileInfo.Types()))
+	assert.Equal(t, 10, len(fileInfo.Types()))
 
 	address := fileSetInfo.Type("Address")
 	assert.NotNil(t, address)
@@ -48,7 +48,7 @@ func TestNewFileSetInfoInfo(t *testing.T) {
 	assert.True(t, userInfo.HasField("Name"))
 	assert.False(t, userInfo.HasField("FF"))
 
-	assert.Equal(t, 13, len(userInfo.Fields()))
+	assert.Equal(t, 14, len(userInfo.Fields()))
 
 	idInfo := userInfo.Field("ID")
 	assert.True(t, idInfo.IsPointer)
@@ -67,9 +67,9 @@ func TestNewFileSetInfoInfo(t *testing.T) {
 	assert.Equal(t, "Address", addressPointer.TypeName)
 
 
-	aMapField := userInfo.Field("AMap")
+	aMapField := userInfo.Field("AMap1")
 	assert.NotNil(t, aMapField)
-	assert.EqualValues(t, "AMap", aMapField.TypeName)
+	assert.EqualValues(t, "AMap1", aMapField.TypeName)
 	aMapType := fileSetInfo.Type(aMapField.TypeName)
 	assert.NotNil(t, aMapType)
 	assert.True(t, aMapType.IsMap)
@@ -85,6 +85,19 @@ func TestNewFileSetInfoInfo(t *testing.T) {
 	assert.True(t, aMapType2.IsMap)
 	assert.EqualValues(t, "string", aMapType2.KeyTypeName)
 	assert.EqualValues(t, "[]*Country", aMapType2.ValueTypeName)
+
+
+	aMapField3 := userInfo.Field("AMap3")
+	assert.NotNil(t, aMapField3)
+	assert.EqualValues(t, "AMap3", aMapField3.TypeName)
+	aMapType3 := fileSetInfo.Type(aMapField3.TypeName)
+	assert.NotNil(t, aMapType3)
+	assert.True(t, aMapType3.IsMap)
+	assert.EqualValues(t, "string", aMapType3.KeyTypeName)
+	assert.EqualValues(t, "*Country", aMapType3.ValueTypeName)
+
+
+
 
 	cInfo := userInfo.Field("C")
 	assert.True(t, cInfo.IsChannel)

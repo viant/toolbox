@@ -360,7 +360,7 @@ func toFunctionInfos(source *ast.FieldList, owner *FileInfo) []*FunctionInfo {
 //Visit visits ast node to extract struct details from the passed file
 func (f *FileInfo) Visit(node ast.Node) ast.Visitor {
 	if node != nil {
-
+//TODO refactor this mess !!!!
 		switch value := node.(type) {
 		case *ast.TypeSpec:
 			typeName := value.Name.Name
@@ -403,15 +403,23 @@ func (f *FileInfo) Visit(node ast.Node) ast.Visitor {
 			}
 		case *ast.MapType:
 			f.currentTypInfo.IsMap = true
-
 			if keyTypeID, ok := value.Key.(*ast.Ident); ok {
 				f.currentTypInfo.KeyTypeName = keyTypeID.Name
 			}
 			switch v := value.Value.(type) {
 			case *ast.Ident:
 				f.currentTypInfo.ValueTypeName = v.Name
-			case *ast.ArrayType:
+			case *ast.StarExpr:
+				componentTypeName := "*"
+				switch y :=v.X.(type) {
+				case *ast.Ident:
+					componentTypeName += y.Name
+				case *ast.SelectorExpr:
+					componentTypeName += y.X.(*ast.Ident).Name + "." + y.Sel.Name
+				}
+				f.currentTypInfo.ValueTypeName = componentTypeName
 
+			case *ast.ArrayType:
 				componentTypeName := ""
 				switch compType := v.Elt.(type) {
 				case *ast.StarExpr:
@@ -426,6 +434,7 @@ func (f *FileInfo) Visit(node ast.Node) ast.Visitor {
 					componentTypeName = compType.Name
 				}
 				f.currentTypInfo.ValueTypeName = "[]" + componentTypeName
+
 			}
 		case *ast.FuncType:
 

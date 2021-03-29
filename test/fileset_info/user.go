@@ -20,9 +20,11 @@ type Address struct {
 	City string
 }
 
-type AMap map[string][]int
+type AMap1 map[string][]int
 
 type AMap2 map[string][]*Country
+
+type AMap3 map[string]*Country
 
 type A Address
 
@@ -40,8 +42,9 @@ type User struct { //my comments
 	M              map[string][]string
 	C              chan *bool
 	Appointments   []time.Time
+	AMap1
 	AMap2
-	AMap
+	AMap3
 }
 
 //Test represents a test method
