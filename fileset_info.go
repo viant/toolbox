@@ -406,6 +406,9 @@ func (f *FileInfo) Visit(node ast.Node) ast.Visitor {
 				f.addFunction(functionInfo)
 			}
 		case *ast.MapType:
+			if f.currentTypInfo == nil {
+				break
+			}
 			f.currentTypInfo.IsMap = true
 			if keyTypeID, ok := value.Key.(*ast.Ident); ok {
 				f.currentTypInfo.KeyTypeName = keyTypeID.Name
