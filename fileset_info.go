@@ -7,6 +7,7 @@ import (
 	"go/token"
 	"go/types"
 	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -360,6 +361,9 @@ func toFunctionInfos(source *ast.FieldList, owner *FileInfo) []*FunctionInfo {
 //Visit visits ast node to extract struct details from the passed file
 func (f *FileInfo) Visit(node ast.Node) ast.Visitor {
 	if node != nil {
+		if os.Getenv("AST_DEBUG") == "1" {
+			fmt.Printf("%T %v\n",node,node)
+		}
 //TODO refactor this mess !!!!
 		switch value := node.(type) {
 		case *ast.TypeSpec:
@@ -402,6 +406,9 @@ func (f *FileInfo) Visit(node ast.Node) ast.Visitor {
 				f.addFunction(functionInfo)
 			}
 		case *ast.MapType:
+			if f.currentTypInfo == nil {
+				break
+			}
 			f.currentTypInfo.IsMap = true
 			if keyTypeID, ok := value.Key.(*ast.Ident); ok {
 				f.currentTypInfo.KeyTypeName = keyTypeID.Name
