@@ -34,6 +34,8 @@ func AsString(input interface{}) string {
 	switch value := input.(type) {
 	case string:
 		return value
+	case *string:
+		return *value
 	case []byte:
 		return string(value)
 	case []interface{}:
@@ -184,12 +186,16 @@ func toInt(value interface{}) (int, error) {
 	switch actual := value.(type) {
 	case int:
 		return actual, nil
+	case *int:
+		return *actual, nil
 	case int8:
 		return int(actual), nil
 	case int16:
 		return int(actual), nil
 	case int32:
 		return int(actual), nil
+	case *int64:
+		return int(*actual), nil
 	case int64:
 		return int(actual), nil
 	case uint:
