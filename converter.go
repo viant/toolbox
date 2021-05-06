@@ -35,6 +35,9 @@ func AsString(input interface{}) string {
 	case string:
 		return value
 	case *string:
+		if value == nil {
+			return ""
+		}
 		return *value
 	case []byte:
 		return string(value)
@@ -187,6 +190,9 @@ func toInt(value interface{}) (int, error) {
 	case int:
 		return actual, nil
 	case *int:
+		if actual == nil {
+			return 0, nil
+		}
 		return *actual, nil
 	case int8:
 		return int(actual), nil
@@ -195,6 +201,9 @@ func toInt(value interface{}) (int, error) {
 	case int32:
 		return int(actual), nil
 	case *int64:
+		if actual == nil {
+			return 0, nil
+		}
 		return int(*actual), nil
 	case int64:
 		return int(actual), nil
