@@ -270,10 +270,6 @@ func WriteServiceRoutingResponse(response http.ResponseWriter, request *http.Req
 		return fmt.Errorf("failed to encode response %v, due to %v", response, err)
 	}
 	return nil
-	if err != nil {
-		return fmt.Errorf("failed to write response response %v, due to %v", result, err)
-	}
-	return nil
 }
 
 //WriteResponse writes response to response writer, it used encoder factory to encode passed in response to the writer, it sets back request contenttype to response.

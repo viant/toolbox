@@ -422,11 +422,13 @@ This API has been deprecated, please consider using [Abstract Storage](https://g
 <a name="tet"></a>
 ### Text utilities
 
-**ToCaseFormat** 
+
+**Text Case Format** 
+
+You can format with [format.Case](format/case.go).Format(text, destCase)
 
 ```go
-    formatted := toolbox.ToCaseFormat(text, toolbox.CaseLowerUnderscore, toolbox.CaseLowerCamel)
-
+    formatted := format.CaseLowerUnderscore.Format(text, format.CaseLowerCamel)
 ```
 
 
