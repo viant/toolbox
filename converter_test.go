@@ -738,3 +738,34 @@ func TestConvertedSliceToMapError(t *testing.T) {
 	err := converter.AssignConverted(&aMap, aSlice)
 	assert.NotNil(t, err)
 }
+
+
+func Test_Issue41(t *testing.T) {
+
+	type Source struct {
+		Name string
+		BirthDate *time.Time
+	}
+	type Target Source
+	tests := []struct {
+		name string
+		sourceItem Source
+	}{
+		{
+			"Ptr to time will breaking all",
+			Source{
+				Name:      "Paulo",
+				BirthDate: nil,
+			},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var target Target
+			var converter = toolbox.NewColumnConverter(time.RFC3339)
+			var err = converter.AssignConverted(&target, test.sourceItem)
+			assert.Nil(t, err)
+			assert.EqualValues(t, test.sourceItem, target)
+		})
+	}
+}

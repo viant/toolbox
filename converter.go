@@ -304,10 +304,13 @@ func ToTime(value interface{}, dateLayout string) (*time.Time, error) {
 		return ToTime(actual, dateLayout)
 	case string:
 		return textToTime(actual, dateLayout)
-	default:
-		textValue := AsString(DereferenceValue(actual))
-		return textToTime(textValue, dateLayout)
+	case map[string]interface{}:
+		if len(actual) == 0 {
+			return nil, nil
+		}
 	}
+	textValue := AsString(DereferenceValue(value))
+	return textToTime(textValue, dateLayout)
 }
 
 //AsTime converts an input to time, it takes time input,  dateLaout as parameters.
@@ -585,6 +588,9 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 				}
 
 			} else {
+				if value == nil {
+					continue
+				}
 				if err := c.AssignConverted(field.Addr().Interface(), value); err != nil {
 					return fmt.Errorf("failed to convert %v to %v due to %v", value, field, err)
 				}
@@ -907,6 +913,9 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 		*targetValuePointer = *timeValue
 		return nil
 	case **time.Time:
+		if source == nil {
+			return nil
+		}
 		timeValue, err := ToTime(source, c.DateLayout)
 		if err != nil {
 			return err
