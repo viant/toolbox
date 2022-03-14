@@ -28,6 +28,8 @@ func Register(aMap data.Map) {
 	aMap.Put("QueryUnescape", QueryUnescape)
 	aMap.Put("Base64Encode", Base64Encode)
 	aMap.Put("Base64Decode", Base64Decode)
+	aMap.Put("Base64RawURLEncode", Base64RawURLEncode)
+	aMap.Put("Base64RawURLEncode", Base64RawURLDecode)
 	aMap.Put("Base64DecodeText", Base64DecodeText)
 	aMap.Put("TrimSpace", TrimSpace)
 	aMap.Put("Elapsed", Elapsed)

@@ -31,16 +31,15 @@ func Length(source interface{}, state data.Map) (interface{}, error) {
 	return 0, nil
 }
 
-
 //Replace replaces text with old and new fragments
 func Replace(source interface{}, state data.Map) (interface{}, error) {
 	var args []interface{}
-	if ! toolbox.IsSlice(source) {
+	if !toolbox.IsSlice(source) {
 		return nil, fmt.Errorf("expacted %T, but had %T", args, source)
 	}
 	args = toolbox.AsSlice(source)
 	if len(args) < 3 {
-		return nil, fmt.Errorf("expected 3 arguments (text, old, new), but had: %v" , len(args))
+		return nil, fmt.Errorf("expected 3 arguments (text, old, new), but had: %v", len(args))
 	}
 	text := toolbox.AsString(args[0])
 	old := toolbox.AsString(args[1])
@@ -48,7 +47,6 @@ func Replace(source interface{}, state data.Map) (interface{}, error) {
 	count := strings.Count(text, old)
 	return strings.Replace(text, old, new, count), nil
 }
-
 
 // Join joins slice by separator
 func Join(args interface{}, state data.Map) (interface{}, error) {
@@ -164,6 +162,43 @@ func Base64Encode(source interface{}, state data.Map) (interface{}, error) {
 				return base64.StdEncoding.EncodeToString(encoded), nil
 			}
 		}
+		return nil, fmt.Errorf("unsupported type: %T", source)
+	}
+}
+
+//Base64RawURLEncode encodes source using base64.RawURLEncoding
+func Base64RawURLEncode(source interface{}, state data.Map) (interface{}, error) {
+	if source == nil {
+		return "", nil
+	}
+	switch value := source.(type) {
+	case string:
+		return base64.RawURLEncoding.EncodeToString([]byte(value)), nil
+	case []byte:
+		return base64.RawURLEncoding.EncodeToString(value), nil
+	default:
+		if toolbox.IsMap(source) || toolbox.IsSlice(source) {
+			encoded, err := json.Marshal(source)
+			fmt.Printf("%s %v\n", encoded, err)
+			if err == nil {
+				return base64.RawURLEncoding.EncodeToString(encoded), nil
+			}
+		}
+		return nil, fmt.Errorf("unsupported type: %T", source)
+	}
+}
+
+//Base64RawURLDecode decodes source using base64.RawURLEncoding
+func Base64RawURLDecode(source interface{}, state data.Map) (interface{}, error) {
+	if source == nil {
+		return "", nil
+	}
+	switch value := source.(type) {
+	case string:
+		return base64.RawURLEncoding.DecodeString(value)
+	case []byte:
+		return base64.RawURLEncoding.DecodeString(string(value))
+	default:
 		return nil, fmt.Errorf("unsupported type: %T", source)
 	}
 }
