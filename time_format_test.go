@@ -16,7 +16,21 @@ func TestTimeFormat(t *testing.T) {
 		fmt.Printf("%s\n", timeLayout)
 	}
 
-		{
+	/*
+		layout := toolbox.DateFormatToLayout("yyyy-MM-dd hh:mm:ss")
+			createdAt, _ := time.Parse(layout, "2022-01-11 18:16:33")
+			fmt.Println(createdAt) // incorrect
+
+			createdAt2, _ := time.Parse("2006-01-02 15:04:05", "2022-01-11 18:16:33")
+			fmt.Println(createdAt2) // correct
+	*/
+
+	{
+		timeLayout := toolbox.DateFormatToLayout("yyyy-MM-dd hh:mm:ss")
+		assert.EqualValues(t, "2006-01-02 15:04:05", timeLayout)
+	}
+
+	{
 		timeLayout := toolbox.DateFormatToLayout("yyyy-MM-dd HH:mm:ss z")
 		timeValue, err := time.Parse(timeLayout, "2018-01-15 08:02:23 UTC")
 		assert.Nil(t, err)

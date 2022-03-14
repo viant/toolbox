@@ -44,7 +44,7 @@ type Config struct {
 
 	//google cloud credential
 	ClientEmail             string `json:"client_email,omitempty"`
-	TokenURL                string `json:"token_uri,omitempty"`
+	TokenURL                string `json:"token_url,omitempty"`
 	PrivateKey              string `json:"private_key,omitempty"`
 	PrivateKeyID            string `json:"private_key_id,omitempty"`
 	ProjectID               string `json:"project_id,omitempty"`

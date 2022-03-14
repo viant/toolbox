@@ -18,9 +18,9 @@ func DateFormatToLayout(dateFormat string) string {
 	dateFormat = strings.Replace(dateFormat, "dd", "02", 1)
 	dateFormat = strings.Replace(dateFormat, "d", "2", 1)
 
-	dateFormat = strings.Replace(dateFormat, "HH", "15", 1)
+	dateFormat = strings.Replace(dateFormat, "HH", "15", 1) //0-23
 
-	dateFormat = strings.Replace(dateFormat, "hh", "03", 1)
+	dateFormat = strings.Replace(dateFormat, "hh", "03", 1) //0-12
 	dateFormat = strings.Replace(dateFormat, "h", "3", 1)
 
 	dateFormat = strings.Replace(dateFormat, "mm", "04", 1)
