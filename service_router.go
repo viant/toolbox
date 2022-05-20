@@ -232,7 +232,9 @@ func (r *ServiceRouter) Route(response http.ResponseWriter, request *http.Reques
 			}
 			return nil
 		}
-		response.Header().Set(contentTypeHeader, textPlainContentType)
+		if response.Header().Get(contentTypeHeader) == "" {
+			response.Header().Set(contentTypeHeader, textPlainContentType)
+		}
 	}
 	if finalError != nil {
 		return fmt.Errorf("failed to route request - %v", finalError)
@@ -264,7 +266,9 @@ func WriteServiceRoutingResponse(response http.ResponseWriter, request *http.Req
 	}
 	encoderFactory := serviceRouting.getEncoderFactory(responseContentType)
 	encoder := encoderFactory.Create(response)
-	response.Header().Set(contentTypeHeader, responseContentType)
+	if response.Header().Get(contentTypeHeader) == "" {
+		response.Header().Set(contentTypeHeader, responseContentType)
+	}
 	err := encoder.Encode(result)
 	if err != nil {
 		return fmt.Errorf("failed to encode response %v, due to %v", response, err)
@@ -277,7 +281,9 @@ func (r *ServiceRouter) WriteResponse(encoderFactory EncoderFactory, response in
 	requestContentType := request.Header.Get(contentTypeHeader)
 	responseContentType := getContentTypeOrJSONContentType(requestContentType)
 	encoder := encoderFactory.Create(responseWriter)
-	responseWriter.Header().Set(contentTypeHeader, responseContentType)
+	if responseWriter.Header().Get(contentTypeHeader) == "" {
+		responseWriter.Header().Set(contentTypeHeader, responseContentType)
+	}
 	err := encoder.Encode(response)
 	if err != nil {
 		return fmt.Errorf("failed to encode response %v, due to %v", response, err)
