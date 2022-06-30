@@ -56,6 +56,13 @@ func TestCase_To(t *testing.T) {
 			caseTo:      CaseLowerCamel,
 			expect:      "thisIsMyTest",
 		},
+		{
+			description: "upper camel to underscore",
+			input:       "ClientID",
+			caseFrom:    CaseUpperCamel,
+			caseTo:      CaseUpperUnderscore,
+			expect:      "CLIENT_ID",
+		},
 	}
 
 	for _, useCase := range useCases {
@@ -64,4 +71,3 @@ func TestCase_To(t *testing.T) {
 	}
 
 }
-

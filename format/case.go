@@ -56,7 +56,6 @@ func (from Case) String() string {
 	return "UnsupportedCase"
 }
 
-
 //Format converts supplied text from Case to
 func (from Case) Format(text string, to Case) string {
 	toUpper := false
@@ -119,7 +118,9 @@ func (from Case) Format(text string, to Case) string {
 			}
 			if unicode.IsUpper(r) && fromCamel {
 				if toUnserscore {
-					result = append(result, underscore)
+					if !(i > 1 && result[len(result)-2] == '_') {
+						result = append(result, underscore)
+					}
 				}
 			}
 		}
