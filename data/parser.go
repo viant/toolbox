@@ -24,6 +24,8 @@ const (
 	whitespace
 	groupingToken
 	operatorTojeb
+	comparatorTojeb
+	boolComparatorTojeb
 	doubleQuoteEnclosedToken
 	comaToken
 )
@@ -44,10 +46,11 @@ var matchers = map[int]toolbox.Matcher{
 	unmatchedToken:           toolbox.NewRemainingSequenceMatcher(),
 	groupingToken:            toolbox.NewBodyMatcher("(", ")"),
 	operatorTojeb:            toolbox.NewTerminatorMatcher("+", "-", "*", "/", "^", "%"),
+	comparatorTojeb:          toolbox.NewTerminatorMatcher("=", ">", "<"),
+	boolComparatorTojeb:      toolbox.NewTerminatorMatcher("&", "|"),
 	whitespace:               toolbox.NewCharactersMatcher(" \t\n\r"),
 }
 
-//Parse parses expression
 func Parse(expression string, handler func(expression string, isUDF bool, argument interface{}) (interface{}, bool)) interface{} {
 	tokenizer := toolbox.NewTokenizer(expression, invalidToken, eofToken, matchers)
 	var value interface{}
@@ -77,16 +80,18 @@ func Parse(expression string, handler func(expression string, isUDF bool, argume
 			case enclosedVarToken:
 
 				expanded := expandEnclosed(match.Matched, handler)
-				if toolbox.IsFloat(expanded) || toolbox.IsInt(expanded) {
+				if toolbox.IsFloat(expanded) || toolbox.IsInt(expanded) || toolbox.IsBool(expanded) {
 					value = expanded
 					result.Append(value)
 					continue
 				}
 				expandedText := toolbox.AsString(expanded)
-				if strings.HasSuffix(expandedText, ")") {
+				if strings.Contains(expandedText, ")") {
 					value = Parse("$"+expandedText, handler)
 					if textValue, ok := value.(string); ok && textValue == "$"+expandedText {
 						value = "${" + expandedText + "}"
+					} else if textValue, ok := value.(string); ok {
+						value = expandEnclosed("{"+textValue+"}", handler)
 					}
 					result.Append(value)
 					continue
@@ -109,17 +114,18 @@ func Parse(expression string, handler func(expression string, isUDF bool, argume
 				fallthrough
 
 			case idToken:
-
 				variable += match.Matched
 				variable = expandVariable(tokenizer, variable, handler)
 				match = tokenizer.Nexts(callToken, incToken, decrementToken, beforeVarToken, unmatchedToken, eofToken)
 				switch match.Token {
 
 				case callToken:
-					arguments := string(match.Matched[1 : len(match.Matched)-1])
+					callTokenIndexEnd := len(match.Matched) - 1
+					arguments := string(match.Matched[1:callTokenIndexEnd])
 					if value, ok = handler(variable, true, arguments); !ok {
 						value = variable + match.Matched
 					}
+
 					result.Append(value)
 					continue
 				case incToken, decrementToken:
@@ -135,7 +141,6 @@ func Parse(expression string, handler func(expression string, isUDF bool, argume
 					result.Append(match.Matched)
 					continue
 				}
-
 			default:
 				result.Append(variable)
 			}
@@ -189,10 +194,11 @@ func expandEnclosed(expr string, handler func(expression string, isUDF bool, arg
 
 	}
 	tokenizer := toolbox.NewTokenizer(expr, invalidToken, eofToken, matchers)
-	match, err := toolbox.ExpectTokenOptionallyFollowedBy(tokenizer, whitespace, "expected operatorTojeb", groupingToken, operatorTojeb)
+	match, err := toolbox.ExpectTokenOptionallyFollowedBy(tokenizer, whitespace, "expected operatorTojeb, boolComparatorTojeb or comparatorTojeb", groupingToken, operatorTojeb, boolComparatorTojeb, comparatorTojeb)
 	if err != nil {
 		return Parse(expr, handler)
 	}
+
 	switch match.Token {
 	case groupingToken:
 		groupExpr := string(match.Matched[1 : len(match.Matched)-1])
@@ -234,8 +240,77 @@ func expandEnclosed(expr string, handler func(expression string, isUDF bool, arg
 			return intResult
 		}
 		return floatResult
+	case boolComparatorTojeb:
+		leftOperand, leftOk := tryBoolOperand(match.Matched, handler).(bool)
+		operator := string(expr[tokenizer.Index : tokenizer.Index+1])
+		rightOperand, rightOk := tryBoolOperand(string(expr[tokenizer.Index+1:]), handler).(bool)
+		if !leftOk || !rightOk {
+			return Parse(expr, handler)
+		}
+		var boolResult bool
+		switch operator {
+		case "&":
+			boolResult = leftOperand && rightOperand
+		case "|":
+			boolResult = leftOperand || rightOperand
+		}
+		return boolResult
+	case comparatorTojeb:
+		//numeric comparator
+		leftOperand, leftOk := tryNumericOperand(match.Matched, handler).(float64)
+		operator := string(expr[tokenizer.Index : tokenizer.Index+1])
+		rightOperand, rightOk := tryNumericOperand(string(expr[tokenizer.Index+1:]), handler).(float64)
+		if !leftOk || !rightOk {
+			switch operator {
+			case "=":
+				//Try string compare
+				leftText := Parse("$"+match.Matched, handler)
+				rightText := Parse("$"+string(expr[tokenizer.Index+1:]), handler)
+				if toolbox.IsString(leftText) && leftText.(string)[:1] == "$" {
+					leftText = strings.TrimSpace(leftText.(string)[1:])
+				}
+				if toolbox.IsString(rightText) && rightText.(string)[:1] == "$" {
+					rightText = strings.TrimSpace(rightText.(string)[1:])
+				}
+
+				return leftText == rightText
+
+			}
+
+			return Parse(expr, handler)
+		}
+		var boolResult bool
+		switch operator {
+		case "=":
+			boolResult = leftOperand == rightOperand
+		case ">":
+			boolResult = leftOperand > rightOperand
+		case "<":
+			boolResult = leftOperand < rightOperand
+		default:
+			return Parse(expr, handler)
+		}
+
+		return boolResult
 	}
 	return Parse(expr, handler)
+}
+
+func tryBoolOperand(expression string, handler func(expression string, isUDF bool, argument interface{}) (interface{}, bool)) interface{} {
+	expression = strings.TrimSpace(expression)
+	if result, err := toolbox.ToBoolean(expression); err == nil {
+		return result
+	}
+	left := expandEnclosed(expression, handler)
+	if result, err := toolbox.ToBoolean(left); err == nil {
+		return result
+	}
+
+	left = Parse("$"+expression, handler)
+	if result, err := toolbox.ToBoolean(left); err == nil {
+		return result
+	}
+	return expression
 }
 
 func tryNumericOperand(expression string, handler func(expression string, isUDF bool, argument interface{}) (interface{}, bool)) interface{} {

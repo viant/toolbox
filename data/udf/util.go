@@ -368,6 +368,48 @@ func matchPath(xPath string, state data.Map, handler func(value interface{}) err
 				return handler(nodeValue)
 			}
 
+			index := strings.Index(part, "[")
+			if index != -1 && part[index:index+1] == "[" && part[len(part)-1:] == "]" {
+				//Predicate cannot be a part by itself
+				if index == 0 {
+					return fmt.Errorf("predicate expression operator [] must be applied to a slice of maps. E.g. node1/obj[id = 1].  node1/obj/[id = 1] is not valide: %v", part)
+				}
+				//Predicate part.  Evaluate predicate
+				nodeName := part[:index]
+				nodeValue = node.Get(nodeName)
+				if !toolbox.IsSlice(nodeValue) {
+					return fmt.Errorf("expected slice for %v, but had %T", nodeName, nodeValue)
+				}
+
+				//Validate first element of slice
+				nodeValue := toolbox.AsSlice(nodeValue)
+				if !toolbox.IsSlice(nodeValue) && !toolbox.IsMap(nodeValue[0]) {
+					return fmt.Errorf("expected slice elements to be map for %v, but had %T", nodeName, nodeValue[0])
+				}
+
+				var filteredNode []map[string]interface{}
+				expression := part[index+1 : len(part)-1]
+				for _, r := range nodeValue {
+					var rec data.Map
+					rec = r.(map[string]interface{})
+
+					predicateMatch, err := AsBool(rec.ExpandAsText("${"+expression+"}"), nil)
+					if err != nil {
+						return fmt.Errorf("expected expression to evaluate to bool: %v", expression)
+					}
+					if predicateMatch.(bool) {
+						filteredNode = append(filteredNode, rec)
+					}
+				}
+
+				for _, item := range toolbox.AsSlice(filteredNode) {
+					if err := handler(item); err != nil {
+						return err
+					}
+				}
+				return nil
+			}
+
 			if !node.Has(part) {
 				break
 			}

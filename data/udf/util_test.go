@@ -177,6 +177,12 @@ func TestSelect(t *testing.T) {
 			"name":   "p2",
 			"vendor": "v2",
 		})
+		collection.Push(map[string]interface{}{
+			"amount": 20,
+			"id":     4,
+			"name":   "p3",
+			"vendor": "v3",
+		})
 		aMap.SetValue("node1.obj", collection)
 
 		records, err := Select([]interface{}{"node1/obj/*", "id", "name:product"}, aMap)
@@ -190,8 +196,99 @@ func TestSelect(t *testing.T) {
 				"id":      3,
 				"product": "p2",
 			},
+			map[string]interface{}{
+				"id":      4,
+				"product": "p3",
+			},
 		}, records)
 
+		records, err = Select([]interface{}{"node1/obj[amount = 12]", "id", "name:product"}, aMap)
+		assert.Nil(t, err)
+		assert.Equal(t, []interface{}{
+			map[string]interface{}{
+				"id":      3,
+				"product": "p2",
+			},
+		}, records)
+
+		records, err = Select([]interface{}{"node1/obj[vendor = v1]", "id", "name:product"}, aMap)
+		assert.Nil(t, err)
+		assert.Equal(t, []interface{}{
+			map[string]interface{}{
+				"id":      2,
+				"product": "p1",
+			},
+		}, records)
+
+		records, err = Select([]interface{}{"node1/obj[amount > 11 & amount < 13]", "id", "name:product"}, aMap)
+		assert.Nil(t, err)
+		assert.Equal(t, []interface{}{
+			map[string]interface{}{
+				"id":      3,
+				"product": "p2",
+			},
+		}, records)
+
+		records, err = Select([]interface{}{"node1/obj[amount > 11]", "id", "name:product"}, aMap)
+		assert.Nil(t, err)
+		assert.Equal(t, []interface{}{
+			map[string]interface{}{
+				"id":      3,
+				"product": "p2",
+			},
+			map[string]interface{}{
+				"id":      4,
+				"product": "p3",
+			},
+		}, records)
+
+		records, err = Select([]interface{}{"node1/obj[amount < 11]", "id", "name:product"}, aMap)
+		assert.Nil(t, err)
+		assert.Equal(t, []interface{}{
+			map[string]interface{}{
+				"id":      2,
+				"product": "p1",
+			},
+		}, records)
+
+		records, err = Select([]interface{}{"node1/obj[amount < 11]", "id", "name:product"}, aMap)
+		assert.Nil(t, err)
+		assert.Equal(t, []interface{}{
+			map[string]interface{}{
+				"id":      2,
+				"product": "p1",
+			},
+		}, records)
+
+		records, err = Select([]interface{}{"node1/obj[vendor = v2 | vendor = v3]", "id", "name:product"}, aMap)
+		assert.Nil(t, err)
+		assert.Equal(t, []interface{}{
+			map[string]interface{}{
+				"id":      3,
+				"product": "p2",
+			},
+			map[string]interface{}{
+				"id":      4,
+				"product": "p3",
+			},
+		}, records)
+
+		records, err = Select([]interface{}{"node1/obj[vendor = v1 | vendor = v2 | vendor = v3]", "id", "name:product"}, aMap)
+		assert.Nil(t, err)
+		assert.Equal(t, []interface{}{
+			map[string]interface{}{
+				"id":      2,
+				"product": "p1",
+			},
+			map[string]interface{}{
+				"id":      3,
+				"product": "p2",
+			},
+			map[string]interface{}{
+				"id":      4,
+				"product": "p3",
+			},
+		}, records)
 	}
 
 }
