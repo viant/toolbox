@@ -170,13 +170,19 @@ func AsInt(value interface{}) int {
 	var result, err = ToInt(value)
 	if err == nil {
 		return result
+	} else {
+		var floatResult, err = ToFloat(value)
+		if err == nil {
+			return AsInt(floatResult)
+		}
+
 	}
 	return 0
 }
 
 //ToInt converts input value to int or error
 func ToInt(value interface{}) (int, error) {
-	if text, ok := value.(string);ok { //common use case
+	if text, ok := value.(string); ok { //common use case
 		return strconv.Atoi(text)
 	}
 	return toInt(value)
