@@ -281,8 +281,6 @@ func Test_Udf(t *testing.T) {
 	state.Put("b", "2")
 	state.Put("Dob", dateOfBirth)
 
-
-
 	{
 		var text = "$xyz($name)"
 		expanded := state.Expand(text)
@@ -320,8 +318,25 @@ func Test_Udf(t *testing.T) {
 		expanded := state.Expand(text)
 		assert.EqualValues(t, "zz 1 2a", expanded)
 	}
+}
 
-
+func Test_ExpandWithoutUDF(t *testing.T) {
+	state := NewMap()
+	{
+		var text = `$xyz("name")`
+		expanded := state.ExpandWithoutUDF(text)
+		assert.EqualValues(t, `$xyz("name")`, expanded)
+	}
+	{
+		var text = `$xyz("name", "foo")`
+		expanded := state.ExpandWithoutUDF(text)
+		assert.EqualValues(t, `$xyz("name", "foo")`, expanded)
+	}
+	{
+		var text = `$xyz(1, "name", 2, "foo")`
+		expanded := state.ExpandWithoutUDF(text)
+		assert.EqualValues(t, `$xyz(1, "name", 2, "foo")`, expanded)
+	}
 }
 
 func Test_Delete(t *testing.T) {
@@ -332,7 +347,6 @@ func Test_Delete(t *testing.T) {
 	state.Delete("k1.v1", "k2")
 	assert.EqualValues(t, 1, len(state))
 	assert.EqualValues(t, 1, len(state.GetMap("k1")))
-
 }
 
 func Test_Replace(t *testing.T) {

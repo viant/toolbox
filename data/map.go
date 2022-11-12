@@ -453,20 +453,25 @@ func hasGenericKeys(aMap map[string]interface{}) bool {
 	return false
 }
 
+//ExpandWithoutUDF expands text like ExpandAsText but keeps quotes for function arguments
+func (s *Map) ExpandWithoutUDF(text string) string {
+	return s.expandAsText(text, false)
+}
+
 //Expand expands provided value of any type with dollar sign expression/
 func (s *Map) Expand(source interface{}) interface{} {
 	switch value := source.(type) {
 	case bool, []byte, int, uint, int8, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64, time.Time:
 		return source
 	case *[]byte:
-		return s.expandExpressions(string(*value))
+		return s.expandExpressions(string(*value), true)
 	case *string:
 		if value == nil {
 			return ""
 		}
-		return s.expandExpressions(*value)
+		return s.expandExpressions(*value, true)
 	case string:
-		return s.expandExpressions(value)
+		return s.expandExpressions(value, true)
 	case map[string]interface{}:
 		if hasGenericKeys(value) {
 			result := make(map[interface{}]interface{})
@@ -544,7 +549,11 @@ func (s *Map) Expand(source interface{}) interface{} {
 
 //ExpandAsText expands all matching expressions starting with dollar sign ($)
 func (s *Map) ExpandAsText(text string) string {
-	result := s.expandExpressions(text)
+	return s.expandAsText(text, true)
+}
+
+func (s *Map) expandAsText(text string, unquoteExpression bool) string {
+	result := s.expandExpressions(text, unquoteExpression)
 	if toolbox.IsSlice(result) || toolbox.IsMap(result) {
 		buf := new(bytes.Buffer)
 		err := toolbox.NewJSONEncoderFactory().Create(buf).Encode(result)
@@ -634,7 +643,7 @@ func (s *Map) hasCycle(source interface{}, ownerVariable string) bool {
 
 //expandExpressions will check provided text with any expression starting with dollar sign ($) to substitute it with key in the map if it is present.
 //The result can be an expanded text or type of key referenced by the expression.
-func (s *Map) expandExpressions(text string) interface{} {
+func (s *Map) expandExpressions(text string, unquoteExpression bool) interface{} {
 	if strings.Index(text, "$") == -1 {
 		return text
 	}
@@ -666,10 +675,19 @@ func (s *Map) expandExpressions(text string) interface{} {
 		if isUDF {
 			expandedArgument := s.expandArgumentsExpressions(argument)
 			_, isByteArray := expandedArgument.([]byte)
-			if !toolbox.IsMap(expandedArgument) && !toolbox.IsSlice(expandedArgument) || isByteArray {
-				argument = toolbox.AsString(expandedArgument)
+
+			var stringified string
+			if asString, ok := expandedArgument.(string); ok && !unquoteExpression {
+				stringified = `"` + asString + `"`
+			} else {
+				if !toolbox.IsMap(expandedArgument) && !toolbox.IsSlice(expandedArgument) || isByteArray {
+					argument = toolbox.AsString(expandedArgument)
+				}
+
+				stringified = toolbox.AsString(argument)
 			}
-			return expression + "(" + toolbox.AsString(argument) + ")", true
+
+			return expression + "(" + stringified + ")", true
 		}
 		return expression, true
 	}
@@ -688,7 +706,7 @@ func (s *Map) expandArgumentsExpressions(argument interface{}) interface{} {
 
 	if ok {
 		if toolbox.IsStructuredJSON(argumentLiteral) {
-			return s.expandExpressions(argumentLiteral)
+			return s.expandExpressions(argumentLiteral, true)
 		}
 	}
 
