@@ -740,6 +740,10 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 			*targetValuePointer = sourceValue != 0
 			return nil
 		case string:
+			if sourceValue == "" {
+				*targetValuePointer = false
+				return nil
+			}
 			boolValue, err := strconv.ParseBool(sourceValue)
 			if err != nil {
 				return err
@@ -748,6 +752,10 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 			*targetValuePointer = boolValue
 			return nil
 		case *string:
+			if sourceValue == nil || *sourceValue == "" {
+				*targetValuePointer = false
+				return nil
+			}
 			boolValue, err := strconv.ParseBool(*sourceValue)
 			if err != nil {
 				return err
@@ -769,6 +777,11 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 			*targetValuePointer = &boolValue
 			return nil
 		case string:
+			if sourceValue == "" {
+				boolVal := false
+				*targetValuePointer = &boolVal
+				return nil
+			}
 			boolValue, err := strconv.ParseBool(sourceValue)
 			if err != nil {
 				return err
@@ -777,6 +790,11 @@ func (c *Converter) AssignConverted(target, source interface{}) error {
 			*targetValuePointer = &boolValue
 			return nil
 		case *string:
+			if sourceValue == nil || *sourceValue == "" {
+				boolVal := false
+				*targetValuePointer = &boolVal
+				return nil
+			}
 			boolValue, err := strconv.ParseBool(*sourceValue)
 			if err != nil {
 				return err
