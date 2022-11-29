@@ -102,6 +102,17 @@ func ToFloat(value interface{}) (float64, error) {
 	switch actualValue := value.(type) {
 	case float64:
 		return actualValue, nil
+	case *float64:
+		if actualValue == nil {
+			return 0, nil
+		}
+		return *actualValue, nil
+
+	case *float32:
+		if actualValue == nil {
+			return 0, nil
+		}
+		return float64(*actualValue), nil
 	case int:
 		return float64(actualValue), nil
 	case uint:
