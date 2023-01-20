@@ -242,7 +242,7 @@ func (c *service) Reconnect() error {
 func (c *service) OpenTunnel(localAddress, remoteAddress string) error {
 	local, err := net.Listen("tcp", localAddress)
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("failed to listen on local: %v %v", localAddress))
+		return errors.Wrap(err, fmt.Sprintf("failed to listen on local: %v", localAddress))
 	}
 	var forwarding = NewForwarding(c.client, remoteAddress, local)
 	if len(c.forwarding) == 0 {
@@ -255,7 +255,7 @@ func (c *service) OpenTunnel(localAddress, remoteAddress string) error {
 
 func (c *service) connect() (err error) {
 	if c.client, err = ssh.Dial("tcp", c.host, c.config); err != nil {
-		return errors.Wrap(err, fmt.Sprintf("failed to dial %v: %s", c.host))
+		return errors.Wrap(err, fmt.Sprintf("failed to dial: %v", c.host))
 	}
 	return nil
 }
