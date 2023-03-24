@@ -41,6 +41,7 @@ type Config struct {
 	Region    string `json:",omitempty"`
 	AccountID string `json:",omitempty"`
 	Token     string `json:",omitempty"`
+	RoleARN   string `json:",omitempty"` //to asume role
 
 	//google cloud credential
 	ClientEmail             string `json:"client_email,omitempty"`
