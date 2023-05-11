@@ -6,7 +6,6 @@ import (
 	"github.com/viant/toolbox"
 	"io"
 	"io/ioutil"
-	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -41,7 +40,7 @@ func (s *fileStorageService) List(URL string) ([]Object, error) {
 	var result = make([]Object, 0)
 	result = append(result, newFileObject(URL, stat))
 
-	var parsedURL, _ = url.Parse(URL)
+	var parsedURL, _ = Parse(URL)
 	for _, fileInfo := range files {
 		var fileName = fileInfo.Name()
 		if parsedURL != nil {
@@ -56,7 +55,7 @@ func (s *fileStorageService) List(URL string) ([]Object, error) {
 
 //Exists returns true if resource exists
 func (s *fileStorageService) Exists(URL string) (bool, error) {
-	parsedUrl, err := url.Parse(URL)
+	parsedUrl, err := Parse(URL)
 	if err != nil {
 		return false, err
 	}
@@ -107,7 +106,7 @@ func (s *fileStorageService) UploadWithMode(URL string, mode os.FileMode, reader
 	if mode == 0 {
 		mode = DefaultFileMode
 	}
-	parsedUrl, err := url.Parse(URL)
+	parsedUrl, err := Parse(URL)
 	if err != nil {
 		return err
 	}

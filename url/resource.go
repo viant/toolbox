@@ -4,15 +4,18 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"github.com/viant/toolbox"
-	"github.com/viant/toolbox/storage"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
+
+	"github.com/viant/toolbox"
+	"github.com/viant/toolbox/storage"
+	"gopkg.in/yaml.v2"
 )
 
 //Resource represents a URL based resource, with enriched meta info
@@ -152,7 +155,7 @@ func (r *Resource) Decode(target interface{}) (err error) {
 		}
 	}()
 	if r.ParsedURL == nil {
-		if r.ParsedURL, err = url.Parse(r.URL); err != nil {
+		if r.ParsedURL, err = storage.Parse(r.URL); err != nil {
 			return err
 		}
 	}
@@ -212,7 +215,7 @@ func (r *Resource) Rename(name string) (err error) {
 	}
 
 	r.URL = strings.Replace(r.URL, currentName, name, 1)
-	r.ParsedURL, err = url.Parse(r.URL)
+	r.ParsedURL, err = storage.Parse(r.URL)
 	return err
 }
 
@@ -329,7 +332,8 @@ func normalizeURL(URL string) string {
 		}
 		return URL
 	}
-	if !strings.HasPrefix(URL, "/") {
+	r, _ := regexp.Compile(`^(?:[\w]\:|\\).*$`)
+	if !strings.HasPrefix(URL, "/") && !r.MatchString(URL) {
 		currentDirectory, _ := os.Getwd()
 
 		if strings.Contains(URL, "..") {
@@ -351,12 +355,12 @@ func normalizeURL(URL string) string {
 				}
 				break
 			}
-			return toolbox.FileSchema + path.Join(currentDirectory, strings.Join(fragments[index:], "/"))
+			return toolbox.FileSchema + filepath.FromSlash(path.Join(currentDirectory, strings.Join(fragments[index:], "/")))
 		}
 
 		currentDirectory, err := os.Getwd()
 		if err == nil {
-			candidate := path.Join(currentDirectory, URL)
+			candidate := filepath.FromSlash(path.Join(currentDirectory, URL))
 			URL = candidate
 		}
 	}
@@ -369,7 +373,7 @@ func (r *Resource) Init() (err error) {
 	}
 	r.init = r.URL
 	r.URL = normalizeURL(r.URL)
-	r.ParsedURL, err = url.Parse(r.URL)
+	r.ParsedURL, err = storage.Parse(r.URL)
 	return err
 }
 
@@ -417,7 +421,7 @@ func NewResource(Params ...interface{}) *Resource {
 	if len(Params) > 3 {
 		cacheExpiryMs = toolbox.AsInt(Params[3])
 	}
-	parsedURL, _ := url.Parse(URL)
+	parsedURL, _ := storage.Parse(URL)
 	return &Resource{
 		init:          URL,
 		ParsedURL:     parsedURL,
