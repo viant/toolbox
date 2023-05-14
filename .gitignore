@@ -1,2 +1,5 @@
 .idea
 *.iml
+go.mod
+go.sum
+.vscode/

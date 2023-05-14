@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
+	"regexp"
 	"strings"
 )
 
@@ -43,7 +44,7 @@ type storageService struct {
 }
 
 func (s *storageService) getServiceForSchema(URL string) (Service, error) {
-	parsedUrl, err := url.Parse(URL)
+	parsedUrl, err := Parse(URL)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +157,7 @@ func NewService() Service {
 
 //NewServiceForURL creates a new storage service for provided URL scheme and optional credential file
 func NewServiceForURL(URL, credentials string) (Service, error) {
-	parsedURL, err := url.Parse(URL)
+	parsedURL, err := Parse(URL)
 	if err != nil {
 		return nil, err
 	}
@@ -205,4 +206,20 @@ func DownloadText(service Service, URL string) (string, error) {
 		return "", err
 	}
 	return string(content), nil
+}
+
+func Parse(URL string) (*url.URL, error) {
+	//Match windows file path.  net/url package does not support windows paths
+	r, _ := regexp.Compile(`^(file:\/\/)?(?:[\w]\:|\\)((\\|\\\\)([a-zA-Z_\-\s\.0-9])+)*(\\|\\\\)?$`)
+	if r.MatchString(URL) {
+		returnURL := URL
+		if strings.HasPrefix(URL, "file://") {
+			returnURL = URL[7:]
+		}
+		return &url.URL{
+			Scheme: "file",
+			Path: returnURL,
+		}, nil
+	}
+	return url.Parse(URL)
 }
