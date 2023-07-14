@@ -126,9 +126,6 @@ func (from Case) Format(text string, to Case) string {
 							result = append(result, underscore)
 						}
 					}
-				} else if to == CaseUpperCamel {
-					makeLower = false
-					makeUpper = true
 				}
 			}
 		}
