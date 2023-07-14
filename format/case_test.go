@@ -13,6 +13,14 @@ func TestCase_To(t *testing.T) {
 		input       string
 		expect      string
 	}{
+
+		{
+			description: "mismatch",
+			input:       "VendorId",
+			caseFrom:    CaseLowerUnderscore,
+			caseTo:      CaseUpperCamel,
+			expect:      "VendorId",
+		},
 		{
 			description: "camel to uppercase",
 			input:       "thisIsMyTest",
@@ -62,6 +70,13 @@ func TestCase_To(t *testing.T) {
 			caseFrom:    CaseUpperCamel,
 			caseTo:      CaseUpperUnderscore,
 			expect:      "CLIENT_ID",
+		},
+		{
+			description: "upper camel to underscore",
+			input:       "ID",
+			caseFrom:    CaseUpperUnderscore,
+			caseTo:      CaseLowerCamel,
+			expect:      "id",
 		},
 	}
 

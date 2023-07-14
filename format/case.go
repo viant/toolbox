@@ -18,7 +18,7 @@ const (
 	CaseLowerUnderscore
 )
 
-//NewCase create a new case for supplied name or error, supported in case insensitive form "upperCase", "upper", "u"
+// NewCase create a new case for supplied name or error, supported in case insensitive form "upperCase", "upper", "u"
 func NewCase(name string) (Case, error) {
 	switch strings.ToLower(name) {
 	case "upper", "u":
@@ -37,7 +37,7 @@ func NewCase(name string) (Case, error) {
 	return -1, fmt.Errorf("unsupported case format: %s", name)
 }
 
-//String return case format name
+// String return case format name
 func (from Case) String() string {
 	switch from {
 	case CaseUpper:
@@ -56,7 +56,7 @@ func (from Case) String() string {
 	return "UnsupportedCase"
 }
 
-//Format converts supplied text from Case to
+// Format converts supplied text from Case to
 func (from Case) Format(text string, to Case) string {
 	toUpper := false
 	toLower := false
@@ -71,7 +71,9 @@ func (from Case) Format(text string, to Case) string {
 	case CaseLower, CaseLowerUnderscore:
 		toLower = true
 	case CaseUpperCamel, CaseLowerCamel:
+
 		toCamel = true
+
 	}
 	switch to {
 	case CaseUpperUnderscore, CaseLowerUnderscore:
@@ -116,11 +118,17 @@ func (from Case) Format(text string, to Case) string {
 					}
 				}
 			}
-			if unicode.IsUpper(r) && fromCamel {
-				if toUnserscore {
-					if !(i > 1 && result[len(result)-2] == '_') {
-						result = append(result, underscore)
+			if unicode.IsUpper(r) {
+
+				if fromCamel {
+					if toUnserscore {
+						if !(i > 1 && result[len(result)-2] == '_') {
+							result = append(result, underscore)
+						}
 					}
+				} else if to == CaseUpperCamel {
+					makeLower = false
+					makeUpper = true
 				}
 			}
 		}
