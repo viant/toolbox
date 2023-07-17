@@ -3,24 +3,26 @@ package toolbox
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/viant/xunsafe"
 	"reflect"
 	"sort"
 	"strings"
+	"unsafe"
 )
 
-//TrueValueProvider is a function that returns true, it takes one parameters which ignores,
-//This provider can be used to make map from slice like map[some type]bool
+// TrueValueProvider is a function that returns true, it takes one parameters which ignores,
+// This provider can be used to make map from slice like map[some type]bool
 var TrueValueProvider = func(ignore interface{}) bool {
 	return true
 }
 
-//CopyStringValueProvider is a function that returns passed in string
-//This provider can be used to make map from slice like map[string]some type
+// CopyStringValueProvider is a function that returns passed in string
+// This provider can be used to make map from slice like map[string]some type
 var CopyStringValueProvider = func(source string) string {
 	return source
 }
 
-//ReverseSlice reverse a slice
+// ReverseSlice reverse a slice
 func ReverseSlice(source interface{}) {
 	if source == nil {
 		return
@@ -90,7 +92,7 @@ func ReverseSlice(source interface{}) {
 	}
 }
 
-//ProcessSlice iterates over any slice, it calls handler with each element unless handler returns false,
+// ProcessSlice iterates over any slice, it calls handler with each element unless handler returns false,
 func ProcessSlice(slice interface{}, handler func(item interface{}) bool) {
 	//The common cases with reflection for speed
 	if aSlice, ok := slice.([]interface{}); ok {
@@ -139,7 +141,7 @@ func ProcessSlice(slice interface{}, handler func(item interface{}) bool) {
 	}
 }
 
-//ProcessSliceWithIndex iterates over any slice, it calls handler with every index and item unless handler returns false
+// ProcessSliceWithIndex iterates over any slice, it calls handler with every index and item unless handler returns false
 func ProcessSliceWithIndex(slice interface{}, handler func(index int, item interface{}) bool) {
 	if aSlice, ok := slice.([]interface{}); ok {
 		for i, item := range aSlice {
@@ -174,7 +176,7 @@ func ProcessSliceWithIndex(slice interface{}, handler func(index int, item inter
 	}
 }
 
-//AsSlice converts underlying slice or Ranger as []interface{}
+// AsSlice converts underlying slice or Ranger as []interface{}
 func AsSlice(sourceSlice interface{}) []interface{} {
 	var result []interface{}
 	ranger, ok := sourceSlice.(Ranger)
@@ -207,8 +209,8 @@ func AsSlice(sourceSlice interface{}) []interface{} {
 	return result
 }
 
-//IndexSlice reads passed in slice and applies function that takes a slice item as argument to return a key value.
-//passed in resulting map needs to match key type return by a key function, and accept slice item type as argument.
+// IndexSlice reads passed in slice and applies function that takes a slice item as argument to return a key value.
+// passed in resulting map needs to match key type return by a key function, and accept slice item type as argument.
 func IndexSlice(slice, resultingMap, keyFunction interface{}) {
 
 	mapValue := DiscoverValueByKind(resultingMap, reflect.Map)
@@ -219,8 +221,8 @@ func IndexSlice(slice, resultingMap, keyFunction interface{}) {
 	})
 }
 
-//CopySliceElements appends elements from source slice into target
-//This function comes handy if you want to copy from generic []interface{} slice to more specific slice like []string, if source slice element are of the same time
+// CopySliceElements appends elements from source slice into target
+// This function comes handy if you want to copy from generic []interface{} slice to more specific slice like []string, if source slice element are of the same time
 func CopySliceElements(sourceSlice, targetSlicePointer interface{}) {
 
 	if aTargetSlicePointer, ok := targetSlicePointer.(*[]interface{}); ok {
@@ -246,7 +248,7 @@ func CopySliceElements(sourceSlice, targetSlicePointer interface{}) {
 	})
 }
 
-//TransformSlice appends transformed elements from source slice into target, transformer take as argument item of source slice and return value of target slice.
+// TransformSlice appends transformed elements from source slice into target, transformer take as argument item of source slice and return value of target slice.
 func TransformSlice(sourceSlice, targetSlicePointer, transformer interface{}) {
 	AssertPointerKind(targetSlicePointer, reflect.Slice, "targetSlicePointer")
 	sliceValue := reflect.ValueOf(targetSlicePointer).Elem()
@@ -257,7 +259,7 @@ func TransformSlice(sourceSlice, targetSlicePointer, transformer interface{}) {
 	})
 }
 
-//FilterSliceElements copies elements from sourceSlice to targetSlice if predicate function returns true. Predicate function needs to accept source slice element type and return true.
+// FilterSliceElements copies elements from sourceSlice to targetSlice if predicate function returns true. Predicate function needs to accept source slice element type and return true.
 func FilterSliceElements(sourceSlice interface{}, predicate interface{}, targetSlicePointer interface{}) {
 	//The most common case witout reflection
 	if aTargetSlicePointer, ok := targetSlicePointer.(*[]string); ok {
@@ -284,7 +286,7 @@ func FilterSliceElements(sourceSlice interface{}, predicate interface{}, targetS
 	})
 }
 
-//HasSliceAnyElements checks if sourceSlice has any of passed in elements. This method iterates through elements till if finds the first match.
+// HasSliceAnyElements checks if sourceSlice has any of passed in elements. This method iterates through elements till if finds the first match.
 func HasSliceAnyElements(sourceSlice interface{}, elements ...interface{}) (result bool) {
 	ProcessSlice(sourceSlice, func(item interface{}) bool {
 		for _, element := range elements {
@@ -298,7 +300,7 @@ func HasSliceAnyElements(sourceSlice interface{}, elements ...interface{}) (resu
 	return result
 }
 
-//SliceToMap reads passed in slice to to apply the key and value function for each item. Result of these calls is placed in the resulting map.
+// SliceToMap reads passed in slice to to apply the key and value function for each item. Result of these calls is placed in the resulting map.
 func SliceToMap(sourceSlice, targetMap, keyFunction, valueFunction interface{}) {
 	//optimized case
 	if stringBoolMap, ok := targetMap.(map[string]bool); ok {
@@ -323,7 +325,7 @@ func SliceToMap(sourceSlice, targetMap, keyFunction, valueFunction interface{}) 
 	})
 }
 
-//GroupSliceElements reads source slice and transfer all values returned by keyFunction to a slice in target map.
+// GroupSliceElements reads source slice and transfer all values returned by keyFunction to a slice in target map.
 func GroupSliceElements(sourceSlice, targetMap, keyFunction interface{}) {
 	mapValue := DiscoverValueByKind(targetMap, reflect.Map)
 	mapValueType := mapValue.Type().Elem()
@@ -341,8 +343,8 @@ func GroupSliceElements(sourceSlice, targetMap, keyFunction interface{}) {
 	})
 }
 
-//SliceToMultimap reads source slice and transfer all values by valueFunction and returned by keyFunction to a slice in target map.
-//Key and value function result type need to agree with target map type.
+// SliceToMultimap reads source slice and transfer all values by valueFunction and returned by keyFunction to a slice in target map.
+// Key and value function result type need to agree with target map type.
 func SliceToMultimap(sourceSlice, targetMap, keyFunction, valueFunction interface{}) {
 	mapValue := DiscoverValueByKind(targetMap, reflect.Map)
 	mapValueType := mapValue.Type().Elem()
@@ -363,7 +365,7 @@ func SliceToMultimap(sourceSlice, targetMap, keyFunction, valueFunction interfac
 	})
 }
 
-//SetSliceValue sets value at slice index
+// SetSliceValue sets value at slice index
 func SetSliceValue(slice interface{}, index int, value interface{}) {
 	if aSlice, ok := slice.([]string); ok {
 		aSlice[index] = AsString(value)
@@ -377,7 +379,7 @@ func SetSliceValue(slice interface{}, index int, value interface{}) {
 	sliceValue.Index(index).Set(reflect.ValueOf(value))
 }
 
-//GetSliceValue gets value from passed in index
+// GetSliceValue gets value from passed in index
 func GetSliceValue(slice interface{}, index int) interface{} {
 	if aSlice, ok := slice.([]string); ok {
 		return aSlice[index]
@@ -391,7 +393,7 @@ func GetSliceValue(slice interface{}, index int) interface{} {
 
 var errSliceDoesNotHoldKeyValuePairs = errors.New("unable process map, not key value pairs")
 
-//ProcessMap iterates over any map, it calls handler with every key, value pair unless handler returns false.
+// ProcessMap iterates over any map, it calls handler with every key, value pair unless handler returns false.
 func ProcessMap(source interface{}, handler func(key, value interface{}) bool) error {
 	switch aSlice := source.(type) {
 	case map[string]string:
@@ -473,7 +475,7 @@ func ProcessMap(source interface{}, handler func(key, value interface{}) bool) e
 	return nil
 }
 
-//ToMap converts underlying map/struct/[]KV as map[string]interface{}
+// ToMap converts underlying map/struct/[]KV as map[string]interface{}
 func ToMap(source interface{}) (map[string]interface{}, error) {
 	if source == nil {
 		return nil, nil
@@ -519,7 +521,7 @@ func ToMap(source interface{}) (map[string]interface{}, error) {
 	return result, nil
 }
 
-//AsMap converts underlying map as map[string]interface{}
+// AsMap converts underlying map as map[string]interface{}
 func AsMap(source interface{}) map[string]interface{} {
 	if result, err := ToMap(source); err == nil {
 		return result
@@ -527,7 +529,7 @@ func AsMap(source interface{}) map[string]interface{} {
 	return nil
 }
 
-//CopyMapEntries appends map entry from source map to target map
+// CopyMapEntries appends map entry from source map to target map
 func CopyMapEntries(sourceMap, targetMap interface{}) {
 	targetMapValue := reflect.ValueOf(targetMap)
 	if targetMapValue.Kind() == reflect.Ptr {
@@ -546,7 +548,7 @@ func CopyMapEntries(sourceMap, targetMap interface{}) {
 	})
 }
 
-//MapKeysToSlice appends all map keys to targetSlice
+// MapKeysToSlice appends all map keys to targetSlice
 func MapKeysToSlice(sourceMap interface{}, targetSlicePointer interface{}) error {
 	AssertPointerKind(targetSlicePointer, reflect.Slice, "targetSlicePointer")
 	slicePointerValue := reflect.ValueOf(targetSlicePointer).Elem()
@@ -556,7 +558,7 @@ func MapKeysToSlice(sourceMap interface{}, targetSlicePointer interface{}) error
 	})
 }
 
-//MapKeysToStringSlice creates a string slice from sourceMap keys, keys do not need to be of a string type.
+// MapKeysToStringSlice creates a string slice from sourceMap keys, keys do not need to be of a string type.
 func MapKeysToStringSlice(sourceMap interface{}) []string {
 	var keys = make([]string, 0)
 	//common cases
@@ -584,7 +586,7 @@ func MapKeysToStringSlice(sourceMap interface{}) []string {
 	return keys
 }
 
-//Process2DSliceInBatches iterates over any 2 dimensional slice, it calls handler with batch.
+// Process2DSliceInBatches iterates over any 2 dimensional slice, it calls handler with batch.
 func Process2DSliceInBatches(slice [][]interface{}, size int, handler func(batchedSlice [][]interface{})) {
 	batchCount := (len(slice) / size) + 1
 	fromIndex, toIndex := 0, 0
@@ -601,7 +603,7 @@ func Process2DSliceInBatches(slice [][]interface{}, size int, handler func(batch
 	}
 }
 
-//SortStrings creates a new copy of passed in slice and sorts it.
+// SortStrings creates a new copy of passed in slice and sorts it.
 func SortStrings(source []string) []string {
 	var result = make([]string, 0)
 	result = append(result, source...)
@@ -609,7 +611,7 @@ func SortStrings(source []string) []string {
 	return result
 }
 
-//JoinAsString joins all items of a slice, with separator, it takes any slice as argument,
+// JoinAsString joins all items of a slice, with separator, it takes any slice as argument,
 func JoinAsString(slice interface{}, separator string) string {
 	result := ""
 	ProcessSlice(slice, func(item interface{}) bool {
@@ -622,7 +624,7 @@ func JoinAsString(slice interface{}, separator string) string {
 	return result
 }
 
-//MakeStringMap creates a mapstring]string from string,
+// MakeStringMap creates a mapstring]string from string,
 func MakeStringMap(text string, valueSeparator string, itemSeparator string) map[string]string {
 	var result = make(map[string]string)
 	for _, item := range strings.Split(text, itemSeparator) {
@@ -637,7 +639,7 @@ func MakeStringMap(text string, valueSeparator string, itemSeparator string) map
 	return result
 }
 
-//MakeMap creates a mapstring]interface{} from string,
+// MakeMap creates a mapstring]interface{} from string,
 func MakeMap(text string, valueSeparator string, itemSeparator string) map[string]interface{} {
 	var result = make(map[string]interface{})
 	for _, item := range strings.Split(text, itemSeparator) {
@@ -652,7 +654,7 @@ func MakeMap(text string, valueSeparator string, itemSeparator string) map[strin
 	return result
 }
 
-//MakeReverseStringMap creates a mapstring]string from string, the values become key, and key values
+// MakeReverseStringMap creates a mapstring]string from string, the values become key, and key values
 func MakeReverseStringMap(text string, valueSepartor string, itemSeparator string) map[string]string {
 	var result = make(map[string]string)
 	for _, item := range strings.Split(text, itemSeparator) {
@@ -705,15 +707,18 @@ func isNilOrEmpty(v interface{}) bool {
 		if value == nil {
 			return true
 		}
+	default:
+		if reflect.TypeOf(v).Kind() == reflect.Ptr {
+			if ptr := xunsafe.AsPointer(v); *(*unsafe.Pointer)(ptr) == nil {
+				return true
+			}
+		}
 	}
 	return AsString(v) == ""
 }
 
-
-
-
-//CopyMap copy source map into destination map, copier function can modify key, value, or return false to skip map entry
-func CopyMap(input, output interface{}, copier func(key, value interface{}) (interface{},interface{}, bool)) (err error) {
+// CopyMap copy source map into destination map, copier function can modify key, value, or return false to skip map entry
+func CopyMap(input, output interface{}, copier func(key, value interface{}) (interface{}, interface{}, bool)) (err error) {
 	var mutator func(k, v interface{})
 	if aMap, ok := output.(map[interface{}]interface{}); ok {
 		mutator = func(k, v interface{}) {
@@ -739,13 +744,13 @@ func CopyMap(input, output interface{}, copier func(key, value interface{}) (int
 	}
 	var ok bool
 	err = ProcessMap(input, func(k, v interface{}) bool {
-		k,  v,  ok = copier(k, v)
-		if ! ok {
+		k, v, ok = copier(k, v)
+		if !ok {
 			return true
 		}
 		if v == nil {
 			//
-		} else if  IsMap(v) {
+		} else if IsMap(v) {
 			transformed := mapProvider(v)()
 			err = CopyMap(v, transformed, copier)
 			if err != nil {
@@ -756,7 +761,7 @@ func CopyMap(input, output interface{}, copier func(key, value interface{}) (int
 			}
 			v = transformed
 
-		} else if  IsSlice(v) {
+		} else if IsSlice(v) {
 			aSlice := AsSlice(v)
 			var transformed = []interface{}{}
 			for _, item := range aSlice {
@@ -790,9 +795,8 @@ func CopyMap(input, output interface{}, copier func(key, value interface{}) (int
 	return err
 }
 
-
-//OmitEmptyMapWriter return false for all nil or empty values
-func OmitEmptyMapWriter(key, value interface{}) (interface{}, interface{}, bool){
+// OmitEmptyMapWriter return false for all nil or empty values
+func OmitEmptyMapWriter(key, value interface{}) (interface{}, interface{}, bool) {
 	if value == nil {
 		return key, value, false
 	}
@@ -802,7 +806,7 @@ func OmitEmptyMapWriter(key, value interface{}) (interface{}, interface{}, bool)
 		}
 	}
 	if IsString(value) {
-		return key, value,  AsString(value) != ""
+		return key, value, AsString(value) != ""
 	}
 	if IsBool(value) {
 		return key, value, AsBoolean(value)
@@ -813,9 +817,7 @@ func OmitEmptyMapWriter(key, value interface{}) (interface{}, interface{}, bool)
 	return key, value, true
 }
 
-
-
-//CopyNonEmptyMapEntries removes empty keys from map result
+// CopyNonEmptyMapEntries removes empty keys from map result
 func CopyNonEmptyMapEntries(input, output interface{}) (err error) {
 	return CopyMap(input, output, func(key, value interface{}) (interface{}, interface{}, bool) {
 		if isNilOrEmpty(value) {
@@ -825,7 +827,7 @@ func CopyNonEmptyMapEntries(input, output interface{}) (err error) {
 	})
 }
 
-//CopyNonEmptyMapEntries removes empty keys from map result
+// CopyNonEmptyMapEntries removes empty keys from map result
 func ReplaceMapEntries(input, output interface{}, replacement map[string]interface{}, removeEmpty bool) (err error) {
 	return CopyMap(input, output, func(key, value interface{}) (interface{}, interface{}, bool) {
 		k := AsString(key)
@@ -839,7 +841,7 @@ func ReplaceMapEntries(input, output interface{}, replacement map[string]interfa
 	})
 }
 
-//DeleteEmptyKeys removes empty keys from map result
+// DeleteEmptyKeys removes empty keys from map result
 func DeleteEmptyKeys(input interface{}) map[string]interface{} {
 	result := map[string]interface{}{}
 	err := CopyNonEmptyMapEntries(input, result)
@@ -849,14 +851,14 @@ func DeleteEmptyKeys(input interface{}) map[string]interface{} {
 	return AsMap(input)
 }
 
-//DeleteEmptyKeys removes empty keys from map result
+// DeleteEmptyKeys removes empty keys from map result
 func ReplaceMapKeys(input interface{}, replacement map[string]interface{}, removeEmpty bool) map[string]interface{} {
 	result := map[string]interface{}{}
 	_ = ReplaceMapEntries(input, result, replacement, removeEmpty)
 	return result
 }
 
-//Pairs returns map for pairs.
+// Pairs returns map for pairs.
 func Pairs(params ...interface{}) map[string]interface{} {
 	var result = make(map[string]interface{})
 	for i := 0; i+1 < len(params); i += 2 {
@@ -867,7 +869,7 @@ func Pairs(params ...interface{}) map[string]interface{} {
 }
 
 // Intersect find elements presents in slice a and b,  match is appended to result slice
-//It accept generic slices,   All slices should have items of the same type or interface{} type
+// It accept generic slices,   All slices should have items of the same type or interface{} type
 func Intersect(a, b interface{}, resultPointer interface{}) error {
 	if reflect.ValueOf(resultPointer).Kind() != reflect.Ptr {
 		return fmt.Errorf("resultPointer has to be pointer but had: %T", resultPointer)
