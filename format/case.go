@@ -47,7 +47,7 @@ func (from Case) String() string {
 	case CaseUpperCamel:
 		return "UpperCamel"
 	case CaseLowerCamel:
-		return "UpperCamel"
+		return "LowerCamel"
 	case CaseUpperUnderscore:
 		return "UpperUnderscore"
 	case CaseLowerUnderscore:
