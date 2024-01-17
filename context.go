@@ -75,7 +75,7 @@ func (c *contextImpl) GetOptional(targetType interface{}) interface{} {
 func (c *contextImpl) GetInto(targetType, target interface{}) bool {
 	key := c.getKey(targetType)
 	c.mux.RLock()
-	defer c.muc.RUnlock()
+	defer c.mux.RUnlock()
 	if result, ok := c.context[key]; ok {
 		reflect.ValueOf(target).Elem().Set(reflect.ValueOf(result))
 		return true
