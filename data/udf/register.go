@@ -2,7 +2,7 @@ package udf
 
 import "github.com/viant/toolbox/data"
 
-//Register registers defined in this package UDFs
+// Register registers defined in this package UDFs
 func Register(aMap data.Map) {
 	aMap.Put("AsInt", AsInt)
 	aMap.Put("AsString", AsString)
@@ -19,6 +19,7 @@ func Register(aMap data.Map) {
 	aMap.Put("Join", Join)
 	aMap.Put("Split", Split)
 	aMap.Put("Keys", Keys)
+	aMap.Put("StringKeys", StringKeys)
 	aMap.Put("Values", Values)
 	aMap.Put("Length", Length)
 	aMap.Put("Len", Length)
