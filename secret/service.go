@@ -15,7 +15,7 @@ import (
 	"sync"
 )
 
-//represents a secret service
+// represents a secret service
 type Service struct {
 	interactive   bool
 	baseDirectory string
@@ -30,7 +30,6 @@ func (s *Service) CredentialsLocation(secret string) (string, error) {
 	if path.Ext(secret) == "" {
 		secret += ".json"
 	}
-
 	if strings.HasPrefix(secret, "~") {
 		secret = strings.Replace(secret, "~", os.Getenv("HOME"), 1)
 	}
@@ -46,7 +45,7 @@ func (s *Service) CredentialsLocation(secret string) (string, error) {
 	return toolbox.URLPathJoin(s.baseDirectory, secret), nil
 }
 
-//Credentials returns credential config for supplied location.
+// Credentials returns credential config for supplied location.
 func (s *Service) CredentialsFromLocation(secret string) (*cred.Config, error) {
 	secretLocation, err := s.CredentialsLocation(secret)
 	if err != nil {
@@ -74,7 +73,7 @@ func (s *Service) CredentialsFromLocation(secret string) (*cred.Config, error) {
 	return credConfig, nil
 }
 
-//GetOrCreate gets or creates credential
+// GetOrCreate gets or creates credential
 func (s *Service) GetOrCreate(secret string) (*cred.Config, error) {
 	if secret == "" {
 		return nil, errors.New("secret was empty")
@@ -90,7 +89,7 @@ func (s *Service) GetOrCreate(secret string) (*cred.Config, error) {
 	return result, err
 }
 
-//Credentials returns credential config
+// Credentials returns credential config
 func (s *Service) GetCredentials(secret string) (*cred.Config, error) {
 	if !Secret(secret).IsLocation() {
 		var result = &cred.Config{Data: string(secret)}
@@ -144,7 +143,7 @@ func (s *Service) expandSecret(command string, key SecretKey, secret Secret) (st
 	return command, nil
 }
 
-//Expand expands input credential keys with actual CredentialsFromLocation
+// Expand expands input credential keys with actual CredentialsFromLocation
 func (s *Service) Expand(input string, credentials map[SecretKey]Secret) (string, error) {
 	if len(credentials) == 0 {
 		return input, nil
@@ -165,7 +164,7 @@ func (s *Service) Expand(input string, credentials map[SecretKey]Secret) (string
 	return input, nil
 }
 
-//Create creates a new credential config for supplied name
+// Create creates a new credential config for supplied name
 func (s *Service) Create(name, privateKeyPath string) (string, error) {
 	if strings.HasPrefix(privateKeyPath, "~") {
 		privateKeyPath = strings.Replace(privateKeyPath, "~", os.Getenv("HOME"), 1)
@@ -195,7 +194,7 @@ func (s *Service) Create(name, privateKeyPath string) (string, error) {
 	return secretResource.URL, err
 }
 
-//NewSecretService creates a new secret service
+// NewSecretService creates a new secret service
 func New(baseDirectory string, interactive bool) *Service {
 	if baseDirectory == "" {
 		baseDirectory = path.Join(os.Getenv("HOME"), ".secret")

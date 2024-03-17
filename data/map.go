@@ -8,18 +8,22 @@ import (
 	"time"
 )
 
-//Map types is an alias type to map[string]interface{} with extended behaviours
+const (
+	UDFKey = "_udf"
+)
+
+// Map types is an alias type to map[string]interface{} with extended behaviours
 type Map map[string]interface{}
 
-//Udf represents a user defined function used to transform data.
+// Udf represents a user defined function used to transform data.
 type Udf func(interface{}, Map) (interface{}, error)
 
-//Put puts key value into the map.
+// Put puts key value into the map.
 func (s *Map) Put(key string, value interface{}) {
 	(*s)[key] = value
 }
 
-//Delete removes the supplied keys, it supports key of path expression with dot i.e. request.method
+// Delete removes the supplied keys, it supports key of path expression with dot i.e. request.method
 func (s *Map) Delete(keys ...string) {
 	for _, key := range keys {
 		if !strings.Contains(key, ".") {
@@ -45,7 +49,7 @@ func (s *Map) Delete(keys ...string) {
 	}
 }
 
-//Replace replaces supplied key/path with corresponding value
+// Replace replaces supplied key/path with corresponding value
 func (s *Map) Replace(key, val string) {
 	if !strings.Contains(key, ".") {
 		(*s)[key] = val
@@ -70,13 +74,13 @@ func (s *Map) Replace(key, val string) {
 
 }
 
-//Has returns true if the provided key is present
+// Has returns true if the provided key is present
 func (s *Map) Has(key string) bool {
 	_, found := (*s)[key]
 	return found
 }
 
-//Get returns a value for provided key
+// Get returns a value for provided key
 func (s *Map) Get(key string) interface{} {
 	if result, found := (*s)[key]; found {
 		return result
@@ -88,10 +92,10 @@ func (s *Map) Get(key string) interface{} {
 GetValue returns value for provided expression.
 The expression uses dot (.) to denote nested data structure.
 The following expression as supported
- 1) <-key shift
- 2) ++key pre increment
- 3) key++ post increment
- 4) $key reference access
+ 1. <-key shift
+ 2. ++key pre increment
+ 3. key++ post increment
+ 4. $key reference access
 */
 func (s *Map) GetValue(expr string) (interface{}, bool) {
 	if expr == "" {
@@ -234,8 +238,8 @@ Set value sets value in the map for the supplied expression.
 The expression uses dot (.) to denote nested data structure. For instance the following expression key1.subKey1.attr1
 Would take or create map for key1, followied bu takeing or creating antother map for subKey1 to set attr1 key with provided value
 The following expression as supported
- 1) $key reference - the final key is determined from key's content.
- 2) ->key push expression to append value at the end of the slice
+ 1. $key reference - the final key is determined from key's content.
+ 2. ->key push expression to append value at the end of the slice
 */
 func (s *Map) SetValue(expr string, value interface{}) {
 	if expr == "" {
@@ -297,14 +301,14 @@ func (s *Map) SetValue(expr string, value interface{}) {
 	state.Put(expr, value)
 }
 
-//Apply copies all elements of provided map to this map.
+// Apply copies all elements of provided map to this map.
 func (s *Map) Apply(source map[string]interface{}) {
 	for k, v := range source {
 		(*s)[k] = v
 	}
 }
 
-//GetString returns value for provided key as string.
+// GetString returns value for provided key as string.
 func (s *Map) GetString(key string) string {
 	if result, found := (*s)[key]; found {
 		return toolbox.AsString(result)
@@ -312,7 +316,7 @@ func (s *Map) GetString(key string) string {
 	return ""
 }
 
-//GetInt returns value for provided key as int.
+// GetInt returns value for provided key as int.
 func (s *Map) GetInt(key string) int {
 	if result, found := (*s)[key]; found {
 		return toolbox.AsInt(result)
@@ -320,7 +324,7 @@ func (s *Map) GetInt(key string) int {
 	return 0
 }
 
-//GetFloat returns value for provided key as float64.
+// GetFloat returns value for provided key as float64.
 func (s *Map) GetFloat(key string) float64 {
 	if result, found := (*s)[key]; found {
 		return toolbox.AsFloat(result)
@@ -328,7 +332,7 @@ func (s *Map) GetFloat(key string) float64 {
 	return 0.0
 }
 
-//GetBoolean returns value for provided key as boolean.
+// GetBoolean returns value for provided key as boolean.
 func (s *Map) GetBoolean(key string) bool {
 	if result, found := (*s)[key]; found {
 		return toolbox.AsBoolean(result)
@@ -336,7 +340,7 @@ func (s *Map) GetBoolean(key string) bool {
 	return false
 }
 
-//GetCollection returns value for provided key as collection pointer.
+// GetCollection returns value for provided key as collection pointer.
 func (s *Map) GetCollection(key string) *Collection {
 	if result, found := (*s)[key]; found {
 		collectionPointer, ok := result.(*Collection)
@@ -359,7 +363,7 @@ func (s *Map) GetCollection(key string) *Collection {
 	return nil
 }
 
-//GetMap returns value for provided key as  map.
+// GetMap returns value for provided key as  map.
 func (s *Map) GetMap(key string) Map {
 	if result, found := (*s)[key]; found {
 		aMap, ok := result.(Map)
@@ -377,7 +381,7 @@ func (s *Map) GetMap(key string) Map {
 	return nil
 }
 
-//Range iterates every key, value pair of this map, calling supplied callback as long it does return true.
+// Range iterates every key, value pair of this map, calling supplied callback as long it does return true.
 func (s *Map) Range(callback func(k string, v interface{}) (bool, error)) error {
 	for k, v := range *s {
 		next, err := callback(k, v)
@@ -391,7 +395,7 @@ func (s *Map) Range(callback func(k string, v interface{}) (bool, error)) error 
 	return nil
 }
 
-//Clones create a clone of this map.
+// Clones create a clone of this map.
 func (s *Map) Clone() Map {
 	var result = NewMap()
 	for key, value := range *s {
@@ -404,8 +408,8 @@ func (s *Map) Clone() Map {
 	return result
 }
 
-//Returns a map that can be encoded by json or other decoders.
-//Since a map can store a function, it filters out any non marshalable types.
+// Returns a map that can be encoded by json or other decoders.
+// Since a map can store a function, it filters out any non marshalable types.
 func (s *Map) AsEncodableMap() map[string]interface{} {
 	var result = make(map[string]interface{})
 	for k, v := range *s {
@@ -417,7 +421,7 @@ func (s *Map) AsEncodableMap() map[string]interface{} {
 	return result
 }
 
-//asEncodableValue returns all non func values or func() literal for function.
+// asEncodableValue returns all non func values or func() literal for function.
 func asEncodableValue(v interface{}) interface{} {
 	if v == nil {
 		return nil
@@ -453,12 +457,12 @@ func hasGenericKeys(aMap map[string]interface{}) bool {
 	return false
 }
 
-//ExpandWithoutUDF expands text like ExpandAsText but keeps quotes for function arguments
+// ExpandWithoutUDF expands text like ExpandAsText but keeps quotes for function arguments
 func (s *Map) ExpandWithoutUDF(text string) string {
 	return s.expandAsText(text, false)
 }
 
-//Expand expands provided value of any type with dollar sign expression/
+// Expand expands provided value of any type with dollar sign expression/
 func (s *Map) Expand(source interface{}) interface{} {
 	switch value := source.(type) {
 	case bool, []byte, int, uint, int8, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64, time.Time:
@@ -547,7 +551,7 @@ func (s *Map) Expand(source interface{}) interface{} {
 	return source
 }
 
-//ExpandAsText expands all matching expressions starting with dollar sign ($)
+// ExpandAsText expands all matching expressions starting with dollar sign ($)
 func (s *Map) ExpandAsText(text string) string {
 	return s.expandAsText(text, true)
 }
@@ -641,14 +645,24 @@ func (s *Map) hasCycle(source interface{}, ownerVariable string) bool {
 	return false
 }
 
-//expandExpressions will check provided text with any expression starting with dollar sign ($) to substitute it with key in the map if it is present.
-//The result can be an expanded text or type of key referenced by the expression.
+// expandExpressions will check provided text with any expression starting with dollar sign ($) to substitute it with key in the map if it is present.
+// The result can be an expanded text or type of key referenced by the expression.
 func (s *Map) expandExpressions(text string, unquoteExpression bool) interface{} {
 	if strings.Index(text, "$") == -1 {
 		return text
 	}
-	var expandVariable = func(expression string, isUDF bool, argument interface{}) (interface{}, bool) {
-		value, hasExpValue := s.GetValue(string(expression[1:]))
+	udfs := s.GetMap(UDFKey)
+	hasUdfs := len(udfs) > 0
+	var expandVariable = func(expression string, isUDF bool, argument interface{}) (value interface{}, hasExpValue bool) {
+		aKey := string(expression[1:])
+
+		if hasUdfs {
+			value, hasExpValue = udfs.GetValue(aKey)
+		}
+		if !hasExpValue {
+			value, hasExpValue = s.GetValue(string(expression[1:]))
+		}
+
 		if hasExpValue {
 			if value != expression && s.hasCycle(value, expression) {
 				log.Printf("detected data cycle on %v in value: %v", expression, value)
@@ -676,18 +690,17 @@ func (s *Map) expandExpressions(text string, unquoteExpression bool) interface{}
 			expandedArgument := s.expandArgumentsExpressions(argument)
 			_, isByteArray := expandedArgument.([]byte)
 
-			var stringified string
+			var stringified2 string
 			if asString, ok := expandedArgument.(string); ok && !unquoteExpression {
-				stringified = `"` + asString + `"`
+				stringified2 = `"` + asString + `"`
 			} else {
 				if !toolbox.IsMap(expandedArgument) && !toolbox.IsSlice(expandedArgument) || isByteArray {
 					argument = toolbox.AsString(expandedArgument)
 				}
-
-				stringified = toolbox.AsString(argument)
+				stringified2 = toolbox.AsString(argument)
 			}
 
-			return expression + "(" + stringified + ")", true
+			return expression + "(" + stringified2 + ")", true
 		}
 		return expression, true
 	}
@@ -695,8 +708,8 @@ func (s *Map) expandExpressions(text string, unquoteExpression bool) interface{}
 	return Parse(text, expandVariable)
 }
 
-//expandExpressions will check provided text with any expression starting with dollar sign ($) to substitute it with key in the map if it is present.
-//The result can be an expanded text or type of key referenced by the expression.
+// expandExpressions will check provided text with any expression starting with dollar sign ($) to substitute it with key in the map if it is present.
+// The result can be an expanded text or type of key referenced by the expression.
 func (s *Map) expandArgumentsExpressions(argument interface{}) interface{} {
 	if argument == nil || !toolbox.IsString(argument) {
 		return argument
@@ -779,7 +792,7 @@ func (s *Map) expandArgumentsExpressions(argument interface{}) interface{} {
 	return result
 }
 
-//NewMap creates a new instance of a map.
+// NewMap creates a new instance of a map.
 func NewMap() Map {
 	return make(map[string]interface{})
 }
