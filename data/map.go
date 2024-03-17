@@ -413,7 +413,7 @@ func (s *Map) Clone() Map {
 func (s *Map) AsEncodableMap() map[string]interface{} {
 	var result = make(map[string]interface{})
 	for k, v := range *s {
-		if v == nil {
+		if v == nil || k == UDFKey {
 			continue
 		}
 		result[k] = asEncodableValue(v)
