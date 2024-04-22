@@ -76,12 +76,18 @@ func (s *Map) Replace(key, val string) {
 
 // Has returns true if the provided key is present
 func (s *Map) Has(key string) bool {
+	if index := strings.LastIndex(key, "("); index != -1 {
+		key = key[:index]
+	}
 	_, found := (*s)[key]
 	return found
 }
 
 // Get returns a value for provided key
 func (s *Map) Get(key string) interface{} {
+	if index := strings.LastIndex(key, "("); index != -1 {
+		key = key[:index]
+	}
 	if result, found := (*s)[key]; found {
 		return result
 	}
@@ -145,19 +151,15 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 				}
 			}
 			isLast := i+1 == len(fragments)
-
 			hasKey := state.Has(fragment)
 			if !hasKey {
 				return nil, false
 			}
-
 			var candidate = state.Get(fragment)
 			if !isLast && candidate == nil {
 				return nil, false
 			}
-
 			if index != nil {
-
 				if intIndex, err := toolbox.ToInt(index); err == nil {
 					if !toolbox.IsSlice(candidate) {
 						return nil, false

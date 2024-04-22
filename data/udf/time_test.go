@@ -41,6 +41,7 @@ func Test_FormatTime(t *testing.T) {
 		now := time.Now()
 		assert.Equal(t, now.Year(), toolbox.AsInt(value))
 	}
+
 	{
 		aMap := data.NewMap()
 		aMap.Put("ts", "2015-02-11")

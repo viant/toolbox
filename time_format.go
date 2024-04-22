@@ -5,13 +5,13 @@ import (
 	"time"
 )
 
-//DateFormatKeyword constant 'dateFormat' key
+// DateFormatKeyword constant 'dateFormat' key
 var DateFormatKeyword = "dateFormat"
 
-//DateLayoutKeyword constant 'dateLayout' key
+// DateLayoutKeyword constant 'dateLayout' key
 var DateLayoutKeyword = "dateLayout"
 
-//DateFormatToLayout converts java date format https://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html#rfc822timezone into go date layout
+// DateFormatToLayout converts java date format https://docs.oracle.com/javase/6/docs/api/java/text/SimpleDateFormat.html#rfc822timezone into go date layout
 func DateFormatToLayout(dateFormat string) string {
 
 	dateFormat = strings.Replace(dateFormat, "ddd", "_2", 1)
@@ -53,12 +53,11 @@ func DateFormatToLayout(dateFormat string) string {
 
 	dateFormat = strings.Replace(dateFormat, "EEEE", "Monday", 1)
 	dateFormat = strings.Replace(dateFormat, "E", "Mon", 1)
-
 	return dateFormat
 }
 
-//GetTimeLayout returns time laout from passed in map, first it check if DateLayoutKeyword is defined is so it returns it, otherwise it check DateFormatKeyword and if exists converts it to  dateLayout
-//If neithers keys exists it panics, please use HasTimeLayout to avoid panic
+// GetTimeLayout returns time laout from passed in map, first it check if DateLayoutKeyword is defined is so it returns it, otherwise it check DateFormatKeyword and if exists converts it to  dateLayout
+// If neithers keys exists it panics, please use HasTimeLayout to avoid panic
 func GetTimeLayout(input interface{}) string {
 	switch settings := input.(type) {
 	case map[string]string:
@@ -83,7 +82,7 @@ func GetTimeLayout(input interface{}) string {
 	return ""
 }
 
-//HasTimeLayout checks if dateLayout can be taken from the passed in setting map
+// HasTimeLayout checks if dateLayout can be taken from the passed in setting map
 func HasTimeLayout(input interface{}) bool {
 	switch settings := input.(type) {
 	case map[string]string:
@@ -106,7 +105,7 @@ func HasTimeLayout(input interface{}) bool {
 	return false
 }
 
-//TimestampToString formats timestamp to passed in java style date format
+// TimestampToString formats timestamp to passed in java style date format
 func TimestampToString(dateFormat string, unixTimestamp, unixNanoTimestamp int64) string {
 	t := time.Unix(unixTimestamp, unixNanoTimestamp)
 	dateLayout := DateFormatToLayout(dateFormat)
