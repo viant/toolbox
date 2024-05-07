@@ -44,7 +44,7 @@ func FormatTime(source interface{}, state data.Map) (interface{}, error) {
 		formatArg := toolbox.AsString(aSlice[1])
 		switch strings.Trim(formatArg, `" ,`) {
 		case "secondsOfDay":
-			return timeValue.Hour()*60 + timeValue.Second(), nil
+			return timeValue.Hour()*60*60 + timeValue.Minute()*60 + timeValue.Second(), nil
 		}
 		if timeLayout == "" {
 			timeFormat := toolbox.AsString(aSlice[1])
