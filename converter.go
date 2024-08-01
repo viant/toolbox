@@ -300,7 +300,7 @@ func textToTime(value, dateLayout string) (*time.Time, error) {
 			}
 
 			if msIndex := strings.LastIndex(rawValue, "."); msIndex != -1 {
-				ms := value[msIndex:]
+				ms := value[msIndex+1:]
 				i := 0
 				for ; i < len(ms); i++ {
 					if ms[i] < '0' || ms[i] > '9' {
