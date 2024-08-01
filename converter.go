@@ -280,8 +280,6 @@ func unitToTime(timestamp int64) *time.Time {
 	return &timeValue
 }
 
-const fallbackLayout = "2006-01-02T15:04:05.999"
-
 func textToTime(value, dateLayout string) (*time.Time, error) {
 	floatValue, err := ToFloat(value)
 	if err == nil {
@@ -300,10 +298,19 @@ func textToTime(value, dateLayout string) (*time.Time, error) {
 				return &timeValue, err
 			}
 
-			if timeValue, err = ParseTime(value, fallbackLayout); err == nil {
-				return &timeValue, err
+			if msIndex := strings.LastIndex(value, "."); msIndex != -1 {
+				ms := value[msIndex:]
+				i := 0
+				for ; i < len(ms); i++ {
+					if ms[i] < '0' || ms[i] > '9' {
+						break
+					}
+				}
+				msLayout := fmt.Sprintf("2006-01-02T15:04:05.%sZ07:00", strings.Repeat("9", i))
+				if timeValue, err = ParseTime(value, msLayout); err == nil {
+					return &timeValue, err
+				}
 			}
-
 			return nil, err
 		}
 
