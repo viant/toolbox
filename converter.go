@@ -285,6 +285,7 @@ func textToTime(value, dateLayout string) (*time.Time, error) {
 	if err == nil {
 		return unitToTime(int64(floatValue)), nil
 	}
+	rawValue := value
 	timeValue, err := ParseTime(value, dateLayout)
 	if err != nil {
 		if dateLayout != "" {
@@ -298,7 +299,7 @@ func textToTime(value, dateLayout string) (*time.Time, error) {
 				return &timeValue, err
 			}
 
-			if msIndex := strings.LastIndex(value, "."); msIndex != -1 {
+			if msIndex := strings.LastIndex(rawValue, "."); msIndex != -1 {
 				ms := value[msIndex:]
 				i := 0
 				for ; i < len(ms); i++ {
@@ -307,7 +308,7 @@ func textToTime(value, dateLayout string) (*time.Time, error) {
 					}
 				}
 				msLayout := fmt.Sprintf("2006-01-02T15:04:05.%sZ07:00", strings.Repeat("9", i))
-				if timeValue, err = ParseTime(value, msLayout); err == nil {
+				if timeValue, err = ParseTime(rawValue, msLayout); err == nil {
 					return &timeValue, err
 				}
 			}
