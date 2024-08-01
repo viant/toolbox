@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-//DefaultDateLayout is set to 2006-01-02 15:04:05.000
+// DefaultDateLayout is set to 2006-01-02 15:04:05.000
 var DefaultDateLayout = "2006-01-02 15:04:05.000"
 var numericTypes = []reflect.Type{
 	reflect.TypeOf(int(0)),
@@ -29,7 +29,7 @@ var numericTypes = []reflect.Type{
 	reflect.TypeOf(float64(0.0)),
 }
 
-//AsString converts an input to string.
+// AsString converts an input to string.
 func AsString(input interface{}) string {
 	switch value := input.(type) {
 	case string:
@@ -77,7 +77,7 @@ func AsString(input interface{}) string {
 	return fmt.Sprintf("%v", input)
 }
 
-//CanConvertToFloat checkis if float conversion is possible.
+// CanConvertToFloat checkis if float conversion is possible.
 func CanConvertToFloat(value interface{}) bool {
 	if _, ok := value.(float64); ok {
 		return true
@@ -86,7 +86,7 @@ func CanConvertToFloat(value interface{}) bool {
 	return err == nil
 }
 
-//AsFloat converts an input to float.
+// AsFloat converts an input to float.
 func AsFloat(value interface{}) float64 {
 	if result, err := ToFloat(value); err == nil {
 		return result
@@ -94,7 +94,7 @@ func AsFloat(value interface{}) float64 {
 	return 0
 }
 
-//ToFloat converts an input to float or error
+// ToFloat converts an input to float or error
 func ToFloat(value interface{}) (float64, error) {
 	if value == nil {
 		return 0, NewNilPointerError("float value was nil")
@@ -144,7 +144,7 @@ func ToFloat(value interface{}) (float64, error) {
 	return strconv.ParseFloat(valueAsString, 64)
 }
 
-//ToBoolean converts an input to bool.
+// ToBoolean converts an input to bool.
 func ToBoolean(value interface{}) (bool, error) {
 	if boolValue, ok := value.(bool); ok {
 		return boolValue, nil
@@ -153,7 +153,7 @@ func ToBoolean(value interface{}) (bool, error) {
 	return strconv.ParseBool(valueAsString)
 }
 
-//AsBoolean converts an input to bool.
+// AsBoolean converts an input to bool.
 func AsBoolean(value interface{}) bool {
 	result, err := ToBoolean(value)
 	if err != nil {
@@ -162,7 +162,7 @@ func AsBoolean(value interface{}) bool {
 	return result
 }
 
-//CanConvertToInt returns true if an input can be converted to int value.
+// CanConvertToInt returns true if an input can be converted to int value.
 func CanConvertToInt(value interface{}) bool {
 	if _, ok := value.(int); ok {
 		return true
@@ -176,7 +176,7 @@ func CanConvertToInt(value interface{}) bool {
 
 var intBitSize = reflect.TypeOf(int64(0)).Bits()
 
-//AsInt converts an input to int.
+// AsInt converts an input to int.
 func AsInt(value interface{}) int {
 	var result, err = ToInt(value)
 	if err == nil {
@@ -191,7 +191,7 @@ func AsInt(value interface{}) int {
 	return 0
 }
 
-//ToInt converts input value to int or error
+// ToInt converts input value to int or error
 func ToInt(value interface{}) (int, error) {
 	if text, ok := value.(string); ok { //common use case
 		return strconv.Atoi(text)
@@ -280,6 +280,8 @@ func unitToTime(timestamp int64) *time.Time {
 	return &timeValue
 }
 
+const fallbackLayout = "2006-01-02T15:04:05.999"
+
 func textToTime(value, dateLayout string) (*time.Time, error) {
 	floatValue, err := ToFloat(value)
 	if err == nil {
@@ -297,13 +299,19 @@ func textToTime(value, dateLayout string) (*time.Time, error) {
 			if timeValue, err = ParseTime(value, time.RFC3339); err == nil {
 				return &timeValue, err
 			}
+
+			if timeValue, err = ParseTime(value, fallbackLayout); err == nil {
+				return &timeValue, err
+			}
+
 			return nil, err
 		}
+
 	}
 	return &timeValue, nil
 }
 
-//ToTime converts value to time, optionally uses layout if value if of string type
+// ToTime converts value to time, optionally uses layout if value if of string type
 func ToTime(value interface{}, dateLayout string) (*time.Time, error) {
 	if value == nil {
 		return nil, errors.New("values was empty")
@@ -330,7 +338,7 @@ func ToTime(value interface{}, dateLayout string) (*time.Time, error) {
 	return textToTime(textValue, dateLayout)
 }
 
-//AsTime converts an input to time, it takes time input,  dateLaout as parameters.
+// AsTime converts an input to time, it takes time input,  dateLaout as parameters.
 func AsTime(value interface{}, dateLayout string) *time.Time {
 	result, err := ToTime(value, dateLayout)
 	if err != nil {
@@ -339,7 +347,7 @@ func AsTime(value interface{}, dateLayout string) *time.Time {
 	return result
 }
 
-//DiscoverValueAndKind discovers input kind, it applies checks of the following types:  int, float, bool, string
+// DiscoverValueAndKind discovers input kind, it applies checks of the following types:  int, float, bool, string
 func DiscoverValueAndKind(input string) (interface{}, reflect.Kind) {
 	if len(input) == 0 {
 		return nil, reflect.Invalid
@@ -359,8 +367,8 @@ func DiscoverValueAndKind(input string) (interface{}, reflect.Kind) {
 	return input, reflect.String
 }
 
-//DiscoverCollectionValuesAndKind discovers passed in slice item kind, and returns slice of values converted to discovered type.
-//It tries the following kind int, float, bool, string
+// DiscoverCollectionValuesAndKind discovers passed in slice item kind, and returns slice of values converted to discovered type.
+// It tries the following kind int, float, bool, string
 func DiscoverCollectionValuesAndKind(values interface{}) ([]interface{}, reflect.Kind) {
 	var candidateKind = reflect.Int
 	var result = make([]interface{}, 0)
@@ -406,12 +414,12 @@ func DiscoverCollectionValuesAndKind(values interface{}) ([]interface{}, reflect
 	return result, candidateKind
 }
 
-//UnwrapValue returns  value
+// UnwrapValue returns  value
 func UnwrapValue(value *reflect.Value) interface{} {
 	return value.Interface()
 }
 
-//NewBytes copies from input
+// NewBytes copies from input
 func NewBytes(input []byte) []byte {
 	if input != nil {
 		var result = make([]byte, len(input))
@@ -421,7 +429,7 @@ func NewBytes(input []byte) []byte {
 	return nil
 }
 
-//ParseTime parses time, adjusting date layout to length of input
+// ParseTime parses time, adjusting date layout to length of input
 func ParseTime(input, layout string) (time.Time, error) {
 	if len(layout) == 0 {
 		layout = DefaultDateLayout
@@ -435,7 +443,7 @@ func ParseTime(input, layout string) (time.Time, error) {
 	return time.Parse(layout, input)
 }
 
-//Converter represets data converter, it converts incompatibe data structure, like map and struct, string and time, *string to string, etc.
+// Converter represets data converter, it converts incompatibe data structure, like map and struct, string and time, *string to string, etc.
 type Converter struct {
 	DateLayout   string
 	MappedKeyTag string
@@ -634,10 +642,10 @@ func (c *Converter) assignConvertedStruct(target interface{}, inputMap map[strin
 	return nil
 }
 
-//customConverter map of target, source type with converter
+// customConverter map of target, source type with converter
 var customConverter = make(map[reflect.Type]map[reflect.Type]func(target, source interface{}) error)
 
-//RegisterConverter register custom converter for supplied target, source type
+// RegisterConverter register custom converter for supplied target, source type
 func RegisterConverter(target, source reflect.Type, converter func(target, source interface{}) error) {
 	if _, ok := customConverter[target]; !ok {
 		customConverter[target] = make(map[reflect.Type]func(target, source interface{}) error)
@@ -645,7 +653,7 @@ func RegisterConverter(target, source reflect.Type, converter func(target, sourc
 	customConverter[target][source] = converter
 }
 
-//GetConverter returns register converter for supplied target and source type
+// GetConverter returns register converter for supplied target and source type
 func GetConverter(target, source interface{}) (func(target, source interface{}) error, bool) {
 	sourceConverters, ok := customConverter[reflect.TypeOf(target)]
 	if !ok {
@@ -655,7 +663,7 @@ func GetConverter(target, source interface{}) (func(target, source interface{}) 
 	return converter, ok
 }
 
-//AssignConverted assign to the target source, target needs to be pointer, input has to be convertible or compatible type
+// AssignConverted assign to the target source, target needs to be pointer, input has to be convertible or compatible type
 func (c *Converter) AssignConverted(target, source interface{}) error {
 	if target == nil {
 		return fmt.Errorf("destination Pointer was nil %v %v", target, source)
@@ -1166,7 +1174,7 @@ func (c *Converter) assignConvertedStructSliceToMap(target, source interface{}) 
 	return err
 }
 
-//entryMapToKeyValue converts entry map into map
+// entryMapToKeyValue converts entry map into map
 func entryMapToKeyValue(entryMap map[string]interface{}) (key string, value interface{}, err error) {
 	if len(entryMap) > 2 {
 		return key, value, fmt.Errorf("map entry needs to have 2 elements but had: %v, %v", len(entryMap), entryMap)
@@ -1344,12 +1352,12 @@ func tryExtractTime(value interface{}) *time.Time {
 	return tryExtractTime(timeValue.Interface())
 }
 
-//NewColumnConverter create a new converter, that has ability to convert map to struct using column mapping
+// NewColumnConverter create a new converter, that has ability to convert map to struct using column mapping
 func NewColumnConverter(dateLayout string) *Converter {
 	return &Converter{dateLayout, "column"}
 }
 
-//NewConverter create a new converter, that has ability to convert map to struct, it uses keytag to identify source and dest of fields/keys
+// NewConverter create a new converter, that has ability to convert map to struct, it uses keytag to identify source and dest of fields/keys
 func NewConverter(dateLayout, keyTag string) *Converter {
 	if keyTag == "" {
 		keyTag = "name"
@@ -1357,10 +1365,10 @@ func NewConverter(dateLayout, keyTag string) *Converter {
 	return &Converter{dateLayout, keyTag}
 }
 
-//DefaultConverter represents a default data structure converter
+// DefaultConverter represents a default data structure converter
 var DefaultConverter = NewConverter("", "name")
 
-//DereferenceValues replaces pointer to its value within a generic  map or slice
+// DereferenceValues replaces pointer to its value within a generic  map or slice
 func DereferenceValues(source interface{}) interface{} {
 	if IsMap(source) {
 		var aMap = make(map[string]interface{})
@@ -1386,7 +1394,7 @@ func DereferenceValues(source interface{}) interface{} {
 	return DereferenceValue(source)
 }
 
-//DereferenceValue dereference passed in value
+// DereferenceValue dereference passed in value
 func DereferenceValue(value interface{}) interface{} {
 	if value == nil {
 		return nil
@@ -1424,7 +1432,7 @@ func DereferenceValue(value interface{}) interface{} {
 	return result
 }
 
-//DereferenceType dereference passed in value
+// DereferenceType dereference passed in value
 func DereferenceType(value interface{}) reflect.Type {
 	if value == nil {
 		return nil
@@ -1447,7 +1455,7 @@ func DereferenceType(value interface{}) reflect.Type {
 	return reflectType
 }
 
-//CountPointers count pointers to undelying non pointer type
+// CountPointers count pointers to undelying non pointer type
 func CountPointers(value interface{}) int {
 	if value == nil {
 		return 0
