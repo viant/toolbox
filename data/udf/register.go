@@ -40,6 +40,7 @@ var Predefined = data.Map{
 	"Concat":                 Concat,
 	"Merge":                  Merge,
 	"AsStringMap":            AsStringMap,
+	"PackInt32sTo64":         PackInt32sTo64,
 	"Replace":                Replace,
 	"ToLower":                ToLower,
 	"ToUpper":                ToUpper,
