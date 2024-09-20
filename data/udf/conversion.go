@@ -173,6 +173,16 @@ func PackInt32sTo64(source interface{}, state data.Map) (interface{}, error) {
 			return nil, fmt.Errorf("expected 2 int values, but had: %v", len(actual))
 		}
 		return actual[0]<<32 | actual[1], nil
+	case []interface{}:
+		ints := make([]int, 2)
+		for i, arg := range actual {
+			value, err := strconv.Atoi(toolbox.AsString(arg))
+			if err != nil {
+				return nil, err
+			}
+			ints[i] = value
+		}
+		return ints[0]<<32 | ints[1], nil
 	case string:
 		args := strings.Split(actual, ",")
 		if len(args) != 2 {
