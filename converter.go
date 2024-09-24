@@ -289,17 +289,19 @@ func textToTime(value, dateLayout string) (*time.Time, error) {
 	timeValue, err := ParseTime(value, dateLayout)
 	if err != nil {
 		if dateLayout != "" {
+			updated := value
 			if len(value) > len(dateLayout) {
-				value = string(value[:len(dateLayout)])
+				updated = string(value[:len(dateLayout)])
 			}
-			timeValue, err = ParseTime(value, dateLayout)
+			timeValue, err = ParseTime(updated, dateLayout)
 		}
+
 		if err != nil { //JSON default time format fallback
 			if timeValue, err = ParseTime(value, time.RFC3339); err == nil {
 				return &timeValue, err
 			}
 
-			if msIndex := strings.LastIndex(rawValue, "."); msIndex != -1 {
+			if msIndex := strings.LastIndex(rawValue, "."); msIndex != -1 && msIndex < len(rawValue)-1 {
 				ms := value[msIndex+1:]
 				i := 0
 				for ; i < len(ms); i++ {
