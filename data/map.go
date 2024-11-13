@@ -605,6 +605,7 @@ func (s *Map) evaluateUDF(candidate interface{}, argument interface{}) (interfac
 			expandedArgument = evaluated
 		}
 	}
+
 	evaluated, err := udf(expandedArgument, *s)
 	if err == nil {
 		return evaluated, true
@@ -724,9 +725,17 @@ func (s *Map) expandArgumentsExpressions(argument interface{}) interface{} {
 			return s.expandExpressions(argumentLiteral, true)
 		}
 	}
+	udfs := s.GetMap(UDFKey)
+	hasUdfs := len(udfs) > 0
 
-	var expandVariable = func(expression string, isUDF bool, argument interface{}) (interface{}, bool) {
-		value, hasExpValue := s.GetValue(string(expression[1:]))
+	var expandVariable = func(expression string, isUDF bool, argument interface{}) (value interface{}, hasExpValue bool) {
+		aKey := expression[1:]
+		if hasUdfs {
+			value, hasExpValue = udfs.GetValue(aKey)
+		}
+		if !hasExpValue {
+			value, hasExpValue = s.GetValue(aKey)
+		}
 		if hasExpValue {
 			if value != expression && s.hasCycle(value, expression) {
 				log.Printf("detected data cycle on %v in value: %v", expression, value)
