@@ -2,48 +2,68 @@ package udf
 
 import "github.com/viant/toolbox/data"
 
-//Register registers defined in this package UDFs
-func Register(aMap data.Map) {
-	aMap.Put("AsInt", AsInt)
-	aMap.Put("AsString", AsString)
-	aMap.Put("AsFloat", AsFloat)
-	aMap.Put("AsFloat32", AsFloat32)
-	aMap.Put("AsFloat32Ptr", AsFloat32Ptr)
+var Predefined = data.Map{
+	"AsInt":                  AsInt,
+	"AsString":               AsString,
+	"AsFloat":                AsFloat,
+	"AsFloat32":              AsFloat32,
+	"AsFloat32Ptr":           AsFloat32Ptr,
+	"AsBool":                 AsBool,
+	"AsMap":                  AsMap,
+	"AsData":                 AsData,
+	"AsCollection":           AsCollection,
+	"AsJSON":                 AsJSON,
+	"Type":                   Type,
+	"Join":                   Join,
+	"Split":                  Split,
+	"Keys":                   Keys,
+	"StringKeys":             StringKeys,
+	"Values":                 Values,
+	"Length":                 Length,
+	"Len":                    Length,
+	"IndexOf":                IndexOf,
+	"FormatTime":             FormatTime,
+	"QueryEscape":            QueryEscape,
+	"QueryUnescape":          QueryUnescape,
+	"Base64Encode":           Base64Encode,
+	"Base64Decode":           Base64Decode,
+	"Base64RawURLEncode":     Base64RawURLEncode,
+	"Base64RawURLDecode":     Base64RawURLDecode,
+	"Base64DecodeText":       Base64DecodeText,
+	"TrimSpace":              TrimSpace,
+	"Elapsed":                Elapsed,
+	"Sum":                    Sum,
+	"Count":                  Count,
+	"AsNumber":               AsNumber,
+	"Select":                 Select,
+	"Rand":                   Rand,
+	"Concat":                 Concat,
+	"Merge":                  Merge,
+	"AsStringMap":            AsStringMap,
+	"PackInt32sTo64":         PackInt32sTo64,
+	"Replace":                Replace,
+	"ToLower":                ToLower,
+	"ToUpper":                ToUpper,
+	"AsNewLineDelimitedJSON": AsNewLineDelimitedJSON,
+	"LoadJSON":               LoadJSON,
+}
 
-	aMap.Put("AsBool", AsBool)
-	aMap.Put("AsMap", AsMap)
-	aMap.Put("AsData", AsData)
-	aMap.Put("AsCollection", AsCollection)
-	aMap.Put("AsJSON", AsJSON)
-	aMap.Put("Type", Type)
-	aMap.Put("Join", Join)
-	aMap.Put("Split", Split)
-	aMap.Put("Keys", Keys)
-	aMap.Put("Values", Values)
-	aMap.Put("Length", Length)
-	aMap.Put("Len", Length)
-	aMap.Put("IndexOf", IndexOf)
-	aMap.Put("FormatTime", FormatTime)
-	aMap.Put("QueryEscape", QueryEscape)
-	aMap.Put("QueryUnescape", QueryUnescape)
-	aMap.Put("Base64Encode", Base64Encode)
-	aMap.Put("Base64Decode", Base64Decode)
-	aMap.Put("Base64RawURLEncode", Base64RawURLEncode)
-	aMap.Put("Base64RawURLDecode", Base64RawURLDecode)
-	aMap.Put("Base64DecodeText", Base64DecodeText)
-	aMap.Put("TrimSpace", TrimSpace)
-	aMap.Put("Elapsed", Elapsed)
-	aMap.Put("Sum", Sum)
-	aMap.Put("Count", Count)
-	aMap.Put("AsNumber", AsNumber)
-	aMap.Put("Select", Select)
-	aMap.Put("Rand", Rand)
-	aMap.Put("Concat", Concat)
-	aMap.Put("Merge", Merge)
-	aMap.Put("AsStringMap", AsStringMap)
-	aMap.Put("Replace", Replace)
-	aMap.Put("ToLower", ToLower)
-	aMap.Put("ToUpper", ToUpper)
-	aMap.Put("AsNewLineDelimitedJSON", AsNewLineDelimitedJSON)
-	aMap.Put("LoadJSON", LoadJSON)
+func Register(aMap data.Map) {
+	if aMap == nil {
+	}
+	udfs, ok := aMap[data.UDFKey]
+	if !ok {
+		aMap[data.UDFKey] = Predefined
+		return
+	}
+	var udfMap = data.Map{}
+	if prevMap, ok := udfs.(data.Map); ok {
+		for k, v := range prevMap {
+			udfMap[k] = v
+		}
+	}
+	for k, v := range Predefined {
+		udfMap[k] = v
+	}
+	aMap[data.UDFKey] = udfMap
 }

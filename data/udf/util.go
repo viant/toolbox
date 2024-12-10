@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-//Length returns length of slice or string
+// Length returns length of slice or string
 func Length(source interface{}, state data.Map) (interface{}, error) {
 
 	if toolbox.IsSlice(source) {
@@ -31,7 +31,7 @@ func Length(source interface{}, state data.Map) (interface{}, error) {
 	return 0, nil
 }
 
-//Replace replaces text with old and new fragments
+// Replace replaces text with old and new fragments
 func Replace(source interface{}, state data.Map) (interface{}, error) {
 	var args []interface{}
 	if !toolbox.IsSlice(source) {
@@ -85,7 +85,24 @@ func Split(args interface{}, state data.Map) (interface{}, error) {
 	return result, nil
 }
 
-//Keys returns keys of the supplied map
+// Keys returns keys of the supplied map
+func StringKeys(source interface{}, state data.Map) (interface{}, error) {
+	aMap, err := AsMap(source, state)
+	if err != nil {
+		return nil, err
+	}
+	var result = make([]string, 0)
+	err = toolbox.ProcessMap(aMap, func(key, value interface{}) bool {
+		result = append(result, toolbox.AsString(key))
+		return true
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// Keys returns keys of the supplied map
 func Keys(source interface{}, state data.Map) (interface{}, error) {
 	aMap, err := AsMap(source, state)
 	if err != nil {
@@ -102,7 +119,7 @@ func Keys(source interface{}, state data.Map) (interface{}, error) {
 	return result, nil
 }
 
-//Values returns values of the supplied map
+// Values returns values of the supplied map
 func Values(source interface{}, state data.Map) (interface{}, error) {
 	aMap, err := AsMap(source, state)
 	if err != nil {
@@ -119,7 +136,7 @@ func Values(source interface{}, state data.Map) (interface{}, error) {
 	return result, nil
 }
 
-//IndexOf returns index of the matched slice elements or -1
+// IndexOf returns index of the matched slice elements or -1
 func IndexOf(source interface{}, state data.Map) (interface{}, error) {
 	if !toolbox.IsSlice(source) {
 		return nil, fmt.Errorf("expected arguments but had: %T", source)
@@ -144,7 +161,7 @@ func IndexOf(source interface{}, state data.Map) (interface{}, error) {
 	return -1, nil
 }
 
-//Base64Decode encodes source using base64.StdEncoding
+// Base64Decode encodes source using base64.StdEncoding
 func Base64Encode(source interface{}, state data.Map) (interface{}, error) {
 	if source == nil {
 		return "", nil
@@ -166,7 +183,7 @@ func Base64Encode(source interface{}, state data.Map) (interface{}, error) {
 	}
 }
 
-//Base64RawURLEncode encodes source using base64.RawURLEncoding
+// Base64RawURLEncode encodes source using base64.RawURLEncoding
 func Base64RawURLEncode(source interface{}, state data.Map) (interface{}, error) {
 	if source == nil {
 		return "", nil
@@ -188,7 +205,7 @@ func Base64RawURLEncode(source interface{}, state data.Map) (interface{}, error)
 	}
 }
 
-//Base64RawURLDecode decodes source using base64.RawURLEncoding
+// Base64RawURLDecode decodes source using base64.RawURLEncoding
 func Base64RawURLDecode(source interface{}, state data.Map) (interface{}, error) {
 	if source == nil {
 		return "", nil
@@ -203,7 +220,7 @@ func Base64RawURLDecode(source interface{}, state data.Map) (interface{}, error)
 	}
 }
 
-//Base64Decode decodes source using base64.StdEncoding
+// Base64Decode decodes source using base64.StdEncoding
 func Base64Decode(source interface{}, state data.Map) (interface{}, error) {
 	if source == nil {
 		return "", nil
@@ -218,7 +235,7 @@ func Base64Decode(source interface{}, state data.Map) (interface{}, error) {
 	}
 }
 
-//Base64DecodeText decodes source using base64.StdEncoding to string
+// Base64DecodeText decodes source using base64.StdEncoding to string
 func Base64DecodeText(source interface{}, state data.Map) (interface{}, error) {
 	decoded, err := Base64Decode(source, state)
 	if err != nil {
@@ -227,25 +244,25 @@ func Base64DecodeText(source interface{}, state data.Map) (interface{}, error) {
 	return toolbox.AsString(decoded), nil
 }
 
-//QueryEscape returns url escaped text
+// QueryEscape returns url escaped text
 func QueryEscape(source interface{}, state data.Map) (interface{}, error) {
 	text := toolbox.AsString(source)
 	return url.QueryEscape(text), nil
 }
 
-//QueryUnescape returns url escaped text
+// QueryUnescape returns url escaped text
 func QueryUnescape(source interface{}, state data.Map) (interface{}, error) {
 	text := toolbox.AsString(source)
 	return url.QueryUnescape(text)
 }
 
-//TrimSpace returns trims spaces from supplied text
+// TrimSpace returns trims spaces from supplied text
 func TrimSpace(source interface{}, state data.Map) (interface{}, error) {
 	text := toolbox.AsString(source)
 	return strings.TrimSpace(text), nil
 }
 
-//Count returns count of matched nodes leaf value
+// Count returns count of matched nodes leaf value
 func Count(xPath interface{}, state data.Map) (interface{}, error) {
 	result, err := aggregate(xPath, state, func(previous, newValue float64) float64 {
 		return previous + 1
@@ -256,7 +273,7 @@ func Count(xPath interface{}, state data.Map) (interface{}, error) {
 	return AsNumber(result, nil)
 }
 
-//Sum returns sums of matched nodes leaf value
+// Sum returns sums of matched nodes leaf value
 func Sum(xPath interface{}, state data.Map) (interface{}, error) {
 	result, err := aggregate(xPath, state, func(previous, newValue float64) float64 {
 		return previous + newValue
@@ -267,7 +284,7 @@ func Sum(xPath interface{}, state data.Map) (interface{}, error) {
 	return AsNumber(result, nil)
 }
 
-//Select returns all matched attributes from matched nodes, attributes can be alised with sourcePath:alias
+// Select returns all matched attributes from matched nodes, attributes can be alised with sourcePath:alias
 func Select(params interface{}, state data.Map) (interface{}, error) {
 	var arguments = make([]interface{}, 0)
 	if toolbox.IsSlice(params) {
@@ -313,7 +330,7 @@ func Select(params interface{}, state data.Map) (interface{}, error) {
 	return result, err
 }
 
-//AsNumber return int or float
+// AsNumber return int or float
 func AsNumber(value interface{}, state data.Map) (interface{}, error) {
 	floatValue := toolbox.AsFloat(value)
 	if float64(int(floatValue)) == floatValue {
@@ -322,7 +339,7 @@ func AsNumber(value interface{}, state data.Map) (interface{}, error) {
 	return floatValue, nil
 }
 
-//Aggregate applies an aggregation function to matched path
+// Aggregate applies an aggregation function to matched path
 func aggregate(xPath interface{}, state data.Map, agg func(previous, newValue float64) float64) (float64, error) {
 	var result = 0.0
 	if state == nil {
@@ -466,7 +483,7 @@ func matchPath(xPath string, state data.Map, handler func(value interface{}) err
 	return nil
 }
 
-//Rand returns random
+// Rand returns random
 func Rand(params interface{}, state data.Map) (interface{}, error) {
 	source := rand.NewSource(time.Now().UnixNano())
 	generator := rand.New(source)
@@ -483,7 +500,7 @@ func Rand(params interface{}, state data.Map) (interface{}, error) {
 	return min + int(float64(max-min)*floatValue), nil
 }
 
-//Concat concatenate supplied parameters, parameters
+// Concat concatenate supplied parameters, parameters
 func Concat(params interface{}, state data.Map) (interface{}, error) {
 	if params == nil || !toolbox.IsSlice(params) {
 		return nil, fmt.Errorf("invalid signature, expected: $Concat(arrayOrItem1, arrayOrItem2)")
@@ -513,7 +530,7 @@ func Concat(params interface{}, state data.Map) (interface{}, error) {
 	return result, nil
 }
 
-//Merge creates a new merged map for supplied maps,  (mapOrPath1, mapOrPath2, mapOrPathN)
+// Merge creates a new merged map for supplied maps,  (mapOrPath1, mapOrPath2, mapOrPathN)
 func Merge(params interface{}, state data.Map) (interface{}, error) {
 	if params == nil || !toolbox.IsSlice(params) {
 		return nil, fmt.Errorf("invalid signature, expected: $Merge(map1, map2, override)")
@@ -541,7 +558,7 @@ func Merge(params interface{}, state data.Map) (interface{}, error) {
 	return result, nil
 }
 
-//AsNewLineDelimitedJSON convers a slice into new line delimited JSON
+// AsNewLineDelimitedJSON convers a slice into new line delimited JSON
 func AsNewLineDelimitedJSON(source interface{}, state data.Map) (interface{}, error) {
 	if source == nil || !toolbox.IsSlice(source) {
 		return nil, fmt.Errorf("invalid signature, expected: $AsNewLineDelimitedJSON([])")

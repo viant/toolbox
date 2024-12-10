@@ -23,7 +23,7 @@ func (t *TerminatedError) Error() string {
 	return fmt.Sprintf("terminated due to %v", t.Err)
 }
 
-//ErrTerminated - command session terminated
+// ErrTerminated - command session terminated
 var ErrTerminated = &TerminatedError{}
 
 const defaultShell = "/bin/bash"
@@ -36,10 +36,10 @@ const (
 	defaultTickFrequency   = 100
 )
 
-//Listener represent command listener (it will send stdout fragments as thier being available on stdout)
+// Listener represent command listener (it will send stdout fragments as thier being available on stdout)
 type Listener func(stdout string, hasMore bool)
 
-//MultiCommandSession represents a multi command session
+// MultiCommandSession represents a multi command session
 type MultiCommandSession interface {
 	Run(command string, listener Listener, timeoutMs int, terminators ...string) (string, error)
 
@@ -52,8 +52,8 @@ type MultiCommandSession interface {
 	Close()
 }
 
-//multiCommandSession represents a multi command session
-//a new command are send vi stdin
+// multiCommandSession represents a multi command session
+// a new command are send vi stdin
 type multiCommandSession struct {
 	service            *service
 	config             *SessionConfig
@@ -93,17 +93,17 @@ func (s *multiCommandSession) Run(command string, listener Listener, timeoutMs i
 	return output, err
 }
 
-//ShellPrompt returns a shell prompt
+// ShellPrompt returns a shell prompt
 func (s *multiCommandSession) ShellPrompt() string {
 	return s.shellPrompt
 }
 
-//System returns a system name
+// System returns a system name
 func (s *multiCommandSession) System() string {
 	return s.system
 }
 
-//Close closes the session with its resources
+// Close closes the session with its resources
 func (s *multiCommandSession) Close() {
 	atomic.StoreInt32(&s.running, 0)
 	_ = s.stdInput.Close()
@@ -160,7 +160,7 @@ func (s *multiCommandSession) start(shell string) (output string, err error) {
 	return output, err
 }
 
-//copy copy data from reader to channel
+// copy copy data from reader to channel
 func (s *multiCommandSession) copy(reader io.Reader, out chan string) {
 	var written int64 = 0
 	buf := make([]byte, 128*1024)

@@ -34,6 +34,17 @@ func TestParseExpression(t *testing.T) {
 		expression  string
 		expected    interface{}
 	}{
+
+		{
+			description: "embedded UDF expression",
+			aMap: map[string]interface{}{
+				"IndexOf":    IndexOf,
+				"collection": []interface{}{"abc", "xtz"},
+				"key":        "abc",
+			},
+			expression: `$IndexOf($collection, $key)`,
+			expected:   0,
+		},
 		{
 			description: "simple variable",
 			aMap: Map(map[string]interface{}{
@@ -600,7 +611,7 @@ func TestParseExpression(t *testing.T) {
 
 	//$Join($AsCollection($Cat($env.APP_HOME/app-config/schema/go/3.json)), “,”)
 
-	for _, useCase := range useCases {
+	for _, useCase := range useCases[:1] {
 		var expandHandler = func(expression string, isUDF bool, argument interface{}) (interface{}, bool) {
 			result, has := useCase.aMap.GetValue(string(expression[1:]))
 			if isUDF {

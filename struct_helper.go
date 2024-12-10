@@ -16,7 +16,7 @@ const (
 
 var columnMapping = []string{"column", "dateLayout", "dateFormat", "autoincrement", "primaryKey", "sequence", "valueMap", defaultKey, anonymousKey}
 
-//ScanStructFunc scan supplied struct methods
+// ScanStructFunc scan supplied struct methods
 func ScanStructMethods(structOrItsType interface{}, depth int, handler func(method reflect.Method) error) error {
 	var scanned = make(map[reflect.Type]bool)
 	return scanStructMethods(structOrItsType, scanned, depth, handler)
@@ -79,7 +79,7 @@ func scanStructMethods(structOrItsType interface{}, scanned map[reflect.Type]boo
 	return nil
 }
 
-//StructField represents a struct field
+// StructField represents a struct field
 type StructField struct {
 	Owner reflect.Value
 	Value reflect.Value
@@ -88,10 +88,10 @@ type StructField struct {
 
 var onUnexportedHandler = IgnoreUnexportedFields
 
-//UnexportedFieldHandler represents unexported field handler
+// UnexportedFieldHandler represents unexported field handler
 type UnexportedFieldHandler func(structField *StructField) bool
 
-//Handler ignoring unexported fields
+// Handler ignoring unexported fields
 func IgnoreUnexportedFields(structField *StructField) bool {
 	return false
 }
@@ -104,7 +104,7 @@ func SetUnexportedFieldHandler(handler UnexportedFieldHandler) error {
 	return nil
 }
 
-//ProcessStruct reads passed in struct fields and values to pass it to provided handler
+// ProcessStruct reads passed in struct fields and values to pass it to provided handler
 func ProcessStruct(aStruct interface{}, handler func(fieldType reflect.StructField, field reflect.Value) error) error {
 	structValue, err := TryDiscoverValueByKind(reflect.ValueOf(aStruct), reflect.Struct)
 	if err != nil {
@@ -177,7 +177,7 @@ func ProcessStruct(aStruct interface{}, handler func(fieldType reflect.StructFie
 	return nil
 }
 
-//BuildTagMapping builds map keyed by mappedKeyTag tag value, and value is another map of keys where tag name is presents in the tags parameter.
+// BuildTagMapping builds map keyed by mappedKeyTag tag value, and value is another map of keys where tag name is presents in the tags parameter.
 func BuildTagMapping(structTemplatePointer interface{}, mappedKeyTag string, resultExclusionTag string, inheritKeyFromField bool, convertKeyToLowerCase bool, tags []string) map[string](map[string]string) {
 	reflectStructType := DiscoverTypeByKind(structTemplatePointer, reflect.Struct)
 	var result = make(map[string]map[string]string)
@@ -245,7 +245,7 @@ func getTagValues(field reflect.StructField, mappedKeyTag string) string {
 	return key
 }
 
-//NewFieldSettingByKey reads field's tags and returns them indexed by passed in key, fieldName is always part of the resulting map unless filed has "transient" tag.
+// NewFieldSettingByKey reads field's tags and returns them indexed by passed in key, fieldName is always part of the resulting map unless filed has "transient" tag.
 func NewFieldSettingByKey(aStruct interface{}, key string) map[string](map[string]string) {
 	return BuildTagMapping(aStruct, key, "transient", true, true, columnMapping)
 }
@@ -320,7 +320,7 @@ func createEmptySlice(source reflect.Value, dataTypes map[string]bool) {
 	source.Set(slicePointer.Elem())
 }
 
-//InitStruct initialise any struct pointer to empty struct
+// InitStruct initialise any struct pointer to empty struct
 func InitStruct(source interface{}) {
 	var dataTypes = make(map[string]bool)
 	if source == nil {
@@ -398,15 +398,17 @@ func initStruct(source interface{}, dataTypes map[string]bool) {
 	})
 }
 
-//StructFieldMeta represents struct field meta
+// StructFieldMeta represents struct field meta
 type StructFieldMeta struct {
 	Name        string `json:"name,omitempty"`
 	Type        string `json:"type,omitempty"`
 	Required    bool   `json:"required,"`
 	Description string `json:"description,omitempty"`
+	Anonymous   bool   `json:"anonymous,omitempty"`
+	Tag         string `json:"tag,omitempty"`
 }
 
-//StructMeta represents struct meta details
+// StructMeta represents struct meta details
 type StructMeta struct {
 	Type         string
 	rawType      reflect.Type       `json:"-"`
@@ -430,7 +432,7 @@ func (m *StructMeta) Message() map[string]interface{} {
 	return result
 }
 
-//StructMetaFilter
+// StructMetaFilter
 type StructMetaFilter func(field reflect.StructField) bool
 
 func DefaultStructMetaFilter(ield reflect.StructField) bool {
@@ -439,7 +441,7 @@ func DefaultStructMetaFilter(ield reflect.StructField) bool {
 
 var structMetaFilter StructMetaFilter = DefaultStructMetaFilter
 
-//SetStructMetaFilter sets struct meta filter
+// SetStructMetaFilter sets struct meta filter
 func SetStructMetaFilter(filter StructMetaFilter) error {
 	if filter == nil {
 		return errors.New("filter was nil")
@@ -448,7 +450,7 @@ func SetStructMetaFilter(filter StructMetaFilter) error {
 	return nil
 }
 
-//GetStructMeta returns struct meta
+// GetStructMeta returns struct meta
 func GetStructMeta(source interface{}) *StructMeta {
 	var result = &StructMeta{}
 	var trackedTypes = make(map[string]bool)
@@ -456,7 +458,7 @@ func GetStructMeta(source interface{}) *StructMeta {
 	return result
 }
 
-//InitStruct initialise any struct pointer to empty struct
+// InitStruct initialise any struct pointer to empty struct
 func getStructMeta(source interface{}, meta *StructMeta, trackedTypes map[string]bool) bool {
 	if source == nil {
 		return false
@@ -507,6 +509,9 @@ func getStructMeta(source interface{}, meta *StructMeta, trackedTypes map[string
 		fieldMeta := &StructFieldMeta{}
 		fieldMeta.Name = fieldType.Name
 		fieldMeta.Type = fieldType.Type.Name()
+		fieldMeta.Tag = string(fieldType.Tag)
+		fieldMeta.Anonymous = fieldType.Anonymous
+
 		meta.Fields = append(meta.Fields, fieldMeta)
 
 		if value, ok := fieldType.Tag.Lookup("required"); ok {
@@ -585,7 +590,7 @@ func isJSONSkippable(tag string) bool {
 	return strings.Contains(tag, "json:\"-")
 }
 
-//StructFields by name sorter
+// StructFields by name sorter
 type StructFields []*StructField
 
 // Len is part of sort.Interface.

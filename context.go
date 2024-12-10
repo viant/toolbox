@@ -3,9 +3,10 @@ package toolbox
 import (
 	"fmt"
 	"reflect"
+	"sync"
 )
 
-//Context represents type safe map.
+// Context represents type safe map.
 type Context interface {
 
 	//GetRequired returns a value for a target type of error if it does not exist
@@ -34,6 +35,7 @@ type Context interface {
 }
 
 type contextImpl struct {
+	mux     sync.RWMutex
 	context map[string]interface{}
 }
 
@@ -62,6 +64,8 @@ func (c *contextImpl) GetRequired(targetType interface{}) (interface{}, error) {
 
 func (c *contextImpl) GetOptional(targetType interface{}) interface{} {
 	key := c.getKey(targetType)
+	c.mux.RLock()
+	defer c.mux.RUnlock()
 	if result, ok := c.context[key]; ok {
 		return result
 	}
@@ -70,6 +74,8 @@ func (c *contextImpl) GetOptional(targetType interface{}) interface{} {
 
 func (c *contextImpl) GetInto(targetType, target interface{}) bool {
 	key := c.getKey(targetType)
+	c.mux.RLock()
+	defer c.mux.RUnlock()
 	if result, ok := c.context[key]; ok {
 		reflect.ValueOf(target).Elem().Set(reflect.ValueOf(result))
 		return true
@@ -90,7 +96,9 @@ func (c *contextImpl) Replace(targetType interface{}, value interface{}) error {
 	targetReflectType := c.getReflectType(targetType)
 	valueReflectType := reflect.TypeOf(value)
 	if valueReflectType == targetReflectType {
+		c.mux.Lock()
 		c.context[key] = value
+		c.mux.Unlock()
 		return nil
 	}
 
@@ -106,19 +114,25 @@ func (c *contextImpl) Replace(targetType interface{}, value interface{}) error {
 		}
 		value = reflect.ValueOf(value).Convert(targetReflectType).Interface()
 	}
+	c.mux.Lock()
 	c.context[key] = value
+	c.mux.Unlock()
 	return nil
 }
 
 func (c *contextImpl) Remove(targetType interface{}) interface{} {
 	key := c.getKey(targetType)
 	result := c.GetOptional(targetType)
+	c.mux.Lock()
 	delete(c.context, key)
+	c.mux.Unlock()
 	return result
 }
 
 func (c *contextImpl) Contains(targetType interface{}) bool {
 	key := c.getKey(targetType)
+	c.mux.RLock()
+	defer c.mux.RUnlock()
 	if _, ok := c.context[key]; ok {
 		return true
 	}
@@ -127,13 +141,15 @@ func (c *contextImpl) Contains(targetType interface{}) bool {
 
 func (c *contextImpl) Clone() Context {
 	var result = &contextImpl{context: make(map[string]interface{})}
+	c.mux.RLock()
+	defer c.mux.RUnlock()
 	for k, v := range c.context {
 		result.context[k] = v
 	}
 	return result
 }
 
-//NewContext creates a new context
+// NewContext creates a new context
 func NewContext() Context {
 	var result Context = &contextImpl{context: make(map[string]interface{})}
 	return result
