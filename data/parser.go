@@ -209,9 +209,36 @@ func expandEnclosed(expr string, handler func(expression string, isUDF bool, arg
 		expandedGroup := toolbox.AsString(result) + string(expr[tokenizer.Index:])
 		return expandEnclosed(expandedGroup, handler)
 	case operatorTojeb:
-		leftOperand, leftOk := tryNumericOperand(match.Matched, handler).(float64)
+		leftOperandInt, leftOk := tryIntOperand(match.Matched, handler).(int)
 		operator := string(expr[tokenizer.Index : tokenizer.Index+1])
-		rightOperand, rightOk := tryNumericOperand(string(expr[tokenizer.Index+1:]), handler).(float64)
+		rightOperandInt, rightOk := tryIntOperand(string(expr[tokenizer.Index+1:]), handler).(int)
+
+		if leftOk && rightOk && operator != "^" && operator != "/" { // ^ and / used with float only
+			var intResult int
+			switch operator {
+			case "+":
+				intResult = leftOperandInt + rightOperandInt
+			case "-":
+				intResult = leftOperandInt - rightOperandInt
+			case "*":
+				intResult = leftOperandInt * rightOperandInt
+			case "%":
+				intResult = leftOperandInt % rightOperandInt
+			}
+			return intResult
+		}
+
+		var leftOperand, rightOperand float64
+
+		if leftOk && rightOk && (operator == "^" || operator == "/") {
+			leftOperand = float64(leftOperandInt)
+			rightOperand = float64(rightOperandInt)
+		} else {
+			leftOperand, leftOk = tryNumericOperand(match.Matched, handler).(float64)
+			operator = string(expr[tokenizer.Index : tokenizer.Index+1])
+			rightOperand, rightOk = tryNumericOperand(string(expr[tokenizer.Index+1:]), handler).(float64)
+		}
+
 		if !leftOk || !rightOk {
 			return Parse(expr, handler)
 		}
@@ -328,6 +355,70 @@ func tryNumericOperand(expression string, handler func(expression string, isUDF 
 		return result
 	}
 	return expression
+}
+
+func tryIntOperand(expression string, handler func(expression string, isUDF bool, argument interface{}) (interface{}, bool)) interface{} {
+	expression = strings.TrimSpace(expression)
+	if result, err := toolbox.ToInt(expression); err == nil { // check not needed for string expression
+		return result
+	}
+
+	left := expandEnclosed(expression, handler)
+	if !canUseToInt(left) {
+		return expression
+	}
+	if result, err := toolbox.ToInt(left); err == nil {
+		return result
+	}
+
+	left = Parse("$"+expression, handler)
+	if !canUseToInt(left) {
+		return expression
+	}
+	if result, err := toolbox.ToInt(left); err == nil {
+		return result
+	}
+
+	return expression
+}
+
+func canUseToInt(expression interface{}) bool {
+	switch expression.(type) {
+	case int:
+		return true
+	case *int:
+		return true
+	case int8:
+		return true
+	case int16:
+		return true
+	case int32:
+		return true
+	case *int64:
+		return true
+	case int64:
+		return true
+	case uint:
+		return true
+	case uint8:
+		return true
+	case uint16:
+		return true
+	case uint32:
+		return true
+	case uint64:
+		return true
+	case bool:
+		return true
+	case float32: // possibility of fraction part loss - toolbox.ToInt(expression) i.e: 0.4 passed as float (not string)
+		return false
+	case float64: // possibility of fraction part loss - toolbox.ToInt(expression) i.e: 0.4 passed as float (not string)
+		return false
+	case string:
+		return true // toolbox.ToInt(expression) is safe for string - uses strconv.Atoi function fot this case
+	default:
+		return false
+	}
 }
 
 func asExpandedText(source interface{}) string {

@@ -494,6 +494,119 @@ func TestParseExpression(t *testing.T) {
 			expression: `$AsString($Payload)`,
 			expected:   `"Hello World"`,
 		},
+		{
+			description: "big integer simple sum",
+			aMap:        Map(map[string]interface{}{}),
+			expression:  `${86935317801598977 + 1}`,
+			expected:    86935317801598978,
+		},
+		{
+			description: "big integer sum",
+			aMap: Map(map[string]interface{}{
+				"i": 86935317801598976,
+				"j": 1,
+			}),
+			expression: `${i + j}`,
+			expected:   86935317801598977,
+		},
+		{
+			description: "big integer multiplication",
+			aMap: Map(map[string]interface{}{
+				"i": 86935317801598977,
+				"j": 2,
+			}),
+			expression: `${i * j}`,
+			expected:   173870635603197954,
+		},
+		{
+			description: "big integer subtraction",
+			aMap: Map(map[string]interface{}{
+				"i": 86935317801598979,
+				"j": 2,
+			}),
+			expression: `${i - j}`,
+			expected:   86935317801598977,
+		},
+		{
+			description: "big integer modulo",
+			aMap: Map(map[string]interface{}{
+				"i": 86935317801598977,
+				"j": 90000000000000000,
+			}),
+			expression: `${i%j}`,
+			expected:   86935317801598977,
+		},
+		{
+			description: "big integer sum - sub attribute arithmetic",
+			aMap: Map(map[string]interface{}{
+				"k": map[string]interface{}{
+					"z": 86935317801598977,
+				},
+				"s": []interface{}{1},
+			}),
+			expression: `${k.z + s[0]}`,
+			expected:   86935317801598978,
+		},
+		{
+			description: "big integer sum - sub attribute arithmetic",
+			aMap: Map(map[string]interface{}{
+				"k": map[string]interface{}{
+					"z": 86935317801598976,
+				},
+				"s": []interface{}{1},
+			}),
+			expression: `${k.z + s[0]}`,
+			expected:   86935317801598977,
+		},
+		{
+			description: "big integer multiplication - sub attribute arithmetic",
+			aMap: Map(map[string]interface{}{
+				"k": map[string]interface{}{
+					"z": 86935317801598977,
+				},
+				"s": []interface{}{2},
+			}),
+			expression: `${k.z * s[0]}`,
+			expected:   173870635603197954,
+		},
+		{
+			description: "big integer subtraction - sub attribute arithmetic",
+			aMap: Map(map[string]interface{}{
+				"k": map[string]interface{}{
+					"z": 86935317801598979,
+				},
+				"s": []interface{}{2},
+			}),
+			expression: `${k.z - s[0]}`,
+			expected:   86935317801598977,
+		},
+		{
+			description: "big integer modulo - sub attribute arithmetic",
+			aMap: Map(map[string]interface{}{
+				"k": map[string]interface{}{
+					"z": 86935317801598977,
+				},
+				"s": []interface{}{90000000000000000},
+			}),
+			expression: `${k.z%s[0]}`,
+			expected:   86935317801598977,
+		},
+		{
+			description: "big integer - simple variable",
+			aMap: Map(map[string]interface{}{
+				"k1": 86935317801598977,
+			}),
+			expression: "$k1",
+			expected:   86935317801598977,
+		},
+		{
+			description: "big integer - simple enclosed variable",
+			aMap: Map(map[string]interface{}{
+				"k1": 86935317801598977,
+			}),
+			expression: "${k1}",
+			expected:   86935317801598977,
+		},
 	}
 
 	//$Join($AsCollection($Cat($env.APP_HOME/app-config/schema/go/3.json)), “,”)
