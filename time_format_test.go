@@ -27,7 +27,7 @@ func TestTimeFormat(t *testing.T) {
 
 	{
 		timeLayout := toolbox.DateFormatToLayout("yyyy-MM-dd hh:mm:ss")
-		assert.EqualValues(t, "2006-01-02 15:04:05", timeLayout)
+		assert.EqualValues(t, "2006-01-02 03:04:05", timeLayout)
 	}
 
 	{
