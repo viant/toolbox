@@ -576,7 +576,7 @@ func (s *Map) expandAsText(text string, unquoteExpression bool) string {
 func (s *Map) evaluateUDF(candidate interface{}, argument interface{}) (interface{}, bool) {
 	var canExpandAll = true
 
-	if toolbox.IsString(argument) {
+	if toolbox.IsString(argument) && !s.passiveUDFArgumentReady(toolbox.AsString(argument)) {
 		var expandable = strings.TrimSpace(toolbox.AsString(argument))
 		Parse(expandable, func(expression string, udf bool, argument interface{}) (interface{}, bool) {
 			if _, has := s.GetValue(string(expression[1:])); !has {
