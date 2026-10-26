@@ -283,22 +283,33 @@ func expandEnclosed(expr string, handler func(expression string, isUDF bool, arg
 		}
 		return boolResult
 	case comparatorTojeb:
-		//numeric comparator
-		leftOperand, leftOk := tryNumericOperand(match.Matched, handler).(float64)
 		operator := string(expr[tokenizer.Index : tokenizer.Index+1])
-		rightOperand, rightOk := tryNumericOperand(string(expr[tokenizer.Index+1:]), handler).(float64)
+		rightExpression := string(expr[tokenizer.Index+1:])
+		leftLiteral, leftQuoted, leftValid := comparisonQuotedLiteral(match.Matched)
+		rightLiteral, rightQuoted, rightValid := comparisonQuotedLiteral(rightExpression)
+		if leftQuoted || rightQuoted {
+			// A quoted operand is data. Never send it through numeric/UDF expansion.
+			if !leftValid || !rightValid || operator != "=" {
+				return false
+			}
+			var leftText, rightText interface{} = leftLiteral, rightLiteral
+			if !leftQuoted {
+				leftText = comparisonStringOperand(match.Matched, handler)
+			}
+			if !rightQuoted {
+				rightText = comparisonStringOperand(rightExpression, handler)
+			}
+			return leftText == rightText
+		}
+		// Unquoted numeric and boolean operand behavior remains unchanged.
+		leftOperand, leftOk := tryNumericOperand(match.Matched, handler).(float64)
+		rightOperand, rightOk := tryNumericOperand(rightExpression, handler).(float64)
 		if !leftOk || !rightOk {
 			switch operator {
 			case "=":
 				//Try string compare
-				leftText := Parse("$"+match.Matched, handler)
-				rightText := Parse("$"+string(expr[tokenizer.Index+1:]), handler)
-				if toolbox.IsString(leftText) && leftText.(string)[:1] == "$" {
-					leftText = strings.TrimSpace(leftText.(string)[1:])
-				}
-				if toolbox.IsString(rightText) && rightText.(string)[:1] == "$" {
-					rightText = strings.TrimSpace(rightText.(string)[1:])
-				}
+				leftText := comparisonStringOperand(match.Matched, handler)
+				rightText := comparisonStringOperand(rightExpression, handler)
 
 				return leftText == rightText
 

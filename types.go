@@ -96,6 +96,9 @@ func IsStruct(input interface{}) bool {
 
 // IsSlice returns true if input is a map
 func IsSlice(input interface{}) bool {
+	if input == nil {
+		return false
+	}
 	switch input.(type) {
 	case []interface{}:
 		return true
@@ -103,6 +106,9 @@ func IsSlice(input interface{}) bool {
 		return true
 	}
 	candidateType := DereferenceType(reflect.TypeOf(input))
+	if candidateType == nil {
+		return false
+	}
 	return candidateType.Kind() == reflect.Slice
 }
 

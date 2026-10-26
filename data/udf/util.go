@@ -289,13 +289,22 @@ func Sum(xPath interface{}, state data.Map) (interface{}, error) {
 
 // Select returns all matched attributes from matched nodes, attributes can be alised with sourcePath:alias
 func Select(params interface{}, state data.Map) (interface{}, error) {
+	if selectNilValue(params) {
+		return nil, fmt.Errorf("Select requires a path")
+	}
 	var arguments = make([]interface{}, 0)
 	if toolbox.IsSlice(params) {
 		arguments = toolbox.AsSlice(params)
 	} else {
 		arguments = append(arguments, params)
 	}
+	if len(arguments) == 0 {
+		return nil, fmt.Errorf("Select requires a path")
+	}
 	xPath := toolbox.AsString(arguments[0])
+	if strings.TrimSpace(xPath) == "" {
+		return nil, fmt.Errorf("Select requires a path")
+	}
 	var result = make([]interface{}, 0)
 	attributes := make([]string, 0)
 	for i := 1; i < len(arguments); i++ {
@@ -307,7 +316,7 @@ func Select(params interface{}, state data.Map) (interface{}, error) {
 			return nil
 		}
 		if !toolbox.IsMap(matched) {
-			return fmt.Errorf("expected map for %v, but had %T", xPath, matched)
+			return selectTypeError("Select projection requires an object", matched)
 		}
 		matchedMap := data.Map(toolbox.AsMap(matched))
 		var attributeValues = make(map[string]interface{})
@@ -371,8 +380,14 @@ func matchPath(xPath string, state data.Map, handler func(value interface{}) err
 		isLast := i == len(fragments)-1
 		if isLast {
 			if part == "*" {
+				if selectNilValue(nodeValue) {
+					return nil
+				}
 				if toolbox.IsSlice(nodeValue) {
 					for _, item := range toolbox.AsSlice(nodeValue) {
+						if selectNilValue(item) {
+							continue
+						}
 						if err := handler(item); err != nil {
 							return err
 						}
@@ -380,6 +395,9 @@ func matchPath(xPath string, state data.Map, handler func(value interface{}) err
 					return nil
 				} else if toolbox.IsMap(nodeValue) {
 					for _, item := range toolbox.AsMap(nodeValue) {
+						if selectNilValue(item) {
+							continue
+						}
 						if err := handler(item); err != nil {
 							return err
 						}
@@ -388,41 +406,53 @@ func matchPath(xPath string, state data.Map, handler func(value interface{}) err
 				return handler(nodeValue)
 			}
 
-			index := strings.Index(part, "[")
-			if index != -1 && part[index:index+1] == "[" && part[len(part)-1:] == "]" {
-				//Predicate cannot be a part by itself
+			index, parseErr := selectFinalBracket(part)
+			if parseErr != nil {
+				return parseErr
+			}
+			if selectPredicateBracket(part, index) {
 				if index == 0 {
-					return fmt.Errorf("predicate expression operator [] must be applied to a slice of maps. E.g. node1/obj[id = 1].  node1/obj/[id = 1] is not valide: %v", part)
+					return fmt.Errorf("Select predicate requires a collection path")
 				}
-				//Predicate part.  Evaluate predicate
-				nodeName := part[:index]
-				nodeValue = node.Get(nodeName)
-				if !toolbox.IsSlice(nodeValue) {
-					return fmt.Errorf("expected slice for %v, but had %T", nodeName, nodeValue)
+				value, found, err := selectLookupValue(node, part[:index])
+				if err != nil {
+					return err
 				}
-
-				//Validate first element of slice
-				nodeValue := toolbox.AsSlice(nodeValue)
-				if !toolbox.IsSlice(nodeValue) && !toolbox.IsMap(nodeValue[0]) {
-					return fmt.Errorf("expected slice elements to be map for %v, but had %T", nodeName, nodeValue[0])
+				if !found || selectNilValue(value) {
+					return nil
 				}
-
-				var filteredNode []map[string]interface{}
+				if !toolbox.IsSlice(value) {
+					return selectTypeError("Select predicate requires a collection", value)
+				}
+				items := toolbox.AsSlice(value)
+				// Validate every row before evaluating predicates or returning partial matches.
+				rows := make([]data.Map, len(items))
+				for j, row := range items {
+					if selectNilValue(row) || !toolbox.IsMap(row) {
+						return selectTypeError("Select predicate requires object rows", row)
+					}
+					values, err := toolbox.ToMap(row)
+					if err != nil {
+						return selectTypeError("Select predicate requires object rows", row)
+					}
+					rows[j] = data.Map(values)
+				}
 				expression := part[index+1 : len(part)-1]
-				for _, r := range nodeValue {
-					var rec data.Map
-					rec = r.(map[string]interface{})
-
+				matched := make([]interface{}, 0, len(items))
+				for j, rec := range rows {
 					predicateMatch, err := AsBool(rec.ExpandAsText("${"+expression+"}"), nil)
 					if err != nil {
-						return fmt.Errorf("expected expression to evaluate to bool: %v", expression)
+						return fmt.Errorf("Select predicate must evaluate to bool")
 					}
-					if predicateMatch.(bool) {
-						filteredNode = append(filteredNode, rec)
+					selected, ok := predicateMatch.(bool)
+					if !ok {
+						return selectTypeError("Select predicate must evaluate to bool", predicateMatch)
+					}
+					if selected {
+						matched = append(matched, items[j])
 					}
 				}
-
-				for _, item := range toolbox.AsSlice(filteredNode) {
+				for _, item := range matched {
 					if err := handler(item); err != nil {
 						return err
 					}
@@ -430,18 +460,27 @@ func matchPath(xPath string, state data.Map, handler func(value interface{}) err
 				return nil
 			}
 
-			if !node.Has(part) {
-				break
+			value, found, err := selectLookupValue(node, part)
+			if err != nil {
+				return err
 			}
-			if err := handler(node.Get(part)); err != nil {
+			if !found || selectNilValue(value) {
+				return nil
+			}
+			if err := handler(value); err != nil {
 				return err
 			}
 			continue
 		}
 		if part != "*" {
-			nodeValue = node.Get(part)
-			if nodeValue == nil {
-				break
+			var found bool
+			var err error
+			nodeValue, found, err = selectLookupValue(node, part)
+			if err != nil {
+				return err
+			}
+			if !found || selectNilValue(nodeValue) {
+				return nil
 			}
 			if toolbox.IsMap(nodeValue) {
 				node = toolbox.AsMap(nodeValue)
