@@ -14,6 +14,9 @@ import (
 
 // Length returns length of slice or string
 func Length(source interface{}, state data.Map) (interface{}, error) {
+	if source == nil {
+		return 0, nil
+	}
 
 	if toolbox.IsSlice(source) {
 		return len(toolbox.AsSlice(source)), nil

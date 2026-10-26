@@ -104,6 +104,16 @@ The following expression as supported
  4. $key reference access
 */
 func (s *Map) GetValue(expr string) (interface{}, bool) {
+	return s.getValue(expr, false)
+}
+
+// LookupValue reads an ordinary path without native increment/shift/reference
+// operations or path getter calls. It retains nil/false/zero leaf presence.
+func (s *Map) LookupValue(expr string) (interface{}, bool) {
+	return s.getValue(expr, true)
+}
+
+func (s *Map) getValue(expr string, passive bool) (interface{}, bool) {
 	if expr == "" {
 		return nil, false
 	}
@@ -111,22 +121,22 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 		expr = expr[1 : len(expr)-1]
 	}
 
-	isShiftOperation := strings.HasPrefix(expr, "<-")
+	isShiftOperation := !passive && strings.HasPrefix(expr, "<-")
 	if isShiftOperation {
 		expr = string(expr[2:])
 	}
 
-	isPostIncrementOperation := strings.HasSuffix(expr, "++")
+	isPostIncrementOperation := !passive && strings.HasSuffix(expr, "++")
 	if isPostIncrementOperation {
 		expr = string(expr[:len(expr)-2])
 	}
 
-	isPreIncrementOperation := strings.HasPrefix(expr, "++")
+	isPreIncrementOperation := !passive && strings.HasPrefix(expr, "++")
 	if isPreIncrementOperation {
 		expr = string(expr[2:])
 	}
 
-	isReference := strings.HasPrefix(expr, "$")
+	isReference := !passive && strings.HasPrefix(expr, "$")
 	if isReference {
 		expr = string(expr[1:])
 		expr = s.GetString(expr)
@@ -165,7 +175,7 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 						return nil, false
 					}
 					var aSlice = toolbox.AsSlice(candidate)
-					if intIndex >= len(aSlice) {
+					if intIndex < 0 || intIndex >= len(aSlice) {
 						return nil, false
 					}
 					if intIndex < len(aSlice) {
@@ -199,9 +209,14 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 				if newState != nil {
 					state = newState
 				}
+			} else if fields, ok := structPathFields(candidate); ok {
+				state = fields
 			} else {
+				if passive {
+					return nil, false
+				}
 				value, _ := state.GetValue(fragment)
-				if f, ok := value.(func(key string) interface{}); ok {
+				if f, ok := value.(func(key string) interface{}); ok && !passive {
 					return f(fragments[i+1]), true
 				}
 				return nil, false
@@ -227,7 +242,7 @@ func (s *Map) GetValue(expr string) (interface{}, bool) {
 			state.Put(expr, &newCollection)
 			return result, true
 		}
-		if f, ok := result.(func() interface{}); ok {
+		if f, ok := result.(func() interface{}); ok && !passive {
 			return f(), true
 		}
 		return result, true

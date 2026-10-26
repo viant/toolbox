@@ -1,10 +1,12 @@
 package data
 
-import "strings"
+import (
+	"github.com/viant/toolbox"
+	"strings"
+)
 
-// passiveUDFArgumentReady lets the native parser resolve nested variable names
-// without executing getters. Unsupported expressions retain the entire legacy
-// readiness traversal; never retry an already expanded UDF result.
+// The native parser resolves passive dynamic index/name values before the next
+// selector. Unsupported/getter expressions retain the legacy fallback exactly.
 func (s *Map) passiveUDFArgumentReady(argument string) bool {
 	ready := true
 	Parse(strings.TrimSpace(argument), func(expression string, udf bool, _ interface{}) (interface{}, bool) {
@@ -16,38 +18,46 @@ func (s *Map) passiveUDFArgumentReady(argument string) bool {
 		if strings.HasPrefix(path, "{") && strings.HasSuffix(path, "}") {
 			path = path[1 : len(path)-1]
 		}
-		var current interface{} = *s
-		for _, key := range strings.Split(path, ".") {
-			if !passiveIdentifier(key) {
-				ready = false
-				return nil, false
-			}
-			var found bool
-			switch object := current.(type) {
-			case Map:
-				current, found = object[key]
-			case map[string]interface{}:
-				current, found = object[key]
-			}
-			if !found {
-				ready = false
-				return nil, false
-			}
+		if !passiveLookupPath(path) {
+			ready = false
+			return nil, false
+		}
+		current, found := s.LookupValue(path)
+		if !found {
+			ready = false
+			return nil, false
 		}
 		switch value := current.(type) {
 		case string:
 			if !passiveIdentifier(value) {
-				ready = false
 				return nil, false
 			}
 		case bool, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
 		default:
+			if current == nil || toolbox.IsMap(current) || toolbox.IsSlice(current) {
+				return nil, false
+			}
 			ready = false
 			return nil, false
 		}
 		return current, true
 	})
 	return ready
+}
+
+func passiveLookupPath(path string) bool {
+	for _, key := range strings.Split(path, ".") {
+		if index := strings.IndexByte(key, '['); index >= 0 {
+			if !strings.HasSuffix(key, "]") || !passiveIdentifier(key[index+1:len(key)-1]) {
+				return false
+			}
+			key = key[:index]
+		}
+		if !passiveIdentifier(key) {
+			return false
+		}
+	}
+	return true
 }
 
 func passiveIdentifier(value string) bool {
