@@ -2,7 +2,7 @@ package toolbox
 
 import (
 	"fmt"
-	"log"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -31,7 +31,7 @@ const (
 	DurationNanosecondAbbr  = "ns"
 )
 
-//AtTime represents a time at given schedule
+// AtTime represents a time at given schedule
 type AtTime struct {
 	WeekDay string
 	Hour    string
@@ -40,75 +40,27 @@ type AtTime struct {
 	loc     *time.Location
 }
 
-func (t *AtTime) min(base time.Time) int {
-	switch t.Minute {
-	case "*":
-		return (base.Minute() + 1) % 59
-	case "":
-		return 0
+// atTimeMask expands a schedule field into its allowed values. Empty fields
+// retain their original meaning of zero (Sunday, midnight, or minute zero).
+func atTimeMask(field string, size uint) uint64 {
+	if field == "*" {
+		return (uint64(1) << size) - 1
 	}
-	candidates := strings.Split(t.Minute, ",")
-	for _, candidate := range candidates {
-		candidateMin := AsInt(candidate)
-		if base.Minute() < candidateMin {
-			return candidateMin
+	if field == "" {
+		return 1
+	}
+	var mask uint64
+	for _, item := range strings.Split(field, ",") {
+		value, err := strconv.Atoi(strings.TrimSpace(item))
+		if err != nil || value < 0 || value >= int(size) {
+			return 0
 		}
+		mask |= uint64(1) << uint(value)
 	}
-	return AsInt(candidates[0])
+	return mask
 }
 
-func (t *AtTime) hour(base time.Time) int {
-	min := t.min(base)
-	switch t.Hour {
-	case "*":
-		if min > base.Minute() {
-			return base.Hour()
-		}
-		return (base.Hour() + 1) % 23
-	case "":
-		return 0
-	}
-	candidates := strings.Split(t.Hour, ",")
-	for _, candidate := range candidates {
-		candidateHour := AsInt(candidate)
-		if base.Hour() < candidateHour {
-			return candidateHour
-		}
-	}
-	return AsInt(candidates[0])
-}
-
-func (t *AtTime) weekday(base time.Time) int {
-	hour := t.hour(base)
-	min := t.min(base)
-	baseWeekday := int(base.Weekday())
-	isPastDue := hour > base.Hour() || (hour == base.Hour() && min > base.Minute())
-	switch t.WeekDay {
-	case "*":
-		if isPastDue {
-			return baseWeekday
-		}
-		return (baseWeekday + 1) % 7
-	case "":
-		return 0
-	}
-	candidates := strings.Split(t.WeekDay, ",")
-	result := AsInt(candidates[0])
-	for _, candidate := range candidates {
-		candidateWeekday := AsInt(candidate)
-		if baseWeekday < candidateWeekday {
-			result = candidateWeekday
-			break
-		}
-	}
-	if result < baseWeekday && isPastDue {
-		return 7 + result
-	}
-
-	return result
-}
-
-//Init initializes tz
+// Init initializes tz
 func (t *AtTime) Init() error {
 	if t.TZ == "" {
 		return nil
@@ -118,45 +70,35 @@ func (t *AtTime) Init() error {
 	return err
 }
 
-//Next returns next time schedule
+// Next returns the first scheduled minute strictly after base. Init must be
+// called to load TZ; otherwise base's location is used. Nonexistent local times
+// are skipped, and repeated local times can match twice. Invalid schedule fields
+// return the zero time.
 func (t *AtTime) Next(base time.Time) time.Time {
-
-	if t.loc != nil && base.Location() != nil && base.Location() != t.loc {
-		base = base.In(t.loc)
-	} else {
-		t.loc = base.Location()
-	}
-
-	min := t.min(base)
-	hour := t.hour(base)
-	timeLiteral := base.Format("2006-01-02")
-	updateTimeLiteral := fmt.Sprintf("%v %02d:%02d:00", timeLiteral, hour, min)
-	weekday := t.weekday(base)
-	baseWeekday := int(base.Weekday())
-	weekdayDiff := 0
-	if weekday >= baseWeekday {
-		weekdayDiff = weekday - baseWeekday
-	} else {
-		weekdayDiff = 7 + weekday - baseWeekday
-	}
-
-	var result time.Time
 	if t.loc != nil {
-		result, _ = time.ParseInLocation("2006-01-02 15:04:05", updateTimeLiteral, t.loc)
-	} else {
-		result, _ = time.Parse("2006-01-02 15:04:05", updateTimeLiteral)
+		base = base.In(t.loc)
+	}
+	weekdays := atTimeMask(t.WeekDay, 7)
+	hours := atTimeMask(t.Hour, 24)
+	minutes := atTimeMask(t.Minute, 60)
+	if weekdays == 0 || hours == 0 || minutes == 0 {
+		return time.Time{}
 	}
 
-	if weekdayDiff > 0 {
-		result = result.Add(time.Hour * 24 * time.Duration(weekdayDiff))
-	} else if weekdayDiff == 0 && AsInt(t.WeekDay) > 0 {
-		result = result.Add(time.Hour * 24 * 7)
+	// Walk actual minutes so DST changes preserve chronological order without
+	// normalizing nonexistent wall times or losing the second repeated hour.
+	candidate := base.Add(-time.Duration(base.Second())*time.Second - time.Duration(base.Nanosecond())).Add(time.Minute)
+	// Two weeks allow a weekly occurrence to be skipped by a clock change.
+	limit := base.AddDate(0, 0, 15)
+	for candidate.Before(limit) {
+		if weekdays&(uint64(1)<<uint(candidate.Weekday())) != 0 &&
+			hours&(uint64(1)<<uint(candidate.Hour())) != 0 &&
+			minutes&(uint64(1)<<uint(candidate.Minute())) != 0 {
+			return candidate
+		}
+		candidate = candidate.Add(time.Minute)
 	}
-
-	if result.UnixNano() < base.UnixNano() {
-		log.Printf("invalid schedule next: %v is before base: %v\n", result, base)
-	}
-	return result
+	return time.Time{}
 }
 
 //Duration represents duration

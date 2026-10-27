@@ -26,7 +26,7 @@ func TestAtTime_Next(t *testing.T) {
 				Minute:  "30",
 			},
 			baseTime:   "2019-01-01 23:33:01",
-			expectTime: "2019-01-02 01:30:00",
+			expectTime: "2019-01-02 00:30:00",
 		},
 
 		{
@@ -37,7 +37,7 @@ func TestAtTime_Next(t *testing.T) {
 				Minute:  "0,30",
 			},
 			baseTime:   "2019-01-01 23:59:00",
-			expectTime: "2019-01-02 01:00:00",
+			expectTime: "2019-01-02 00:00:00",
 		},
 
 		{
@@ -48,7 +48,7 @@ func TestAtTime_Next(t *testing.T) {
 				Minute:  "0,30",
 			},
 			baseTime:   "2019-05-31 23:59:00",
-			expectTime: "2019-06-01 01:00:00",
+			expectTime: "2019-06-01 00:00:00",
 		},
 
 		{
@@ -59,7 +59,7 @@ func TestAtTime_Next(t *testing.T) {
 				Minute:  "*",
 			},
 			baseTime:   "2019-01-01 23:01:01",
-			expectTime: "2019-01-02 00:02:00",
+			expectTime: "2019-01-02 00:00:00",
 		},
 
 		{
@@ -118,7 +118,7 @@ func TestAtTime_Next(t *testing.T) {
 			at: &AtTime{
 				WeekDay: "*",
 				Hour:    "*",
-					Minute:  "10,30",
+				Minute:  "10,30",
 			},
 			baseTime:   "2019-01-01 01:33:01",
 			expectTime: "2019-01-01 02:10:00",
@@ -280,6 +280,93 @@ func TestAtTime_Next(t *testing.T) {
 
 	}
 
+}
+
+func TestAtTime_NextRegression(t *testing.T) {
+	cases := []struct {
+		name string
+		at   AtTime
+		base string
+		want string
+	}{
+		{"quarter hour enters 23", AtTime{WeekDay: "*", Hour: "*", Minute: "0,15,30,45"}, "2026-10-27T22:45:00Z", "2026-10-27T23:00:00Z"},
+		{"quarter hour crosses midnight", AtTime{WeekDay: "*", Hour: "*", Minute: "0,15,30,45"}, "2026-10-27T23:45:00Z", "2026-10-28T00:00:00Z"},
+		{"wildcard minute 59", AtTime{WeekDay: "*", Hour: "*", Minute: "*"}, "2026-10-27T22:58:59Z", "2026-10-27T22:59:00Z"},
+		{"wildcard minute rolls hour", AtTime{WeekDay: "*", Hour: "*", Minute: "*"}, "2026-10-27T22:59:00Z", "2026-10-27T23:00:00Z"},
+		{"explicit current hour", AtTime{WeekDay: "*", Hour: "13", Minute: "30"}, "2026-10-27T13:15:00Z", "2026-10-27T13:30:00Z"},
+		{"next hour resets minutes", AtTime{WeekDay: "*", Hour: "13,15", Minute: "10,30"}, "2026-10-27T13:15:00Z", "2026-10-27T13:30:00Z"},
+		{"next hour uses first minute", AtTime{WeekDay: "*", Hour: "13,15", Minute: "10,30"}, "2026-10-27T13:45:00Z", "2026-10-27T15:10:00Z"},
+		{"same weekday before run", AtTime{WeekDay: "2", Hour: "13", Minute: "30"}, "2026-10-27T12:15:00Z", "2026-10-27T13:30:00Z"},
+		{"same weekday after run", AtTime{WeekDay: "2", Hour: "13", Minute: "30"}, "2026-10-27T14:15:00Z", "2026-11-03T13:30:00Z"},
+		{"Sunday after run", AtTime{WeekDay: "0", Hour: "13", Minute: "30"}, "2026-10-25T14:15:00Z", "2026-11-01T13:30:00Z"},
+		{"unsorted lists", AtTime{WeekDay: "5,2", Hour: "15,13", Minute: "30,10"}, "2026-10-27T13:05:00Z", "2026-10-27T13:10:00Z"},
+		{"exact match advances", AtTime{WeekDay: "*", Hour: "13", Minute: "30"}, "2026-10-27T13:30:00Z", "2026-10-28T13:30:00Z"},
+		{"fractional second advances", AtTime{WeekDay: "*", Hour: "*", Minute: "*"}, "2026-10-27T13:30:00.000000001Z", "2026-10-27T13:31:00Z"},
+		{"empty fields retain Sunday midnight", AtTime{}, "2026-10-27T13:30:00Z", "2026-11-01T00:00:00Z"},
+		{"configured timezone", AtTime{WeekDay: "*", Hour: "13", Minute: "30", TZ: "America/Los_Angeles"}, "2026-10-27T19:15:00Z", "2026-10-27T13:30:00-07:00"},
+		{"spring skips missing time", AtTime{WeekDay: "*", Hour: "2", Minute: "30", TZ: "America/Los_Angeles"}, "2026-03-08T01:59:00-08:00", "2026-03-09T02:30:00-07:00"},
+		{"weekly missing time skips a week", AtTime{WeekDay: "0", Hour: "2", Minute: "30", TZ: "America/Los_Angeles"}, "2026-03-01T03:00:00-08:00", "2026-03-15T02:30:00-07:00"},
+		{"weekly across spring transition", AtTime{WeekDay: "1", Hour: "9", TZ: "America/Los_Angeles"}, "2026-03-07T12:00:00-08:00", "2026-03-09T09:00:00-07:00"},
+		{"fall repeats scheduled time", AtTime{WeekDay: "*", Hour: "1", Minute: "30", TZ: "America/Los_Angeles"}, "2026-11-01T01:45:00-07:00", "2026-11-01T01:30:00-08:00"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if err := tc.at.Init(); err != nil {
+				t.Fatal(err)
+			}
+			base, err := time.Parse(time.RFC3339Nano, tc.base)
+			if err != nil {
+				t.Fatal(err)
+			}
+			want, err := time.Parse(time.RFC3339Nano, tc.want)
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := tc.at.Next(base)
+			if !got.Equal(want) {
+				t.Fatalf("Next(%s) = %s, want %s", base, got, want)
+			}
+		})
+	}
+}
+
+func TestAtTime_NextQuarterHourDay(t *testing.T) {
+	at := AtTime{WeekDay: "*", Hour: "*", Minute: "0,15,30,45"}
+	base := time.Date(2026, 10, 27, 0, 0, 0, 0, time.UTC)
+	start := base
+	for i := 1; i <= 96; i++ {
+		got := at.Next(base)
+		want := start.Add(time.Duration(i) * 15 * time.Minute)
+		if !got.Equal(want) {
+			t.Fatalf("run %d: got %s, want %s", i, got, want)
+		}
+		base = got
+	}
+}
+
+func TestAtTime_NextBaseLocation(t *testing.T) {
+	at := AtTime{WeekDay: "*", Hour: "13", Minute: "30"}
+	for _, loc := range []*time.Location{time.UTC, time.FixedZone("offset", -7*60*60)} {
+		base := time.Date(2026, 10, 27, 13, 0, 0, 0, loc)
+		want := base.Add(30 * time.Minute)
+		if got := at.Next(base); !got.Equal(want) || got.Location() != loc {
+			t.Fatalf("Next(%s) = %s, want %s in %s", base, got, want, loc)
+		}
+	}
+}
+
+func TestAtTime_NextInvalid(t *testing.T) {
+	for _, at := range []AtTime{
+		{WeekDay: "7", Hour: "*", Minute: "*"},
+		{WeekDay: "*", Hour: "24", Minute: "*"},
+		{WeekDay: "*", Hour: "*", Minute: "60"},
+		{WeekDay: "*", Hour: "*", Minute: "-1"},
+		{WeekDay: "*", Hour: "*", Minute: "bad"},
+	} {
+		if got := at.Next(time.Now()); !got.IsZero() {
+			t.Errorf("Next with invalid schedule %+v = %s, want zero time", at, got)
+		}
+	}
 }
 
 func TestNewDuration(t *testing.T) {
