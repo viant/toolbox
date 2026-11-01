@@ -13,6 +13,7 @@ var Predefined = data.Map{
 	"AsData":                 AsData,
 	"AsCollection":           AsCollection,
 	"AsJSON":                 AsJSON,
+	"JSONSize":               JSONSize,
 	"Type":                   Type,
 	"Join":                   Join,
 	"Split":                  Split,

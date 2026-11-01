@@ -2,6 +2,7 @@ package udf
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"log"
 	"reflect"
@@ -142,4 +143,22 @@ func Test_AsString(t *testing.T) {
 	aMap.Put("k1", 2323232323223)
 	expanded = aMap.ExpandAsText(" $AsString(${k1})")
 	assert.EqualValues(t, "2323232323223", expanded)
+}
+
+func TestAsDataYAMLFlowMappingIsNotMistakenForJSON(t *testing.T) {
+	for _, text := range []string{
+		"kind: example\noptions: {enabled: true}",
+		"{kind: example, options: {enabled: true}}",
+		`{"kind":"example","options":{"enabled":true}}`,
+	} {
+		value, err := AsData(text, nil)
+		if !assert.NoError(t, err) {
+			continue
+		}
+		actual := toolbox.AsMap(value)
+		assert.Equal(t, "example", actual["kind"])
+		assert.Equal(t, true, toolbox.AsMap(actual["options"])["enabled"])
+	}
+	_, err := AsData("{broken: [", nil)
+	assert.Error(t, err)
 }

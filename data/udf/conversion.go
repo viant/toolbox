@@ -122,7 +122,9 @@ func AsData(source interface{}, state data.Map) (interface{}, error) {
 		text = strings.TrimSpace(text)
 		if strings.HasPrefix(text, "[") || strings.HasSuffix(text, "[") || strings.HasPrefix(text, "{") || strings.HasSuffix(text, "}") {
 			if err := toolbox.NewJSONDecoderFactory().Create(strings.NewReader(text)).Decode(&aData); err != nil {
-				return nil, err
+				// A YAML flow mapping may end in '}' without being JSON.
+				// Preserve the YAML path and discard any partial JSON value.
+				aData = nil
 			}
 		}
 		if err := yaml.NewDecoder(strings.NewReader(toolbox.AsString(source))).Decode(&aData); err != nil {
