@@ -443,6 +443,17 @@ func asEncodableValue(v interface{}) interface{} {
 	if v == nil {
 		return nil
 	}
+	// Binary is already JSON encodable. Keep its standard base64/null encoding
+	// and detach the snapshot from mutable source bytes instead of boxing each
+	// byte into a generic list.
+	if binary, ok := v.([]byte); ok {
+		if binary == nil {
+			return []byte(nil)
+		}
+		result := make([]byte, len(binary))
+		copy(result, binary)
+		return result
+	}
 	value := v
 	if toolbox.IsFunc(v) {
 		return "func()"
