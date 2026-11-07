@@ -1,6 +1,7 @@
 package data_test
 
 import (
+	"github.com/viant/toolbox"
 	"github.com/viant/toolbox/data"
 	"github.com/viant/toolbox/data/udf"
 	"reflect"
@@ -121,6 +122,46 @@ func TestNativeLookupArrayBoundsAreNotFound(t *testing.T) {
 		if value, found := state.GetValue(path); found {
 			t.Fatalf("ordinary %s unexpectedly resolved %#v", path, value)
 		}
+	}
+}
+
+func TestNativePassiveLookupWithNilIntermediateMap(t *testing.T) {
+	var nilMap *map[string]interface{}
+	var nilTypedMap *map[string]string
+	present := map[string]string{"value": "nested"}
+	state := data.Map{
+		"leaf":    "root decoy",
+		"present": &present,
+		"rows":    []data.Map{{"leaf": "array"}},
+	}
+	for _, absent := range []interface{}{map[string]interface{}(nil), nilMap, nilTypedMap, &nilTypedMap} {
+		state["node"] = absent
+		for _, path := range []string{"node.leaf", "node[leaf]", "node.inner.leaf"} {
+			if value, found := state.LookupValue(path); found {
+				t.Fatalf("%s resolved through absent map: %#v", path, value)
+			}
+		}
+		if value, found := state.LookupValue("node"); !found || !reflect.DeepEqual(value, absent) {
+			t.Fatalf("present nil leaf lost: %#v, %t", value, found)
+		}
+	}
+	for path, want := range map[string]string{"present.value": "nested", "present[value]": "nested", "rows[0].leaf": "array"} {
+		if got, found := state.LookupValue(path); !found || got != want {
+			t.Fatalf("%s = %#v, %t; want %q", path, got, found, want)
+		}
+	}
+}
+
+func TestToMapStillCopiesPointerToNamedMap(t *testing.T) {
+	type namedMap map[string]interface{}
+	source := namedMap{"leaf": "original"}
+	converted, err := toolbox.ToMap(&source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	converted["leaf"] = "changed"
+	if source["leaf"] != "original" {
+		t.Fatal("conversion of a pointer to a named map now aliases the caller")
 	}
 }
 

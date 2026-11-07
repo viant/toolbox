@@ -206,6 +206,9 @@ func (s *Map) getValue(expr string, passive bool) (interface{}, bool) {
 			}
 			if toolbox.IsMap(candidate) {
 				newState := toolbox.AsMap(candidate)
+				if passive && newState == nil {
+					return nil, false
+				}
 				if newState != nil {
 					state = newState
 				}

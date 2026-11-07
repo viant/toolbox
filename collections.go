@@ -480,6 +480,9 @@ func ToMap(source interface{}) (map[string]interface{}, error) {
 	if source == nil {
 		return nil, nil
 	}
+	if value := reflect.ValueOf(source); value.Kind() == reflect.Ptr && IsMap(source) && !IsValueOfKind(value, reflect.Map) {
+		return nil, nil
+	}
 	var result map[string]interface{}
 	switch candidate := source.(type) {
 	case map[string]interface{}:
